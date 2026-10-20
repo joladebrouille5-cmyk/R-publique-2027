@@ -1,4 +1,5 @@
 import { existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { defineConfig, devices } from '@playwright/test';
 
 // Tests de bout en bout : API réelle + PostgreSQL réel + interface construite (vite preview).
@@ -41,6 +42,10 @@ export default defineConfig({
         API_PORT,
         SESSION_SECRET: process.env.SESSION_SECRET ?? 'secret-e2e-uniquement-0123456789-abcdefgh',
         RATE_LIMIT_MAX: '10000',
+        // Jeu de démonstration commité : scénarios identiques en local et en CI.
+        GEO_DATA_DIR: fileURLToPath(
+          new URL('./packages/data-import/demo/cog-2026', import.meta.url),
+        ),
       },
       reuseExistingServer: false,
       timeout: 120_000,

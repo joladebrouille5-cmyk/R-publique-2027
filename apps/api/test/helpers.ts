@@ -1,4 +1,5 @@
 import type { FastifyInstance, InjectOptions, LightMyRequestResponse } from 'fastify';
+import { fileURLToPath } from 'node:url';
 import { buildApp, type AppOptions } from '../src/app';
 import { createDatabase, type Database } from '../src/db';
 import { loadRootEnv } from '../src/env-file';
@@ -6,6 +7,9 @@ import { loadRootEnv } from '../src/env-file';
 loadRootEnv();
 
 export const TEST_SECRET = 'secret-de-test-uniquement-0123456789-abcdef';
+export const DEMO_GEO_DIR = fileURLToPath(
+  new URL('../../../packages/data-import/demo/cog-2026', import.meta.url),
+);
 
 export function testDatabase(): Database {
   const url = process.env.DATABASE_URL_TEST;
@@ -30,6 +34,8 @@ export async function testApp(
       SESSION_SECRET: TEST_SECRET,
       RATE_LIMIT_MAX: 10_000,
       TRUST_PROXY: false,
+      // Jeu de démonstration commité : mêmes résultats en local et en CI.
+      GEO_DATA_DIR: DEMO_GEO_DIR,
       ...overrides,
     },
   });

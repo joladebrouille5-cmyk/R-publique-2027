@@ -41,6 +41,14 @@ export default defineConfig({
       },
       {
         test: {
+          name: 'data-import',
+          root: './packages/data-import',
+          include: ['src/**/*.test.ts'],
+          environment: 'node',
+        },
+      },
+      {
+        test: {
           name: 'save-engine',
           root: './packages/save-engine',
           include: ['src/**/*.test.ts'],

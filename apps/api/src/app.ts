@@ -20,6 +20,7 @@ import type { Database } from './db';
 import { HttpError } from './errors';
 import { advanceGame } from './services/advance';
 import { exportGame, importGame } from './services/exchange';
+import { geoDirectories, GeoRepository } from './services/geo';
 import { createNewGame, getGame, listGames } from './services/games';
 import { journalPage } from './services/journal';
 import { createManualSave, listSaves, restoreSave } from './services/saves';
@@ -27,8 +28,11 @@ import { resolveUserId } from './session';
 import { API_VERSION } from './version';
 
 export type AppOptions = {
-  config: Pick<Config, 'NODE_ENV' | 'SESSION_SECRET' | 'RATE_LIMIT_MAX' | 'TRUST_PROXY'>;
+  config: Pick<Config, 'NODE_ENV' | 'SESSION_SECRET' | 'RATE_LIMIT_MAX' | 'TRUST_PROXY'> &
+    Partial<Pick<Config, 'GEO_DATA_DIR'>>;
   db: Database;
+  /** Référentiel cartographique ; chargé selon GEO_DATA_DIR s'il n'est pas fourni. */
+  geo?: GeoRepository;
 };
 
 const GameParams = z.object({ gameId: z.uuid() });
@@ -44,7 +48,8 @@ function errorBody(code: string, message: string, details?: unknown): ApiError {
   return { error: details === undefined ? { code, message } : { code, message, details } };
 }
 
-export async function buildApp({ config, db }: AppOptions): Promise<FastifyInstance> {
+export async function buildApp({ config, db, geo }: AppOptions): Promise<FastifyInstance> {
+  const territories = geo ?? GeoRepository.load(geoDirectories(config.GEO_DATA_DIR));
   const app = Fastify({
     bodyLimit: BODY_LIMIT_BYTES,
     trustProxy: config.TRUST_PROXY,
@@ -164,6 +169,29 @@ export async function buildApp({ config, db }: AppOptions): Promise<FastifyInsta
       .header('content-disposition', `attachment; filename="${fileName}"`)
       .header('cache-control', 'no-store')
       .send(document);
+  });
+
+  // Référentiel cartographique (§3) : manifeste, fichiers TopoJSON et recherche de territoires.
+  app.get('/api/geo/manifeste', async (_request, reply) =>
+    reply.header('cache-control', 'public, max-age=3600').send(territories.manifest),
+  );
+
+  app.get('/api/geo/fichiers/*', async (request, reply) => {
+    const name = (request.params as { '*': string })['*'];
+    const file = territories.file(name);
+    if (!file) throw new HttpError(404, 'introuvable', `Fichier cartographique inconnu : ${name}`);
+    const gzip = /\bgzip\b/.test(String(request.headers['accept-encoding'] ?? ''));
+    reply
+      .header('content-type', 'application/json; charset=utf-8')
+      .header('cache-control', 'public, max-age=86400')
+      .header('vary', 'accept-encoding');
+    if (gzip) reply.header('content-encoding', 'gzip');
+    return reply.send(gzip ? file.gzip : file.raw);
+  });
+
+  app.get('/api/geo/recherche', async (request) => {
+    const { q } = z.object({ q: z.string().trim().min(1).max(80) }).parse(request.query);
+    return territories.search(q);
   });
 
   // Jeu de règles des nouvelles parties (profils de départ, adversaires, électorat).

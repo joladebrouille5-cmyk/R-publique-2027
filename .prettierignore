@@ -7,3 +7,6 @@ coverage/
 dist/
 # Documentation rédigée à la main (tableaux larges) : pas de reformatage automatique.
 *.md
+# Données générées par packages/data-import (JSON compact, reproductible).
+packages/data-import/demo/
+data/

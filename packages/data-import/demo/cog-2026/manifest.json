@@ -1,0 +1,1704 @@
+{
+  "format": "republique-2027/geo",
+  "formatVersion": 1,
+  "millesime": "cog-2026",
+  "couverture": "demonstration",
+  "importeur": "geo-1.0.0",
+  "sources": [
+    {
+      "id": "insee-cog-communes",
+      "titre": "Code officiel géographique — communes",
+      "producteur": "INSEE",
+      "url": "https://www.insee.fr/fr/statistiques/fichier/8740222/v_commune_2026.csv",
+      "licence": "Licence Ouverte 2.0",
+      "millesime": "COG 2026 (au 1er janvier 2026)",
+      "telechargeLe": "2026-10-20",
+      "sha256": "7be1153de3a63df48fa0ca77f8490c8a0c5c9c4eb12f5cec1ca7f70b0237b1d3",
+      "octets": 3565935
+    },
+    {
+      "id": "insee-cog-departements",
+      "titre": "Code officiel géographique — départements",
+      "producteur": "INSEE",
+      "url": "https://www.insee.fr/fr/statistiques/fichier/8740222/v_departement_2026.csv",
+      "licence": "Licence Ouverte 2.0",
+      "millesime": "COG 2026 (au 1er janvier 2026)",
+      "telechargeLe": "2026-10-20",
+      "sha256": "513900ca23edc682ef9b912d7bfc317129eac3a7d71ff19bc22b40ea4838e6eb",
+      "octets": 6076
+    },
+    {
+      "id": "insee-cog-regions",
+      "titre": "Code officiel géographique — régions",
+      "producteur": "INSEE",
+      "url": "https://www.insee.fr/fr/statistiques/fichier/8740222/v_region_2026.csv",
+      "licence": "Licence Ouverte 2.0",
+      "millesime": "COG 2026 (au 1er janvier 2026)",
+      "telechargeLe": "2026-10-20",
+      "sha256": "d903566d9c0d263389d279baea6761917b7460749a07bec8ba37dd8f2ff7d98a",
+      "octets": 1245
+    },
+    {
+      "id": "insee-cog-comer",
+      "titre": "Code officiel géographique — collectivités d’outre-mer",
+      "producteur": "INSEE",
+      "url": "https://www.insee.fr/fr/statistiques/fichier/8740222/v_comer_2026.csv",
+      "licence": "Licence Ouverte 2.0",
+      "millesime": "COG 2026 (au 1er janvier 2026)",
+      "telechargeLe": "2026-10-20",
+      "sha256": "d1f08ba101abf50c0a5db5cf7b24a50397bf68706aa658e4027a4fb933f059ed",
+      "octets": 785
+    },
+    {
+      "id": "ign-admin-express-cog-carto",
+      "titre": "ADMIN EXPRESS COG CARTO 4-0, France entière WGS84 (GeoPackage)",
+      "producteur": "IGN",
+      "url": "https://data.geopf.fr/telechargement/download/ADMIN-EXPRESS-COG-CARTO/ADMIN-EXPRESS-COG-CARTO_4-0__GPKG_WGS84G_FRA_2026-01-01/ADMIN-EXPRESS-COG-CARTO_4-0__GPKG_WGS84G_FRA_2026-01-01.7z",
+      "licence": "Licence Ouverte 2.0",
+      "millesime": "édition 2026-01-01",
+      "telechargeLe": "2026-10-20",
+      "sha256": "40269cb76a80c144a7b6ad247e122ccf911d10b039d07eb054ae93770b90de28",
+      "octets": 125711568
+    }
+  ],
+  "simplification": {
+    "communes": "tolérance 100 m (mapshaper, formes conservées)",
+    "apercu": "tolérance 1000 m, départements et régions fusionnés à partir des communes"
+  },
+  "effectifs": {
+    "communes": 880,
+    "communesDuReferentiel": 34875,
+    "departements": 101,
+    "regions": 18
+  },
+  "apercu": "france.topo.json",
+  "index": "index.json",
+  "regions": [
+    {
+      "code": "01",
+      "nom": "Guadeloupe",
+      "bbox": [
+        -61.8098,
+        15.832,
+        -61.002,
+        16.5145
+      ]
+    },
+    {
+      "code": "02",
+      "nom": "Martinique",
+      "bbox": [
+        -61.229,
+        14.3887,
+        -60.8097,
+        14.8787
+      ]
+    },
+    {
+      "code": "03",
+      "nom": "Guyane",
+      "bbox": [
+        -54.6024,
+        2.1111,
+        -51.6191,
+        5.7487
+      ]
+    },
+    {
+      "code": "04",
+      "nom": "La Réunion",
+      "bbox": [
+        55.2166,
+        -21.3896,
+        55.8366,
+        -20.8718
+      ]
+    },
+    {
+      "code": "06",
+      "nom": "Mayotte",
+      "bbox": [
+        45.0183,
+        -13.0054,
+        45.3,
+        -12.6366
+      ]
+    },
+    {
+      "code": "11",
+      "nom": "Île-de-France",
+      "bbox": [
+        1.4463,
+        48.1201,
+        3.559,
+        49.2415
+      ]
+    },
+    {
+      "code": "24",
+      "nom": "Centre-Val de Loire",
+      "bbox": [
+        0.0527,
+        46.3469,
+        3.1287,
+        48.941
+      ]
+    },
+    {
+      "code": "27",
+      "nom": "Bourgogne-Franche-Comté",
+      "bbox": [
+        2.8449,
+        46.1561,
+        7.1434,
+        48.4001
+      ]
+    },
+    {
+      "code": "28",
+      "nom": "Normandie",
+      "bbox": [
+        -1.9487,
+        48.1799,
+        1.8029,
+        50.0722
+      ]
+    },
+    {
+      "code": "32",
+      "nom": "Hauts-de-France",
+      "bbox": [
+        1.3802,
+        48.8372,
+        4.2558,
+        51.0892
+      ]
+    },
+    {
+      "code": "44",
+      "nom": "Grand Est",
+      "bbox": [
+        3.3837,
+        47.4203,
+        8.2325,
+        50.1693
+      ]
+    },
+    {
+      "code": "52",
+      "nom": "Pays de la Loire",
+      "bbox": [
+        -2.625,
+        46.2667,
+        0.9167,
+        48.568
+      ]
+    },
+    {
+      "code": "53",
+      "nom": "Bretagne",
+      "bbox": [
+        -5.1413,
+        47.2779,
+        -1.0156,
+        48.9008
+      ]
+    },
+    {
+      "code": "75",
+      "nom": "Nouvelle-Aquitaine",
+      "bbox": [
+        -1.7924,
+        42.7779,
+        2.6113,
+        47.176
+      ]
+    },
+    {
+      "code": "76",
+      "nom": "Occitanie",
+      "bbox": [
+        -0.3272,
+        42.3329,
+        4.8456,
+        45.0467
+      ]
+    },
+    {
+      "code": "84",
+      "nom": "Auvergne-Rhône-Alpes",
+      "bbox": [
+        2.0629,
+        44.1155,
+        7.1856,
+        46.8043
+      ]
+    },
+    {
+      "code": "93",
+      "nom": "Provence-Alpes-Côte d'Azur",
+      "bbox": [
+        4.2302,
+        42.982,
+        7.719,
+        45.1268
+      ]
+    },
+    {
+      "code": "94",
+      "nom": "Corse",
+      "bbox": [
+        8.5347,
+        41.3336,
+        9.56,
+        43.0276
+      ]
+    }
+  ],
+  "departements": [
+    {
+      "code": "01",
+      "nom": "Ain",
+      "region": "84",
+      "zone": "metropole",
+      "communes": 391,
+      "bbox": [
+        4.7281,
+        45.6111,
+        6.1701,
+        46.5199
+      ],
+      "fichier": "communes/01.topo.json"
+    },
+    {
+      "code": "02",
+      "nom": "Aisne",
+      "region": "32",
+      "zone": "metropole",
+      "communes": 797,
+      "bbox": [
+        2.958,
+        48.8372,
+        4.2558,
+        50.0695
+      ],
+      "fichier": null
+    },
+    {
+      "code": "03",
+      "nom": "Allier",
+      "region": "84",
+      "zone": "metropole",
+      "communes": 317,
+      "bbox": [
+        2.2768,
+        45.9307,
+        4.0057,
+        46.8043
+      ],
+      "fichier": null
+    },
+    {
+      "code": "04",
+      "nom": "Alpes-de-Haute-Provence",
+      "region": "93",
+      "zone": "metropole",
+      "communes": 198,
+      "bbox": [
+        5.4968,
+        43.6683,
+        6.9692,
+        44.66
+      ],
+      "fichier": null
+    },
+    {
+      "code": "05",
+      "nom": "Hautes-Alpes",
+      "region": "93",
+      "zone": "metropole",
+      "communes": 162,
+      "bbox": [
+        5.4184,
+        44.1865,
+        7.0772,
+        45.1268
+      ],
+      "fichier": null
+    },
+    {
+      "code": "06",
+      "nom": "Alpes-Maritimes",
+      "region": "93",
+      "zone": "metropole",
+      "communes": 163,
+      "bbox": [
+        6.6355,
+        43.4803,
+        7.719,
+        44.3613
+      ],
+      "fichier": null
+    },
+    {
+      "code": "07",
+      "nom": "Ardèche",
+      "region": "84",
+      "zone": "metropole",
+      "communes": 335,
+      "bbox": [
+        3.8611,
+        44.2643,
+        4.8865,
+        45.3662
+      ],
+      "fichier": null
+    },
+    {
+      "code": "08",
+      "nom": "Ardennes",
+      "region": "44",
+      "zone": "metropole",
+      "communes": 447,
+      "bbox": [
+        4.0245,
+        49.227,
+        5.3942,
+        50.1693
+      ],
+      "fichier": null
+    },
+    {
+      "code": "09",
+      "nom": "Ariège",
+      "region": "76",
+      "zone": "metropole",
+      "communes": 325,
+      "bbox": [
+        0.826,
+        42.5715,
+        2.1759,
+        43.3162
+      ],
+      "fichier": null
+    },
+    {
+      "code": "10",
+      "nom": "Aube",
+      "region": "44",
+      "zone": "metropole",
+      "communes": 431,
+      "bbox": [
+        3.3837,
+        47.9237,
+        4.8646,
+        48.7167
+      ],
+      "fichier": null
+    },
+    {
+      "code": "11",
+      "nom": "Aude",
+      "region": "76",
+      "zone": "metropole",
+      "communes": 433,
+      "bbox": [
+        1.6884,
+        42.6489,
+        3.2402,
+        43.4601
+      ],
+      "fichier": null
+    },
+    {
+      "code": "12",
+      "nom": "Aveyron",
+      "region": "76",
+      "zone": "metropole",
+      "communes": 285,
+      "bbox": [
+        1.8396,
+        43.6906,
+        3.4518,
+        44.9414
+      ],
+      "fichier": null
+    },
+    {
+      "code": "13",
+      "nom": "Bouches-du-Rhône",
+      "region": "93",
+      "zone": "metropole",
+      "communes": 119,
+      "bbox": [
+        4.2302,
+        43.1574,
+        5.8134,
+        43.9241
+      ],
+      "fichier": null
+    },
+    {
+      "code": "14",
+      "nom": "Calvados",
+      "region": "28",
+      "zone": "metropole",
+      "communes": 526,
+      "bbox": [
+        -1.1598,
+        48.7517,
+        0.4465,
+        49.4299
+      ],
+      "fichier": null
+    },
+    {
+      "code": "15",
+      "nom": "Cantal",
+      "region": "84",
+      "zone": "metropole",
+      "communes": 250,
+      "bbox": [
+        2.0629,
+        44.6158,
+        3.3714,
+        45.4835
+      ],
+      "fichier": null
+    },
+    {
+      "code": "16",
+      "nom": "Charente",
+      "region": "75",
+      "zone": "metropole",
+      "communes": 359,
+      "bbox": [
+        -0.4632,
+        45.1917,
+        0.9471,
+        46.1408
+      ],
+      "fichier": null
+    },
+    {
+      "code": "17",
+      "nom": "Charente-Maritime",
+      "region": "75",
+      "zone": "metropole",
+      "communes": 462,
+      "bbox": [
+        -1.5625,
+        45.0887,
+        0.0059,
+        46.3714
+      ],
+      "fichier": null
+    },
+    {
+      "code": "18",
+      "nom": "Cher",
+      "region": "24",
+      "zone": "metropole",
+      "communes": 286,
+      "bbox": [
+        1.7737,
+        46.4205,
+        3.0797,
+        47.6291
+      ],
+      "fichier": null
+    },
+    {
+      "code": "19",
+      "nom": "Corrèze",
+      "region": "75",
+      "zone": "metropole",
+      "communes": 277,
+      "bbox": [
+        1.2265,
+        44.9203,
+        2.5287,
+        45.7653
+      ],
+      "fichier": null
+    },
+    {
+      "code": "21",
+      "nom": "Côte-d'Or",
+      "region": "27",
+      "zone": "metropole",
+      "communes": 698,
+      "bbox": [
+        4.0652,
+        46.8998,
+        5.5188,
+        48.0313
+      ],
+      "fichier": null
+    },
+    {
+      "code": "22",
+      "nom": "Côtes-d'Armor",
+      "region": "53",
+      "zone": "metropole",
+      "communes": 344,
+      "bbox": [
+        -3.6659,
+        48.0326,
+        -1.909,
+        48.9008
+      ],
+      "fichier": null
+    },
+    {
+      "code": "23",
+      "nom": "Creuse",
+      "region": "75",
+      "zone": "metropole",
+      "communes": 255,
+      "bbox": [
+        1.3726,
+        45.6635,
+        2.6113,
+        46.4554
+      ],
+      "fichier": null
+    },
+    {
+      "code": "24",
+      "nom": "Dordogne",
+      "region": "75",
+      "zone": "metropole",
+      "communes": 503,
+      "bbox": [
+        -0.0419,
+        44.5707,
+        1.4482,
+        45.7148
+      ],
+      "fichier": null
+    },
+    {
+      "code": "25",
+      "nom": "Doubs",
+      "region": "27",
+      "zone": "metropole",
+      "communes": 563,
+      "bbox": [
+        5.6987,
+        46.5538,
+        7.0624,
+        47.5797
+      ],
+      "fichier": null
+    },
+    {
+      "code": "26",
+      "nom": "Drôme",
+      "region": "84",
+      "zone": "metropole",
+      "communes": 362,
+      "bbox": [
+        4.6469,
+        44.1155,
+        5.8304,
+        45.344
+      ],
+      "fichier": null
+    },
+    {
+      "code": "27",
+      "nom": "Eure",
+      "region": "28",
+      "zone": "metropole",
+      "communes": 585,
+      "bbox": [
+        0.2967,
+        48.6664,
+        1.8029,
+        49.4853
+      ],
+      "fichier": null
+    },
+    {
+      "code": "28",
+      "nom": "Eure-et-Loir",
+      "region": "24",
+      "zone": "metropole",
+      "communes": 363,
+      "bbox": [
+        0.7557,
+        47.9538,
+        1.9946,
+        48.941
+      ],
+      "fichier": null
+    },
+    {
+      "code": "29",
+      "nom": "Finistère",
+      "region": "53",
+      "zone": "metropole",
+      "communes": 277,
+      "bbox": [
+        -5.1413,
+        47.7013,
+        -3.3866,
+        48.7535
+      ],
+      "fichier": null
+    },
+    {
+      "code": "2A",
+      "nom": "Corse-du-Sud",
+      "region": "94",
+      "zone": "metropole",
+      "communes": 124,
+      "bbox": [
+        8.5347,
+        41.3336,
+        9.408,
+        42.3816
+      ],
+      "fichier": "communes/2A.topo.json"
+    },
+    {
+      "code": "2B",
+      "nom": "Haute-Corse",
+      "region": "94",
+      "zone": "metropole",
+      "communes": 236,
+      "bbox": [
+        8.5733,
+        41.8322,
+        9.56,
+        43.0276
+      ],
+      "fichier": "communes/2B.topo.json"
+    },
+    {
+      "code": "30",
+      "nom": "Gard",
+      "region": "76",
+      "zone": "metropole",
+      "communes": 350,
+      "bbox": [
+        3.2624,
+        43.4603,
+        4.8456,
+        44.4597
+      ],
+      "fichier": null
+    },
+    {
+      "code": "31",
+      "nom": "Haute-Garonne",
+      "region": "76",
+      "zone": "metropole",
+      "communes": 586,
+      "bbox": [
+        0.4417,
+        42.6892,
+        2.0483,
+        43.9215
+      ],
+      "fichier": null
+    },
+    {
+      "code": "32",
+      "nom": "Gers",
+      "region": "76",
+      "zone": "metropole",
+      "communes": 458,
+      "bbox": [
+        -0.2823,
+        43.3108,
+        1.2032,
+        44.08
+      ],
+      "fichier": null
+    },
+    {
+      "code": "33",
+      "nom": "Gironde",
+      "region": "75",
+      "zone": "metropole",
+      "communes": 534,
+      "bbox": [
+        -1.261,
+        44.1939,
+        0.3151,
+        45.5865
+      ],
+      "fichier": null
+    },
+    {
+      "code": "34",
+      "nom": "Hérault",
+      "region": "76",
+      "zone": "metropole",
+      "communes": 341,
+      "bbox": [
+        2.5396,
+        43.2102,
+        4.1945,
+        43.9728
+      ],
+      "fichier": null
+    },
+    {
+      "code": "35",
+      "nom": "Ille-et-Vilaine",
+      "region": "53",
+      "zone": "metropole",
+      "communes": 332,
+      "bbox": [
+        -2.289,
+        47.6316,
+        -1.0156,
+        48.7217
+      ],
+      "fichier": null
+    },
+    {
+      "code": "36",
+      "nom": "Indre",
+      "region": "24",
+      "zone": "metropole",
+      "communes": 241,
+      "bbox": [
+        0.8674,
+        46.3469,
+        2.2046,
+        47.2775
+      ],
+      "fichier": null
+    },
+    {
+      "code": "37",
+      "nom": "Indre-et-Loire",
+      "region": "24",
+      "zone": "metropole",
+      "communes": 272,
+      "bbox": [
+        0.0527,
+        46.7367,
+        1.366,
+        47.7099
+      ],
+      "fichier": null
+    },
+    {
+      "code": "38",
+      "nom": "Isère",
+      "region": "84",
+      "zone": "metropole",
+      "communes": 512,
+      "bbox": [
+        4.742,
+        44.6959,
+        6.3593,
+        45.8834
+      ],
+      "fichier": null
+    },
+    {
+      "code": "39",
+      "nom": "Jura",
+      "region": "27",
+      "zone": "metropole",
+      "communes": 492,
+      "bbox": [
+        5.252,
+        46.2607,
+        6.2072,
+        47.3059
+      ],
+      "fichier": null
+    },
+    {
+      "code": "40",
+      "nom": "Landes",
+      "region": "75",
+      "zone": "metropole",
+      "communes": 327,
+      "bbox": [
+        -1.5333,
+        43.4874,
+        0.1368,
+        44.5324
+      ],
+      "fichier": null
+    },
+    {
+      "code": "41",
+      "nom": "Loir-et-Cher",
+      "region": "24",
+      "zone": "metropole",
+      "communes": 267,
+      "bbox": [
+        0.5805,
+        47.1864,
+        2.2479,
+        48.1332
+      ],
+      "fichier": null
+    },
+    {
+      "code": "42",
+      "nom": "Loire",
+      "region": "84",
+      "zone": "metropole",
+      "communes": 320,
+      "bbox": [
+        3.6884,
+        45.231,
+        4.7604,
+        46.2766
+      ],
+      "fichier": null
+    },
+    {
+      "code": "43",
+      "nom": "Haute-Loire",
+      "region": "84",
+      "zone": "metropole",
+      "communes": 257,
+      "bbox": [
+        3.0822,
+        44.744,
+        4.4908,
+        45.4276
+      ],
+      "fichier": null
+    },
+    {
+      "code": "44",
+      "nom": "Loire-Atlantique",
+      "region": "52",
+      "zone": "metropole",
+      "communes": 207,
+      "bbox": [
+        -2.625,
+        46.8601,
+        -0.9467,
+        47.8359
+      ],
+      "fichier": null
+    },
+    {
+      "code": "45",
+      "nom": "Loiret",
+      "region": "24",
+      "zone": "metropole",
+      "communes": 325,
+      "bbox": [
+        1.5124,
+        47.483,
+        3.1287,
+        48.3449
+      ],
+      "fichier": null
+    },
+    {
+      "code": "46",
+      "nom": "Lot",
+      "region": "76",
+      "zone": "metropole",
+      "communes": 312,
+      "bbox": [
+        0.9815,
+        44.2033,
+        2.2109,
+        45.0467
+      ],
+      "fichier": null
+    },
+    {
+      "code": "47",
+      "nom": "Lot-et-Garonne",
+      "region": "75",
+      "zone": "metropole",
+      "communes": 319,
+      "bbox": [
+        -0.1407,
+        43.9726,
+        1.0783,
+        44.7657
+      ],
+      "fichier": null
+    },
+    {
+      "code": "48",
+      "nom": "Lozère",
+      "region": "76",
+      "zone": "metropole",
+      "communes": 152,
+      "bbox": [
+        2.9812,
+        44.1096,
+        3.9984,
+        44.9758
+      ],
+      "fichier": null
+    },
+    {
+      "code": "49",
+      "nom": "Maine-et-Loire",
+      "region": "52",
+      "zone": "metropole",
+      "communes": 176,
+      "bbox": [
+        -1.3542,
+        46.9689,
+        0.2346,
+        47.81
+      ],
+      "fichier": null
+    },
+    {
+      "code": "50",
+      "nom": "Manche",
+      "region": "28",
+      "zone": "metropole",
+      "communes": 445,
+      "bbox": [
+        -1.9487,
+        48.4558,
+        -0.7348,
+        49.7276
+      ],
+      "fichier": null
+    },
+    {
+      "code": "51",
+      "nom": "Marne",
+      "region": "44",
+      "zone": "metropole",
+      "communes": 610,
+      "bbox": [
+        3.3959,
+        48.5152,
+        5.0397,
+        49.4078
+      ],
+      "fichier": null
+    },
+    {
+      "code": "52",
+      "nom": "Haute-Marne",
+      "region": "44",
+      "zone": "metropole",
+      "communes": 426,
+      "bbox": [
+        4.6266,
+        47.5766,
+        5.8909,
+        48.6893
+      ],
+      "fichier": null
+    },
+    {
+      "code": "53",
+      "nom": "Mayenne",
+      "region": "52",
+      "zone": "metropole",
+      "communes": 240,
+      "bbox": [
+        -1.2388,
+        47.7334,
+        -0.0491,
+        48.568
+      ],
+      "fichier": null
+    },
+    {
+      "code": "54",
+      "nom": "Meurthe-et-Moselle",
+      "region": "44",
+      "zone": "metropole",
+      "communes": 591,
+      "bbox": [
+        5.4261,
+        48.349,
+        7.1232,
+        49.5633
+      ],
+      "fichier": null
+    },
+    {
+      "code": "55",
+      "nom": "Meuse",
+      "region": "44",
+      "zone": "metropole",
+      "communes": 499,
+      "bbox": [
+        4.8884,
+        48.409,
+        5.8542,
+        49.6168
+      ],
+      "fichier": null
+    },
+    {
+      "code": "56",
+      "nom": "Morbihan",
+      "region": "53",
+      "zone": "metropole",
+      "communes": 249,
+      "bbox": [
+        -3.7349,
+        47.2779,
+        -2.0353,
+        48.2109
+      ],
+      "fichier": null
+    },
+    {
+      "code": "57",
+      "nom": "Moselle",
+      "region": "44",
+      "zone": "metropole",
+      "communes": 725,
+      "bbox": [
+        5.8919,
+        48.5267,
+        7.64,
+        49.5149
+      ],
+      "fichier": null
+    },
+    {
+      "code": "58",
+      "nom": "Nièvre",
+      "region": "27",
+      "zone": "metropole",
+      "communes": 309,
+      "bbox": [
+        2.8449,
+        46.651,
+        4.2319,
+        47.5883
+      ],
+      "fichier": null
+    },
+    {
+      "code": "59",
+      "nom": "Nord",
+      "region": "32",
+      "zone": "metropole",
+      "communes": 647,
+      "bbox": [
+        2.0893,
+        49.9691,
+        4.2313,
+        51.0892
+      ],
+      "fichier": null
+    },
+    {
+      "code": "60",
+      "nom": "Oise",
+      "region": "32",
+      "zone": "metropole",
+      "communes": 680,
+      "bbox": [
+        1.6889,
+        49.0605,
+        3.1658,
+        49.7639
+      ],
+      "fichier": null
+    },
+    {
+      "code": "61",
+      "nom": "Orne",
+      "region": "28",
+      "zone": "metropole",
+      "communes": 381,
+      "bbox": [
+        -0.8606,
+        48.1799,
+        0.9766,
+        48.9725
+      ],
+      "fichier": null
+    },
+    {
+      "code": "62",
+      "nom": "Pas-de-Calais",
+      "region": "32",
+      "zone": "metropole",
+      "communes": 887,
+      "bbox": [
+        1.5554,
+        50.0198,
+        3.1882,
+        51.0107
+      ],
+      "fichier": null
+    },
+    {
+      "code": "63",
+      "nom": "Puy-de-Dôme",
+      "region": "84",
+      "zone": "metropole",
+      "communes": 463,
+      "bbox": [
+        2.3881,
+        45.2871,
+        3.9853,
+        46.2566
+      ],
+      "fichier": null
+    },
+    {
+      "code": "64",
+      "nom": "Pyrénées-Atlantiques",
+      "region": "75",
+      "zone": "metropole",
+      "communes": 545,
+      "bbox": [
+        -1.7924,
+        42.7779,
+        0.0298,
+        43.5968
+      ],
+      "fichier": null
+    },
+    {
+      "code": "65",
+      "nom": "Hautes-Pyrénées",
+      "region": "76",
+      "zone": "metropole",
+      "communes": 469,
+      "bbox": [
+        -0.3272,
+        42.6732,
+        0.6461,
+        43.6133
+      ],
+      "fichier": null
+    },
+    {
+      "code": "66",
+      "nom": "Pyrénées-Orientales",
+      "region": "76",
+      "zone": "metropole",
+      "communes": 226,
+      "bbox": [
+        1.7215,
+        42.3329,
+        3.1779,
+        42.9185
+      ],
+      "fichier": null
+    },
+    {
+      "code": "67",
+      "nom": "Bas-Rhin",
+      "region": "44",
+      "zone": "metropole",
+      "communes": 514,
+      "bbox": [
+        6.9406,
+        48.1204,
+        8.2325,
+        49.0778
+      ],
+      "fichier": null
+    },
+    {
+      "code": "68",
+      "nom": "Haut-Rhin",
+      "region": "44",
+      "zone": "metropole",
+      "communes": 366,
+      "bbox": [
+        6.841,
+        47.4203,
+        7.6219,
+        48.3112
+      ],
+      "fichier": null
+    },
+    {
+      "code": "69",
+      "nom": "Rhône",
+      "region": "84",
+      "zone": "metropole",
+      "communes": 266,
+      "bbox": [
+        4.2437,
+        45.4541,
+        5.1601,
+        46.3065
+      ],
+      "fichier": null
+    },
+    {
+      "code": "70",
+      "nom": "Haute-Saône",
+      "region": "27",
+      "zone": "metropole",
+      "communes": 536,
+      "bbox": [
+        5.3669,
+        47.2525,
+        6.8249,
+        48.0241
+      ],
+      "fichier": null
+    },
+    {
+      "code": "71",
+      "nom": "Saône-et-Loire",
+      "region": "27",
+      "zone": "metropole",
+      "communes": 563,
+      "bbox": [
+        3.6226,
+        46.1561,
+        5.4653,
+        47.1558
+      ],
+      "fichier": null
+    },
+    {
+      "code": "72",
+      "nom": "Sarthe",
+      "region": "52",
+      "zone": "metropole",
+      "communes": 352,
+      "bbox": [
+        -0.4481,
+        47.5684,
+        0.9167,
+        48.485
+      ],
+      "fichier": null
+    },
+    {
+      "code": "73",
+      "nom": "Savoie",
+      "region": "84",
+      "zone": "metropole",
+      "communes": 273,
+      "bbox": [
+        5.6219,
+        45.0517,
+        7.1856,
+        45.9385
+      ],
+      "fichier": null
+    },
+    {
+      "code": "74",
+      "nom": "Haute-Savoie",
+      "region": "84",
+      "zone": "metropole",
+      "communes": 279,
+      "bbox": [
+        5.805,
+        45.6817,
+        7.0445,
+        46.4082
+      ],
+      "fichier": null
+    },
+    {
+      "code": "75",
+      "nom": "Paris",
+      "region": "11",
+      "zone": "metropole",
+      "communes": 1,
+      "bbox": [
+        2.2242,
+        48.8156,
+        2.4698,
+        48.9021
+      ],
+      "fichier": null
+    },
+    {
+      "code": "76",
+      "nom": "Seine-Maritime",
+      "region": "28",
+      "zone": "metropole",
+      "communes": 707,
+      "bbox": [
+        0.0656,
+        49.2507,
+        1.7908,
+        50.0722
+      ],
+      "fichier": null
+    },
+    {
+      "code": "77",
+      "nom": "Seine-et-Marne",
+      "region": "11",
+      "zone": "metropole",
+      "communes": 507,
+      "bbox": [
+        2.3923,
+        48.1201,
+        3.559,
+        49.1179
+      ],
+      "fichier": null
+    },
+    {
+      "code": "78",
+      "nom": "Yvelines",
+      "region": "11",
+      "zone": "metropole",
+      "communes": 259,
+      "bbox": [
+        1.4463,
+        48.4386,
+        2.2291,
+        49.0854
+      ],
+      "fichier": null
+    },
+    {
+      "code": "79",
+      "nom": "Deux-Sèvres",
+      "region": "75",
+      "zone": "metropole",
+      "communes": 252,
+      "bbox": [
+        -0.9035,
+        45.9697,
+        0.2204,
+        47.1085
+      ],
+      "fichier": null
+    },
+    {
+      "code": "80",
+      "nom": "Somme",
+      "region": "32",
+      "zone": "metropole",
+      "communes": 771,
+      "bbox": [
+        1.3802,
+        49.5718,
+        3.2028,
+        50.3677
+      ],
+      "fichier": null
+    },
+    {
+      "code": "81",
+      "nom": "Tarn",
+      "region": "76",
+      "zone": "metropole",
+      "communes": 314,
+      "bbox": [
+        1.5352,
+        43.3823,
+        2.9375,
+        44.2015
+      ],
+      "fichier": null
+    },
+    {
+      "code": "82",
+      "nom": "Tarn-et-Garonne",
+      "region": "76",
+      "zone": "metropole",
+      "communes": 195,
+      "bbox": [
+        0.7378,
+        43.7676,
+        2.0009,
+        44.3939
+      ],
+      "fichier": null
+    },
+    {
+      "code": "83",
+      "nom": "Var",
+      "region": "93",
+      "zone": "metropole",
+      "communes": 153,
+      "bbox": [
+        5.6559,
+        42.982,
+        6.9334,
+        43.8089
+      ],
+      "fichier": null
+    },
+    {
+      "code": "84",
+      "nom": "Vaucluse",
+      "region": "93",
+      "zone": "metropole",
+      "communes": 151,
+      "bbox": [
+        4.6491,
+        43.6587,
+        5.7573,
+        44.4315
+      ],
+      "fichier": null
+    },
+    {
+      "code": "85",
+      "nom": "Vendée",
+      "region": "52",
+      "zone": "metropole",
+      "communes": 253,
+      "bbox": [
+        -2.4009,
+        46.2667,
+        -0.5381,
+        47.085
+      ],
+      "fichier": null
+    },
+    {
+      "code": "86",
+      "nom": "Vienne",
+      "region": "75",
+      "zone": "metropole",
+      "communes": 265,
+      "bbox": [
+        -0.105,
+        46.0483,
+        1.2132,
+        47.176
+      ],
+      "fichier": null
+    },
+    {
+      "code": "87",
+      "nom": "Haute-Vienne",
+      "region": "75",
+      "zone": "metropole",
+      "communes": 195,
+      "bbox": [
+        0.6292,
+        45.4366,
+        1.9111,
+        46.4016
+      ],
+      "fichier": null
+    },
+    {
+      "code": "88",
+      "nom": "Vosges",
+      "region": "44",
+      "zone": "metropole",
+      "communes": 506,
+      "bbox": [
+        5.3936,
+        47.8133,
+        7.1983,
+        48.5136
+      ],
+      "fichier": null
+    },
+    {
+      "code": "89",
+      "nom": "Yonne",
+      "region": "27",
+      "zone": "metropole",
+      "communes": 423,
+      "bbox": [
+        2.8484,
+        47.3104,
+        4.3403,
+        48.4001
+      ],
+      "fichier": null
+    },
+    {
+      "code": "90",
+      "nom": "Territoire de Belfort",
+      "region": "27",
+      "zone": "metropole",
+      "communes": 101,
+      "bbox": [
+        6.7562,
+        47.4333,
+        7.1434,
+        47.8251
+      ],
+      "fichier": null
+    },
+    {
+      "code": "91",
+      "nom": "Essonne",
+      "region": "11",
+      "zone": "metropole",
+      "communes": 194,
+      "bbox": [
+        1.9145,
+        48.2846,
+        2.5857,
+        48.7761
+      ],
+      "fichier": null
+    },
+    {
+      "code": "92",
+      "nom": "Hauts-de-Seine",
+      "region": "11",
+      "zone": "metropole",
+      "communes": 36,
+      "bbox": [
+        2.1457,
+        48.7294,
+        2.337,
+        48.9511
+      ],
+      "fichier": null
+    },
+    {
+      "code": "93",
+      "nom": "Seine-Saint-Denis",
+      "region": "11",
+      "zone": "metropole",
+      "communes": 39,
+      "bbox": [
+        2.2883,
+        48.8072,
+        2.6033,
+        49.0123
+      ],
+      "fichier": null
+    },
+    {
+      "code": "94",
+      "nom": "Val-de-Marne",
+      "region": "11",
+      "zone": "metropole",
+      "communes": 47,
+      "bbox": [
+        2.3087,
+        48.6876,
+        2.6157,
+        48.8615
+      ],
+      "fichier": null
+    },
+    {
+      "code": "95",
+      "nom": "Val-d'Oise",
+      "region": "11",
+      "zone": "metropole",
+      "communes": 183,
+      "bbox": [
+        1.6087,
+        48.9086,
+        2.595,
+        49.2415
+      ],
+      "fichier": null
+    },
+    {
+      "code": "971",
+      "nom": "Guadeloupe",
+      "region": "01",
+      "zone": "971",
+      "communes": 32,
+      "bbox": [
+        -61.8098,
+        15.832,
+        -61.002,
+        16.5145
+      ],
+      "fichier": "communes/971.topo.json"
+    },
+    {
+      "code": "972",
+      "nom": "Martinique",
+      "region": "02",
+      "zone": "972",
+      "communes": 34,
+      "bbox": [
+        -61.229,
+        14.3887,
+        -60.8097,
+        14.8787
+      ],
+      "fichier": "communes/972.topo.json"
+    },
+    {
+      "code": "973",
+      "nom": "Guyane",
+      "region": "03",
+      "zone": "973",
+      "communes": 22,
+      "bbox": [
+        -54.6024,
+        2.1111,
+        -51.6191,
+        5.7487
+      ],
+      "fichier": "communes/973.topo.json"
+    },
+    {
+      "code": "974",
+      "nom": "La Réunion",
+      "region": "04",
+      "zone": "974",
+      "communes": 24,
+      "bbox": [
+        55.2166,
+        -21.3896,
+        55.8366,
+        -20.8718
+      ],
+      "fichier": "communes/974.topo.json"
+    },
+    {
+      "code": "976",
+      "nom": "Mayotte",
+      "region": "06",
+      "zone": "976",
+      "communes": 17,
+      "bbox": [
+        45.0183,
+        -13.0054,
+        45.3,
+        -12.6366
+      ],
+      "fichier": "communes/976.topo.json"
+    }
+  ],
+  "horsCarte": [
+    {
+      "code": "975",
+      "nom": "Saint-Pierre-et-Miquelon"
+    },
+    {
+      "code": "977",
+      "nom": "Saint-Barthélemy"
+    },
+    {
+      "code": "978",
+      "nom": "Saint-Martin"
+    },
+    {
+      "code": "986",
+      "nom": "Wallis-et-Futuna"
+    },
+    {
+      "code": "987",
+      "nom": "Polynésie française"
+    },
+    {
+      "code": "988",
+      "nom": "Nouvelle-Calédonie"
+    },
+    {
+      "code": "99",
+      "nom": "Français établis hors de France"
+    }
+  ]
+}
