@@ -1,0 +1,23 @@
+# Dépendances et builds
+node_modules/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# Secrets et configuration locale
+.env
+.env.*
+!.env.example
+
+# Données téléchargées ou générées (volumineuses)
+data/raw/
+data/processed/
+
+# Tests de bout en bout
+playwright-report/
+test-results/
+
+# Divers
+.DS_Store
+*.log
