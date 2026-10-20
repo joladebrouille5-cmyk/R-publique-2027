@@ -207,6 +207,7 @@ Réalisé :
 | `pnpm test:integration` (API + PostgreSQL 16 réel) | 47 tests réussis (8 nouveaux ou étendus) |
 | `pnpm test:e2e` (Playwright, bureau + mobile) | 12 tests réussis, dont une présidentielle complète jusqu'aux résultats |
 | Contrôle visuel (captures bureau et mobile, thèmes clair et sombre) | carte des positionnements, tableaux de sondages et de résultats lisibles, sans défilement horizontal |
+| CI GitHub Actions (exécution n° 6, commit `d52a7a3`) | verte : toutes les étapes réussies en 2 min 49 s |
 
 Réalisé :
 - **P3-01** : création du candidat personnalisé (prénom, nom, parti, positionnement économique et sociétal de −100 à +100, parcours, profil de départ modifiant les ressources) ; formulaire avec les électorats les plus proches ; nom et parti obligatoires (client et serveur). Mode « candidat réel » toujours refusé, en attente de Q2.
