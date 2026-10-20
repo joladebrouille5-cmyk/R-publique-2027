@@ -71,6 +71,20 @@ export function applyDecisions(
   const week = state.meta.week;
   const applied: AppliedDecision[] = [];
   for (const { decision, optionId, automatic } of answers) {
+    if (decision.kind === 'consigne') {
+      // Consigne de vote du joueur éliminé : pas d'effet sur les ressources, effet au second tour.
+      const toActorId = optionId === 'aucune' ? null : optionId;
+      state.elections.consignes.push({ fromActorId: decision.actorId, toActorId, automatic });
+      const option = decision.options.find((o) => o.id === optionId)!;
+      applied.push({
+        decisionId: decision.id,
+        eventId: decision.eventId,
+        optionId,
+        label: `${decision.label} : ${option.libelle}`,
+        automatic,
+      });
+      continue;
+    }
     const definition = ruleset.evenements.find((e) => e.id === decision.eventId);
     const option = definition?.choix.find((c) => c.id === optionId);
     if (!definition || !option) throw new Error(`Événement ou option introuvable : ${decision.id}`);
@@ -128,7 +142,10 @@ export function drawEvents(
   step: number,
 ): ReportEvent[] {
   const actorId = state.player.actorId;
-  if (!actorId || !state.actors[actorId]) return [];
+  const player = actorId ? state.actors[actorId] : undefined;
+  // Événements de campagne : seulement pour un joueur encore en lice.
+  if (!actorId || !player || (player.status !== 'candidat' && player.status !== 'qualifie'))
+    return [];
   const week = state.meta.week;
   const triggered: ReportEvent[] = [];
   let decisionCreated = false;
@@ -152,6 +169,7 @@ export function drawEvents(
       decisionCreated = true;
       state.pendingDecisions.push({
         id: decisionId,
+        kind: 'evenement',
         eventId: event.id,
         actorId,
         createdWeek: week,

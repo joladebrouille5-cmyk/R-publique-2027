@@ -9,11 +9,25 @@ import {
   PlannedActionSchema,
   SeedSchema,
 } from './game';
+import { PositionSchema } from './politics';
 import { WeeklyReportSchema } from './report';
 
 // Contrats de l'API REST, partagés entre `apps/api` et `apps/web`.
 
 export const MAX_SAVE_SLOTS = 5;
+
+/** Candidat créé par le joueur (§1.2) ; les ressources de départ dépendent du profil choisi. */
+export const CandidateInputSchema = z
+  .object({
+    prenom: z.string().trim().max(40).default(''),
+    nom: z.string().trim().min(1).max(60),
+    parti: z.string().trim().min(1).max(80),
+    positionnement: PositionSchema,
+    parcours: z.string().trim().max(500).default(''),
+    profilId: z.string().min(1).max(60).nullable().default(null),
+  })
+  .strict();
+export type CandidateInput = z.input<typeof CandidateInputSchema>;
 
 export const CreateGameRequestSchema = z
   .object({
@@ -22,8 +36,25 @@ export const CreateGameRequestSchema = z
     difficulty: DifficultySchema.default('standard'),
     seed: SeedSchema.optional(),
     startDate: IsoDateSchema.optional(),
+    candidate: CandidateInputSchema.optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((body, ctx) => {
+    if (body.mode === 'candidat_personnalise' && !body.candidate) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['candidate'],
+        message: 'Candidat requis dans ce mode',
+      });
+    }
+    if (body.mode === 'observateur' && body.candidate) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['candidate'],
+        message: 'Pas de candidat en mode observateur',
+      });
+    }
+  });
 export type CreateGameRequest = z.input<typeof CreateGameRequestSchema>;
 
 export const GameSummarySchema = z.object({

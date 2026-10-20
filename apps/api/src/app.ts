@@ -2,7 +2,7 @@ import cookie from '@fastify/cookie';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import { ENGINE_VERSION, SAVE_SCHEMA_VERSION } from '@r2027/engine';
-import { getRuleset, UnknownRulesetError } from '@r2027/rulesets';
+import { CURRENT_RULESET_KEY, getRuleset, UnknownRulesetError } from '@r2027/rulesets';
 import {
   AdvanceRequestSchema,
   CreateGameRequestSchema,
@@ -165,6 +165,9 @@ export async function buildApp({ config, db }: AppOptions): Promise<FastifyInsta
       .header('cache-control', 'no-store')
       .send(document);
   });
+
+  // Jeu de règles des nouvelles parties (profils de départ, adversaires, électorat).
+  app.get('/api/rulesets/courant', async () => getRuleset(CURRENT_RULESET_KEY));
 
   app.get('/api/rulesets/:key', async (request) => {
     const { key } = z.object({ key: z.string().min(1).max(100) }).parse(request.params);

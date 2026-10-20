@@ -92,7 +92,6 @@ export async function advanceGame(
   );
   const next = snapshotState(result.state);
   const { report } = result;
-  const actorId = state.player.actorId ?? 'aucun';
 
   try {
     const response = await db.$transaction(async (tx) => {
@@ -106,13 +105,16 @@ export async function advanceGame(
           'La partie a été modifiée entre-temps : rechargez-la.',
         );
       }
-      // Sauvegarde automatique AVANT un événement majeur : on peut revenir à l'état d'avant (§12).
+      // Sauvegarde automatique AVANT un événement majeur ou un scrutin : on peut revenir à
+      // l'état d'avant (§12).
       if (result.majorEvent) {
         await tx.gameSave.create({
           data: {
             gameId,
             kind: 'avant_evenement',
-            label: 'Avant événement majeur',
+            label: report.election
+              ? `Avant le ${report.election.round === 1 ? 'premier' : 'second'} tour`
+              : 'Avant événement majeur',
             ...saveColumns(state, stateHash),
           },
         });
@@ -139,7 +141,7 @@ export async function advanceGame(
             advanceId: advance.id,
             week: report.week,
             position: action.index,
-            actorId,
+            actorId: action.actorId,
             type: action.actionId,
             payload: { label: action.label, cost: action.cost },
             status: action.status,
@@ -163,6 +165,24 @@ export async function advanceGame(
             nature: event.nature,
             payload: event,
           })),
+          ...report.polls.map((poll) => ({
+            gameId,
+            week: report.week,
+            type: 'sondage_publie',
+            nature: 'sondage' as const,
+            payload: poll,
+          })),
+          ...(report.election
+            ? [
+                {
+                  gameId,
+                  week: report.week,
+                  type: 'resultat_scrutin',
+                  nature: 'simule' as const,
+                  payload: report.election,
+                },
+              ]
+            : []),
         ],
       });
       await tx.simulationLog.createMany({

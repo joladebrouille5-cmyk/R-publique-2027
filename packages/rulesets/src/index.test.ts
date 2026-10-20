@@ -58,4 +58,23 @@ describe('jeu de règles presidentielle-2027', () => {
   it('ne contient que des événements fictifs', () => {
     for (const event of ruleset.evenements) expect(event.nature).toBe('fictif');
   });
+
+  it('ne présente que des adversaires et des instituts fictifs, déclarés comme tels', () => {
+    for (const candidate of ruleset.candidatsFictifs) {
+      expect(candidate.parcours).toMatch(/^Personnage fictif\./);
+    }
+    for (const institute of ruleset.sondages.instituts)
+      expect(institute.libelle).toMatch(/\(fictif\)$/);
+  });
+
+  it('reprend les inscrits proclamés en 2022, étiquetés comme estimation pour 2027', () => {
+    // Décision n° 2022-197 PDR (docs/SOURCES.md §3.2) : 48 752 339 inscrits au second tour.
+    expect(ruleset.electorat.inscrits).toMatchObject({
+      valeur: 48_752_339,
+      statut: 'estimation',
+      sourceId: 'cc-2022-197-pdr',
+    });
+    expect(ruleset.electorat.statutGroupes).toBe('hypothese');
+    expect(ruleset.modele.statut).toBe('hypothese');
+  });
 });

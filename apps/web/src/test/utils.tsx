@@ -1,5 +1,6 @@
+import { advanceWeek, createGame, ENGINE_VERSION, SAVE_SCHEMA_VERSION } from '@r2027/engine';
 import { CURRENT_RULESET_KEY, getRuleset } from '@r2027/rulesets';
-import type { GameDetail, SaveSummary, WeeklyReport } from '@r2027/shared';
+import type { GameDetail, GameState, SaveSummary, WeeklyReport } from '@r2027/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
@@ -8,58 +9,69 @@ import { routes } from '../routes';
 
 export const GAME_ID = '11111111-1111-4111-8111-111111111111';
 export const RULESET_KEY = CURRENT_RULESET_KEY;
+export const RULESET = getRuleset(RULESET_KEY);
 export const RULESET_URL = `/api/rulesets/${encodeURIComponent(RULESET_KEY)}`;
-export const rulesetHandler: Handler = () => ({ body: getRuleset(RULESET_KEY) });
+export const rulesetHandler: Handler = () => ({ body: RULESET });
 
-export function gameFixture(overrides: Partial<GameDetail> = {}): GameDetail {
+export const TEST_CANDIDATE = {
+  prenom: 'Camille',
+  nom: 'Test',
+  parti: 'Parti du test',
+  positionnement: { economie: 0, societe: 0 },
+};
+
+/** État initial produit par le vrai moteur (candidat du joueur et adversaires fictifs). */
+export function initialState(
+  mode: 'candidat_personnalise' | 'observateur' = 'candidat_personnalise',
+): GameState {
+  return createGame(
+    {
+      seed: 'graine-test',
+      mode,
+      difficulty: 'standard',
+      ...(mode === 'observateur' ? {} : { candidate: TEST_CANDIDATE }),
+    },
+    RULESET,
+  );
+}
+
+/** Fait avancer le vrai moteur jusqu'à `done(state)` (décisions par défaut, sans action). */
+export function playedState(
+  done: (state: GameState) => boolean,
+  start = initialState(),
+): GameState {
+  let state = start;
+  for (let i = 0; i < 80 && !done(state) && !state.calendar.blockedBy; i++) {
+    const decisions = state.pendingDecisions.map((d) => ({
+      decisionId: d.id,
+      optionId: d.defaultOptionId,
+    }));
+    state = advanceWeek(state, { actions: [], decisions }, { ruleset: RULESET }).state;
+  }
+  return state;
+}
+
+export function gameFixture(
+  overrides: Partial<GameDetail> = {},
+  state: GameState = initialState(),
+): GameDetail {
   return {
     id: GAME_ID,
     name: 'Partie de test',
-    mode: 'candidat_personnalise',
+    mode: state.player.mode,
     difficulty: 'standard',
-    phase: 'campagne',
-    week: 0,
-    date: '2026-09-28',
+    phase: state.meta.phase,
+    week: state.meta.week,
+    date: state.meta.date,
     createdAt: '2026-10-20T10:00:00.000Z',
     updatedAt: '2026-10-20T10:00:00.000Z',
     seed: 'graine-test',
-    engineVersion: '0.2.0',
+    engineVersion: ENGINE_VERSION,
     rulesetVersion: RULESET_KEY,
-    saveSchemaVersion: 2,
+    saveSchemaVersion: SAVE_SCHEMA_VERSION,
     version: 3,
     stateHash: 'a'.repeat(64),
-    state: {
-      meta: {
-        seed: 'graine-test',
-        week: 0,
-        date: '2026-09-28',
-        startDate: '2026-09-28',
-        phase: 'campagne',
-        difficulty: 'standard',
-        engineVersion: '0.2.0',
-        rulesetVersion: RULESET_KEY,
-        saveSchemaVersion: 2,
-      },
-      player: { mode: 'candidat_personnalise', actorId: 'joueur' },
-      actors: {
-        joueur: {
-          id: 'joueur',
-          kind: 'joueur',
-          label: 'Votre campagne',
-          resources: {
-            budgetCentimes: 80_000_000,
-            tempsHeures: 70,
-            militants: 400,
-            notoriete: 600,
-            popularite: 3000,
-          },
-        },
-      },
-      scheduled: [],
-      pendingDecisions: [],
-      eventHistory: {},
-      calendar: { blockedBy: null },
-    },
+    state,
     ...overrides,
   };
 }
@@ -73,8 +85,8 @@ export function saveFixture(overrides: Partial<SaveSummary> = {}): SaveSummary {
     week: 0,
     date: '2026-09-28',
     stateHash: 'a'.repeat(64),
-    engineVersion: '0.2.0',
-    saveSchemaVersion: 2,
+    engineVersion: ENGINE_VERSION,
+    saveSchemaVersion: SAVE_SCHEMA_VERSION,
     createdAt: '2026-10-20T10:05:00.000Z',
     ...overrides,
   };
@@ -145,6 +157,7 @@ export function reportFixture(overrides: Partial<WeeklyReport> = {}): WeeklyRepo
     })),
     actions: [
       {
+        actorId: 'joueur',
         index: 0,
         actionId: 'meeting',
         label: 'Meeting public',
@@ -166,6 +179,10 @@ export function reportFixture(overrides: Partial<WeeklyReport> = {}): WeeklyRepo
     decisions: [],
     notices: [],
     blocked: null,
+    intentions: null,
+    polls: [],
+    election: null,
+    phaseChange: null,
     ...overrides,
   };
 }

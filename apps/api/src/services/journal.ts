@@ -3,7 +3,7 @@ import type { Database } from '../db';
 import { findOwnedGame } from './state';
 
 /** Événements résumés dans le bilan de leur semaine : non répétés dans le journal. */
-const SUMMARIZED_IN_REPORT = ['evenement', 'risque'];
+const SUMMARIZED_IN_REPORT = ['evenement', 'risque', 'sondage_publie', 'resultat_scrutin'];
 
 export async function journalPage(
   db: Database,

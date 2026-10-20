@@ -1,6 +1,6 @@
 # Modèle de données — RÉPUBLIQUE 2027
 
-> Statut : **phases 1 et 2 réalisées** pour les tables techniques (`User`, `Game`, `GameSave`, `GameAdvance`, `GameAction`, `GameEvent`, `SimulationLog`) — schéma réel : [`apps/api/prisma/schema.prisma`](../apps/api/prisma/schema.prisma) ; état de partie réel (format 2) : [`packages/shared/src/game.ts`](../packages/shared/src/game.ts). Le reste du schéma ci-dessous reste indicatif et sera complété phase par phase.
+> Statut : **phases 1 à 3 réalisées** pour les tables techniques (`User`, `Game`, `GameSave`, `GameAdvance`, `GameAction`, `GameEvent`, `SimulationLog`) — schéma réel : [`apps/api/prisma/schema.prisma`](../apps/api/prisma/schema.prisma) ; état de partie réel (format 3) : [`packages/shared/src/game.ts`](../packages/shared/src/game.ts). Le reste du schéma ci-dessous reste indicatif et sera complété phase par phase.
 > Voir aussi [ARCHITECTURE.md §7](./ARCHITECTURE.md#7-persistance-et-sauvegardes-12).
 
 ## 1. Principe : trois familles de données
@@ -58,7 +58,19 @@ Stocker des valeurs par commune dans chaque instantané hebdomadaire serait proh
 
 ## 4. Esquisse du schéma `GameState` (Zod, `packages/shared`)
 
-> Phase 2 : le format 2 réellement implémenté contient `meta`, `player`, `actors` (campagne du joueur et ses ressources), `scheduled` (effets différés), `pendingDecisions`, `eventHistory` et `calendar` (blocage avant scrutin). L'aléa n'est plus stocké : il est dérivé de la graine. L'esquisse ci-dessous décrit la cible des phases suivantes.
+> Phase 2 : le format 2 contenait `meta`, `player`, `actors` (campagne du joueur et ses ressources), `scheduled` (effets différés), `pendingDecisions`, `eventHistory` et `calendar` (blocage avant scrutin). L'aléa n'est plus stocké : il est dérivé de la graine.
+>
+> **Phase 3 — format 3** (implémenté) :
+> - `actors` : le joueur et les 7 adversaires fictifs, chacun avec `candidate` (prénom, nom, parti, positionnement économie/société de −100 à +100, parcours, `nature` `personnalise` | `fictif`, profil de départ), `style` et `toleranceRisque` (IA), `resources`, `status` (`candidat`, `qualifie`, `elimine`, `elu`, `battu`) et `history.popularite` (8 dernières semaines, pour la dynamique) ;
+> - `pendingDecisions[].kind` : `evenement` ou `consigne` (consigne de vote du joueur éliminé) ;
+> - `opinion` : intentions attendues de la semaine (centièmes de point des exprimés), participation attendue et décomposition moyenne des facteurs par candidat — internes au modèle, non présentées comme un sondage ;
+> - `polls` : sondages publiés (`nature: 'sondage'`, institut, terrain, publication, échantillon, méthode, marge, limites) ;
+> - `elections` : `t1`, `t2` (résultats entiers nationaux et par groupe d'électeurs, `nature: 'simule'`), `consignes`, `debate` ;
+> - `calendar.blockedMessage` : message affiché quand la partie est bloquée (fin de la présidentielle).
+>
+> Migration 2 → 3 : identité par défaut pour le candidat d'une partie existante (« Candidat du joueur », sans étiquette, au centre), adversaires ajoutés avec leurs moyens de départ, ressources et historique d'événements conservés, blocage du premier tour levé (le scrutin est désormais simulé), jeu de règles `presidentielle-2027@2.0.0`. Testé sur un état réel produit par le moteur de la phase 2 (`packages/save-engine/src/fixtures/v2-phase-2.json`).
+>
+> L'esquisse ci-dessous décrit la cible des phases suivantes.
 
 ```ts
 type GameState = {
@@ -402,7 +414,8 @@ model EconomicIndicator {
 
 ## 6. Invariants vérifiés par tests
 
-- `Σ voix = exprimes`, `votants = blancs + nuls + exprimes`, `inscrits ≥ votants`, valeurs ≥ 0.
+- `Σ voix = exprimes`, `votants = blancs + nuls + exprimes`, `inscrits ≥ votants`, valeurs ≥ 0 (phase 3 : vérifié sur chaque groupe et sur le national ; `abstentions = inscrits − votants`).
+- Phase 3 : résultat national = somme exacte des groupes d'électeurs ; répartition au plus fort reste exacte (propriété) ; une consigne de vote ne transfère qu'une partie des électeurs de l'éliminé ; le décompte ne dépend pas de la difficulté ; un aller-retour JSON de l'état ne change rien (aucun `−0`).
 - Agrégat d'un niveau = somme exacte des enfants inclus dans le périmètre.
 - Chaque `Territory` de type `commune` avec `mapped = true` a une et une seule géométrie (contrôlé à l'import).
 - Les tables d'historique (`GameAction`, `GameEvent`, `SimulationLog`, `ElectoralResult*`) ne sont jamais modifiées après écriture. Depuis la phase 1, des déclencheurs PostgreSQL refusent toute mise à jour de `game_action`, `game_event` et `simulation_log`, et depuis la phase 2 de `game_advance` (testé).

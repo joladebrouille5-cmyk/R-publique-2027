@@ -4,3 +4,4 @@ export * from './game';
 export * from './resources';
 export * from './ruleset';
 export * from './report';
+export * from './politics';

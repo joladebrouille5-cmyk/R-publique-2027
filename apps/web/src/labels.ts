@@ -1,9 +1,11 @@
 import type {
+  CandidateStatus,
   DataStatus,
   Difficulty,
   FactorSource,
   GameMode,
   GamePhase,
+  Poll,
   ResourceKey,
 } from '@r2027/shared';
 
@@ -97,6 +99,7 @@ export const DATA_STATUS_LABELS: Record<DataStatus, string> = {
   officiel: 'officielle',
   annonce: 'annoncée, décret non publié',
   deduit: 'déduite d’une règle',
+  estimation: 'estimation',
   hypothese: 'hypothèse de jeu',
 };
 
@@ -121,3 +124,41 @@ export const JOURNAL_TYPE_LABELS: Record<string, string> = {
   sauvegarde_restauree: 'Sauvegarde restaurée',
   migration_de_sauvegarde: 'Migration du format de sauvegarde',
 };
+
+// --- Élection (phase 3) ---
+
+export const CANDIDATE_STATUS_LABELS: Record<CandidateStatus, string> = {
+  candidat: 'En campagne',
+  qualifie: 'Qualifié(e) au second tour',
+  elimine: 'Éliminé(e)',
+  elu: 'Élu(e)',
+  battu: 'Battu(e) au second tour',
+};
+
+export const POLL_KIND_LABELS: Record<Poll['kind'], string> = {
+  intentions_t1: 'Intentions de vote au premier tour',
+  intentions_t2: 'Intentions de vote au second tour',
+  popularite: 'Cote de popularité',
+};
+
+/** Part en centièmes de point (0 à 10 000) → « 23,45 % ». */
+export function formatShare(value: number): string {
+  return `${twoDecimals.format(value / 100)} %`;
+}
+
+/** Part d'un total entier → « 23,45 % » (deux décimales, arrondi). */
+export function formatRatio(part: number, total: number): string {
+  return total > 0 ? formatShare(Math.round((part * 10_000) / total)) : '—';
+}
+
+/** Nombre entier avec séparateurs français : « 48 752 339 ». */
+export function formatCount(value: number): string {
+  return integer.format(value);
+}
+
+/** Axe économique (−100 gauche … +100 droite) et sociétal (−100 progressiste … +100 conservateur). */
+export function describePosition(position: { economie: number; societe: number }): string {
+  const axis = (value: number, left: string, right: string) =>
+    value === 0 ? 'centre' : `${value < 0 ? left : right} ${Math.abs(value)}`;
+  return `économie : ${axis(position.economie, 'gauche', 'droite')} · société : ${axis(position.societe, 'progressiste', 'conservateur')}`;
+}

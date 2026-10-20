@@ -51,13 +51,19 @@ export function Journal() {
                     Semaine {entry.report.week} — {formatGameDate(entry.report.date)}
                   </span>
                   <span className="block text-xs text-slate-500 dark:text-slate-400">
-                    {entry.report.actions.filter((a) => a.status === 'validee').length} action(s),{' '}
-                    {entry.report.events.length} événement(s), {entry.report.changes.length}{' '}
-                    variation(s) · résolue le {formatTimestamp(entry.createdAt)}
+                    {entry.report.election &&
+                      `${entry.report.election.round === 1 ? 'Premier' : 'Second'} tour · `}
+                    {
+                      entry.report.actions.filter(
+                        (a) => a.status === 'validee' && a.actorId === game.state.player.actorId,
+                      ).length
+                    }{' '}
+                    action(s) de votre campagne, {entry.report.events.length} événement(s) · résolue
+                    le {formatTimestamp(entry.createdAt)}
                   </span>
                 </summary>
                 <div className="mt-4">
-                  <WeeklyReportView report={entry.report} />
+                  <WeeklyReportView report={entry.report} state={game.state} />
                 </div>
               </details>
             </li>

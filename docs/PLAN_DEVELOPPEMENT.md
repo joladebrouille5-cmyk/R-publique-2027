@@ -42,6 +42,8 @@
 
 Conséquence : les imports de résultats électoraux (data.gouv.fr) ne peuvent pas s'exécuter depuis cet environnement tant que la politique réseau n'autorise pas ces domaines (risque [R-02](./RISQUES.md)).
 
+Nouveau contrôle en fin de phase 3 : `geo.api.gouv.fr` et `www.conseil-constitutionnel.fr` répondent désormais (200) ; `www.insee.fr` reste accessible ; `www.data.gouv.fr`, `static.data.gouv.fr` et `etalab-datasets.geo.data.gouv.fr` coupent toujours la connexion ; `object.files.data.gouv.fr` répond 403.
+
 ---
 
 ## 2. Méthode de travail (§18 et guide, étape 5)
@@ -180,7 +182,7 @@ Réalisé :
 - Les règles de financement (plafond des dons, compte de campagne) ne sont pas appliquées : la collecte de dons est un montant agrégé, comme l'indique l'interface (phase 5).
 - Pas encore d'« accélération » sur plusieurs semaines : une semaine par demande.
 
-### Phase 3 — Présidentielle jouable
+### Phase 3 — Présidentielle jouable ✅
 
 | ID | Tâche | Test d'acceptation |
 |---|---|---|
@@ -195,6 +197,35 @@ Réalisé :
 | P3-09 | UI : sondages, soirée électorale (tableaux), badges réel / sondage / simulé. | Playwright élection complète. |
 
 **Livrable** : présidentielle jouable. **Critères visés** : 2, 5 (base), 6, 7, 10 (transition), 16.
+
+**Bilan (20/10/2026)** — les neuf tâches sont réalisées, avec les adaptations signalées ci-dessous.
+
+| Vérification | Résultat |
+|---|---|
+| `pnpm lint`, `pnpm format:check`, `pnpm typecheck` | sans erreur |
+| `pnpm test` | 137 tests réussis : moteur 79 (dont 7 propriétés fast-check), sauvegardes 17, jeu de règles 8, contrats 4, interface 29 |
+| `pnpm test:integration` (API + PostgreSQL 16 réel) | 47 tests réussis (8 nouveaux ou étendus) |
+| `pnpm test:e2e` (Playwright, bureau + mobile) | 12 tests réussis, dont une présidentielle complète jusqu'aux résultats |
+| Contrôle visuel (captures bureau et mobile, thèmes clair et sombre) | carte des positionnements, tableaux de sondages et de résultats lisibles, sans défilement horizontal |
+
+Réalisé :
+- **P3-01** : création du candidat personnalisé (prénom, nom, parti, positionnement économique et sociétal de −100 à +100, parcours, profil de départ modifiant les ressources) ; formulaire avec les électorats les plus proches ; nom et parti obligatoires (client et serveur). Mode « candidat réel » toujours refusé, en attente de Q2.
+- **P3-02** : `territory/aggregate.ts` (agrégation exacte d'une hiérarchie, contrôle des invariants) ; en attendant les territoires réels, l'électorat est découpé en 9 groupes d'électeurs nationaux étiquetés « hypothèse de jeu ».
+- **P3-03 / P3-04** : score latent décomposé en facteurs nommés, softmax, participation et abstention différentielle, blancs croissants au second tour quand aucun finaliste n'est proche ; voix entières au plus fort reste ; national = somme exacte des groupes ; participation, blancs et nuls calés sur 2022.
+- **P3-05** : deux instituts fictifs (1 000 et 1 500 personnes, un sondage toutes les deux semaines chacun) ; échantillon tiré des intentions attendues avec biais d'institut ; marge à 95 % ; hypothèse de second tour ; cote de popularité distincte ; fiche technique complète.
+- **P3-06** : majorité absolue ou deux qualifiés ; consignes de vote (automatiques pour les adversaires selon la proximité, décision obligatoire pour le joueur éliminé) ne transférant qu'une partie des électeurs (testé) ; débat d'entre-deux-tours simulé ; second tour.
+- **P3-07** : 7 adversaires fictifs autonomes (style, tolérance au risque, moyens selon la difficulté), même catalogue, mêmes coûts et même validation que le joueur ; actifs en mode observateur.
+- **P3-08** : statuts (en campagne, qualifié, éliminé, élu, battu) ; phase « présidence » si le joueur gagne, « bilan » sinon ; la partie se bloque ensuite explicitement avec un message renvoyant à la phase 6 ; sauvegarde automatique « Avant le premier tour » / « Avant le second tour ».
+- **P3-09** : écrans Candidats, Sondages et Résultats ; tableau de bord (position dans le dernier sondage, consigne de vote, fin de la présidentielle) ; bilan hebdomadaire séparant vos actions de celles des adversaires ; badges « Fictif », « Sondage simulé », « Résultat simulé ».
+- Format de sauvegarde 3 et migration 2 → 3 testée sur un état réel de la phase 2 ; jeu de règles 2.0.0.
+
+Écarts et limites :
+- **Pas de territoires** avant la phase 4 : résultats nationaux et par groupe d'électeurs uniquement ; la carte reste annoncée « phase 4 ».
+- **Parrainages non modélisés** (phase 5) : tous les candidats sont présents au premier tour, ce que l'écran Candidats indique.
+- Après l'élection, la partie s'arrête (gouvernement, législatives et quinquennat en phase 6) ; défaite : le bilan et la poursuite arrivent en phases 6 et 7.
+- Les sondages et résultats sont lus dans l'état de la partie, sans route `/polls` dédiée (prévue avec les volumes communaux de la phase 4).
+- Équilibrage non calibré ([R-12](./RISQUES.md), [R-24](./RISQUES.md)) : sans action du joueur, la candidate fictive du centre gagne la plupart des parties testées.
+- La migration 2 → 3 donne une identité par défaut (« Candidat du joueur », au centre) aux parties existantes ; l'édition du candidat n'est pas proposée.
 
 ### Phase 4 — Carte interactive complète (métropole + DROM)
 
@@ -240,9 +271,9 @@ Durcissement sécurité (§14), mesure de performance et fixation des seuils (§
 | # | Question | Recommandation par défaut | Bloque |
 |---|---|---|---|
 | Q1 | Dates officielles des tours de 2027 | **Fait en phase 2** : 18 avril et 2 mai 2027 dans le jeu de règles avec le statut `annonce` ; à passer en `officiel` (nouvelle version du jeu de règles) à la publication du décret ([SOURCES §4](./SOURCES.md#4-calendrier-de-la-présidentielle-2027)). | — |
-| Q2 | Personnalités réelles proposées et politique d'affichage (photos, statut) | Commencer par le mode personnalisé ; profils réels ajoutés un par un, sourcés, sans photo. | phase 3 |
+| Q2 | Personnalités réelles proposées et politique d'affichage (photos, statut) | Commencer par le mode personnalisé ; profils réels ajoutés un par un, sourcés, sans photo. **Phase 3 : défaut appliqué** (candidat personnalisé + adversaires fictifs) ; le mode « candidat réel » reste refusé tant que la liste et la politique ne sont pas validées. | mode « candidat réel » |
 | Q3 | Millésime géographique et source des contours | COG 2026 (34 875 communes) et IGN ADMIN EXPRESS COG CARTO 2026, Licence Ouverte 2.0 (décision D8). | phase 4 |
-| Q4 | Périmètre du scrutin | Périmètre officiel complet ; COM et Français de l'étranger dans une liste « Hors carte ». | phase 3 |
+| Q4 | Périmètre du scrutin | Périmètre officiel complet ; COM et Français de l'étranger dans une liste « Hors carte ». **Phase 3 : périmètre officiel complet** (inscrits proclamés en 2022) ; la liste « Hors carte » arrive avec la carte. | phase 4 |
 | Q5 | Comptes utilisateurs | Session anonyme par cookie en phase 1 ; comptes plus tard si mise en ligne publique. | phase 1 (non bloquant) |
 | Q6 | Hébergeur | Choix avant la phase 8. | phase 8 |
 | Q7 | Accès réseau aux domaines publics dans l'environnement cloud | Autoriser `www.data.gouv.fr`, `static.data.gouv.fr`, `object.files.data.gouv.fr`, `geo.api.gouv.fr` (au minimum) ; sinon exécuter les imports en local. | phase 4 |
@@ -250,4 +281,4 @@ Durcissement sécurité (§14), mesure de performance et fixation des seuils (§
 
 ## 6. Prochaine étape
 
-**Phase 3 — présidentielle jouable** (candidats, sondages, participation, deux tours), après validation de la phase 2.
+**Phase 4 — carte interactive complète** (métropole + DROM), après validation de la phase 3. Elle exige l'accès réseau aux sources officielles (Q7, [R-02](./RISQUES.md)) : `www.data.gouv.fr`, `static.data.gouv.fr`, `object.files.data.gouv.fr` et `etalab-datasets.geo.data.gouv.fr` sont encore bloqués ; `geo.api.gouv.fr`, `www.insee.fr`, `data.geopf.fr` (IGN) et `www.conseil-constitutionnel.fr` répondent.

@@ -37,7 +37,13 @@ export async function createNewGame(
   let initial: GameState;
   try {
     initial = createGame(
-      { seed, mode: body.mode, difficulty: body.difficulty, startDate: body.startDate },
+      {
+        seed,
+        mode: body.mode,
+        difficulty: body.difficulty,
+        startDate: body.startDate,
+        candidate: body.candidate,
+      },
       getRuleset(CURRENT_RULESET_KEY),
     );
   } catch (error) {
@@ -63,7 +69,13 @@ export async function createNewGame(
         week: state.meta.week,
         type: 'partie_creee',
         nature: 'systeme',
-        payload: { mode: body.mode, difficulty: body.difficulty, seed, startDate: state.meta.date },
+        payload: {
+          mode: body.mode,
+          difficulty: body.difficulty,
+          seed,
+          startDate: state.meta.date,
+          candidat: state.player.actorId ? state.actors[state.player.actorId]!.candidate : null,
+        },
       },
     });
     return created;

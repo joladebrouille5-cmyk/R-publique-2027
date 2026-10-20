@@ -11,21 +11,23 @@ import { useCreateGame } from '../api/hooks';
 import { ErrorMessage } from '../components/ErrorMessage';
 import { buttonPrimary, card, input, label } from '../components/ui';
 import { DIFFICULTY_LABELS, MODE_LABELS } from '../labels';
+import { CandidateForm, EMPTY_CANDIDATE, type CandidateDraft } from './new-game/CandidateForm';
 
 const MODES: { value: GameMode; description: string; available: boolean }[] = [
   {
     value: 'candidat_personnalise',
-    description: 'Créez votre candidat et votre parti (création détaillée en phase 3).',
+    description: 'Créez votre candidat et votre parti, face à des adversaires fictifs.',
     available: true,
   },
   {
     value: 'observateur',
-    description: 'Suivez une partie sans la contrôler.',
+    description: 'Suivez la campagne des candidats fictifs sans la contrôler.',
     available: true,
   },
   {
     value: 'candidat_reel',
-    description: 'Incarnez une personnalité réelle — profils sourcés prévus en phase 3.',
+    description:
+      'Incarnez une personnalité réelle : en attente de profils sourcés et d’une validation juridique (question Q2 du plan).',
     available: false,
   },
 ];
@@ -44,9 +46,18 @@ export function NewGame() {
   const [difficulty, setDifficulty] = useState<Difficulty>('standard');
   const [startDate, setStartDate] = useState(DEFAULT_START_DATE);
   const [seed, setSeed] = useState('');
+  const [candidate, setCandidate] = useState<CandidateDraft>(EMPTY_CANDIDATE);
+  const [missing, setMissing] = useState(false);
+  const withCandidate = mode === 'candidat_personnalise';
 
   const onSubmit = (event: FormEvent) => {
     event.preventDefault();
+    if (withCandidate && (!candidate.nom.trim() || !candidate.parti.trim())) {
+      setMissing(true);
+      return;
+    }
+    setMissing(false);
+    const { economie, societe, ...identity } = candidate;
     createGame.mutate(
       {
         name,
@@ -54,6 +65,9 @@ export function NewGame() {
         difficulty,
         startDate,
         ...(seed.trim() ? { seed: seed.trim() } : {}),
+        ...(withCandidate
+          ? { candidate: { ...identity, positionnement: { economie, societe } } }
+          : {}),
       },
       { onSuccess: (game) => void navigate(`/parties/${game.id}/tableau-de-bord`) },
     );
@@ -107,6 +121,8 @@ export function NewGame() {
             </label>
           ))}
         </fieldset>
+
+        {withCandidate && <CandidateForm value={candidate} onChange={setCandidate} />}
 
         <fieldset className="space-y-2">
           <legend className={label}>Difficulté</legend>
@@ -176,6 +192,11 @@ export function NewGame() {
           </div>
         </div>
 
+        {missing && (
+          <p role="alert" className="text-sm text-red-700 dark:text-red-400">
+            Indiquez au moins le nom du candidat et son parti.
+          </p>
+        )}
         {createGame.isError && <ErrorMessage error={createGame.error} />}
 
         <button type="submit" className={buttonPrimary} disabled={createGame.isPending}>

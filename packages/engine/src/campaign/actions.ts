@@ -7,11 +7,10 @@ import type {
   Ruleset,
 } from '@r2027/shared';
 import { applyOrSchedule } from '../core/effects';
-import { EngineInputError } from '../core/errors';
 import type { Ledger } from '../core/ledger';
 import { drawAlea, stream } from '../core/random';
 
-export type ValidatedAction = { index: number; definition: ActionDefinition };
+export type ValidatedAction = { actorId: string; index: number; definition: ActionDefinition };
 
 const euros = (centimes: number) =>
   `${Math.round(centimes / 100)
@@ -37,29 +36,19 @@ function rejectionReason(
 }
 
 /**
- * Étape 1 : validation des actions programmées, dans l'ordre soumis. Une action qui ne peut
- * pas être financée avec ce qui reste (budget, temps) ou dont le prérequis n'est pas rempli
- * est rejetée avec son motif ; les autres sont retenues.
+ * Validation des actions programmées par un acteur, dans l'ordre soumis. Une action qui ne
+ * peut pas être financée avec ce qui reste (budget, temps) ou dont le prérequis n'est pas
+ * rempli est rejetée avec son motif ; les autres sont retenues. Mêmes règles pour le joueur
+ * et pour les adversaires.
  */
 export function validateActions(
   state: GameState,
+  actorId: string,
   planned: readonly PlannedAction[],
   ruleset: Ruleset,
 ): { outcomes: ActionOutcome[]; validated: ValidatedAction[] } {
-  const actorId = state.player.actorId;
-  if (planned.length > 0 && (state.player.mode === 'observateur' || !actorId)) {
-    throw new EngineInputError('actions_interdites', 'Le mode observateur ne permet pas d’agir.');
-  }
-  if (planned.length > ruleset.jeu.actionsMaxParSemaine) {
-    throw new EngineInputError(
-      'trop_d_actions',
-      `Au plus ${ruleset.jeu.actionsMaxParSemaine} actions par semaine.`,
-    );
-  }
   const outcomes: ActionOutcome[] = [];
   const validated: ValidatedAction[] = [];
-  if (!actorId) return { outcomes, validated };
-
   const resources = state.actors[actorId]!.resources;
   let budget = resources.budgetCentimes;
   let time = resources.tempsHeures;
@@ -71,6 +60,7 @@ export function validateActions(
       : rejectionReason(definition, resources.militants, budget, time);
     if (!definition || reason) {
       outcomes.push({
+        actorId,
         index,
         actionId: action.actionId,
         label: definition?.libelle ?? action.actionId,
@@ -83,8 +73,9 @@ export function validateActions(
     const { cout } = definition;
     budget -= cout.budgetCentimes;
     time -= cout.tempsHeures;
-    validated.push({ index, definition });
+    validated.push({ actorId, index, definition });
     outcomes.push({
+      actorId,
       index,
       actionId: definition.id,
       label: definition.libelle,
@@ -99,11 +90,10 @@ export function validateActions(
 /** Étape 2 : débit exact du coût des actions retenues. */
 export function consumeActions(
   ledger: Ledger,
-  actorId: string,
   validated: readonly ValidatedAction[],
   step: number,
 ): void {
-  for (const { definition } of validated) {
+  for (const { actorId, definition } of validated) {
     const label = `${definition.libelle} : coût`;
     ledger.apply(actorId, 'budgetCentimes', [
       { label, value: -definition.cout.budgetCentimes, source: 'action', step },
@@ -118,15 +108,14 @@ export function consumeActions(
 export function resolveActionEffects(
   state: GameState,
   ledger: Ledger,
-  actorId: string,
   validated: readonly ValidatedAction[],
   step: number,
 ): ReportEvent[] {
   const week = state.meta.week;
   const risks: ReportEvent[] = [];
-  for (const { index, definition } of validated) {
-    const rng = stream(state.meta.seed, week, 'action', index, definition.id);
-    const ref = `a-${week}-${index}`;
+  for (const { actorId, index, definition } of validated) {
+    const rng = stream(state.meta.seed, week, 'action', actorId, index, definition.id);
+    const ref = `a-${week}-${actorId}-${index}`;
     const base = { state, ledger, actorId, week, step, ref };
     definition.effets.forEach((effect, i) =>
       applyOrSchedule(
@@ -157,7 +146,7 @@ export function resolveActionEffects(
         kind: 'risque',
         refId: definition.id,
         label: risk.libelle,
-        description: `Aléa de l'action « ${definition.libelle} » (probabilité ${Math.round(risk.probabilite * 100)} %).`,
+        description: `Aléa de l'action « ${definition.libelle} » de ${state.actors[actorId]!.label} (probabilité ${Math.round(risk.probabilite * 100)} %).`,
         nature: 'simule',
         majeur: false,
         decisionId: null,

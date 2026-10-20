@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { isValidIsoDate } from './dates';
+import { CampaignStyleSchema, CandidateIdentitySchema } from './politics';
 import { ResourceKeySchema, ResourcesSchema } from './resources';
 
 export const GAME_MODES = ['candidat_reel', 'candidat_personnalise', 'observateur'] as const;
@@ -89,16 +90,10 @@ export type GameStateV1 = z.infer<typeof GameStateV1Schema>;
 
 const Id = z.string().min(1).max(120);
 
-/** Acteur de campagne. Phase 2 : uniquement la campagne du joueur ; adversaires en phase 3. */
-export const ActorSchema = z
-  .object({
-    id: Id,
-    kind: z.literal('joueur'),
-    label: z.string().min(1),
-    resources: ResourcesSchema,
-  })
-  .strict();
-export type Actor = z.infer<typeof ActorSchema>;
+const EventHistorySchema = z.record(
+  Id,
+  z.object({ count: z.number().int().min(1), lastWeek: z.number().int().min(0) }).strict(),
+);
 
 /** Effet programmé, appliqué à l'entrée de la semaine `dueWeek` (§8 : effets différés). */
 export const ScheduledEffectSchema = z
@@ -122,8 +117,11 @@ export const ScheduledEffectSchema = z
   .strict();
 export type ScheduledEffect = z.infer<typeof ScheduledEffectSchema>;
 
-/** Décision obligatoire née d'un événement : à trancher avant la semaine suivante (§2). */
-export const PendingDecisionSchema = z
+const DecisionOptionSchema = z
+  .object({ id: Id, libelle: z.string().min(1), description: z.string().min(1) })
+  .strict();
+
+const PendingDecisionV2Schema = z
   .object({
     id: Id,
     eventId: Id,
@@ -131,34 +129,176 @@ export const PendingDecisionSchema = z
     createdWeek: z.number().int().min(0),
     label: z.string().min(1),
     description: z.string().min(1),
-    options: z
-      .array(
-        z.object({ id: Id, libelle: z.string().min(1), description: z.string().min(1) }).strict(),
-      )
-      .min(1),
+    options: z.array(DecisionOptionSchema).min(1),
     defaultOptionId: Id,
   })
   .strict();
-export type PendingDecision = z.infer<typeof PendingDecisionSchema>;
 
 /**
- * État complet d'une partie, format de sauvegarde n° 2 (phase 2). Toute évolution
+ * Format de sauvegarde n° 2 (phase 2) : figé, ne jamais modifier. Sert à relire et migrer
+ * les parties créées pendant la phase 2.
+ */
+export const GameStateV2Schema = z
+  .object({
+    meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(2) }).strict(),
+    player: PlayerSchema,
+    actors: z.record(
+      Id,
+      z
+        .object({
+          id: Id,
+          kind: z.literal('joueur'),
+          label: z.string().min(1),
+          resources: ResourcesSchema,
+        })
+        .strict(),
+    ),
+    scheduled: z.array(ScheduledEffectSchema),
+    pendingDecisions: z.array(PendingDecisionV2Schema),
+    eventHistory: EventHistorySchema,
+    calendar: z.object({ blockedBy: Id.nullable() }).strict(),
+  })
+  .strict();
+export type GameStateV2 = z.infer<typeof GameStateV2Schema>;
+
+export const CANDIDATE_STATUSES = ['candidat', 'qualifie', 'elimine', 'elu', 'battu'] as const;
+export const CandidateStatusSchema = z.enum(CANDIDATE_STATUSES);
+export type CandidateStatus = z.infer<typeof CandidateStatusSchema>;
+
+/** Candidat et sa campagne : le joueur ou un adversaire autonome (IA). */
+export const ActorSchema = z
+  .object({
+    id: Id,
+    kind: z.enum(['joueur', 'adversaire']),
+    label: z.string().min(1),
+    candidate: CandidateIdentitySchema,
+    /** Style et goût du risque de l'IA ; null pour le joueur. */
+    style: CampaignStyleSchema.nullable(),
+    toleranceRisque: z.number().min(0).max(1).nullable(),
+    resources: ResourcesSchema,
+    status: CandidateStatusSchema,
+    /** Popularité des dernières semaines (la plus récente en dernier), pour la dynamique. */
+    history: z.object({ popularite: z.array(z.number().int()).max(8) }).strict(),
+  })
+  .strict();
+export type Actor = z.infer<typeof ActorSchema>;
+
+/** Décision obligatoire : réponse à un événement, ou consigne de vote entre les deux tours. */
+export const PendingDecisionSchema = PendingDecisionV2Schema.extend({
+  kind: z.enum(['evenement', 'consigne']),
+}).strict();
+export type PendingDecision = z.infer<typeof PendingDecisionSchema>;
+
+/** Contribution d'un facteur au score latent d'un candidat (moyenne pondérée sur l'électorat). */
+export const UtilityFactorSchema = z
+  .object({ label: z.string().min(1), value: z.number() })
+  .strict();
+export type UtilityFactor = z.infer<typeof UtilityFactorSchema>;
+
+/** Intentions de vote « réelles » du modèle (non publiées) : les sondages en sont un échantillon. */
+export const OpinionSchema = z
+  .object({
+    week: z.number().int().min(0),
+    round: z.union([z.literal(1), z.literal(2)]),
+    /** Participation attendue, en centièmes de point de pourcentage des inscrits. */
+    participation: z.number().int().min(0).max(10_000),
+    /** Intentions, en centièmes de point de pourcentage des suffrages exprimés. */
+    intentions: z.record(Id, z.number().int().min(0).max(10_000)),
+    breakdown: z.record(Id, z.array(UtilityFactorSchema)),
+  })
+  .strict();
+export type Opinion = z.infer<typeof OpinionSchema>;
+
+export const POLL_KINDS = ['intentions_t1', 'intentions_t2', 'popularite'] as const;
+
+/** Sondage simulé (§5.2) : terrain, publication, échantillon, méthode, marge, limites. */
+export const PollSchema = z
+  .object({
+    id: Id,
+    kind: z.enum(POLL_KINDS),
+    instituteId: Id,
+    institute: z.string().min(1),
+    week: z.number().int().min(0),
+    fieldStart: IsoDateSchema,
+    fieldEnd: IsoDateSchema,
+    publishedAt: IsoDateSchema,
+    sampleSize: z.number().int().positive(),
+    method: z.string().min(1),
+    results: z
+      .array(
+        z
+          .object({
+            actorId: Id,
+            value: z.number().int().min(0).max(10_000),
+            margin: z.number().int().min(0),
+          })
+          .strict(),
+      )
+      .min(1),
+    limits: z.string().min(1),
+    nature: z.literal('sondage'),
+  })
+  .strict();
+export type Poll = z.infer<typeof PollSchema>;
+
+const VoteCountsSchema = {
+  inscrits: z.number().int().min(0),
+  votants: z.number().int().min(0),
+  blancs: z.number().int().min(0),
+  nuls: z.number().int().min(0),
+  exprimes: z.number().int().min(0),
+  voix: z.record(Id, z.number().int().min(0)),
+};
+
+/** Résultat simulé d'un tour : national et par groupe d'électeurs (le national est leur somme). */
+export const RoundResultSchema = z
+  .object({
+    scrutinId: Id,
+    round: z.union([z.literal(1), z.literal(2)]),
+    date: IsoDateSchema,
+    ...VoteCountsSchema,
+    abstentions: z.number().int().min(0),
+    groups: z.array(z.object({ groupId: Id, ...VoteCountsSchema }).strict()).min(1),
+    qualified: z.array(Id),
+    winner: Id.nullable(),
+    nature: z.literal('simule'),
+  })
+  .strict();
+export type RoundResult = z.infer<typeof RoundResultSchema>;
+
+export const VoteInstructionSchema = z
+  .object({ fromActorId: Id, toActorId: Id.nullable(), automatic: z.boolean() })
+  .strict();
+export type VoteInstruction = z.infer<typeof VoteInstructionSchema>;
+
+/**
+ * État complet d'une partie, format de sauvegarde n° 3 (phase 3). Toute évolution
  * s'accompagne d'un nouveau numéro de format et d'une migration (packages/save-engine).
  * L'aléa ne figure pas dans l'état : chaque tirage est dérivé de la graine, de la semaine
- * et de son contexte (module, action, événement).
+ * et de son contexte (module, action, événement, groupe d'électeurs…).
  */
 export const GameStateSchema = z
   .object({
-    meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(2) }).strict(),
+    meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(3) }).strict(),
     player: PlayerSchema,
     actors: z.record(Id, ActorSchema),
     scheduled: z.array(ScheduledEffectSchema),
     pendingDecisions: z.array(PendingDecisionSchema),
-    eventHistory: z.record(
-      Id,
-      z.object({ count: z.number().int().min(1), lastWeek: z.number().int().min(0) }).strict(),
-    ),
-    calendar: z.object({ blockedBy: Id.nullable() }).strict(),
+    eventHistory: EventHistorySchema,
+    opinion: OpinionSchema.nullable(),
+    polls: z.array(PollSchema),
+    elections: z
+      .object({
+        t1: RoundResultSchema.nullable(),
+        t2: RoundResultSchema.nullable(),
+        consignes: z.array(VoteInstructionSchema),
+        /** Prestation de chaque finaliste au débat d'entre-deux-tours (−1 à +1), une fois tenu. */
+        debate: z.record(Id, z.number().min(-1).max(1)).nullable(),
+      })
+      .strict(),
+    calendar: z
+      .object({ blockedBy: Id.nullable(), blockedMessage: z.string().nullable() })
+      .strict(),
   })
   .strict();
 export type GameState = z.infer<typeof GameStateSchema>;

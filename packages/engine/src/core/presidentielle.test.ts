@@ -1,0 +1,120 @@
+import { describe, expect, it } from 'vitest';
+import { advanceWeek } from './advanceWeek';
+import { PLAYER_ACTOR_ID } from './createGame';
+import { EngineInputError } from './errors';
+import {
+  advance,
+  deepFreeze,
+  newGame,
+  playToEnd,
+  playUntil,
+  QUIET,
+  RULESET,
+  TEST_CANDIDATE,
+  withResources,
+} from './testing';
+
+describe('présidentielle complète', () => {
+  const { state, reports } = playToEnd(newGame(), RULESET, () => ['meeting', 'interview']);
+  const t1 = reports.find((r) => r.election?.round === 1)!;
+  const t2 = reports.find((r) => r.election?.round === 2);
+
+  it('dépouille le premier tour la semaine du 18 avril 2027', () => {
+    expect(t1).toMatchObject({ week: 28, date: '2027-04-12' });
+    expect(t1.election).toMatchObject({ scrutinId: 'presidentielle-2027-t1', date: '2027-04-18' });
+    expect(state.elections.t1).toEqual(t1.election);
+  });
+
+  it('enchaîne l’entre-deux-tours puis le second tour la semaine du 2 mai 2027', () => {
+    expect(t1.phaseChange).toEqual({ from: 'campagne', to: 'entre_deux_tours' });
+    expect(t2).toMatchObject({ week: 30, date: '2027-04-26' });
+    expect(t2!.election).toMatchObject({ scrutinId: 'presidentielle-2027-t2', date: '2027-05-02' });
+    expect(reports.some((r) => r.events.some((e) => e.refId === 'debat-entre-deux-tours'))).toBe(
+      true,
+    );
+    expect(state.elections.debate).not.toBeNull();
+  });
+
+  it('publie des intentions et des sondages chaque semaine de campagne', () => {
+    for (const report of reports.filter((r) => r.week < 28)) {
+      expect(report.intentions?.round).toBe(1);
+      expect(Object.values(report.intentions!.values).reduce((a, b) => a + b, 0)).toBe(10_000);
+    }
+    expect(reports.filter((r) => r.week < 28).every((r) => r.polls.length > 0)).toBe(true);
+    expect(state.polls.length).toBe(reports.reduce((n, r) => n + r.polls.length, 0));
+  });
+
+  it('termine sur un élu, met à jour les statuts et bloque la progression', () => {
+    const statuses = Object.values(state.actors).map((a) => a.status);
+    expect(statuses.filter((s) => s === 'elu')).toHaveLength(1);
+    expect(statuses.filter((s) => s === 'battu')).toHaveLength(1);
+    expect(statuses.filter((s) => s === 'elimine')).toHaveLength(statuses.length - 2);
+    const winner = Object.values(state.actors).find((a) => a.status === 'elu')!;
+    expect(state.elections.t2!.winner).toBe(winner.id);
+    expect(state.meta.phase).toBe(winner.id === PLAYER_ACTOR_ID ? 'presidence' : 'bilan');
+    expect(state.calendar.blockedBy).toBe('fin-de-la-presidentielle');
+    expect(reports.at(-1)!.blocked?.message).toMatch(/phases? 6/);
+    expect(() => advanceWeek(state, { actions: [], decisions: [] }, { ruleset: RULESET })).toThrow(
+      EngineInputError,
+    );
+  });
+
+  it('ne modifie pas l’état reçu, même la semaine d’un scrutin', () => {
+    const before = playUntil(newGame({}, QUIET), (s) => s.meta.week === 28, QUIET).state;
+    expect(() => advance(deepFreeze(before))).not.toThrow();
+  });
+});
+
+describe('candidat éliminé au premier tour', () => {
+  const start = withResources(
+    newGame(
+      { candidate: { ...TEST_CANDIDATE, positionnement: { economie: 100, societe: -100 } } },
+      QUIET,
+    ),
+    { notoriete: 100 },
+  );
+  const { state } = playUntil(start, (s) => s.meta.phase === 'entre_deux_tours', QUIET);
+  const decision = state.pendingDecisions.find((d) => d.kind === 'consigne')!;
+
+  it('le joueur éliminé doit choisir une consigne de vote entre les finalistes', () => {
+    expect(state.actors[PLAYER_ACTOR_ID]!.status).toBe('elimine');
+    expect(decision.options.map((o) => o.id)).toEqual([...state.elections.t1!.qualified, 'aucune']);
+    expect(() => advance(state)).toThrow(/Décision à prendre/);
+  });
+
+  it('ne peut plus programmer d’actions de campagne', () => {
+    const answer = [{ decisionId: decision.id, optionId: 'aucune' }];
+    expect(() => advance(state, ['meeting'], answer)).toThrow(/plus candidat/);
+  });
+
+  it('sa consigne est enregistrée et pèse sur le second tour', () => {
+    const finalist = state.elections.t1!.qualified[0]!;
+    const { state: next, report } = advance(
+      state,
+      [],
+      [{ decisionId: decision.id, optionId: finalist }],
+    );
+    expect(next.elections.consignes).toContainEqual({
+      fromActorId: PLAYER_ACTOR_ID,
+      toActorId: finalist,
+      automatic: false,
+    });
+    expect(report.decisions).toMatchObject([{ optionId: finalist, automatic: false }]);
+    expect(
+      next.opinion!.breakdown[finalist]!.some((f) =>
+        f.label.startsWith('Consigne de vote de Camille'),
+      ),
+    ).toBe(true);
+  });
+});
+
+describe('mode observateur', () => {
+  it('la présidentielle se déroule sans joueur, jusqu’à l’élection', () => {
+    const { state, reports } = playToEnd(newGame({ mode: 'observateur' }), QUIET);
+    expect(reports.flatMap((r) => r.actions).every((a) => a.actorId !== PLAYER_ACTOR_ID)).toBe(
+      true,
+    );
+    expect(state.meta.phase).toBe('bilan');
+    expect(Object.values(state.actors).filter((a) => a.status === 'elu')).toHaveLength(1);
+  });
+});

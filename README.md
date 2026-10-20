@@ -11,17 +11,20 @@ Simulation politique française : présidentielle, campagne et quinquennat. Jeu 
 | 0 | Audit, architecture, sources, risques | ✅ terminée |
 | 1 | Squelette web, API, base, navigation, sauvegardes | ✅ terminée |
 | 2 | Calendrier hebdomadaire, actions, ressources, événements, journal | ✅ terminée |
-| 3 | Candidats, sondages, participation, deux tours | à faire |
+| 3 | Candidats, adversaires autonomes, sondages, participation, deux tours | ✅ terminée |
 | 4–8 | Carte, campagne, quinquennat, contenu, mise en ligne | à faire |
 
 **Ce qui fonctionne aujourd'hui** :
-- créer une partie (candidat personnalisé ou observateur, difficulté, date de départ, graine) ;
+- créer une partie avec son candidat (prénom, nom, parti, positionnement économique et sociétal, parcours, profil de départ) ou en observateur, avec difficulté, date de départ et graine ;
+- affronter 7 adversaires **fictifs** qui mènent leur campagne seuls, avec le même catalogue d'actions et les mêmes coûts ;
+- suivre les sondages simulés de deux instituts fictifs (fiche technique complète, marge d'erreur, cote de popularité distincte, hypothèses de second tour) ;
+- jouer la présidentielle jusqu'au bout : premier tour (18 avril 2027), consignes de vote, débat, second tour (2 mai 2027), avec des résultats simulés en voix entières (inscrits, votants, blancs, nuls, exprimés) et le détail par groupe d'électeurs ;
 - la jouer semaine par semaine : programmer des actions (meeting, tournée, interview, campagne numérique, recrutement, collecte, porte-à-porte, rencontre d'élus) avec leur coût, leur effet attendu, leur incertitude et leur risque ; trancher les décisions nées d'événements fictifs ; résoudre la semaine ;
 - lire le bilan de chaque semaine, où chaque variation de ressource est décomposée en facteurs, et le journal complet de la partie ;
 - suivre le calendrier électoral officiel (dates annoncées ou déduites, avec leur source) ;
 - sauvegarder (5 emplacements manuels, sauvegarde automatique chaque semaine et avant un événement majeur), restaurer, exporter en JSON et importer dans une nouvelle partie, sans perte (empreinte SHA-256 identique).
 
-**Ce qui ne fonctionne pas encore** : candidats, adversaires, sondages et élection (phase 3) — la partie s'arrête explicitement la semaine du premier tour ; carte (phase 4) ; programme, finances réglementées, médias (phase 5) ; mode « candidat réel » (phase 3).
+**Ce qui ne fonctionne pas encore** : la suite après le second tour (gouvernement, législatives, quinquennat : phase 6) — la partie s'arrête explicitement une fois le président élu ; carte et résultats territoriaux (phase 4) ; programme, parrainages, finances réglementées, médias, alliances (phase 5) ; mode « candidat réel » (en attente de la décision Q2 : profils sourcés et validation juridique).
 
 ## Prérequis
 
@@ -85,7 +88,7 @@ Le pied de page de l'interface indique « Serveur connecté » quand l'API et la
 |---|---|---|
 | `pnpm test` | tests unitaires, de propriétés et de composants (moteur, jeu de règles, sauvegardes, interface) | aucun |
 | `pnpm test:integration` | API réelle contre PostgreSQL : parties, progression idempotente, sauvegardes, journal, export/import, migrations, isolation, sécurité | `DATABASE_URL_TEST` |
-| `pnpm test:e2e` | Playwright, navigateur bureau + mobile : actions, progression, bilan, sauvegarde, restauration, journal, export/import, reprise | `DATABASE_URL_TEST` ; navigateur : `pnpm exec playwright install chromium` |
+| `pnpm test:e2e` | Playwright, navigateur bureau + mobile : création du candidat, actions, progression, bilan, sauvegarde, restauration, journal, export/import, reprise, présidentielle complète jusqu'aux résultats | `DATABASE_URL_TEST` ; navigateur : `pnpm exec playwright install chromium` |
 | `pnpm lint` · `pnpm typecheck` · `pnpm format:check` | qualité du code | aucun |
 | `pnpm check` | lint + format + typecheck + tests unitaires | aucun |
 
@@ -98,8 +101,8 @@ apps/api            API Fastify + Prisma (sessions, parties, sauvegardes)
 apps/web            Interface React (Vite, React Router, TanStack Query, Zustand, Tailwind)
 apps/web/e2e        Tests Playwright
 packages/engine     Moteur de simulation pur et déterministe (aucune E/S)
-packages/rulesets   Jeux de règles versionnés et sourcés (calendrier, actions, événements)
-packages/save-engine  Sérialisation canonique et empreintes des sauvegardes
+packages/rulesets   Jeux de règles versionnés et sourcés (calendrier, actions, événements, électorat, adversaires)
+packages/save-engine  Sérialisation canonique, empreintes, migrations et export/import des sauvegardes
 packages/shared     Schémas Zod et contrats d'API partagés
 docs/               Cahier des charges, plan, architecture, sources, risques
 scripts/            Outils de développement

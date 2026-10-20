@@ -1,6 +1,6 @@
 {
   "id": "presidentielle-2027",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "libelle": "Élection présidentielle 2027",
   "verifieLe": "2026-10-20",
   "sources": {
@@ -18,6 +18,11 @@
       "titre": "Paramètres de conception du jeu RÉPUBLIQUE 2027 (hypothèses, sans valeur officielle)",
       "url": null,
       "consulteLe": null
+    },
+    "cc-2022-197-pdr": {
+      "titre": "Conseil constitutionnel — Décision n° 2022-197 PDR du 27 avril 2022 (proclamation des résultats du second tour)",
+      "url": "https://www.conseil-constitutionnel.fr/decision/2022/2022197PDR.htm",
+      "consulteLe": "2026-10-20"
     }
   },
   "calendrier": {
@@ -88,7 +93,10 @@
     },
     "opinion": {
       "erosionNotoriete": 0.01,
-      "popularite": { "reference": 3000, "rappel": 0.05 },
+      "popularite": {
+        "reference": 3000,
+        "rappel": 0.05
+      },
       "attritionMilitants": 0.01
     }
   },
@@ -98,8 +106,13 @@
       "libelle": "Meeting public",
       "description": "Grand rassemblement avec discours du candidat.",
       "portee": "regionale",
-      "cout": { "budgetCentimes": 3000000, "tempsHeures": 8 },
-      "prerequis": { "militantsMin": 50 },
+      "cout": {
+        "budgetCentimes": 3000000,
+        "tempsHeures": 8
+      },
+      "prerequis": {
+        "militantsMin": 50
+      },
       "effets": [
         {
           "ressource": "notoriete",
@@ -136,8 +149,13 @@
       "libelle": "Tournée de terrain (3 jours)",
       "description": "Déplacements, marchés et rencontres avec les habitants.",
       "portee": "locale",
-      "cout": { "budgetCentimes": 1500000, "tempsHeures": 24 },
-      "prerequis": { "militantsMin": 0 },
+      "cout": {
+        "budgetCentimes": 1500000,
+        "tempsHeures": 24
+      },
+      "prerequis": {
+        "militantsMin": 0
+      },
       "effets": [
         {
           "ressource": "popularite",
@@ -174,8 +192,13 @@
       "libelle": "Interview dans un média national",
       "description": "Entretien d'une heure en direct ; effet sur l'image très incertain.",
       "portee": "nationale",
-      "cout": { "budgetCentimes": 0, "tempsHeures": 3 },
-      "prerequis": { "militantsMin": 0 },
+      "cout": {
+        "budgetCentimes": 0,
+        "tempsHeures": 3
+      },
+      "prerequis": {
+        "militantsMin": 0
+      },
       "effets": [
         {
           "ressource": "notoriete",
@@ -212,8 +235,13 @@
       "libelle": "Campagne numérique ciblée",
       "description": "Vidéos et publications sponsorisées ; effet visible la semaine suivante.",
       "portee": "nationale",
-      "cout": { "budgetCentimes": 2000000, "tempsHeures": 2 },
-      "prerequis": { "militantsMin": 0 },
+      "cout": {
+        "budgetCentimes": 2000000,
+        "tempsHeures": 2
+      },
+      "prerequis": {
+        "militantsMin": 0
+      },
       "effets": [
         {
           "ressource": "notoriete",
@@ -231,8 +259,13 @@
       "libelle": "Opération de recrutement de militants",
       "description": "Réunions d'accueil et relances ; nouveaux militants actifs la semaine suivante.",
       "portee": "locale",
-      "cout": { "budgetCentimes": 500000, "tempsHeures": 4 },
-      "prerequis": { "militantsMin": 0 },
+      "cout": {
+        "budgetCentimes": 500000,
+        "tempsHeures": 4
+      },
+      "prerequis": {
+        "militantsMin": 0
+      },
       "effets": [
         {
           "ressource": "militants",
@@ -250,8 +283,13 @@
       "libelle": "Soirée de collecte de dons",
       "description": "Dîner de soutien avec des sympathisants.",
       "portee": "locale",
-      "cout": { "budgetCentimes": 200000, "tempsHeures": 6 },
-      "prerequis": { "militantsMin": 0 },
+      "cout": {
+        "budgetCentimes": 200000,
+        "tempsHeures": 6
+      },
+      "prerequis": {
+        "militantsMin": 0
+      },
       "effets": [
         {
           "ressource": "budgetCentimes",
@@ -281,8 +319,13 @@
       "libelle": "Porte-à-porte",
       "description": "Les militants vont à la rencontre des électeurs ; nécessite une équipe déjà constituée.",
       "portee": "locale",
-      "cout": { "budgetCentimes": 0, "tempsHeures": 4 },
-      "prerequis": { "militantsMin": 100 },
+      "cout": {
+        "budgetCentimes": 0,
+        "tempsHeures": 4
+      },
+      "prerequis": {
+        "militantsMin": 100
+      },
       "effets": [
         {
           "ressource": "popularite",
@@ -291,7 +334,13 @@
           "delaiSemaines": 0,
           "saturation": true
         },
-        { "ressource": "militants", "base": 5, "ecart": 5, "delaiSemaines": 0, "saturation": false }
+        {
+          "ressource": "militants",
+          "base": 5,
+          "ecart": 5,
+          "delaiSemaines": 0,
+          "saturation": false
+        }
       ],
       "risque": null,
       "note": null
@@ -301,8 +350,13 @@
       "libelle": "Rencontre avec des élus locaux",
       "description": "Échanges avec des maires et conseillers ; les promesses de parrainage seront suivies en phase 5.",
       "portee": "regionale",
-      "cout": { "budgetCentimes": 300000, "tempsHeures": 6 },
-      "prerequis": { "militantsMin": 0 },
+      "cout": {
+        "budgetCentimes": 300000,
+        "tempsHeures": 6
+      },
+      "prerequis": {
+        "militantsMin": 0
+      },
       "effets": [
         {
           "ressource": "notoriete",
@@ -346,7 +400,13 @@
       "nature": "fictif",
       "majeur": false,
       "probabiliteHebdomadaire": 0.04,
-      "conditions": [{ "ressource": "popularite", "min": 2500, "max": null }],
+      "conditions": [
+        {
+          "ressource": "popularite",
+          "min": 2500,
+          "max": null
+        }
+      ],
       "delaiMinEntreOccurrences": 6,
       "occurrencesMax": null,
       "effets": [
@@ -368,7 +428,13 @@
       "nature": "fictif",
       "majeur": false,
       "probabiliteHebdomadaire": 0.05,
-      "conditions": [{ "ressource": "militants", "min": 150, "max": null }],
+      "conditions": [
+        {
+          "ressource": "militants",
+          "min": 150,
+          "max": null
+        }
+      ],
       "delaiMinEntreOccurrences": 6,
       "occurrencesMax": null,
       "effets": [
@@ -412,7 +478,13 @@
       "nature": "fictif",
       "majeur": false,
       "probabiliteHebdomadaire": 0.06,
-      "conditions": [{ "ressource": "notoriete", "min": 800, "max": null }],
+      "conditions": [
+        {
+          "ressource": "notoriete",
+          "min": 800,
+          "max": null
+        }
+      ],
       "delaiMinEntreOccurrences": 6,
       "occurrencesMax": null,
       "effets": [],
@@ -483,7 +555,13 @@
       "nature": "fictif",
       "majeur": true,
       "probabiliteHebdomadaire": 0.025,
-      "conditions": [{ "ressource": "militants", "min": 200, "max": null }],
+      "conditions": [
+        {
+          "ressource": "militants",
+          "min": 200,
+          "max": null
+        }
+      ],
       "delaiMinEntreOccurrences": 10,
       "occurrencesMax": 2,
       "effets": [],
@@ -526,5 +604,363 @@
       ],
       "choixParDefaut": "mediation"
     }
-  ]
+  ],
+  "electorat": {
+    "inscrits": {
+      "valeur": 48752339,
+      "statut": "estimation",
+      "sourceId": "cc-2022-197-pdr",
+      "note": "Nombre d'inscrits au second tour de 2022, utilisé faute de chiffre officiel pour 2027."
+    },
+    "statutGroupes": "hypothese",
+    "groupes": [
+      {
+        "id": "gauche-radicale",
+        "libelle": "Gauche radicale",
+        "description": "Électeurs très attachés à la redistribution et aux services publics.",
+        "part": 0.1,
+        "position": {
+          "economie": -80,
+          "societe": -50
+        },
+        "participation": 0.66
+      },
+      {
+        "id": "gauche-sociale",
+        "libelle": "Gauche sociale",
+        "description": "Électeurs de gauche réformistes, sensibles au pouvoir d'achat.",
+        "part": 0.12,
+        "position": {
+          "economie": -50,
+          "societe": -25
+        },
+        "participation": 0.72
+      },
+      {
+        "id": "ecologistes",
+        "libelle": "Écologistes",
+        "description": "Électeurs dont l'environnement est la priorité.",
+        "part": 0.08,
+        "position": {
+          "economie": -35,
+          "societe": -70
+        },
+        "participation": 0.7
+      },
+      {
+        "id": "centre-gauche",
+        "libelle": "Centre gauche",
+        "description": "Électeurs modérés, attachés aux équilibres budgétaires et sociaux.",
+        "part": 0.11,
+        "position": {
+          "economie": -15,
+          "societe": -15
+        },
+        "participation": 0.76
+      },
+      {
+        "id": "centre-liberal",
+        "libelle": "Centre libéral",
+        "description": "Électeurs favorables au marché et à l'Europe, socialement ouverts.",
+        "part": 0.14,
+        "position": {
+          "economie": 25,
+          "societe": -10
+        },
+        "participation": 0.78
+      },
+      {
+        "id": "droite-moderee",
+        "libelle": "Droite modérée",
+        "description": "Électeurs de droite de gouvernement.",
+        "part": 0.11,
+        "position": {
+          "economie": 45,
+          "societe": 25
+        },
+        "participation": 0.78
+      },
+      {
+        "id": "droite-conservatrice",
+        "libelle": "Droite conservatrice",
+        "description": "Électeurs attachés à l'ordre et aux valeurs traditionnelles.",
+        "part": 0.09,
+        "position": {
+          "economie": 60,
+          "societe": 55
+        },
+        "participation": 0.76
+      },
+      {
+        "id": "droite-nationale",
+        "libelle": "Droite nationale",
+        "description": "Électeurs prioritairement préoccupés par l'immigration et la sécurité.",
+        "part": 0.15,
+        "position": {
+          "economie": 20,
+          "societe": 80
+        },
+        "participation": 0.66
+      },
+      {
+        "id": "eloignes",
+        "libelle": "Éloignés de la politique",
+        "description": "Électeurs peu intéressés, qui votent rarement.",
+        "part": 0.1,
+        "position": {
+          "economie": 0,
+          "societe": 30
+        },
+        "participation": 0.34
+      }
+    ]
+  },
+  "modele": {
+    "statut": "hypothese",
+    "note": "Coefficients du score latent fixés par conception du jeu. Participation des groupes, blancs et nuls calés pour retrouver l'ordre de grandeur des résultats proclamés en 2022 (décisions n° 2022-195 et 2022-197 PDR : participation 73,69 % puis 71,99 % des inscrits ; blancs 1,51 % puis 6,37 % des votants ; nuls 0,69 % puis 2,29 %). Le jeu simule environ 74,8 % puis 72,1 %, 1,5 % puis 6,1 % de blancs, 0,7 % puis 2,3 % de nuls. À recalibrer sur les données communales en phase 4.",
+    "proximite": 3.0,
+    "notoriete": 1.0,
+    "popularite": 3.0,
+    "dynamique": 8.0,
+    "alea": 0.15,
+    "participation": {
+      "effetProximite": 0.1,
+      "min": 0.2,
+      "max": 0.95
+    },
+    "blancsNuls": {
+      "blancsT1": 0.015,
+      "nulsT1": 0.007,
+      "blancsT2Min": 0.055,
+      "blancsT2Max": 0.15,
+      "nulsT2": 0.023
+    },
+    "secondTour": {
+      "effetConsigne": 0.8,
+      "effetDebat": 0.25,
+      "abstentionDifferentielle": 0.12,
+      "seuilConsigne": 0.9
+    }
+  },
+  "sondages": {
+    "statut": "hypothese",
+    "instituts": [
+      {
+        "id": "opinio",
+        "libelle": "Institut Opinio (fictif)",
+        "taille": 1000,
+        "methode": "Échantillon par quotas (sexe, âge, profession, région), questionnaire en ligne",
+        "periodicite": 2,
+        "decalage": 0
+      },
+      {
+        "id": "civis",
+        "libelle": "Baromètre Civis (fictif)",
+        "taille": 1500,
+        "methode": "Échantillon par quotas, questionnaire en ligne et par téléphone",
+        "periodicite": 2,
+        "decalage": 1
+      }
+    ],
+    "biaisMaxCentiemes": 150,
+    "limites": "Sondage simulé par le jeu. Intentions mesurées parmi les personnes certaines d'aller voter et exprimant un choix. Marge d'erreur indicative, calculée comme pour un échantillon aléatoire de même taille (méthode des quotas). Un sondage décrit l'opinion à la date du terrain : ce n'est pas une prédiction du résultat."
+  },
+  "candidatsFictifs": [
+    {
+      "id": "adv-etincelle",
+      "prenom": "Bastien",
+      "nom": "Roudier",
+      "parti": "Étincelle",
+      "famille": "extrême gauche",
+      "positionnement": {
+        "economie": -90,
+        "societe": -40
+      },
+      "parcours": "Personnage fictif. Ancien syndicaliste dans l'industrie automobile.",
+      "style": "offensif",
+      "toleranceRisque": 0.7,
+      "ressources": {
+        "budgetCentimes": 15000000,
+        "militants": 600,
+        "notoriete": 1500,
+        "popularite": 2200
+      }
+    },
+    {
+      "id": "adv-aurore",
+      "prenom": "Élise",
+      "nom": "Marchetti",
+      "parti": "Aurore",
+      "famille": "gauche radicale",
+      "positionnement": {
+        "economie": -65,
+        "societe": -45
+      },
+      "parcours": "Personnage fictif. Ancienne députée, tribune remarquée sur les services publics.",
+      "style": "offensif",
+      "toleranceRisque": 0.6,
+      "ressources": {
+        "budgetCentimes": 60000000,
+        "militants": 1500,
+        "notoriete": 4500,
+        "popularite": 3000
+      }
+    },
+    {
+      "id": "adv-canopee",
+      "prenom": "Nadia",
+      "nom": "Ferrand",
+      "parti": "Canopée",
+      "famille": "écologiste",
+      "positionnement": {
+        "economie": -40,
+        "societe": -65
+      },
+      "parcours": "Personnage fictif. Agronome, élue régionale.",
+      "style": "equilibre",
+      "toleranceRisque": 0.5,
+      "ressources": {
+        "budgetCentimes": 40000000,
+        "militants": 900,
+        "notoriete": 3000,
+        "popularite": 3300
+      }
+    },
+    {
+      "id": "adv-agora",
+      "prenom": "Julien",
+      "nom": "Castaing",
+      "parti": "Agora",
+      "famille": "social-démocrate",
+      "positionnement": {
+        "economie": -25,
+        "societe": -20
+      },
+      "parcours": "Personnage fictif. Maire d'une ville moyenne.",
+      "style": "prudent",
+      "toleranceRisque": 0.3,
+      "ressources": {
+        "budgetCentimes": 50000000,
+        "militants": 1100,
+        "notoriete": 3500,
+        "popularite": 3200
+      }
+    },
+    {
+      "id": "adv-boussole",
+      "prenom": "Claire",
+      "nom": "Delorme",
+      "parti": "Boussole",
+      "famille": "centre libéral",
+      "positionnement": {
+        "economie": 20,
+        "societe": -10
+      },
+      "parcours": "Personnage fictif. Ancienne cheffe d'entreprise, ministre dans un gouvernement imaginaire.",
+      "style": "equilibre",
+      "toleranceRisque": 0.4,
+      "ressources": {
+        "budgetCentimes": 120000000,
+        "militants": 1300,
+        "notoriete": 6000,
+        "popularite": 3500
+      }
+    },
+    {
+      "id": "adv-pilier",
+      "prenom": "Antoine",
+      "nom": "Rivière",
+      "parti": "Pilier",
+      "famille": "droite libérale-conservatrice",
+      "positionnement": {
+        "economie": 50,
+        "societe": 35
+      },
+      "parcours": "Personnage fictif. Président de département.",
+      "style": "prudent",
+      "toleranceRisque": 0.35,
+      "ressources": {
+        "budgetCentimes": 90000000,
+        "militants": 1400,
+        "notoriete": 5000,
+        "popularite": 3100
+      }
+    },
+    {
+      "id": "adv-rempart",
+      "prenom": "Mathieu",
+      "nom": "Laborde",
+      "parti": "Rempart",
+      "famille": "droite nationale",
+      "positionnement": {
+        "economie": 25,
+        "societe": 80
+      },
+      "parcours": "Personnage fictif. Avocat devenu tribun.",
+      "style": "offensif",
+      "toleranceRisque": 0.6,
+      "ressources": {
+        "budgetCentimes": 80000000,
+        "militants": 2000,
+        "notoriete": 7000,
+        "popularite": 3400
+      }
+    }
+  ],
+  "profilsDeDepart": [
+    {
+      "id": "notable-local",
+      "libelle": "Élu local reconnu",
+      "description": "Un réseau d'élus et de militants, une notoriété surtout locale.",
+      "modificateurs": {
+        "militants": 200,
+        "notoriete": 200
+      }
+    },
+    {
+      "id": "societe-civile",
+      "libelle": "Figure de la société civile",
+      "description": "Connu du grand public, mais sans appareil militant.",
+      "modificateurs": {
+        "notoriete": 600,
+        "popularite": 200,
+        "militants": -150
+      }
+    },
+    {
+      "id": "militant",
+      "libelle": "Militant de terrain",
+      "description": "Une équipe nombreuse et motivée, peu de moyens financiers.",
+      "modificateurs": {
+        "militants": 500,
+        "budgetCentimes": -20000000,
+        "notoriete": -100
+      }
+    },
+    {
+      "id": "entrepreneur",
+      "libelle": "Entrepreneur",
+      "description": "Des moyens pour financer la campagne, une image à construire.",
+      "modificateurs": {
+        "budgetCentimes": 40000000,
+        "popularite": -300,
+        "militants": -100
+      }
+    }
+  ],
+  "ia": {
+    "statut": "hypothese",
+    "accessible": {
+      "multiplicateurBudget": 0.6,
+      "actionsParSemaine": 2
+    },
+    "standard": {
+      "multiplicateurBudget": 1.0,
+      "actionsParSemaine": 3
+    },
+    "expert": {
+      "multiplicateurBudget": 1.4,
+      "actionsParSemaine": 4
+    }
+  }
 }

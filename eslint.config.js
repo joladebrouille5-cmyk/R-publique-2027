@@ -86,6 +86,12 @@ export default tseslint.config(
   },
 
   {
+    // Les tests de l'interface fabriquent leurs états avec le vrai moteur (jamais le code livré).
+    files: ['apps/web/src/test/**/*.{ts,tsx}', 'apps/web/**/*.test.{ts,tsx}'],
+    rules: { '@typescript-eslint/no-restricted-imports': 'off' },
+  },
+
+  {
     rules: {
       '@typescript-eslint/no-unused-vars': [
         'error',

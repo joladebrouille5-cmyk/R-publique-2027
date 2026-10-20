@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { IsoDateSchema } from './game';
+import { CampaignStyleSchema, PositionSchema } from './politics';
 import { ResourceKeySchema, ResourcesSchema } from './resources';
 
 // Jeu de règles versionné (§2 : les dates électorales sont des paramètres versionnés vérifiés
@@ -8,9 +9,10 @@ import { ResourceKeySchema, ResourcesSchema } from './resources';
 
 /**
  * officiel : publié au Journal officiel ; annonce : annoncé officiellement, non encore décrété ;
- * deduit : calculé à partir d'une règle sourcée ; hypothese : paramètre de conception du jeu.
+ * deduit : calculé à partir d'une règle sourcée ; estimation : donnée réelle utilisée comme
+ * approximation (ex. inscrits 2022 pour 2027) ; hypothese : paramètre de conception du jeu.
  */
-export const DATA_STATUSES = ['officiel', 'annonce', 'deduit', 'hypothese'] as const;
+export const DATA_STATUSES = ['officiel', 'annonce', 'deduit', 'estimation', 'hypothese'] as const;
 export const DataStatusSchema = z.enum(DATA_STATUSES);
 export type DataStatus = z.infer<typeof DataStatusSchema>;
 
@@ -133,6 +135,73 @@ export const EventDefinitionSchema = z
 export type EventDefinition = z.infer<typeof EventDefinitionSchema>;
 
 const DifficultyResources = ResourcesSchema.omit({ tempsHeures: true });
+const Coefficient = z.number().min(0).max(100);
+const ResourceModifiers = z
+  .object({
+    budgetCentimes: z.number().int(),
+    militants: z.number().int(),
+    notoriete: z.number().int(),
+    popularite: z.number().int(),
+  })
+  .partial()
+  .strict();
+
+/** Groupe d'électeurs du modèle national (hypothèse de jeu : part, position, participation). */
+export const ElectorateGroupSchema = z
+  .object({
+    id: Id,
+    libelle: z.string().min(1),
+    description: z.string().min(1),
+    part: Fraction,
+    position: PositionSchema,
+    participation: Fraction,
+  })
+  .strict();
+export type ElectorateGroup = z.infer<typeof ElectorateGroupSchema>;
+
+export const FictionalCandidateSchema = z
+  .object({
+    id: z.string().regex(/^adv-[a-z0-9-]+$/),
+    prenom: z.string().min(1),
+    nom: z.string().min(1),
+    parti: z.string().min(1),
+    famille: z.string().min(1),
+    positionnement: PositionSchema,
+    parcours: z.string().min(1),
+    style: CampaignStyleSchema,
+    toleranceRisque: Fraction,
+    ressources: DifficultyResources,
+  })
+  .strict();
+export type FictionalCandidate = z.infer<typeof FictionalCandidateSchema>;
+
+export const StartingProfileSchema = z
+  .object({
+    id: Id,
+    libelle: z.string().min(1),
+    description: z.string().min(1),
+    modificateurs: ResourceModifiers,
+  })
+  .strict();
+
+export const InstituteSchema = z
+  .object({
+    id: Id,
+    libelle: z.string().min(1),
+    taille: z.number().int().min(100).max(20_000),
+    methode: z.string().min(1),
+    /** Un sondage toutes les `periodicite` semaines, à partir de la semaine `decalage`. */
+    periodicite: z.number().int().min(1),
+    decalage: z.number().int().min(0),
+  })
+  .strict();
+
+const AiLevel = z
+  .object({
+    multiplicateurBudget: z.number().min(0).max(10),
+    actionsParSemaine: z.number().int().min(0),
+  })
+  .strict();
 
 export const RulesetSchema = z
   .object({
@@ -174,6 +243,69 @@ export const RulesetSchema = z
       .strict(),
     actions: z.array(ActionDefinitionSchema).min(1),
     evenements: z.array(EventDefinitionSchema),
+    electorat: z
+      .object({
+        inscrits: z
+          .object({
+            valeur: z.number().int().positive(),
+            statut: DataStatusSchema,
+            sourceId: Id,
+            note: z.string().min(1),
+          })
+          .strict(),
+        statutGroupes: z.literal('hypothese'),
+        groupes: z.array(ElectorateGroupSchema).min(2),
+      })
+      .strict(),
+    modele: z
+      .object({
+        statut: z.literal('hypothese'),
+        note: z.string().min(1),
+        proximite: Coefficient,
+        notoriete: Coefficient,
+        popularite: Coefficient,
+        dynamique: Coefficient,
+        alea: Coefficient,
+        participation: z
+          .object({ effetProximite: Fraction, min: Fraction, max: Fraction })
+          .strict(),
+        blancsNuls: z
+          .object({
+            blancsT1: Fraction,
+            nulsT1: Fraction,
+            blancsT2Min: Fraction,
+            blancsT2Max: Fraction,
+            nulsT2: Fraction,
+          })
+          .strict(),
+        secondTour: z
+          .object({
+            effetConsigne: Coefficient,
+            effetDebat: Coefficient,
+            abstentionDifferentielle: Fraction,
+            seuilConsigne: z.number().min(0).max(3),
+          })
+          .strict(),
+      })
+      .strict(),
+    sondages: z
+      .object({
+        statut: z.literal('hypothese'),
+        instituts: z.array(InstituteSchema).min(1),
+        biaisMaxCentiemes: z.number().int().min(0).max(1_000),
+        limites: z.string().min(1),
+      })
+      .strict(),
+    candidatsFictifs: z.array(FictionalCandidateSchema).min(1),
+    profilsDeDepart: z.array(StartingProfileSchema).min(1),
+    ia: z
+      .object({
+        statut: z.literal('hypothese'),
+        accessible: AiLevel,
+        standard: AiLevel,
+        expert: AiLevel,
+      })
+      .strict(),
   })
   .strict()
   .superRefine((ruleset, ctx) => {
@@ -183,6 +315,7 @@ export const RulesetSchema = z
       ...ruleset.calendrier.scrutins.map((s) => s.sourceId),
       ...ruleset.calendrier.echeances.map((e) => e.sourceId),
       ruleset.jeu.sourceId,
+      ruleset.electorat.inscrits.sourceId,
     ];
     for (const id of referenced) if (!sourceIds.has(id)) issue(`Source inconnue : ${id}`);
 
@@ -209,6 +342,31 @@ export const RulesetSchema = z
       'Événement',
       ruleset.evenements.map((e) => e.id),
     );
+
+    unique(
+      'Groupe d’électeurs',
+      ruleset.electorat.groupes.map((g) => g.id),
+    );
+    unique(
+      'Candidat fictif',
+      ruleset.candidatsFictifs.map((c) => c.id),
+    );
+    unique(
+      'Profil de départ',
+      ruleset.profilsDeDepart.map((p) => p.id),
+    );
+    unique(
+      'Institut',
+      ruleset.sondages.instituts.map((i) => i.id),
+    );
+    const totalShare = ruleset.electorat.groupes.reduce((sum, g) => sum + g.part, 0);
+    if (Math.abs(totalShare - 1) > 1e-9)
+      issue(`Les parts des groupes totalisent ${totalShare}, pas 1`);
+    const { min, max } = ruleset.modele.participation;
+    if (min > max) issue('Participation : min > max');
+    if (ruleset.modele.blancsNuls.blancsT2Min > ruleset.modele.blancsNuls.blancsT2Max) {
+      issue('Blancs au second tour : min > max');
+    }
 
     for (const event of ruleset.evenements) {
       unique(

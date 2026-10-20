@@ -2,17 +2,24 @@ import type {
   DecisionAnswer,
   GameState,
   PlannedAction,
+  Poll,
   ReportEvent,
+  RoundResult,
   Ruleset,
   StepSummary,
   WeeklyReport,
 } from '@r2027/shared';
+import { planOpponentActions } from '../ai/opponents';
 import { consumeActions, resolveActionEffects, validateActions } from '../campaign/actions';
+import { distribute, summarize } from '../election/distribution';
+import { concludeRound, holdDebate, scrutinOfWeek } from '../election/flow';
 import { weeklyDrift } from '../election/opinion';
+import { publishPolls } from '../election/polls';
+import { resolveRound } from '../election/rounds';
 import { applyDecisions, drawEvents, validateDecisionAnswers } from '../event/events';
 import { enterNextWeek } from './calendar';
 import { EngineInputError } from './errors';
-import { Ledger } from './ledger';
+import { compareStrings, Ledger } from './ledger';
 
 export type AdvanceInput = {
   actions: readonly PlannedAction[];
@@ -24,7 +31,7 @@ export type EngineContext = { ruleset: Ruleset };
 export type AdvanceResult = {
   state: GameState;
   report: WeeklyReport;
-  /** Vrai si un événement majeur a eu lieu : l'API sauvegarde alors l'état d'avant (§12). */
+  /** Vrai si un événement majeur ou un scrutin a eu lieu : l'API sauvegarde l'état d'avant (§12). */
   majorEvent: boolean;
 };
 
@@ -44,12 +51,13 @@ export const WEEKLY_STEPS = [
   { step: 12, module: 'bilan', label: 'Afficher le bilan hebdomadaire' },
 ] as const;
 
+const HISTORY_LENGTH = 8;
 const plural = (n: number, word: string) => `${n} ${word}${n > 1 ? 's' : ''}`;
 
 /**
  * Résout une semaine. Fonction pure : l'état reçu n'est jamais modifié, aucune horloge,
  * aucun réseau, aucune base ; l'aléa est dérivé de la graine (même entrée ⇒ même sortie).
- * L'étape 11 (sauvegarde) est effectuée par l'API, qui complète le bilan.
+ * L'étape 11 (sauvegarde) est effectuée par l'API.
  */
 export function advanceWeek(
   input: GameState,
@@ -59,74 +67,146 @@ export function advanceWeek(
   if (input.calendar.blockedBy) {
     throw new EngineInputError(
       'progression_bloquee',
-      'La partie est arrivée à un scrutin que le moteur électoral (phase 3) doit résoudre.',
+      input.calendar.blockedMessage ?? 'La partie ne peut pas avancer davantage pour l’instant.',
     );
   }
   const state = JSON.parse(JSON.stringify(input)) as GameState;
   const ledger = new Ledger(state);
   const week = state.meta.week;
   const date = state.meta.date;
-  const actorId =
-    state.player.actorId && state.actors[state.player.actorId] ? state.player.actorId : null;
+  const playerId = state.player.actorId;
+  const player = playerId ? state.actors[playerId] : undefined;
+  const playerActive =
+    player !== undefined && (player.status === 'candidat' || player.status === 'qualifie');
   const summaries = new Map<number, { active: boolean; summary: string }>();
   const set = (step: number, active: boolean, summary: string) =>
     summaries.set(step, { active, summary });
 
-  // 1. Valider les actions (et les réponses aux décisions en attente).
+  // 1. Valider les actions du joueur et ses réponses aux décisions en attente.
   const answers = validateDecisionAnswers(state, plan.decisions);
-  const { outcomes, validated } = validateActions(state, plan.actions, ruleset);
-  const rejected = outcomes.filter((o) => o.status === 'rejetee').length;
+  if (plan.actions.length > 0) {
+    if (!player)
+      throw new EngineInputError('actions_interdites', 'Le mode observateur ne permet pas d’agir.');
+    if (!playerActive) {
+      throw new EngineInputError(
+        'actions_interdites',
+        'Vous n’êtes plus candidat : vous ne pouvez plus programmer d’actions de campagne.',
+      );
+    }
+    if (plan.actions.length > ruleset.jeu.actionsMaxParSemaine) {
+      throw new EngineInputError(
+        'trop_d_actions',
+        `Au plus ${ruleset.jeu.actionsMaxParSemaine} actions par semaine.`,
+      );
+    }
+  }
+  const own = playerActive
+    ? validateActions(state, playerId!, plan.actions, ruleset)
+    : { outcomes: [], validated: [] };
+  const rejected = own.outcomes.filter((o) => o.status === 'rejetee').length;
   set(
     1,
     true,
-    `${plural(validated.length, 'action retenue')}, ${plural(rejected, 'action rejetée')}` +
+    `${plural(own.validated.length, 'action retenue')}, ${plural(rejected, 'action rejetée')}` +
       (answers.length ? `, ${plural(answers.length, 'décision')} à appliquer` : ''),
   );
 
-  // 2. Consommer les ressources.
-  if (actorId) consumeActions(ledger, actorId, validated, 2);
-  const spent = validated.reduce((sum, v) => sum + v.definition.cout.budgetCentimes, 0);
-  const hours = validated.reduce((sum, v) => sum + v.definition.cout.tempsHeures, 0);
+  // 2. Consommer les ressources du joueur.
+  consumeActions(ledger, own.validated, 2);
+  const spent = own.validated.reduce((sum, v) => sum + v.definition.cout.budgetCentimes, 0);
+  const hours = own.validated.reduce((sum, v) => sum + v.definition.cout.tempsHeures, 0);
   set(2, true, `Dépenses : ${Math.round(spent / 100)} € et ${hours} h`);
 
-  // 3 et 4. Adversaires et alliances : moteurs non encore implémentés (aucun effet simulé).
-  set(3, false, 'Aucun adversaire avant la phase 3 (candidats et IA adverse).');
+  // 3. Décisions adverses : mêmes actions, mêmes coûts, mêmes règles de validation.
+  const opponents = planOpponentActions(state, ruleset).map((p) =>
+    validateActions(state, p.actorId, p.planned, ruleset),
+  );
+  const opponentValidated = opponents.flatMap((o) => o.validated);
+  consumeActions(ledger, opponentValidated, 3);
+  set(
+    3,
+    opponents.length > 0,
+    `${plural(opponentValidated.length, 'action')} de ${plural(opponents.length, 'adversaire')}`,
+  );
+
+  // 4. Alliances : phase 5.
   set(4, false, 'Alliances et relations modélisées en phase 5.');
 
-  // 5. Événements : décisions de la semaine passée, effets des actions, nouveaux événements.
+  // 5. Décisions de la semaine passée, débat, effets des actions, nouveaux événements.
   const decisions = applyDecisions(state, ruleset, ledger, answers, 5);
-  const risks: ReportEvent[] = actorId
-    ? resolveActionEffects(state, ledger, actorId, validated, 5)
-    : [];
+  const debate = holdDebate(state);
+  const risks: ReportEvent[] = resolveActionEffects(
+    state,
+    ledger,
+    [...own.validated, ...opponentValidated],
+    5,
+  );
   const events = drawEvents(state, ruleset, ledger, 5);
   set(
     5,
     true,
-    actorId
-      ? `${plural(events.length, 'événement')}, ${plural(risks.length, 'aléa')} d'action, ${plural(decisions.length, 'décision appliquée')}`
-      : 'Aucun acteur en mode observateur avant la phase 3.',
+    `${plural(events.length, 'événement')}, ${plural(risks.length, 'aléa')} d'action, ${plural(decisions.length, 'décision appliquée')}` +
+      (debate ? ', débat d’entre-deux-tours' : ''),
   );
 
-  // 6. Médias et opinion : dynamique hebdomadaire (médias individuels en phase 5).
+  // 6. Opinion : dynamique hebdomadaire de chaque campagne, puis historique de popularité.
   weeklyDrift(state, ruleset, ledger, 6);
+  for (const actor of Object.values(state.actors)) {
+    actor.history.popularite = [...actor.history.popularite, actor.resources.popularite].slice(
+      -HISTORY_LENGTH,
+    );
+  }
+  set(6, true, 'Érosion, retour à la moyenne et attrition appliqués à chaque campagne.');
+
+  // 7. Économie : phase 6.
+  set(7, false, 'Indicateurs économiques et sociaux calculés à partir de la phase 6.');
+
+  // 8. Intentions de vote et sondages (pendant la campagne et l'entre-deux-tours).
+  let intentions: WeeklyReport['intentions'] = null;
+  let polls: Poll[] = [];
+  const phase = state.meta.phase;
+  if (phase === 'campagne' || phase === 'entre_deux_tours') {
+    const round = phase === 'campagne' ? 1 : 2;
+    const opinion = summarize(distribute(state, ruleset, round, 'opinion'), week, round);
+    state.opinion = opinion;
+    if (opinion) {
+      intentions = { round, participation: opinion.participation, values: opinion.intentions };
+      polls = publishPolls(state, ruleset, round, opinion.intentions);
+      state.polls.push(...polls);
+    }
+  }
   set(
-    6,
-    actorId !== null,
-    actorId ? 'Érosion, retour à la moyenne et attrition appliqués.' : 'Aucun acteur.',
+    8,
+    intentions !== null,
+    intentions
+      ? `Intentions du ${intentions.round === 1 ? 'premier' : 'second'} tour mises à jour ; ${plural(polls.length, 'sondage')} publié(s).`
+      : 'Aucune élection en cours.',
   );
 
-  // 7 et 8. Économie et intentions de vote : phases 6 et 3.
-  set(7, false, 'Indicateurs économiques et sociaux calculés à partir de la phase 6.');
-  set(8, false, 'Intentions de vote calculées à partir de la phase 3.');
-
-  // 9. Échéances : passage à la semaine suivante.
-  const { notices, blocked, appliedScheduled } = enterNextWeek(state, ruleset, ledger, 9);
+  // 9. Échéances : scrutin de la semaine, puis passage à la semaine suivante.
+  let election: RoundResult | null = null;
+  let phaseChange: WeeklyReport['phaseChange'] = null;
+  const scrutin = scrutinOfWeek(state, ruleset);
+  const electionEvents: ReportEvent[] = [];
+  if (scrutin) {
+    const expected = scrutin.round === 1 ? 'campagne' : 'entre_deux_tours';
+    if (state.meta.phase !== expected) {
+      throw new Error(
+        `Scrutin ${scrutin.scrutin.id} hors de la phase attendue (${state.meta.phase})`,
+      );
+    }
+    election = resolveRound(state, ruleset, scrutin.scrutin, scrutin.round);
+    const concluded = concludeRound(state, ruleset, election);
+    phaseChange = concluded.phaseChange;
+    electionEvents.push(...concluded.events);
+  }
+  const { notices, appliedScheduled } = enterNextWeek(state, ruleset, ledger, 9);
   set(
     9,
     true,
-    `Semaine ${state.meta.week} : ${plural(appliedScheduled, 'effet différé')} appliqué(s), ` +
-      `${plural(notices.length, 'échéance')} dans les 4 semaines` +
-      (blocked ? ' ; progression bloquée avant le scrutin.' : '.'),
+    (election ? `${election.round === 1 ? 'Premier' : 'Second'} tour dépouillé ; ` : '') +
+      `semaine ${state.meta.week} : ${plural(appliedScheduled, 'effet différé')} appliqué(s), ` +
+      `${plural(notices.length, 'échéance')} dans les 4 semaines.`,
   );
 
   // 10. Journal ; 11. sauvegarde (API) ; 12. bilan.
@@ -136,22 +216,33 @@ export function advanceWeek(
   set(12, true, 'Bilan hebdomadaire généré.');
 
   const steps: StepSummary[] = WEEKLY_STEPS.map((s) => ({ ...s, ...summaries.get(s.step)! }));
-  const allEvents = [...events, ...risks];
+  const allEvents = [...events, ...(debate ? [debate] : []), ...electionEvents, ...risks];
+  // Actions du joueur d'abord, puis celles des adversaires par identifiant, dans l'ordre du plan.
+  const rank = (actorId: string) => (actorId === playerId ? '' : actorId);
+  const actions = [...own.outcomes, ...opponents.flatMap((o) => o.outcomes)].sort(
+    (a, b) => compareStrings(rank(a.actorId), rank(b.actorId)) || a.index - b.index,
+  );
   return {
     state,
-    majorEvent: events.some((e) => e.majeur),
+    majorEvent: events.some((e) => e.majeur) || election !== null,
     report: {
       week,
       date,
       nextWeek: state.meta.week,
       nextDate: state.meta.date,
       steps,
-      actions: outcomes,
+      actions,
       changes,
       events: allEvents,
       decisions,
       notices,
-      blocked,
+      blocked: state.calendar.blockedBy
+        ? { scrutinId: state.calendar.blockedBy, message: state.calendar.blockedMessage ?? '' }
+        : null,
+      intentions,
+      polls,
+      election,
+      phaseChange,
     },
   };
 }

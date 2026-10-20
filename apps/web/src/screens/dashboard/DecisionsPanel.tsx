@@ -22,7 +22,11 @@ export function DecisionsPanel({ decisions, answers, onAnswer }: Props) {
         >
           <legend className="sr-only">{decision.label}</legend>
           <p className="flex flex-wrap items-center gap-2 font-semibold">
-            <Badge tone="fictif">Événement fictif</Badge>
+            {decision.kind === 'consigne' ? (
+              <Badge tone="simule">Consigne de vote</Badge>
+            ) : (
+              <Badge tone="fictif">Événement fictif</Badge>
+            )}
             {decision.label}
           </p>
           <p className="text-sm text-slate-600 dark:text-slate-400">{decision.description}</p>

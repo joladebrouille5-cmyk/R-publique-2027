@@ -62,6 +62,15 @@ export function useRuleset(key: string) {
   });
 }
 
+/** Jeu de règles des nouvelles parties (profils de départ, électorat, adversaires). */
+export function useCurrentRuleset() {
+  return useQuery({
+    queryKey: queryKeys.ruleset('courant'),
+    queryFn: () => api.get('/api/rulesets/courant', RulesetSchema),
+    staleTime: Infinity,
+  });
+}
+
 export function useJournal(gameId: string, pageSize = 10) {
   return useInfiniteQuery({
     queryKey: queryKeys.journal(gameId),

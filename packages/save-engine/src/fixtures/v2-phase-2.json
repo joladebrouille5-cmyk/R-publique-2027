@@ -1,0 +1,81 @@
+{
+  "description": "État exact produit par le moteur de la phase 2 (commit c9b1c53), graine « phase-2 », 20 semaines jouées (meeting + numérique, décisions par défaut).",
+  "stateHash": "421fbaf065a6c64ca093a85fa7394a2fa9fdb1eff3bfca96a80c466cc3dee3e5",
+  "state": {
+    "meta": {
+      "seed": "phase-2",
+      "week": 20,
+      "date": "2027-02-15",
+      "startDate": "2026-09-28",
+      "phase": "campagne",
+      "difficulty": "standard",
+      "engineVersion": "0.2.0",
+      "rulesetVersion": "presidentielle-2027@1.0.0",
+      "saveSchemaVersion": 2
+    },
+    "player": {
+      "mode": "candidat_personnalise",
+      "actorId": "joueur"
+    },
+    "actors": {
+      "joueur": {
+        "id": "joueur",
+        "kind": "joueur",
+        "label": "Votre campagne",
+        "resources": {
+          "budgetCentimes": 1036971,
+          "militants": 532,
+          "notoriete": 1980,
+          "popularite": 2845,
+          "tempsHeures": 70
+        }
+      }
+    },
+    "scheduled": [],
+    "pendingDecisions": [
+      {
+        "id": "d-19-polemique-reseaux",
+        "eventId": "polemique-reseaux",
+        "actorId": "joueur",
+        "createdWeek": 19,
+        "label": "Polémique sur les réseaux sociaux",
+        "description": "Une ancienne publication de votre équipe est exhumée et commentée.",
+        "options": [
+          {
+            "id": "repondre",
+            "libelle": "Répondre publiquement",
+            "description": "Assumer et contre-attaquer : plus d'exposition, image incertaine."
+          },
+          {
+            "id": "ignorer",
+            "libelle": "Laisser passer",
+            "description": "Ne rien dire : la polémique s'éteint lentement."
+          },
+          {
+            "id": "excuses",
+            "libelle": "Présenter des excuses",
+            "description": "Calmer le jeu, au prix d'un malaise chez certains militants."
+          }
+        ],
+        "defaultOptionId": "ignorer"
+      }
+    ],
+    "eventHistory": {
+      "elan-de-dons": {
+        "count": 2,
+        "lastWeek": 15
+      },
+      "polemique-reseaux": {
+        "count": 3,
+        "lastWeek": 19
+      },
+      "portrait-presse": {
+        "count": 2,
+        "lastWeek": 19
+      }
+    },
+    "calendar": {
+      "blockedBy": null
+    }
+  }
+}

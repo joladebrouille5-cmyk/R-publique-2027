@@ -6,6 +6,7 @@ import {
   gameFixture,
   healthHandler,
   mockApi,
+  playedState,
   renderRoute,
   reportFixture,
   RULESET_URL,
@@ -87,6 +88,7 @@ describe('tableau de bord', () => {
     game.state.pendingDecisions = [
       {
         id: 'd-0-polemique-reseaux',
+        kind: 'evenement',
         eventId: 'polemique-reseaux',
         actorId: 'joueur',
         createdWeek: 0,
@@ -119,13 +121,46 @@ describe('tableau de bord', () => {
     );
   });
 
-  it('annonce le blocage avant le scrutin et retire le plan d’actions', async () => {
+  it('annonce la fin de la présidentielle et retire le plan d’actions', async () => {
     const game = gameFixture();
-    game.state.calendar.blockedBy = 'presidentielle-2027-t1';
+    game.state.calendar = {
+      blockedBy: 'fin-de-la-presidentielle',
+      blockedMessage: 'Claire Delorme est élu(e). La suite arrive en phase 6.',
+    };
     mockApi(base(game));
     renderRoute(`/parties/${GAME_ID}/tableau-de-bord`);
-    expect(await screen.findByText(/moteur électoral .* arrive en phase 3/)).toBeInTheDocument();
+    expect(await screen.findByText(/Claire Delorme est élu\(e\)/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Voir les résultats' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Résoudre la semaine 0' })).toBeDisabled();
+    expect(screen.queryByRole('list', { name: 'Catalogue des actions' })).not.toBeInTheDocument();
+  });
+
+  it('situe le candidat dans le dernier sondage publié', async () => {
+    const state = playedState((s) => s.meta.week >= 1);
+    mockApi(base(gameFixture({}, state)));
+    renderRoute(`/parties/${GAME_ID}/tableau-de-bord`);
+    const race = await screen.findByRole('region', { name: 'La course présidentielle' });
+    expect(
+      within(race).getByText(/Dernier sondage \(Institut Opinio \(fictif\), semaine 0\)/),
+    ).toBeInTheDocument();
+    expect(within(race).getByRole('link', { name: 'Tous les sondages' })).toBeInTheDocument();
+  });
+
+  it('demande une consigne de vote au candidat éliminé, sans plan d’actions', async () => {
+    const state = playedState((s) => s.meta.phase === 'entre_deux_tours');
+    expect(state.actors.joueur!.status).toBe('elimine');
+    mockApi(base(gameFixture({}, state)));
+    renderRoute(`/parties/${GAME_ID}/tableau-de-bord`);
+    expect(await screen.findByText('Consigne de vote')).toBeInTheDocument();
+    const [first] = state.elections.t1!.qualified;
+    const finalist = state.actors[first!]!.candidate;
+    expect(
+      screen.getByRole('radio', {
+        name: new RegExp(`Appeler à voter pour ${finalist.prenom} ${finalist.nom}`),
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /Ne donner aucune consigne/ })).toBeInTheDocument();
+    expect(screen.getByText(/Vous n’êtes plus candidat/)).toBeInTheDocument();
     expect(screen.queryByRole('list', { name: 'Catalogue des actions' })).not.toBeInTheDocument();
   });
 

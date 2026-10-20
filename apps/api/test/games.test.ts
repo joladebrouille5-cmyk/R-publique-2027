@@ -29,7 +29,18 @@ beforeEach(async () => {
   await resetDatabase(db);
 });
 
-const newGame = { name: 'Partie de test', mode: 'candidat_personnalise', seed: 'graine-test' };
+const candidate = {
+  prenom: 'Camille',
+  nom: 'Test',
+  parti: 'Parti du test',
+  positionnement: { economie: -10, societe: 20 },
+};
+const newGame = {
+  name: 'Partie de test',
+  mode: 'candidat_personnalise',
+  seed: 'graine-test',
+  candidate,
+};
 
 async function createGame(client: Client, body: object = newGame): Promise<GameDetail> {
   const response = await client.post('/api/games', body);
@@ -97,9 +108,29 @@ describe('création de partie', () => {
       version: 0,
     });
     expect(game.stateHash).toBe(hashState(game.state));
+    expect(game.state.actors.joueur).toMatchObject({
+      label: 'Campagne de Camille Test',
+      candidate: { ...candidate, nature: 'personnalise', profilId: null },
+    });
+    const opponents = Object.values(game.state.actors).filter((a) => a.kind === 'adversaire');
+    expect(opponents.length).toBeGreaterThan(0);
+    expect(opponents.every((a) => a.candidate.nature === 'fictif')).toBe(true);
 
     const events = await db.gameEvent.findMany({ where: { gameId: game.id } });
     expect(events.map((e) => e.type)).toEqual(['partie_creee']);
+    expect(events[0]!.payload).toMatchObject({ candidat: { nom: 'Test', parti: 'Parti du test' } });
+  });
+
+  it('applique le profil de départ choisi', async () => {
+    const client = new Client(app);
+    const base = await createGame(client);
+    const civil = await createGame(client, {
+      ...newGame,
+      candidate: { ...candidate, profilId: 'societe-civile' },
+    });
+    expect(civil.state.actors.joueur!.resources.notoriete).toBeGreaterThan(
+      base.state.actors.joueur!.resources.notoriete,
+    );
   });
 
   it('est déterministe : même graine, même état', async () => {
@@ -131,6 +162,15 @@ describe('création de partie', () => {
     [{ ...newGame, seed: 'graine avec espaces' }, 400, 'requete_invalide'],
     [{ ...newGame, startDate: '2026-09-29' }, 422, 'date_de_depart_invalide'],
     [{ ...newGame, mode: 'candidat_reel' }, 422, 'mode_non_disponible'],
+    [{ ...newGame, candidate: undefined }, 400, 'requete_invalide'],
+    [{ ...newGame, mode: 'observateur' }, 400, 'requete_invalide'],
+    [{ ...newGame, candidate: { ...candidate, nom: '' } }, 400, 'requete_invalide'],
+    [
+      { ...newGame, candidate: { ...candidate, positionnement: { economie: 150, societe: 0 } } },
+      400,
+      'requete_invalide',
+    ],
+    [{ ...newGame, candidate: { ...candidate, profilId: 'inconnu' } }, 422, 'profil_inconnu'],
   ])('refuse une requête invalide (%j)', async (body, status, code) => {
     const response = await new Client(app).post('/api/games', body);
     expect(response.statusCode).toBe(status);

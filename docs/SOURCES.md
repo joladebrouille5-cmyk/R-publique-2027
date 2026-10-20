@@ -183,9 +183,9 @@ Statut : vérifié sur le guide CNCCFP ; les montants de base inscrits dans la l
 
 ---
 
-## 8. Utilisation dans le jeu (phase 2)
+## 8. Utilisation dans le jeu (phases 2 et 3)
 
-Le jeu de règles [`packages/rulesets/src/presidentielle-2027.json`](../packages/rulesets/src/presidentielle-2027.json) (`presidentielle-2027@1.0.0`) reprend, avec leur source et leur statut :
+Le jeu de règles [`packages/rulesets/src/presidentielle-2027.json`](../packages/rulesets/src/presidentielle-2027.json) (`presidentielle-2027@2.0.0` depuis la phase 3 ; 1.0.0 en phase 2) reprend, avec leur source et leur statut :
 
 | Donnée | Valeur | Statut dans le jeu | Source |
 |---|---|---|---|
@@ -194,8 +194,10 @@ Le jeu de règles [`packages/rulesets/src/presidentielle-2027.json`](../packages
 | Vote la veille | 971, 972, 973, 975, 977, 978, 987 | `annonce` | idem (texte relu le 20/10/2026 : Guadeloupe, Martinique, Guyane, Saint-Pierre-et-Miquelon, Saint-Barthélemy, Saint-Martin, Polynésie française) |
 | Présentation des candidatures | 12 mars 2027, 18 h | `deduit` | règle relue mot pour mot dans le guide CNCCFP : « le sixième vendredi précédant le premier tour de scrutin à dix-huit heures » |
 | Dépôt des comptes de campagne | 2 juillet 2027, 18 h | `deduit` | règle relue mot pour mot dans le guide CNCCFP : « au plus tard à dix-huit heures le onzième vendredi suivant le premier tour de scrutin » |
+| Inscrits (phase 3) | 48 752 339 | `estimation` | inscrits proclamés au second tour de 2022, décision n° 2022-197 PDR (§3.2) ; repris faute de chiffre pour 2027 |
+| Participation, blancs, nuls (phase 3) | calés sur 73,69 % / 71,99 % de participation, 1,51 % / 6,37 % de blancs et 0,69 % / 2,29 % de nuls des votants (1er / 2nd tour 2022) | `hypothese` (modèle) | calculés à partir des décisions n° 2022-195 et 2022-197 PDR (§3.2) |
 
-Les dates déduites sont recalculées par un test à partir de leur règle. Tous les autres paramètres du jeu de règles (ressources de départ, coûts, effets, probabilités) sont des **hypothèses de jeu** (source « conception du jeu », sans URL), affichées comme telles dans l'interface.
+Les dates déduites sont recalculées par un test à partir de leur règle. Tous les autres paramètres du jeu de règles (ressources de départ, coûts, effets, probabilités ; en phase 3 : les 9 groupes d'électeurs et leurs positions, les coefficients du vote, les 7 adversaires et les 2 instituts de sondage) sont des **hypothèses de jeu** (source « conception du jeu », sans URL), affichées comme telles dans l'interface. Les adversaires et les instituts sont **fictifs** (« Personnage fictif », « (fictif) », vérifié par test) : aucune personnalité ni aucun institut réel n'est représenté (question Q2).
 
 ## 9. Points restant non vérifiés
 

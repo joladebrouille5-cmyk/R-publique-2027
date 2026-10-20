@@ -20,7 +20,15 @@ type Plan = { actions: string[]; choice: number }[];
 
 /** Joue une partie ; `roundTrip` simule une sauvegarde puis une reprise à chaque semaine. */
 function play(seed: string, difficulty: Difficulty, plan: Plan, roundTrip = false) {
-  let state: GameState = createGame({ seed, mode: 'candidat_personnalise', difficulty }, ruleset);
+  let state: GameState = createGame(
+    {
+      seed,
+      mode: 'candidat_personnalise',
+      difficulty,
+      candidate: { nom: 'Propriété', parti: 'Parti', positionnement: { economie: 0, societe: 0 } },
+    },
+    ruleset,
+  );
   const reports: WeeklyReport[] = [];
   const states: GameState[] = [state];
   for (const week of plan) {
@@ -103,12 +111,14 @@ describe('propriétés du moteur (fast-check)', () => {
       fc.property(seedArb, difficultyArb, weekPlanArb, (seed, difficulty, week) => {
         const { reports } = play(seed, difficulty, [week]);
         const report = reports[0]!;
-        const budget = report.changes.find((c) => c.ressource === 'budgetCentimes');
+        const budget = report.changes.find(
+          (c) => c.actorId === 'joueur' && c.ressource === 'budgetCentimes',
+        );
         const costFactors = (budget?.factors ?? []).filter(
           (f) => f.source === 'action' && f.step === 2,
         );
         const expected = report.actions
-          .filter((a) => a.status === 'validee')
+          .filter((a) => a.actorId === 'joueur' && a.status === 'validee')
           .map((a) => -a.cost.budgetCentimes)
           .filter((v) => v !== 0);
         expect(costFactors.map((f) => f.value)).toEqual(expected);

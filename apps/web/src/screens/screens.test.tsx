@@ -7,7 +7,9 @@ import {
   gameFixture,
   healthHandler,
   mockApi,
+  playedState,
   renderRoute,
+  RULESET,
   RULESET_URL,
   rulesetHandler,
   saveFixture,
@@ -15,6 +17,7 @@ import {
 
 const gameHandlers = {
   'GET /api/health': healthHandler,
+  'GET /api/rulesets/courant': rulesetHandler,
   [`GET /api/games/${GAME_ID}`]: () => ({ body: gameFixture() }),
   [`GET ${RULESET_URL}`]: rulesetHandler,
   [`GET /api/games/${GAME_ID}/journal?limit=10`]: () => ({
@@ -38,6 +41,7 @@ describe('navigation de partie', () => {
       'Programme',
       'Finances',
       'Sondages',
+      'Résultats',
       'Gouvernement',
       'Parlement',
       'Économie',
@@ -88,6 +92,10 @@ describe('création de partie', () => {
     const { router } = renderRoute('/nouvelle-partie');
     const user = userEvent.setup();
     await user.type(await screen.findByLabelText('Nom de la partie'), 'Ma campagne');
+    await user.type(screen.getByLabelText('Prénom'), 'Lou');
+    await user.type(screen.getByLabelText(/^Nom \*/), 'Martin');
+    await user.type(screen.getByLabelText(/^Parti ou mouvement/), 'Parti du renouveau');
+    await user.click(await screen.findByRole('radio', { name: /Figure de la société civile/ }));
     await user.click(screen.getByRole('radio', { name: /Expert/ }));
     await user.type(screen.getByLabelText('Graine (facultative)'), 'ma-graine');
     await user.click(screen.getByRole('button', { name: 'Créer la partie' }));
@@ -101,12 +109,50 @@ describe('création de partie', () => {
       difficulty: 'expert',
       startDate: '2026-09-28',
       seed: 'ma-graine',
+      candidate: {
+        prenom: 'Lou',
+        nom: 'Martin',
+        parti: 'Parti du renouveau',
+        parcours: '',
+        profilId: 'societe-civile',
+        positionnement: { economie: 0, societe: 0 },
+      },
     });
+  });
+
+  it('exige le nom du candidat et de son parti avant d’envoyer', async () => {
+    const calls = mockApi({ ...gameHandlers });
+    renderRoute('/nouvelle-partie');
+    const user = userEvent.setup();
+    await user.type(await screen.findByLabelText('Nom de la partie'), 'X');
+    await user.click(screen.getByRole('button', { name: 'Créer la partie' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('nom du candidat et son parti');
+    expect(calls.some((call) => call.method === 'POST')).toBe(false);
+  });
+
+  it('indique les électorats proches du positionnement choisi', async () => {
+    mockApi({ ...gameHandlers });
+    renderRoute('/nouvelle-partie');
+    expect(
+      await screen.findByText(/Électorats les plus proches : Centre gauche/),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText(/Positionnement économique/)).toHaveAttribute(
+      'aria-valuetext',
+      '0 (centre)',
+    );
+  });
+
+  it('n’affiche pas de candidat en mode observateur', async () => {
+    mockApi({ ...gameHandlers });
+    renderRoute('/nouvelle-partie');
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('radio', { name: /Observateur/ }));
+    expect(screen.queryByRole('group', { name: 'Votre candidat' })).not.toBeInTheDocument();
   });
 
   it('affiche le message d’erreur du serveur', async () => {
     mockApi({
-      'GET /api/health': healthHandler,
+      ...gameHandlers,
       'POST /api/games': () => ({
         status: 422,
         body: {
@@ -120,8 +166,70 @@ describe('création de partie', () => {
     renderRoute('/nouvelle-partie');
     const user = userEvent.setup();
     await user.type(await screen.findByLabelText('Nom de la partie'), 'X');
+    await user.type(screen.getByLabelText(/^Nom \*/), 'Martin');
+    await user.type(screen.getByLabelText(/^Parti ou mouvement/), 'Parti');
     await user.click(screen.getByRole('button', { name: 'Créer la partie' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('doit être un lundi');
+  });
+});
+
+describe('élection présidentielle', () => {
+  const withState = (state = playedState(() => true)) => ({
+    ...gameHandlers,
+    [`GET /api/games/${GAME_ID}`]: () => ({ body: gameFixture({}, state) }),
+  });
+
+  it('présente les candidats, fictifs étiquetés comme tels, et leur positionnement', async () => {
+    mockApi(withState());
+    renderRoute(`/parties/${GAME_ID}/candidats`);
+    expect(await screen.findByRole('heading', { name: 'Candidats' })).toBeInTheDocument();
+    expect(screen.getAllByText('Fictif')).toHaveLength(RULESET.candidatsFictifs.length);
+    const mine = screen.getByRole('listitem', { name: 'Camille Test' });
+    expect(within(mine).getByText('Votre candidat')).toBeInTheDocument();
+    expect(within(mine).getByText('En campagne')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /Positionnement des candidats/ })).toBeInTheDocument();
+  });
+
+  it('affiche les sondages avec leur fiche technique et leur marge d’erreur', async () => {
+    mockApi(withState(playedState((s) => s.meta.week >= 2)));
+    renderRoute(`/parties/${GAME_ID}/sondages`);
+    const latest = await screen.findByRole('region', { name: /Dernier sondage/ });
+    expect(within(latest).getByText(/Baromètre Civis \(fictif\), terrain du/)).toBeInTheDocument();
+    expect(within(latest).getByText(/1\s500 personnes/)).toBeInTheDocument();
+    expect(within(latest).getAllByText(/^± /).length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Sondage simulé').length).toBeGreaterThan(0);
+    expect(screen.getByRole('heading', { name: /Tous les sondages publiés/ })).toBeInTheDocument();
+  });
+
+  it('annonce l’absence de sondage avant la première semaine', async () => {
+    mockApi(withState());
+    renderRoute(`/parties/${GAME_ID}/sondages`);
+    expect(await screen.findByText(/Aucun sondage publié pour l’instant/)).toBeInTheDocument();
+  });
+
+  it('affiche les résultats simulés des deux tours', async () => {
+    const state = playedState(() => false);
+    mockApi(withState(state));
+    renderRoute(`/parties/${GAME_ID}/resultats`);
+    const t2 = await screen.findByRole('region', { name: 'Second tour' });
+    const winner = state.actors[state.elections.t2!.winner!]!.candidate;
+    expect(
+      within(t2).getByText(
+        `${winner.prenom} ${winner.nom} est élu(e) président(e) de la République.`,
+      ),
+    ).toBeInTheDocument();
+    expect(within(t2).getByText('Résultat simulé')).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Premier tour' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Entre-deux-tours' })).toBeInTheDocument();
+  });
+
+  it('annonce les dates des scrutins tant qu’aucun n’a eu lieu', async () => {
+    mockApi(withState());
+    renderRoute(`/parties/${GAME_ID}/resultats`);
+    expect(await screen.findByText(/Aucun scrutin dépouillé/)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/Premier tour de l'élection présidentielle : dimanche 18 avril 2027/),
+    ).toBeInTheDocument();
   });
 });
 

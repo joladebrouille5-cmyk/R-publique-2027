@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { IsoDateSchema } from './game';
+import { GamePhaseSchema, IsoDateSchema, PollSchema, RoundResultSchema } from './game';
 import { ResourceKeySchema } from './resources';
 import { DataStatusSchema } from './ruleset';
 
@@ -43,6 +43,8 @@ export type ResourceChange = z.infer<typeof ResourceChangeSchema>;
 
 export const ActionOutcomeSchema = z
   .object({
+    /** Acteur qui a programmé l'action (joueur ou adversaire IA). Absent des bilans de phase 2. */
+    actorId: z.string().default('joueur'),
     index: z.number().int().min(0),
     actionId: z.string(),
     label: z.string(),
@@ -116,6 +118,23 @@ export const WeeklyReportSchema = z
     decisions: z.array(AppliedDecisionSchema),
     notices: z.array(NoticeSchema),
     blocked: z.object({ scrutinId: z.string(), message: z.string() }).strict().nullable(),
+    // Ajouts de la phase 3 (valeurs par défaut pour relire les bilans de la phase 2).
+    intentions: z
+      .object({
+        round: z.union([z.literal(1), z.literal(2)]),
+        participation: z.number().int(),
+        values: z.record(z.string(), z.number().int()),
+      })
+      .strict()
+      .nullable()
+      .default(null),
+    polls: z.array(PollSchema).default([]),
+    election: RoundResultSchema.nullable().default(null),
+    phaseChange: z
+      .object({ from: GamePhaseSchema, to: GamePhaseSchema })
+      .strict()
+      .nullable()
+      .default(null),
   })
   .strict();
 export type WeeklyReport = z.infer<typeof WeeklyReportSchema>;

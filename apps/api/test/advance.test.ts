@@ -13,6 +13,7 @@ import {
 import type { FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { Database } from '../src/db';
+import V2 from '../../../packages/save-engine/src/fixtures/v2-phase-2.json' with { type: 'json' };
 import { AUTO_SAVE_RETENTION } from '../src/services/saves';
 import { Client, resetDatabase, testApp, testDatabase } from './helpers';
 
@@ -34,11 +35,22 @@ beforeEach(async () => {
   await resetDatabase(db);
 });
 
-async function createGameVia(client: Client, body: object = {}): Promise<GameDetail> {
+const candidate = {
+  prenom: 'Camille',
+  nom: 'Test',
+  parti: 'Parti du test',
+  positionnement: { economie: 0, societe: 0 },
+};
+
+async function createGameVia(
+  client: Client,
+  body: Record<string, unknown> = {},
+): Promise<GameDetail> {
   const response = await client.post('/api/games', {
     name: 'Campagne',
     mode: 'candidat_personnalise',
     seed: 'graine-test',
+    ...(body.mode === 'observateur' ? {} : { candidate }),
     ...body,
   });
   expect(response.statusCode).toBe(201);
@@ -89,13 +101,25 @@ describe('progression hebdomadaire', () => {
     );
 
     const actions = await db.gameAction.findMany({
-      where: { gameId: game.id },
+      where: { gameId: game.id, actorId: 'joueur' },
       orderBy: { position: 'asc' },
     });
     expect(actions.map((a) => [a.type, a.status])).toEqual([
       ['meeting', 'validee'],
       ['inexistante', 'rejetee'],
     ]);
+    // Les actions des adversaires sont enregistrées sous leur propre identifiant.
+    const opponents = await db.gameAction.findMany({
+      where: { gameId: game.id, actorId: { not: 'joueur' } },
+    });
+    expect(opponents.length).toBe(report.actions.length - 2);
+    expect(opponents.every((a) => a.actorId.startsWith('adv-'))).toBe(true);
+    // Sondages publiés : journalisés avec la nature « sondage ».
+    const polls = await db.gameEvent.findMany({
+      where: { gameId: game.id, type: 'sondage_publie' },
+    });
+    expect(polls).toHaveLength(report.polls.length);
+    expect(polls.every((p) => p.nature === 'sondage')).toBe(true);
     const logs = await db.simulationLog.findMany({
       where: { gameId: game.id },
       orderBy: { step: 'asc' },
@@ -183,6 +207,7 @@ describe('progression hebdomadaire', () => {
       pendingDecisions: [
         {
           id: 'd-0-polemique-reseaux',
+          kind: 'evenement',
           eventId: 'polemique-reseaux',
           actorId: 'joueur',
           createdWeek: 0,
@@ -211,21 +236,69 @@ describe('progression hebdomadaire', () => {
     ]);
   });
 
-  it('bloque la progression la semaine d’un scrutin non encore simulé', async () => {
+  it('simule le premier tour la semaine du scrutin et sauvegarde l’état d’avant', async () => {
     const client = new Client(app);
     const game = await createGameVia(client);
-    await forceState(game.id, { ...game.state, calendar: { blockedBy: 'presidentielle-2027-t1' } });
+    let state = game.state;
+    while (state.meta.week < 28) {
+      const decisions = state.pendingDecisions.map((d) => ({
+        decisionId: d.id,
+        optionId: d.defaultOptionId,
+      }));
+      state = advanceWeek(state, { actions: [], decisions }, { ruleset }).state;
+    }
+    await forceState(game.id, state);
+    const current = GameDetailSchema.parse((await client.get(`/api/games/${game.id}`)).json());
+    const { report, game: next } = await advanceDefault(client, current);
+
+    expect(report.election).toMatchObject({
+      round: 1,
+      scrutinId: 'presidentielle-2027-t1',
+      nature: 'simule',
+    });
+    expect(next.phase).toBe('entre_deux_tours');
+    const results = await db.gameEvent.findMany({
+      where: { gameId: game.id, type: 'resultat_scrutin' },
+    });
+    expect(results).toHaveLength(1);
+    expect(results[0]!.nature).toBe('simule');
+    const before = await db.gameSave.findMany({
+      where: { gameId: game.id, kind: 'avant_evenement' },
+    });
+    expect(before.map((s) => [s.label, s.week, s.stateHash])).toEqual([
+      ['Avant le premier tour', 28, current.stateHash],
+    ]);
+  });
+
+  it('bloque la progression à la fin de la présidentielle', async () => {
+    const client = new Client(app);
+    const game = await createGameVia(client);
+    await forceState(game.id, {
+      ...game.state,
+      calendar: {
+        blockedBy: 'fin-de-la-presidentielle',
+        blockedMessage: 'La suite arrive en phase 6.',
+      },
+    });
     const response = await advanceVia(client, game, { expectedWeek: 0 });
     expect(response.statusCode).toBe(409);
-    expect(response.json()).toMatchObject({ error: { code: 'progression_bloquee' } });
+    expect(response.json()).toMatchObject({
+      error: { code: 'progression_bloquee', message: 'La suite arrive en phase 6.' },
+    });
   });
 });
 
 describe('sauvegardes automatiques', () => {
   it('sauvegarde l’état d’avant un événement majeur', async () => {
+    const CANDIDATE = candidate;
     const seed = Array.from({ length: 2000 }, (_, i) => `majeur-${i}`).find((candidate) => {
       const state = createGame(
-        { seed: candidate, mode: 'candidat_personnalise', difficulty: 'standard' },
+        {
+          seed: candidate,
+          mode: 'candidat_personnalise',
+          difficulty: 'standard',
+          candidate: CANDIDATE,
+        },
         ruleset,
       );
       return advanceWeek(state, { actions: [], decisions: [] }, { ruleset }).majorEvent;
@@ -355,7 +428,7 @@ describe('export et import', () => {
   });
 });
 
-describe('migration des parties de la phase 1', () => {
+describe('migration des parties des phases 1 et 2', () => {
   const V1_STATE = {
     meta: {
       seed: 'phase-1',
@@ -388,7 +461,7 @@ describe('migration des parties de la phase 1', () => {
     });
 
     const migrated = GameDetailSchema.parse((await client.get(`/api/games/${game.id}`)).json());
-    expect(migrated).toMatchObject({ saveSchemaVersion: 2, rulesetVersion: CURRENT_RULESET_KEY });
+    expect(migrated).toMatchObject({ saveSchemaVersion: 3, rulesetVersion: CURRENT_RULESET_KEY });
     expect(migrated.state.actors.joueur).toBeDefined();
     await client.get(`/api/games/${game.id}`);
     const events = await db.gameEvent.findMany({
@@ -416,7 +489,33 @@ describe('migration des parties de la phase 1', () => {
     });
     const restored = await client.post(`/api/games/${game.id}/saves/${save.id}/restore`, {});
     expect(restored.statusCode).toBe(200);
-    expect(GameDetailSchema.parse(restored.json()).saveSchemaVersion).toBe(2);
+    expect(GameDetailSchema.parse(restored.json()).saveSchemaVersion).toBe(3);
+  });
+
+  it('migre une partie réelle de la phase 2 et la rend jouable', async () => {
+    const client = new Client(app);
+    const game = await createGameVia(client, { seed: 'phase-2' });
+    await db.game.update({
+      where: { id: game.id },
+      data: {
+        state: V2.state,
+        stateHash: V2.stateHash,
+        saveSchemaVersion: 2,
+        engineVersion: '0.2.0',
+        rulesetVersion: 'presidentielle-2027@1.0.0',
+        week: 20,
+      },
+    });
+    const migrated = GameDetailSchema.parse((await client.get(`/api/games/${game.id}`)).json());
+    expect(migrated).toMatchObject({
+      week: 20,
+      saveSchemaVersion: 3,
+      rulesetVersion: CURRENT_RULESET_KEY,
+    });
+    expect(migrated.state.actors.joueur!.resources).toEqual(V2.state.actors.joueur.resources);
+    const { report } = await advanceDefault(client, migrated);
+    expect(report.decisions).toHaveLength(1);
+    expect(report.intentions).not.toBeNull();
   });
 });
 
@@ -428,6 +527,8 @@ describe('jeu de règles', () => {
     });
     expect(response.statusCode).toBe(200);
     expect(RulesetSchema.parse(response.json()).id).toBe('presidentielle-2027');
+    const current = await app.inject({ method: 'GET', url: '/api/rulesets/courant' });
+    expect(RulesetSchema.parse(current.json()).version).toBe(ruleset.version);
     expect(
       (await app.inject({ method: 'GET', url: '/api/rulesets/inconnu@0.0.0' })).statusCode,
     ).toBe(404);

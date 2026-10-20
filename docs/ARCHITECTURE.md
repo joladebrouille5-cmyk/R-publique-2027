@@ -126,13 +126,13 @@ La fonction est **pure** : aucune horloge, aucun réseau, aucune base. L'aléa p
 |---|---|---|---|
 | 1 | Valider les actions | campaign / event | Actions refusées avec motif (budget, temps, prérequis, action inconnue) ; réponses obligatoires aux décisions en attente. **Phase 2 : actif.** |
 | 2 | Consommer les ressources | campaign | Coût exact des actions retenues. Argent en **centimes entiers**, temps et militants en unités entières, notoriété et popularité en centièmes de point. **Actif.** |
-| 3 | Calculer les décisions adverses | ai | Même catalogue d'actions que le joueur, mêmes coûts. *Inactif jusqu'à la phase 3 (journalisé comme tel).* |
+| 3 | Calculer les décisions adverses | ai | Même catalogue d'actions que le joueur, mêmes coûts, même validation ; choix par fonction d'utilité et tirage softmax (§4.5). **Actif depuis la phase 3.** |
 | 4 | Mettre à jour alliances et relations | ai | Graphe confiance / proximité / rivalité / historique (§7). *Inactif jusqu'à la phase 5.* |
 | 5 | Résoudre les événements | event / campaign | Décisions de la semaine passée, effets des actions (immédiats ou programmés), risques des actions, nouveaux événements (conditions, probabilité, délai entre occurrences, choix, §8). **Actif.** |
 | 6 | Mettre à jour médias et opinion | election | Érosion de la notoriété, retour de la popularité vers une référence, attrition des militants (paramètres de jeu). Médias individuels en phase 5. **Actif.** |
 | 7 | Calculer indicateurs économiques et sociaux | economy | Actif surtout pendant le quinquennat. *Inactif jusqu'à la phase 6.* |
-| 8 | Mettre à jour intentions de vote | election | Scores latents par territoire, puis sondages simulés. *Inactif jusqu'à la phase 3.* |
-| 9 | Vérifier échéances | core | Passage à la semaine suivante : temps remis à la capacité hebdomadaire, effets différés arrivés à échéance appliqués, échéances des 4 semaines signalées. Blocage explicite la semaine d'un scrutin tant que le moteur électoral n'existe pas (phase 3). **Actif.** |
+| 8 | Mettre à jour intentions de vote | election | Scores latents par groupe d'électeurs (par territoire en phase 4), intentions attendues et décomposition des facteurs, puis sondages simulés des instituts dont c'est la semaine. **Actif depuis la phase 3** (campagne et entre-deux-tours). |
+| 9 | Vérifier échéances | core / election | Dépouillement du scrutin qui tombe dans la semaine (premier tour, puis second tour), statuts des candidats, consignes de vote, changement de phase ; puis passage à la semaine suivante : temps remis à la capacité hebdomadaire, effets différés appliqués, échéances des 4 semaines signalées. Après le second tour, la partie se bloque explicitement (« fin de la présidentielle ») jusqu'à la phase 6. **Actif.** |
 | 10 | Générer le journal | core | Entrées immuables. |
 | 11 | Sauvegarder | *(API)* | Le moteur renvoie l'état ; l'API persiste (sauvegarde auto hebdomadaire, §12). |
 | 12 | Afficher le bilan hebdomadaire | *(UI)* | `report` renvoyé par le moteur. |
@@ -171,9 +171,20 @@ Les poids `w` et la température sont des paramètres du *ruleset* (difficulté 
 
 **Deux tours** (§5.3) : qualification des deux premiers du 1er tour (sauf cas prévus par le *ruleset* : désistement, majorité absolue au 1er tour) ; matrice de reports partiels par électorat et consignes de soutien ; abstention différentielle ; effet du débat d'entre-deux-tours. Un soutien ne transfère jamais 100 % des voix (test de propriété).
 
+**Implémentation de la phase 3** (`packages/engine/src/election`) — en attendant les territoires de la phase 4, l'électorat est découpé en **9 groupes d'électeurs nationaux** (part, position sur les axes économique et sociétal, participation de base : hypothèses de jeu du *ruleset*) ; les inscrits sont ceux proclamés au second tour de 2022 (48 752 339, statut `estimation`), répartis entre groupes au plus fort reste.
+
+- Score latent d'un candidat auprès d'un groupe = somme exacte de facteurs nommés : proximité idéologique (−α · distance), notoriété (β · ln), popularité, dynamique (variation de popularité sur 3 semaines), incertitude (tirage dérivé de la graine), et au second tour consignes de vote (proportionnelles au poids de l'éliminé dans le groupe) et débat. Probabilités par softmax.
+- Participation par groupe : base × (1 + effet de proximité du candidat le plus proche), bornée ; au second tour, abstention différentielle des groupes éloignés des deux finalistes, et blancs plus nombreux quand aucun finaliste n'est proche. Participation, blancs et nuls calés sur l'ordre de grandeur de 2022 (note du *ruleset*).
+- Dépouillement : votants, blancs, nuls en entiers par groupe ; voix au plus fort reste ; **national = somme exacte des groupes** (`territory/aggregate.ts`, réutilisé en phase 4 pour communes → départements → régions → national).
+- Premier tour : élu si majorité absolue des exprimés, sinon les deux premiers (égalité parfaite départagée par identifiant, de façon déterministe). Les adversaires éliminés donnent une consigne au finaliste le plus proche s'il l'est assez ; le joueur éliminé choisit (décision obligatoire). Une consigne ne transfère qu'une partie des électeurs (testé).
+- Sondages : deux instituts fictifs à périodicité fixe ; échantillon multinomial de taille *n* tiré des intentions attendues décalées d'un biais d'institut constant ; marge à 95 % calculée comme pour un échantillon aléatoire ; hypothèse de second tour entre les deux premiers ; cote de popularité distincte.
+- Les intentions « vraies » du modèle restent internes (décomposition des facteurs visible) ; le joueur voit les sondages, puis les résultats.
+
 ### 4.5 IA des adversaires (§7)
 
 Boucle par adversaire : *analyser → générer les actions candidates → estimer coût/bénéfice → sélectionner → exécuter → mettre à jour la stratégie*. Implémentation par **fonction d'utilité** pondérée par le profil (idéologie, style, tolérance au risque) avec tirage softmax pour éviter les comportements robotiques. Aucun LLM dans la décision ; un module de narration optionnel (désactivé par défaut) ne peut produire que du texte et n'a pas d'accès en écriture à l'état.
+
+**Phase 3** (`packages/engine/src/ai/opponents.ts`) : 7 adversaires fictifs (style prudent / équilibré / offensif, tolérance au risque) ; chaque semaine, chacun choisit jusqu'à N actions abordables (N et budget selon la difficulté) ; valeur d'une action = gains attendus pondérés par ses besoins − risque pondéré par sa prudence − part du budget ; tirage softmax. Les actions passent par la même validation et le même registre que celles du joueur, et agissent aussi en mode observateur. Alliances, médias et débats préparés : phase 5.
 
 ### 4.6 Quinquennat (§9)
 
@@ -244,7 +255,7 @@ Toutes les entrées et sorties sont validées par des schémas Zod partagés (`p
 | Méthode | Route | Rôle |
 |---|---|---|
 | `GET` | `/api/session` | Session anonyme (cookie signé). *Phase 1.* |
-| `GET/POST` | `/api/games` | Lister les parties du joueur / créer une partie (mode, difficulté, date de départ, graine). *Phase 1.* |
+| `GET/POST` | `/api/games` | Lister les parties du joueur / créer une partie (mode, difficulté, date de départ, graine ; candidat du joueur — prénom, nom, parti, positionnement, parcours, profil de départ — obligatoire en mode personnalisé, interdit en observateur). *Phases 1 et 3.* |
 | `GET` | `/api/games/:id` | État courant ; une partie d'un ancien format est migrée à la lecture. *Phases 1–2.* |
 | `POST` | `/api/games/:id/advance` | Avancer d'une semaine avec les actions programmées et les réponses aux décisions dans le corps. **Idempotent** : en-tête `Idempotency-Key` obligatoire + `expectedWeek` ; même clé et même requête ⇒ même réponse (`idempotent-replay: true`), même clé et autre requête ⇒ `422`, semaine différente ⇒ `409`. *Phase 2.* |
 | `GET` | `/api/games/:id/journal?limit&before` | Journal paginé (semaines résolues avec bilan complet, événements techniques). *Phase 2.* |
@@ -252,9 +263,10 @@ Toutes les entrées et sorties sont validées par des schémas Zod partagés (`p
 | `POST` | `/api/games/:id/saves/:saveId/restore` | Reprendre depuis une sauvegarde (migrée si ancien format). *Phases 1–2.* |
 | `GET` | `/api/games/:id/export` | Export JSON versionné (`republique-2027/partie`, format 1), en pièce jointe. *Phase 2.* |
 | `POST` | `/api/games/import` | Import dans une **nouvelle** partie ; empreinte vérifiée avant migration, schéma, cohérence ; jamais d'écrasement. *Phase 2.* |
-| `GET` | `/api/rulesets/:clé` | Jeu de règles d'une partie (calendrier sourcé, catalogue d'actions et d'événements). *Phase 2.* |
+| `GET` | `/api/rulesets/:clé` | Jeu de règles d'une partie (calendrier sourcé, catalogue d'actions et d'événements, électorat, adversaires, instituts). *Phase 2.* |
+| `GET` | `/api/rulesets/courant` | Jeu de règles des nouvelles parties (profils de départ du formulaire de création). *Phase 3.* |
 | `GET` | `/api/games/:id/elections/:electionId/rounds/:n/results?level=commune` | Résultats compacts pour la carte. |
-| `GET` | `/api/games/:id/polls` | Sondages simulés. |
+| `GET` | `/api/games/:id/polls` | Sondages simulés. *Phase 3 : les sondages et résultats font partie de l'état de la partie (`GET /api/games/:id`) et sont aussi journalisés (`sondage_publie`, `resultat_scrutin`) ; une route dédiée viendra avec les volumes communaux de la phase 4.* |
 | `GET` | `/api/territories/search?q=` | Recherche nom / code. |
 | `GET` | `/api/data-sources` | Provenance des données affichées. |
 | `GET` | `/api/health` | Santé (base joignable, versions). |
@@ -269,7 +281,7 @@ Toutes les entrées et sorties sont validées par des schémas Zod partagés (`p
 - **État dynamique d'une partie** : instantané `GameState` (JSON validé par Zod, `jsonb`) à chaque semaine + journaux immuables `GameAction`, `GameEvent`, `SimulationLog`. Les entités dynamiques du §12 (candidats, alliances, gouvernement, projets de loi…) vivent dans cet instantané ; celles qui doivent être interrogées ou agrégées (résultats électoraux, sondages, indicateurs) sont **projetées** dans des tables dédiées. Le détail entité par entité est dans [MODELE_DONNEES.md](./MODELE_DONNEES.md).
 - **Opinion territoriale** : l'instantané ne stocke pas de valeur par commune (≈ 420 000 nombres par semaine). Il garde l'opinion nationale et départementale plus des modificateurs communaux creux ; la valeur d'une commune est dérivée de façon déterministe de sa base historique (voir [MODELE_DONNEES.md §3](./MODELE_DONNEES.md#3-volume--ce-que-linstantané-ne-contient-pas)).
 - **Résultats communaux** : ~35 000 communes × ~12 candidats × 2 tours ≈ 840 000 valeurs par élection et par partie ; stockés en bloc compact par (élection, tour, département) plutôt qu'une ligne par (commune, candidat), avec agrégats départementaux / régionaux / nationaux en lignes.
-- **Sauvegarde automatique** chaque semaine (les 8 plus récentes sont conservées) et avant tout événement majeur ; **manuelle** sur 5 emplacements ; **export/import JSON versionné** avec empreinte et migrations de sauvegarde (`save-engine` : format 1 de la phase 1 → format 2).
+- **Sauvegarde automatique** chaque semaine (les 8 plus récentes sont conservées) et avant tout événement majeur ou scrutin (« Avant le premier tour ») ; **manuelle** sur 5 emplacements ; **export/import JSON versionné** avec empreinte et migrations de sauvegarde (`save-engine` : format 1 de la phase 1 → format 2 de la phase 2 → format 3 de la phase 3).
 - **Progression** : chaque `POST /advance` réussi est enregistré dans `game_advance` (clé d'idempotence, empreinte de la requête, réponse) ; la même transaction écrit l'état, les actions, les événements, les 12 étapes du journal de simulation et la sauvegarde automatique, avec verrou optimiste sur la version de la partie.
 - Protection contre l'import corrompu : validation complète **avant** écriture, transaction, aucune écriture partielle.
 - Stockage navigateur (IndexedDB) seulement pour le cache et la démo hors ligne.
@@ -283,6 +295,7 @@ Toutes les entrées et sorties sont validées par des schémas Zod partagés (`p
 - **TanStack Query** pour les données serveur (cache, invalidation après `advance`) ; **Zustand** limité à l'état d'interface (filtres de carte, sélection, thème).
 - Thème clair/sombre, mise en page responsive (mobile d'abord), tableaux filtrables, notifications, infobulles, navigation clavier.
 - Chaque variation affichée (« +2 pts ») propose un détail des facteurs issu du `SimulationLog`.
+- Phase 3 : création du candidat (positionnement sur deux axes, électorats les plus proches, profil de départ) ; écrans **Candidats** (carte des positionnements, statuts, facteurs du vote), **Sondages** (dernier sondage avec marge, évolution, fiche technique complète) et **Résultats** (deux tours, participation, blancs, nuls, détail par groupe d'électeurs). Les graphiques sont des barres et un nuage de points en SVG/CSS, sans bibliothèque : votre candidat dans la couleur d'accent, les autres en gris ; la valeur est toujours écrite dans un tableau voisin. Badges « Fictif », « Sondage simulé », « Résultat simulé ».
 
 ---
 

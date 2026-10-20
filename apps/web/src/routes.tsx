@@ -2,17 +2,23 @@ import type { ComponentType } from 'react';
 import { Navigate, type RouteObject } from 'react-router';
 import { AppLayout } from './components/AppLayout';
 import { Unavailable } from './components/Unavailable';
+import { Candidates } from './screens/Candidates';
 import { Dashboard } from './screens/Dashboard';
 import { GameLayout } from './screens/GameLayout';
 import { Home } from './screens/Home';
 import { Journal } from './screens/Journal';
 import { NewGame } from './screens/NewGame';
 import { NotFound, RouteError } from './screens/NotFound';
+import { Polls } from './screens/Polls';
 import { GAME_SCREENS } from './screens/registry';
+import { Results } from './screens/Results';
 import { Saves } from './screens/Saves';
 
 const IMPLEMENTED: Record<string, ComponentType> = {
   'tableau-de-bord': Dashboard,
+  candidats: Candidates,
+  sondages: Polls,
+  resultats: Results,
   journal: Journal,
   sauvegardes: Saves,
 };

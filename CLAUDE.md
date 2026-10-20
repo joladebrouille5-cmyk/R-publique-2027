@@ -8,6 +8,7 @@
 - Ne jamais inventer une donnée officielle (date, résultat, plafond, URL) : la sourcer dans `docs/SOURCES.md` ou l'étiqueter `estimation` / `hypothèse`. Les dates et paramètres de jeu vivent dans `packages/rulesets` (une modification = nouvelle version du jeu de règles).
 - Toute modification de ressource passe par le registre `Ledger` du moteur (facteurs explicatifs) ; toute évolution de `GameState` incrémente `SAVE_SCHEMA_VERSION` avec une migration dans `packages/save-engine`.
 - Codes géographiques toujours en chaînes de caractères (`2A`, `2B`, `01`…).
+- Le navigateur ne calcule jamais l'état : `apps/web` n'importe pas `@r2027/engine`, sauf ses tests (`apps/web/src/test`, `*.test.tsx`) qui fabriquent des états réalistes avec le vrai moteur.
 - Aucun secret dans Git ; variables d'environnement documentées dans `.env.example`.
 - Documentation et interface en français.
 - Compte rendu de fin de phase : résumé, fichiers modifiés, tests et résultats, limites, prochaine étape.

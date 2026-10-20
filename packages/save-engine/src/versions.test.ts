@@ -4,9 +4,12 @@ import { GameStateSchema } from '@r2027/shared';
 import { describe, expect, it } from 'vitest';
 import { canonicalStringify, hashState, sha256 } from './canonical';
 import { buildExport, readExport } from './exchange';
-import { loadStoredState, SaveFormatError, upgradeState } from './versions';
+import V2 from './fixtures/v2-phase-2.json' with { type: 'json' };
+import { loadStoredState, MIGRATED_CANDIDATE, SaveFormatError, upgradeState } from './versions';
 
 const ruleset = getRuleset(CURRENT_RULESET_KEY);
+const candidate = { nom: 'Export', parti: 'Parti', positionnement: { economie: 0, societe: 0 } };
+const opponentIds = ruleset.candidatsFictifs.map((c) => c.id).sort();
 
 /** État exact produit par le moteur de la phase 1 (commit 268d591) pour la graine « phase-1 ». */
 const V1_STATE = {
@@ -37,7 +40,7 @@ const errorCode = (fn: () => unknown) => {
 };
 
 describe('migrations de sauvegarde', () => {
-  it('migre une partie de la phase 1 vers le format 2', () => {
+  it('migre une partie de la phase 1 jusqu’au format 3', () => {
     const { state, stateHash, migratedFrom } = loadStoredState(V1_STATE, V1_HASH, 1);
     expect(migratedFrom).toBe(1);
     expect(GameStateSchema.parse(state)).toEqual(state);
@@ -46,7 +49,7 @@ describe('migrations de sauvegarde', () => {
       seed: 'phase-1',
       week: 0,
       difficulty: 'expert',
-      saveSchemaVersion: 2,
+      saveSchemaVersion: 3,
       engineVersion: ENGINE_VERSION,
       rulesetVersion: CURRENT_RULESET_KEY,
     });
@@ -61,13 +64,75 @@ describe('migrations de sauvegarde', () => {
   it('migre un observateur sans lui créer de campagne', () => {
     const observer = { ...V1_STATE, player: { mode: 'observateur', actorId: null } };
     const { state } = loadStoredState(observer, sha256(canonicalStringify(observer)), 1);
-    expect(state.actors).toEqual({});
+    expect(Object.keys(state.actors).sort()).toEqual(opponentIds);
     expect(state.player.actorId).toBeNull();
+  });
+
+  it('migre une partie réelle de la phase 2 en conservant sa progression', () => {
+    const v2 = V2.state;
+    const { state, migratedFrom } = loadStoredState(v2, V2.stateHash, 2);
+    expect(migratedFrom).toBe(2);
+    expect(state.meta).toMatchObject({
+      seed: 'phase-2',
+      week: 20,
+      date: '2027-02-15',
+      saveSchemaVersion: 3,
+    });
+    const player = state.actors[PLAYER_ACTOR_ID]!;
+    expect(player.resources).toEqual(v2.actors.joueur.resources);
+    expect(player).toMatchObject({
+      label: 'Votre campagne',
+      status: 'candidat',
+      candidate: MIGRATED_CANDIDATE,
+    });
+    expect(
+      Object.keys(state.actors)
+        .filter((id) => id !== PLAYER_ACTOR_ID)
+        .sort(),
+    ).toEqual(opponentIds);
+    expect(state.eventHistory).toEqual(v2.eventHistory);
+    expect(state.pendingDecisions).toEqual(
+      v2.pendingDecisions.map((d) => ({ ...d, kind: 'evenement' })),
+    );
+    expect(state).toMatchObject({
+      opinion: null,
+      polls: [],
+      calendar: { blockedBy: null, blockedMessage: null },
+    });
+
+    // Jouable : la décision en attente se répond comme avant.
+    const [decision] = state.pendingDecisions;
+    const next = advanceWeek(
+      state,
+      {
+        actions: [{ actionId: 'meeting' }],
+        decisions: [{ decisionId: decision!.id, optionId: 'excuses' }],
+      },
+      { ruleset },
+    );
+    expect(next.state.meta.week).toBe(21);
+    expect(next.report.intentions).not.toBeNull();
+  });
+
+  it('lève le blocage de la phase 2 au premier tour : le scrutin est désormais simulé', () => {
+    const blocked = {
+      ...V2.state,
+      meta: { ...V2.state.meta, week: 28, date: '2027-04-12' },
+      pendingDecisions: [],
+      calendar: { blockedBy: 'presidentielle-2027-t1' },
+    };
+    const { state } = loadStoredState(blocked, sha256(canonicalStringify(blocked)), 2);
+    expect(state.calendar.blockedBy).toBeNull();
+    const result = advanceWeek(state, { actions: [], decisions: [] }, { ruleset });
+    expect(result.report.election).toMatchObject({ round: 1, scrutinId: 'presidentielle-2027-t1' });
   });
 
   it('vérifie l’empreinte avant toute migration', () => {
     const altered = { ...V1_STATE, meta: { ...V1_STATE.meta, week: 3 } };
     expect(errorCode(() => loadStoredState(altered, V1_HASH, 1))).toBe('empreinte_incoherente');
+    expect(
+      errorCode(() => loadStoredState({ ...V2.state, eventHistory: {} }, V2.stateHash, 2)),
+    ).toBe('empreinte_incoherente');
   });
 
   it('refuse les versions futures, inconnues et les états non conformes', () => {
@@ -75,27 +140,31 @@ describe('migrations de sauvegarde', () => {
     expect(errorCode(() => upgradeState(V1_STATE, 0))).toBe('version_inconnue');
     expect(errorCode(() => upgradeState({ ...V1_STATE, intrus: 1 }, 1))).toBe('etat_invalide');
     expect(errorCode(() => upgradeState(V1_STATE, 2))).toBe('etat_invalide');
+    expect(errorCode(() => upgradeState(V2.state, 3))).toBe('etat_invalide');
   });
 
   it('refuse un jeu de règles inconnu', () => {
     const state = createGame({ seed: 'x', mode: 'observateur', difficulty: 'standard' }, ruleset);
     const unknown = { ...state, meta: { ...state.meta, rulesetVersion: 'inexistant@9.9.9' } };
-    expect(errorCode(() => upgradeState(unknown, 2))).toBe('regles_inconnues');
+    expect(errorCode(() => upgradeState(unknown, 3))).toBe('regles_inconnues');
   });
 
   it('laisse un état au format courant inchangé', () => {
     const state = createGame(
-      { seed: 'courant', mode: 'candidat_personnalise', difficulty: 'standard' },
+      { seed: 'courant', mode: 'candidat_personnalise', difficulty: 'standard', candidate },
       ruleset,
     );
-    const loaded = loadStoredState(state, hashState(state), 2);
+    const loaded = loadStoredState(state, hashState(state), 3);
     expect(loaded).toEqual({ state, stateHash: hashState(state), migratedFrom: null });
   });
 });
 
 describe('export et import', () => {
   const state = advanceWeek(
-    createGame({ seed: 'export', mode: 'candidat_personnalise', difficulty: 'standard' }, ruleset),
+    createGame(
+      { seed: 'export', mode: 'candidat_personnalise', difficulty: 'standard', candidate },
+      ruleset,
+    ),
     { actions: [{ actionId: 'meeting' }], decisions: [] },
     { ruleset },
   ).state;
@@ -141,6 +210,6 @@ describe('export et import', () => {
     };
     const read = readExport(v1Doc);
     expect(read.migratedFrom).toBe(1);
-    expect(read.state.meta.saveSchemaVersion).toBe(2);
+    expect(read.state.meta.saveSchemaVersion).toBe(3);
   });
 });

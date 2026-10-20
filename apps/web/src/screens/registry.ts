@@ -29,8 +29,8 @@ export const GAME_SCREENS: readonly GameScreen[] = [
     path: 'candidats',
     label: 'Candidats',
     phase: 3,
-    available: false,
-    description: 'Candidats en lice, profils sourcés et création d’un candidat personnalisé.',
+    available: true,
+    description: 'Candidats en lice, positionnements, statuts et facteurs du vote.',
   },
   {
     path: 'programme',
@@ -50,8 +50,15 @@ export const GAME_SCREENS: readonly GameScreen[] = [
     path: 'sondages',
     label: 'Sondages',
     phase: 3,
-    available: false,
+    available: true,
     description: 'Sondages simulés avec échantillon, méthode et marge d’erreur.',
+  },
+  {
+    path: 'resultats',
+    label: 'Résultats',
+    phase: 3,
+    available: true,
+    description: 'Résultats simulés des deux tours, participation, blancs et nuls.',
   },
   {
     path: 'gouvernement',

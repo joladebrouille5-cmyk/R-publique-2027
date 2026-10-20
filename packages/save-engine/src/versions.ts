@@ -1,5 +1,5 @@
 import {
-  createPlayerActor,
+  createOpponents,
   ENGINE_VERSION,
   PLAYER_ACTOR_ID,
   SAVE_SCHEMA_VERSION,
@@ -8,8 +8,11 @@ import { CURRENT_RULESET_KEY, getRuleset, UnknownRulesetError } from '@r2027/rul
 import {
   GameStateSchema,
   GameStateV1Schema,
+  GameStateV2Schema,
+  type Actor,
   type GameState,
   type GameStateV1,
+  type GameStateV2,
 } from '@r2027/shared';
 import { z } from 'zod';
 import { hashState, sha256, canonicalStringify } from './canonical';
@@ -37,25 +40,45 @@ export class SaveFormatError extends Error {
 
 export const CURRENT_SAVE_SCHEMA_VERSION = SAVE_SCHEMA_VERSION;
 
-const SCHEMAS: Record<number, z.ZodType> = { 1: GameStateV1Schema, 2: GameStateSchema };
+const SCHEMAS: Record<number, z.ZodType> = {
+  1: GameStateV1Schema,
+  2: GameStateV2Schema,
+  3: GameStateSchema,
+};
+
+/** Jeu de règles des parties au format 2 (phase 2). */
+const V2_RULESET_KEY = 'presidentielle-2027@1.0.0';
 
 /**
  * Format 1 → 2 (phase 2) : ajout des ressources de campagne, des effets programmés, des
  * décisions et du calendrier ; l'aléa n'est plus stocké (dérivé de la graine). Les ressources
- * de départ sont celles du jeu de règles courant pour la difficulté de la partie.
+ * de départ sont celles du jeu de règles courant (identiques à celles de la version 1.0.0).
  */
-function migrateV1ToV2(v1: GameStateV1): GameState {
-  const ruleset = getRuleset(CURRENT_RULESET_KEY);
+function migrateV1ToV2(v1: GameStateV1): GameStateV2 {
+  const jeu = getRuleset(CURRENT_RULESET_KEY).jeu;
   const observer = v1.player.mode === 'observateur';
+  const resources = {
+    ...jeu.ressourcesInitiales[v1.meta.difficulty],
+    tempsHeures: jeu.tempsHebdomadaireHeures,
+  };
   return {
     meta: {
       ...v1.meta,
-      engineVersion: ENGINE_VERSION,
-      rulesetVersion: CURRENT_RULESET_KEY,
+      engineVersion: '0.2.0',
+      rulesetVersion: V2_RULESET_KEY,
       saveSchemaVersion: 2,
     },
     player: { mode: v1.player.mode, actorId: observer ? null : PLAYER_ACTOR_ID },
-    actors: observer ? {} : { [PLAYER_ACTOR_ID]: createPlayerActor(v1.meta.difficulty, ruleset) },
+    actors: observer
+      ? {}
+      : {
+          [PLAYER_ACTOR_ID]: {
+            id: PLAYER_ACTOR_ID,
+            kind: 'joueur',
+            label: 'Votre campagne',
+            resources,
+          },
+        },
     scheduled: [],
     pendingDecisions: [],
     eventHistory: {},
@@ -63,7 +86,63 @@ function migrateV1ToV2(v1: GameStateV1): GameState {
   };
 }
 
-const MIGRATIONS: Record<number, (state: never) => unknown> = { 1: migrateV1ToV2 };
+/** Identité attribuée au candidat d'une partie créée avant la phase 3 (modifiable en phase 5). */
+export const MIGRATED_CANDIDATE = {
+  prenom: '',
+  nom: 'Candidat du joueur',
+  parti: 'Sans étiquette',
+  positionnement: { economie: 0, societe: 0 },
+  parcours: 'Candidature créée avant la phase 3 : identité et positionnement par défaut.',
+  nature: 'personnalise',
+  profilId: null,
+} as const satisfies Actor['candidate'];
+
+/**
+ * Format 2 → 3 (phase 3) : le joueur devient un candidat (identité par défaut, au centre),
+ * les adversaires fictifs du jeu de règles courant entrent en campagne avec leurs moyens de
+ * départ, les décisions en attente sont des réponses à des événements, et le blocage de la
+ * phase 2 au premier tour est levé : le scrutin est désormais simulé.
+ */
+function migrateV2ToV3(v2: GameStateV2): GameState {
+  const ruleset = getRuleset(CURRENT_RULESET_KEY);
+  const actors: Record<string, Actor> = {};
+  for (const [id, actor] of Object.entries(v2.actors)) {
+    actors[id] = {
+      ...actor,
+      candidate: {
+        ...MIGRATED_CANDIDATE,
+        positionnement: { ...MIGRATED_CANDIDATE.positionnement },
+      },
+      style: null,
+      toleranceRisque: null,
+      status: 'candidat',
+      history: { popularite: [actor.resources.popularite] },
+    };
+  }
+  Object.assign(actors, createOpponents(v2.meta.difficulty, ruleset));
+  return {
+    meta: {
+      ...v2.meta,
+      engineVersion: ENGINE_VERSION,
+      rulesetVersion: CURRENT_RULESET_KEY,
+      saveSchemaVersion: 3,
+    },
+    player: v2.player,
+    actors,
+    scheduled: v2.scheduled,
+    pendingDecisions: v2.pendingDecisions.map((d) => ({ ...d, kind: 'evenement' })),
+    eventHistory: v2.eventHistory,
+    opinion: null,
+    polls: [],
+    elections: { t1: null, t2: null, consignes: [], debate: null },
+    calendar: { blockedBy: null, blockedMessage: null },
+  };
+}
+
+const MIGRATIONS: Record<number, (state: never) => unknown> = {
+  1: migrateV1ToV2,
+  2: migrateV2ToV3,
+};
 
 export type LoadedState = { state: GameState; stateHash: string; migratedFrom: number | null };
 

@@ -5,7 +5,6 @@ import {
   type GameState,
   type Notice,
   type Ruleset,
-  type WeeklyReport,
 } from '@r2027/shared';
 import { effectFactors } from './effects';
 import { compareStrings, type Ledger } from './ledger';
@@ -71,16 +70,15 @@ export function scrutinInWeek(weekStart: string, ruleset: Ruleset) {
 }
 
 /**
- * Étape 9 : passage à la semaine suivante. Remet à zéro le temps disponible, applique les
- * effets différés arrivés à échéance, signale les échéances proches et bloque la partie
- * avant un scrutin que le moteur ne sait pas encore résoudre (moteur électoral : phase 3).
+ * Étape 9 (fin) : passage à la semaine suivante. Remet à zéro le temps disponible de chaque
+ * campagne, applique les effets différés arrivés à échéance et signale les échéances proches.
  */
 export function enterNextWeek(
   state: GameState,
   ruleset: Ruleset,
   ledger: Ledger,
   step: number,
-): { notices: Notice[]; blocked: WeeklyReport['blocked']; appliedScheduled: number } {
+): { notices: Notice[]; appliedScheduled: number } {
   const nextWeek = state.meta.week + 1;
   state.meta.week = nextWeek;
   state.meta.date = addDays(state.meta.date, 7);
@@ -112,19 +110,5 @@ export function enterNextWeek(
       effectFactors(effect, current, label, 'differe', step),
     );
   }
-
-  const scrutin = scrutinInWeek(state.meta.date, ruleset);
-  let blocked: WeeklyReport['blocked'] = null;
-  if (scrutin) {
-    state.calendar.blockedBy = scrutin.id;
-    blocked = {
-      scrutinId: scrutin.id,
-      message: `${scrutin.libelle} le ${formatFrenchDate(scrutin.date)} : le moteur électoral arrive en phase 3. La partie ne peut pas encore avancer au-delà de cette semaine.`,
-    };
-  }
-  return {
-    notices: upcomingNotices(state.meta.date, ruleset),
-    blocked,
-    appliedScheduled: due.length,
-  };
+  return { notices: upcomingNotices(state.meta.date, ruleset), appliedScheduled: due.length };
 }

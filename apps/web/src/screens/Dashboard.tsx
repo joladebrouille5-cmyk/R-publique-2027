@@ -1,10 +1,19 @@
+import { candidateName } from '@r2027/shared';
 import { useRef, useState } from 'react';
+import { Link } from 'react-router';
 import { ApiRequestError, newIdempotencyKey } from '../api/client';
 import { useAdvance, useJournal, useRuleset } from '../api/hooks';
 import { ErrorMessage } from '../components/ErrorMessage';
 import { buttonPrimary, card } from '../components/ui';
 import { WeeklyReportView } from '../components/WeeklyReportView';
-import { DIFFICULTY_LABELS, formatGameDate, MODE_LABELS, PHASE_LABELS } from '../labels';
+import {
+  CANDIDATE_STATUS_LABELS,
+  DIFFICULTY_LABELS,
+  formatGameDate,
+  formatShare,
+  MODE_LABELS,
+  PHASE_LABELS,
+} from '../labels';
 import { ActionPlanner } from './dashboard/ActionPlanner';
 import { CalendarPanel } from './dashboard/CalendarPanel';
 import { DecisionsPanel } from './dashboard/DecisionsPanel';
@@ -25,6 +34,19 @@ export function Dashboard() {
   const actor = state.player.actorId ? state.actors[state.player.actorId] : undefined;
   const blocked = state.calendar.blockedBy !== null;
   const observer = state.player.mode === 'observateur';
+  const campaigning =
+    actor !== undefined && (actor.status === 'candidat' || actor.status === 'qualifie');
+  const round = state.meta.phase === 'entre_deux_tours' ? 'intentions_t2' : 'intentions_t1';
+  const latestPoll = [...state.polls]
+    .reverse()
+    .find((p) => p.kind === round && !p.id.endsWith('-hypothese-t2'));
+  const playerPoll = latestPoll?.results.find((r) => r.actorId === actor?.id);
+  const playerRank =
+    latestPoll && playerPoll
+      ? [...latestPoll.results]
+          .sort((a, b) => b.value - a.value)
+          .findIndex((r) => r.actorId === actor?.id) + 1
+      : null;
   const unanswered = observer
     ? []
     : state.pendingDecisions.filter((decision) => !answers[decision.id]);
@@ -76,6 +98,14 @@ export function Dashboard() {
     { label: 'Phase', value: PHASE_LABELS[game.phase] },
     { label: 'Mode', value: MODE_LABELS[game.mode] },
     { label: 'Difficulté', value: DIFFICULTY_LABELS[game.difficulty] },
+    ...(actor
+      ? [
+          {
+            label: 'Votre candidat',
+            value: `${candidateName(actor.candidate)} — ${CANDIDATE_STATUS_LABELS[actor.status]}`,
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -84,7 +114,7 @@ export function Dashboard() {
         Tableau de bord
       </h1>
 
-      <dl className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+      <dl className="grid grid-cols-2 gap-3 lg:grid-cols-3">
         {facts.map((fact) => (
           <div key={fact.label} className={card}>
             <dt className="text-xs text-slate-500 dark:text-slate-400">{fact.label}</dt>
@@ -94,12 +124,75 @@ export function Dashboard() {
       </dl>
 
       {blocked && (
-        <p
+        <div
           role="alert"
-          className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100"
+          className="space-y-2 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100"
         >
-          La partie est arrivée à la semaine du premier tour. Le moteur électoral (candidats,
-          sondages, deux tours) arrive en phase 3 : la partie ne peut pas encore avancer.
+          <p>
+            {state.calendar.blockedMessage ??
+              'La partie ne peut pas avancer davantage pour l’instant.'}
+          </p>
+          <Link to="../resultats" className="font-semibold underline">
+            Voir les résultats
+          </Link>
+        </div>
+      )}
+
+      {(latestPoll || state.elections.t1) && (
+        <section aria-labelledby="titre-course" className={`${card} space-y-2 text-sm`}>
+          <h2 id="titre-course" className="text-lg font-semibold">
+            La course présidentielle
+          </h2>
+          {latestPoll && playerPoll && playerRank && (
+            <p>
+              Dernier sondage ({latestPoll.institute}, semaine {latestPoll.week}) : vous êtes{' '}
+              <strong>{playerRank === 1 ? '1er' : `${playerRank}e`}</strong> sur{' '}
+              {latestPoll.results.length} avec <strong>{formatShare(playerPoll.value)}</strong> (±{' '}
+              {formatShare(playerPoll.margin).replace(' %', ' pt')}).
+            </p>
+          )}
+          {latestPoll && !playerPoll && (
+            <p>
+              Dernier sondage ({latestPoll.institute}, semaine {latestPoll.week}) :{' '}
+              {[...latestPoll.results]
+                .sort((a, b) => b.value - a.value)
+                .slice(0, 3)
+                .map(
+                  (r) =>
+                    `${state.actors[r.actorId] ? candidateName(state.actors[r.actorId]!.candidate) : r.actorId} ${formatShare(r.value)}`,
+                )
+                .join(' · ')}
+            </p>
+          )}
+          <p className="flex flex-wrap gap-x-4 gap-y-1">
+            <Link
+              to="../sondages"
+              className="text-republique-600 underline dark:text-republique-100"
+            >
+              Tous les sondages
+            </Link>
+            <Link
+              to="../candidats"
+              className="text-republique-600 underline dark:text-republique-100"
+            >
+              Les candidats
+            </Link>
+            {state.elections.t1 && (
+              <Link
+                to="../resultats"
+                className="text-republique-600 underline dark:text-republique-100"
+              >
+                Résultats
+              </Link>
+            )}
+          </p>
+        </section>
+      )}
+
+      {actor && !campaigning && !blocked && (
+        <p className="rounded-lg border border-slate-300 p-4 text-sm dark:border-slate-700">
+          Vous n’êtes plus candidat : vous ne programmez plus d’actions de campagne, mais vous
+          pouvez suivre la suite de l’élection semaine après semaine.
         </p>
       )}
 
@@ -113,8 +206,8 @@ export function Dashboard() {
       )}
       {observer && (
         <p className="text-sm text-slate-600 dark:text-slate-400">
-          Mode observateur : aucune campagne n’est contrôlée. Les candidats et leurs campagnes
-          autonomes arrivent en phase 3 ; d’ici là, seul le temps avance.
+          Mode observateur : aucune campagne n’est contrôlée. Les candidats fictifs mènent leur
+          campagne de façon autonome ; les décisions éventuelles prennent l’option par défaut.
         </p>
       )}
 
@@ -122,7 +215,7 @@ export function Dashboard() {
         <DecisionsPanel decisions={state.pendingDecisions} answers={answers} onAnswer={answer} />
       )}
 
-      {ruleset.data && actor && !blocked && (
+      {ruleset.data && actor && campaigning && !blocked && (
         <ActionPlanner
           ruleset={ruleset.data}
           resources={actor.resources}
@@ -156,7 +249,7 @@ export function Dashboard() {
             : 'Bilan hebdomadaire'}
         </h2>
         {lastReport ? (
-          <WeeklyReportView report={lastReport} />
+          <WeeklyReportView report={lastReport} state={state} />
         ) : (
           <p className="text-sm text-slate-500 dark:text-slate-400">
             Aucune semaine résolue pour l’instant.
