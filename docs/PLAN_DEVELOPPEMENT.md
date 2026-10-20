@@ -159,6 +159,7 @@ La numérotation suit le §16 du cahier des charges. La « phase 7 — Finalisat
 | `pnpm test:integration` (API + PostgreSQL 16 réel) | 39 tests réussis (23 de la phase 1, 16 nouveaux) |
 | `pnpm test:e2e` (Playwright, bureau + mobile) | 10 tests réussis |
 | Contrôle par mutation (rejeu idempotent désactivé) | détecté par le test d'idempotence |
+| CI GitHub Actions (exécution n° 3, commit `c9b1c53`) | verte : toutes les étapes réussies en 2 min 15 s |
 
 Réalisé :
 - **P2-01** : jeu de règles `presidentielle-2027@1.0.0` (paquet `packages/rulesets`) : scrutins annoncés, échéances déduites de leur règle (recalculées par test), sources, paramètres de jeu étiquetés « hypothèse ».
