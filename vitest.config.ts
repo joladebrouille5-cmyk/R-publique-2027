@@ -33,6 +33,14 @@ export default defineConfig({
       },
       {
         test: {
+          name: 'rulesets',
+          root: './packages/rulesets',
+          include: ['src/**/*.test.ts'],
+          environment: 'node',
+        },
+      },
+      {
+        test: {
           name: 'save-engine',
           root: './packages/save-engine',
           include: ['src/**/*.test.ts'],

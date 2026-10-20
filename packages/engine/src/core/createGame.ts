@@ -2,14 +2,19 @@ import {
   DEFAULT_START_DATE,
   isoWeekday,
   parseIsoDate,
+  rulesetKey,
   START_DATE_MAX,
   START_DATE_MIN,
+  type Actor,
   type Difficulty,
   type GameMode,
   type GameState,
+  type Ruleset,
 } from '@r2027/shared';
-import { deriveRngState } from './rng';
-import { ENGINE_VERSION, RULESET_VERSION, SAVE_SCHEMA_VERSION } from './versions';
+import { ENGINE_VERSION, SAVE_SCHEMA_VERSION } from './versions';
+
+/** Identifiant de la campagne du joueur (le candidat lui-même est créé en phase 3). */
+export const PLAYER_ACTOR_ID = 'joueur';
 
 export type CreateGameInput = {
   seed: string;
@@ -28,7 +33,20 @@ export class GameCreationError extends Error {
   }
 }
 
-export function createGame(input: CreateGameInput): GameState {
+/** Ressources de départ : paramètres de jeu (hypothèses) qui dépendent de la difficulté (§1.3). */
+export function createPlayerActor(difficulty: Difficulty, ruleset: Ruleset): Actor {
+  return {
+    id: PLAYER_ACTOR_ID,
+    kind: 'joueur',
+    label: 'Votre campagne',
+    resources: {
+      ...ruleset.jeu.ressourcesInitiales[difficulty],
+      tempsHeures: ruleset.jeu.tempsHebdomadaireHeures,
+    },
+  };
+}
+
+export function createGame(input: CreateGameInput, ruleset: Ruleset): GameState {
   if (input.mode === 'candidat_reel') {
     throw new GameCreationError(
       'mode_non_disponible',
@@ -63,10 +81,20 @@ export function createGame(input: CreateGameInput): GameState {
       phase: 'campagne',
       difficulty: input.difficulty,
       engineVersion: ENGINE_VERSION,
-      rulesetVersion: RULESET_VERSION,
+      rulesetVersion: rulesetKey(ruleset),
       saveSchemaVersion: SAVE_SCHEMA_VERSION,
     },
-    rng: deriveRngState(input.seed, 'partie'),
-    player: { mode: input.mode, actorId: null },
+    player: {
+      mode: input.mode,
+      actorId: input.mode === 'observateur' ? null : PLAYER_ACTOR_ID,
+    },
+    actors:
+      input.mode === 'observateur'
+        ? {}
+        : { [PLAYER_ACTOR_ID]: createPlayerActor(input.difficulty, ruleset) },
+    scheduled: [],
+    pendingDecisions: [],
+    eventHistory: {},
+    calendar: { blockedBy: null },
   };
 }

@@ -1,0 +1,82 @@
+import type { Effect, Factor, FactorSource, GameState, ScheduledEffect } from '@r2027/shared';
+import type { Ledger } from './ledger';
+
+const SATURABLE = new Set(['notoriete', 'popularite']);
+
+/** « 12,34 % » à partir d'une valeur en centièmes de point (format indépendant du système). */
+export function formatPercent(centiemes: number): string {
+  return `${(centiemes / 100).toFixed(2).replace('.', ',')} %`;
+}
+
+type Drawn = Pick<ScheduledEffect, 'ressource' | 'base' | 'alea' | 'saturation'>;
+
+/** Facteurs d'un effet : attendu, aléa, puis saturation calculée sur le niveau actuel. */
+export function effectFactors(
+  effect: Drawn,
+  current: number,
+  label: string,
+  source: FactorSource,
+  step: number,
+): Factor[] {
+  const factors: Factor[] = [
+    { label: `${label} : effet attendu`, value: effect.base, source, step },
+  ];
+  if (effect.alea !== 0)
+    factors.push({ label: `${label} : aléa`, value: effect.alea, source, step });
+  const total = effect.base + effect.alea;
+  if (effect.saturation && SATURABLE.has(effect.ressource) && total > 0) {
+    const reduction = Math.round((total * current) / 10_000);
+    if (reduction > 0) {
+      factors.push({
+        label: `${label} : saturation (niveau actuel ${formatPercent(current)})`,
+        value: -reduction,
+        source,
+        step,
+      });
+    }
+  }
+  return factors;
+}
+
+export type EffectContext = {
+  state: GameState;
+  ledger: Ledger;
+  actorId: string;
+  week: number;
+  step: number;
+  label: string;
+  source: Extract<FactorSource, 'action' | 'risque' | 'evenement' | 'decision'>;
+  /** Identifiant stable de l'origine (sert aussi à nommer l'effet programmé). */
+  ref: string;
+};
+
+/** Applique un effet tout de suite (délai 0) ou le programme pour une semaine ultérieure. */
+export function applyOrSchedule(
+  context: EffectContext,
+  effect: Effect,
+  alea: number,
+  index: number,
+) {
+  const drawn: Drawn = {
+    ressource: effect.ressource,
+    base: effect.base,
+    alea,
+    saturation: effect.saturation,
+  };
+  if (effect.delaiSemaines === 0) {
+    const current = context.ledger.current(context.actorId, effect.ressource);
+    context.ledger.apply(
+      context.actorId,
+      effect.ressource,
+      effectFactors(drawn, current, context.label, context.source, context.step),
+    );
+    return;
+  }
+  context.state.scheduled.push({
+    id: `${context.ref}-${index}`,
+    dueWeek: context.week + effect.delaiSemaines,
+    actorId: context.actorId,
+    ...drawn,
+    origin: { kind: context.source, ref: context.ref, label: context.label, week: context.week },
+  });
+}

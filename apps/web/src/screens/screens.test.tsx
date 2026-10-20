@@ -8,12 +8,18 @@ import {
   healthHandler,
   mockApi,
   renderRoute,
+  RULESET_URL,
+  rulesetHandler,
   saveFixture,
 } from '../test/utils';
 
 const gameHandlers = {
   'GET /api/health': healthHandler,
   [`GET /api/games/${GAME_ID}`]: () => ({ body: gameFixture() }),
+  [`GET ${RULESET_URL}`]: rulesetHandler,
+  [`GET /api/games/${GAME_ID}/journal?limit=10`]: () => ({
+    body: { entries: [], nextBefore: null },
+  }),
 };
 
 describe('navigation de partie', () => {
@@ -48,7 +54,8 @@ describe('navigation de partie', () => {
     renderRoute(`/parties/${GAME_ID}`);
     expect(await screen.findByRole('heading', { name: 'Tableau de bord' })).toBeInTheDocument();
     expect(screen.getAllByText('lundi 28 septembre 2026').length).toBeGreaterThan(0);
-    expect(screen.getByRole('button', { name: /Semaine suivante/ })).toBeDisabled();
+    expect(await screen.findByRole('button', { name: 'Résoudre la semaine 0' })).toBeEnabled();
+    expect(screen.getByText('Aucune semaine résolue pour l’instant.')).toBeInTheDocument();
   });
 
   it('annonce un écran non implémenté sans données factices', async () => {

@@ -1,4 +1,5 @@
 import { createGame } from '@r2027/engine';
+import { CURRENT_RULESET_KEY, getRuleset } from '@r2027/rulesets';
 import { describe, expect, it } from 'vitest';
 import {
   canonicalStringify,
@@ -8,7 +9,10 @@ import {
   verifySnapshot,
 } from './canonical';
 
-const state = createGame({ seed: 'sauvegarde', mode: 'observateur', difficulty: 'expert' });
+const state = createGame(
+  { seed: 'sauvegarde', mode: 'observateur', difficulty: 'expert' },
+  getRuleset(CURRENT_RULESET_KEY),
+);
 
 describe('sérialisation canonique', () => {
   it("ne dépend pas de l'ordre des clés", () => {

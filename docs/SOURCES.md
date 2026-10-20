@@ -183,7 +183,21 @@ Statut : vérifié sur le guide CNCCFP ; les montants de base inscrits dans la l
 
 ---
 
-## 8. Points restant non vérifiés
+## 8. Utilisation dans le jeu (phase 2)
+
+Le jeu de règles [`packages/rulesets/src/presidentielle-2027.json`](../packages/rulesets/src/presidentielle-2027.json) (`presidentielle-2027@1.0.0`) reprend, avec leur source et leur statut :
+
+| Donnée | Valeur | Statut dans le jeu | Source |
+|---|---|---|---|
+| Premier tour | 18 avril 2027 | `annonce` | compte rendu du Conseil des ministres du 1er juillet 2026 (§4) |
+| Second tour | 2 mai 2027 | `annonce` | idem |
+| Vote la veille | 971, 972, 973, 975, 977, 978, 987 | `annonce` | idem (texte relu le 20/10/2026 : Guadeloupe, Martinique, Guyane, Saint-Pierre-et-Miquelon, Saint-Barthélemy, Saint-Martin, Polynésie française) |
+| Présentation des candidatures | 12 mars 2027, 18 h | `deduit` | règle relue mot pour mot dans le guide CNCCFP : « le sixième vendredi précédant le premier tour de scrutin à dix-huit heures » |
+| Dépôt des comptes de campagne | 2 juillet 2027, 18 h | `deduit` | règle relue mot pour mot dans le guide CNCCFP : « au plus tard à dix-huit heures le onzième vendredi suivant le premier tour de scrutin » |
+
+Les dates déduites sont recalculées par un test à partir de leur règle. Tous les autres paramètres du jeu de règles (ressources de départ, coûts, effets, probabilités) sont des **hypothèses de jeu** (source « conception du jeu », sans URL), affichées comme telles dans l'interface.
+
+## 9. Points restant non vérifiés
 
 1. Texte exact, sur Légifrance, de la loi n° 62-1292 (parrainages, financement) et de l'article L. 52-11.
 2. Publication du décret de convocation des électeurs pour 2027.
@@ -193,10 +207,10 @@ Statut : vérifié sur le guide CNCCFP ; les montants de base inscrits dans la l
 6. Zéros initiaux des codes métropolitains dans les fichiers des législatives 2024.
 7. Sources des indicateurs économiques initiaux (Banque de France, INSEE) : à identifier en phase 6.
 
-## 9. Métadonnées obligatoires de chaque import (§10)
+## 10. Métadonnées obligatoires de chaque import (§10)
 
 Chaque import enregistre dans `DataImport` : source, URL exacte, date de récupération, millésime, licence, période de validité, transformations appliquées, empreinte SHA-256 du fichier brut, version de l'importeur, nombre de lignes, statut. Les mises à jour sont versionnées ; un import qui ne passe pas ses contrôles est rejeté en entier.
 
-## 10. Données de démonstration
+## 11. Données de démonstration
 
-Un jeu réduit, commité dans `data/demo/`, permet de jouer hors ligne (§10). S'il est dérivé de données réelles, il en conserve la source et la licence (sous réserve du point 3 de la section 8) ; s'il est synthétique, il est étiqueté `fictif`.
+Un jeu réduit, commité dans `data/demo/`, permet de jouer hors ligne (§10). S'il est dérivé de données réelles, il en conserve la source et la licence (sous réserve du point 3 de la section 9) ; s'il est synthétique, il est étiqueté `fictif`.

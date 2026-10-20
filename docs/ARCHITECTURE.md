@@ -15,7 +15,7 @@ Les numéros `§x` renvoient aux sections du cahier des charges.
 | Simulation **persistante, explicable, testable** (résumé exécutif) | Le moteur est une bibliothèque TypeScript pure, sans accès réseau, base ou navigateur (§11). |
 | **Déterminisme** : même sauvegarde + mêmes actions ⇒ même état (§11) | Générateur pseudo-aléatoire à graine, aucun `Math.random()` ni `Date.now()` dans le moteur, calcul autoritaire **côté serveur uniquement**. |
 | Réel, estimé, sondé, simulé et fictif sont **distingués** (§1.1, §3.3, §8, critère 16) | Chaque donnée affichable porte un champ `nature` (`reel`, `estimation`, `sondage`, `projection`, `simule`, `fictif`) et, si réel, une référence `DataSource`. |
-| Règles électorales et institutionnelles **explicites et versionnées** (§2, §6) | Jeux de règles en fichiers de données versionnés (`rulesets/`), jamais de dates ou plafonds codés en dur dans la logique. |
+| Règles électorales et institutionnelles **explicites et versionnées** (§2, §6) | Jeux de règles en fichiers de données versionnés (`packages/rulesets`), jamais de dates ou plafonds codés en dur dans la logique. |
 | **Pas d'API externe obligatoire** (§7, §14, critère 14) | Pas de fond de carte payant, pas de LLM requis ; un jeu de données de démonstration permet de jouer hors ligne (§10). |
 | Une explication de variation repose sur les **facteurs réellement utilisés** (§13) | Chaque calcul d'opinion produit une décomposition de facteurs stockée avec le résultat ; l'UI affiche cette décomposition, rien d'autre. |
 
@@ -83,10 +83,10 @@ pnpm 10 est installé ; les *workspaces* pnpm permettent de partager les types e
 │   │       ├── parliament/     # parliament-engine : groupes, votes, législatives
 │   │       ├── economy/        # economy-engine : indicateurs macro et sociaux
 │   │       └── territory/      # territory-engine : hiérarchie, agrégations
+│   ├── rulesets/               # jeux de règles versionnés et sourcés (dates, catalogue d'actions et d'événements)
 │   ├── save-engine/            # sérialisation, export/import JSON versionné, migrations de sauvegarde
 │   ├── data-import/            # CLI d'import des sources officielles (§10)
 │   └── shared/                 # schémas Zod, types DTO, constantes d'énumération
-├── rulesets/                   # règles versionnées (dates, parrainages, plafonds…) en JSON validé
 ├── data/
 │   ├── raw/                    # téléchargements bruts — IGNORÉ par Git
 │   ├── processed/              # sorties d'import (volumineuses) — IGNORÉ ou stockage externe
@@ -124,15 +124,15 @@ La fonction est **pure** : aucune horloge, aucun réseau, aucune base. L'aléa p
 
 | # | Étape (§2) | Module | Notes |
 |---|---|---|---|
-| 1 | Valider les actions | campaign / government | Rejet explicite (motif) si ressources insuffisantes ou action interdite à cette date. |
-| 2 | Consommer les ressources | campaign | Argent en **centimes entiers**, temps et militants en unités entières. |
-| 3 | Calculer les décisions adverses | ai | Même catalogue d'actions que le joueur, mêmes coûts. |
-| 4 | Mettre à jour alliances et relations | ai | Graphe confiance / proximité / rivalité / historique (§7). |
-| 5 | Résoudre les événements | event | Conditions, probabilité, effets immédiats et différés (§8). |
-| 6 | Mettre à jour médias et opinion | event / election | Décomposition de facteurs conservée. |
-| 7 | Calculer indicateurs économiques et sociaux | economy | Actif surtout pendant le quinquennat. |
-| 8 | Mettre à jour intentions de vote | election | Scores latents par territoire, puis sondages simulés. |
-| 9 | Vérifier échéances | core | Dépôt des parrainages, scrutins, législatives… ; arrêt de l'accélération avant décision obligatoire. |
+| 1 | Valider les actions | campaign / event | Actions refusées avec motif (budget, temps, prérequis, action inconnue) ; réponses obligatoires aux décisions en attente. **Phase 2 : actif.** |
+| 2 | Consommer les ressources | campaign | Coût exact des actions retenues. Argent en **centimes entiers**, temps et militants en unités entières, notoriété et popularité en centièmes de point. **Actif.** |
+| 3 | Calculer les décisions adverses | ai | Même catalogue d'actions que le joueur, mêmes coûts. *Inactif jusqu'à la phase 3 (journalisé comme tel).* |
+| 4 | Mettre à jour alliances et relations | ai | Graphe confiance / proximité / rivalité / historique (§7). *Inactif jusqu'à la phase 5.* |
+| 5 | Résoudre les événements | event / campaign | Décisions de la semaine passée, effets des actions (immédiats ou programmés), risques des actions, nouveaux événements (conditions, probabilité, délai entre occurrences, choix, §8). **Actif.** |
+| 6 | Mettre à jour médias et opinion | election | Érosion de la notoriété, retour de la popularité vers une référence, attrition des militants (paramètres de jeu). Médias individuels en phase 5. **Actif.** |
+| 7 | Calculer indicateurs économiques et sociaux | economy | Actif surtout pendant le quinquennat. *Inactif jusqu'à la phase 6.* |
+| 8 | Mettre à jour intentions de vote | election | Scores latents par territoire, puis sondages simulés. *Inactif jusqu'à la phase 3.* |
+| 9 | Vérifier échéances | core | Passage à la semaine suivante : temps remis à la capacité hebdomadaire, effets différés arrivés à échéance appliqués, échéances des 4 semaines signalées. Blocage explicite la semaine d'un scrutin tant que le moteur électoral n'existe pas (phase 3). **Actif.** |
 | 10 | Générer le journal | core | Entrées immuables. |
 | 11 | Sauvegarder | *(API)* | Le moteur renvoie l'état ; l'API persiste (sauvegarde auto hebdomadaire, §12). |
 | 12 | Afficher le bilan hebdomadaire | *(UI)* | `report` renvoyé par le moteur. |
@@ -141,12 +141,13 @@ Consulter un écran ne déclenche **jamais** `advanceWeek` (§2). Seul `POST /ga
 
 ### 4.3 Déterminisme et aléa
 
-- PRNG à graine implémenté dans le dépôt (ex. *sfc32* ou *xoshiro128\*\**, algorithme et vecteurs de test documentés), état du générateur stocké dans `GameState`.
-- **Flux dérivés** : un sous-générateur par (semaine, module, acteur), dérivé de la graine de la partie par hachage. Ajouter un module n'altère pas les tirages des autres.
+- PRNG *sfc32* implémenté dans le dépôt, vérifié contre une implémentation C de référence (`packages/engine/scripts/sfc32-reference.c`) ; SHA-256 pur vérifié sur les vecteurs FIPS 180-4.
+- **Flux dérivés** (depuis la phase 2) : chaque tirage provient d'un générateur dérivé de (graine, semaine, contexte) — par exemple (graine, semaine 4, action n° 2, « meeting ») — par SHA-256. L'état du générateur n'est donc pas stocké dans `GameState`, et ajouter un module ou une action n'altère pas les autres tirages.
 - Itérations toujours dans un **ordre trié explicite** (codes territoriaux, identifiants), jamais l'ordre d'insertion d'un objet ou d'un `Map` alimenté par la base.
 - Le calcul faisant foi s'exécute **uniquement dans Node.js** (serveur et tests) : les fonctions `Math.exp`/`Math.log` peuvent différer d'un moteur JavaScript à l'autre, donc le navigateur ne recalcule jamais l'état.
 - Chaque partie stocke `seed`, `engineVersion`, `rulesetVersion`, `saveSchemaVersion` (§12).
-- Test de non-régression : « rejouer » une séquence d'actions enregistrée doit produire une empreinte SHA-256 d'état identique.
+- Tests de propriétés (fast-check) : même graine et mêmes actions ⇒ même partie ; sauvegarde puis reprise à chaque semaine ⇒ même partie ; deux parties de même graine jouées via l'API ⇒ mêmes empreintes.
+- **Comptabilité exacte** : toute modification de ressource passe par un registre (`core/ledger.ts`) qui enregistre ses facteurs ; la somme des facteurs vaut exactement la variation, écrêtement aux bornes compris (testé par propriétés).
 
 ### 4.4 Moteur électoral (§5)
 
@@ -242,15 +243,16 @@ Toutes les entrées et sorties sont validées par des schémas Zod partagés (`p
 
 | Méthode | Route | Rôle |
 |---|---|---|
-| `POST` | `/api/games` | Créer une partie (mode réel / personnalisé / observateur, difficulté, graine optionnelle). |
-| `GET` | `/api/games/:id` | État courant (projection lisible par l'UI). |
-| `POST` | `/api/games/:id/actions` | Programmer des actions pour la semaine courante (validation serveur). |
-| `POST` | `/api/games/:id/advance` | Avancer d'une semaine. **Idempotent** : en-tête `Idempotency-Key` + `expectedWeek` ; même clé ⇒ même réponse, semaine différente ⇒ `409`. |
-| `GET` | `/api/games/:id/journal` | Journal paginé. |
-| `GET/POST` | `/api/games/:id/saves` | Lister / créer une sauvegarde manuelle (emplacements multiples). |
-| `POST` | `/api/games/:id/saves/:saveId/restore` | Reprendre depuis une sauvegarde. |
-| `GET` | `/api/games/:id/export` | Export JSON versionné. |
-| `POST` | `/api/games/import` | Import JSON (schéma, versions, empreinte vérifiés ; jamais d'écrasement d'une partie existante). |
+| `GET` | `/api/session` | Session anonyme (cookie signé). *Phase 1.* |
+| `GET/POST` | `/api/games` | Lister les parties du joueur / créer une partie (mode, difficulté, date de départ, graine). *Phase 1.* |
+| `GET` | `/api/games/:id` | État courant ; une partie d'un ancien format est migrée à la lecture. *Phases 1–2.* |
+| `POST` | `/api/games/:id/advance` | Avancer d'une semaine avec les actions programmées et les réponses aux décisions dans le corps. **Idempotent** : en-tête `Idempotency-Key` obligatoire + `expectedWeek` ; même clé et même requête ⇒ même réponse (`idempotent-replay: true`), même clé et autre requête ⇒ `422`, semaine différente ⇒ `409`. *Phase 2.* |
+| `GET` | `/api/games/:id/journal?limit&before` | Journal paginé (semaines résolues avec bilan complet, événements techniques). *Phase 2.* |
+| `GET/POST` | `/api/games/:id/saves` | Lister (manuelles, automatiques, avant événement, import) / créer une sauvegarde manuelle (5 emplacements). *Phase 1.* |
+| `POST` | `/api/games/:id/saves/:saveId/restore` | Reprendre depuis une sauvegarde (migrée si ancien format). *Phases 1–2.* |
+| `GET` | `/api/games/:id/export` | Export JSON versionné (`republique-2027/partie`, format 1), en pièce jointe. *Phase 2.* |
+| `POST` | `/api/games/import` | Import dans une **nouvelle** partie ; empreinte vérifiée avant migration, schéma, cohérence ; jamais d'écrasement. *Phase 2.* |
+| `GET` | `/api/rulesets/:clé` | Jeu de règles d'une partie (calendrier sourcé, catalogue d'actions et d'événements). *Phase 2.* |
 | `GET` | `/api/games/:id/elections/:electionId/rounds/:n/results?level=commune` | Résultats compacts pour la carte. |
 | `GET` | `/api/games/:id/polls` | Sondages simulés. |
 | `GET` | `/api/territories/search?q=` | Recherche nom / code. |
@@ -267,7 +269,8 @@ Toutes les entrées et sorties sont validées par des schémas Zod partagés (`p
 - **État dynamique d'une partie** : instantané `GameState` (JSON validé par Zod, `jsonb`) à chaque semaine + journaux immuables `GameAction`, `GameEvent`, `SimulationLog`. Les entités dynamiques du §12 (candidats, alliances, gouvernement, projets de loi…) vivent dans cet instantané ; celles qui doivent être interrogées ou agrégées (résultats électoraux, sondages, indicateurs) sont **projetées** dans des tables dédiées. Le détail entité par entité est dans [MODELE_DONNEES.md](./MODELE_DONNEES.md).
 - **Opinion territoriale** : l'instantané ne stocke pas de valeur par commune (≈ 420 000 nombres par semaine). Il garde l'opinion nationale et départementale plus des modificateurs communaux creux ; la valeur d'une commune est dérivée de façon déterministe de sa base historique (voir [MODELE_DONNEES.md §3](./MODELE_DONNEES.md#3-volume--ce-que-linstantané-ne-contient-pas)).
 - **Résultats communaux** : ~35 000 communes × ~12 candidats × 2 tours ≈ 840 000 valeurs par élection et par partie ; stockés en bloc compact par (élection, tour, département) plutôt qu'une ligne par (commune, candidat), avec agrégats départementaux / régionaux / nationaux en lignes.
-- **Sauvegarde automatique** chaque semaine et avant tout événement majeur ; **manuelle** sur emplacements multiples ; **export/import JSON versionné** avec empreinte et migrations de sauvegarde (`save-engine`).
+- **Sauvegarde automatique** chaque semaine (les 8 plus récentes sont conservées) et avant tout événement majeur ; **manuelle** sur 5 emplacements ; **export/import JSON versionné** avec empreinte et migrations de sauvegarde (`save-engine` : format 1 de la phase 1 → format 2).
+- **Progression** : chaque `POST /advance` réussi est enregistré dans `game_advance` (clé d'idempotence, empreinte de la requête, réponse) ; la même transaction écrit l'état, les actions, les événements, les 12 étapes du journal de simulation et la sauvegarde automatique, avec verrou optimiste sur la version de la partie.
 - Protection contre l'import corrompu : validation complète **avant** écriture, transaction, aucune écriture partielle.
 - Stockage navigateur (IndexedDB) seulement pour le cache et la démo hors ligne.
 

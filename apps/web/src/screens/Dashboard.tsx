@@ -1,9 +1,75 @@
+import { useRef, useState } from 'react';
+import { ApiRequestError, newIdempotencyKey } from '../api/client';
+import { useAdvance, useJournal, useRuleset } from '../api/hooks';
+import { ErrorMessage } from '../components/ErrorMessage';
 import { buttonPrimary, card } from '../components/ui';
+import { WeeklyReportView } from '../components/WeeklyReportView';
 import { DIFFICULTY_LABELS, formatGameDate, MODE_LABELS, PHASE_LABELS } from '../labels';
+import { ActionPlanner } from './dashboard/ActionPlanner';
+import { CalendarPanel } from './dashboard/CalendarPanel';
+import { DecisionsPanel } from './dashboard/DecisionsPanel';
+import { ResourcesPanel } from './dashboard/ResourcesPanel';
 import { useCurrentGame } from './GameLayout';
 
 export function Dashboard() {
   const game = useCurrentGame();
+  const ruleset = useRuleset(game.rulesetVersion);
+  const journal = useJournal(game.id);
+  const advance = useAdvance(game.id);
+  const [plan, setPlan] = useState<string[]>([]);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  // Une clé par tentative ; conservée si le réseau coupe, pour qu'un renvoi ne rejoue rien.
+  const attemptKey = useRef<string | null>(null);
+
+  const { state } = game;
+  const actor = state.player.actorId ? state.actors[state.player.actorId] : undefined;
+  const blocked = state.calendar.blockedBy !== null;
+  const observer = state.player.mode === 'observateur';
+  const unanswered = observer
+    ? []
+    : state.pendingDecisions.filter((decision) => !answers[decision.id]);
+  const lastReport =
+    advance.data?.report ??
+    journal.data?.pages[0]?.entries.find((entry) => entry.report)?.report ??
+    null;
+
+  const changePlan = (next: string[]) => {
+    attemptKey.current = null;
+    setPlan(next);
+  };
+  const answer = (decisionId: string, optionId: string) => {
+    attemptKey.current = null;
+    setAnswers((current) => ({ ...current, [decisionId]: optionId }));
+  };
+
+  const submit = () => {
+    attemptKey.current ??= newIdempotencyKey();
+    advance.mutate(
+      {
+        idempotencyKey: attemptKey.current,
+        body: {
+          expectedWeek: game.week,
+          actions: plan.map((actionId) => ({ actionId })),
+          decisions: Object.entries(answers)
+            .filter(([decisionId]) => state.pendingDecisions.some((d) => d.id === decisionId))
+            .map(([decisionId, optionId]) => ({ decisionId, optionId })),
+        },
+      },
+      {
+        onSuccess: () => {
+          attemptKey.current = null;
+          setPlan([]);
+          setAnswers({});
+        },
+        onError: (error) => {
+          if (!(error instanceof ApiRequestError && error.code === 'serveur_injoignable')) {
+            attemptKey.current = null;
+          }
+        },
+      },
+    );
+  };
+
   const facts = [
     { label: 'Date en jeu', value: formatGameDate(game.date) },
     { label: 'Semaine', value: String(game.week) },
@@ -13,30 +79,92 @@ export function Dashboard() {
   ];
 
   return (
-    <section aria-labelledby="titre-tableau" className="space-y-6">
+    <section aria-labelledby="titre-tableau" className="space-y-8">
       <h1 id="titre-tableau" className="text-2xl font-bold">
         Tableau de bord
       </h1>
 
-      <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <dl className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         {facts.map((fact) => (
           <div key={fact.label} className={card}>
-            <dt className="text-sm text-slate-500 dark:text-slate-400">{fact.label}</dt>
-            <dd className="mt-1 text-lg font-semibold">{fact.value}</dd>
+            <dt className="text-xs text-slate-500 dark:text-slate-400">{fact.label}</dt>
+            <dd className="mt-1 font-semibold">{fact.value}</dd>
           </div>
         ))}
       </dl>
 
-      <div className={`${card} space-y-3`}>
-        <h2 className="font-semibold">Progression hebdomadaire</h2>
-        <p className="text-sm text-slate-600 dark:text-slate-400">
-          Les actions de campagne, les ressources et l’avancée semaine par semaine arrivent en phase
-          2. Le bouton est inactif tant que le moteur correspondant n’existe pas.
+      {blocked && (
+        <p
+          role="alert"
+          className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100"
+        >
+          La partie est arrivée à la semaine du premier tour. Le moteur électoral (candidats,
+          sondages, deux tours) arrive en phase 3 : la partie ne peut pas encore avancer.
         </p>
-        <button type="button" className={buttonPrimary} disabled>
-          Semaine suivante (phase 2)
+      )}
+
+      {ruleset.isError && (
+        <ErrorMessage error={ruleset.error} onRetry={() => void ruleset.refetch()} />
+      )}
+      {ruleset.isPending && <p>Chargement du jeu de règles…</p>}
+
+      {ruleset.data && actor && (
+        <ResourcesPanel resources={actor.resources} ruleset={ruleset.data} />
+      )}
+      {observer && (
+        <p className="text-sm text-slate-600 dark:text-slate-400">
+          Mode observateur : aucune campagne n’est contrôlée. Les candidats et leurs campagnes
+          autonomes arrivent en phase 3 ; d’ici là, seul le temps avance.
+        </p>
+      )}
+
+      {!observer && state.pendingDecisions.length > 0 && (
+        <DecisionsPanel decisions={state.pendingDecisions} answers={answers} onAnswer={answer} />
+      )}
+
+      {ruleset.data && actor && !blocked && (
+        <ActionPlanner
+          ruleset={ruleset.data}
+          resources={actor.resources}
+          plan={plan}
+          onAdd={(id) => changePlan([...plan, id])}
+          onRemove={(index) => changePlan(plan.filter((_, i) => i !== index))}
+        />
+      )}
+
+      <div className={`${card} space-y-3`}>
+        <button
+          type="button"
+          className={buttonPrimary}
+          disabled={blocked || advance.isPending || unanswered.length > 0}
+          onClick={submit}
+        >
+          {advance.isPending ? 'Résolution de la semaine…' : `Résoudre la semaine ${game.week}`}
         </button>
+        {unanswered.length > 0 && (
+          <p className="text-sm text-amber-800 dark:text-amber-300">
+            Répondez d’abord aux décisions en attente.
+          </p>
+        )}
+        {advance.isError && <ErrorMessage error={advance.error} />}
       </div>
+
+      <section aria-labelledby="titre-bilan" className={`${card} space-y-3`}>
+        <h2 id="titre-bilan" className="text-lg font-semibold">
+          {lastReport
+            ? `Bilan de la semaine ${lastReport.week} (${formatGameDate(lastReport.date)})`
+            : 'Bilan hebdomadaire'}
+        </h2>
+        {lastReport ? (
+          <WeeklyReportView report={lastReport} />
+        ) : (
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Aucune semaine résolue pour l’instant.
+          </p>
+        )}
+      </section>
+
+      {ruleset.data && <CalendarPanel ruleset={ruleset.data} today={game.date} />}
 
       <details className={card}>
         <summary className="cursor-pointer font-semibold">Paramètres techniques</summary>

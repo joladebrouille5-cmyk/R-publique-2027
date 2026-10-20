@@ -5,7 +5,8 @@
 - Ne jamais simuler une fonctionnalité non implémentée ni masquer une erreur ; un écran sans moteur l'indique explicitement.
 - Chaque fonctionnalité arrive avec ses tests ; lancer les tests avant tout commit.
 - Le moteur (`packages/engine`) reste pur : pas de `Math.random`, `Date`, réseau, base ni DOM.
-- Ne jamais inventer une donnée officielle (date, résultat, plafond, URL) : la sourcer dans `docs/SOURCES.md` ou l'étiqueter `estimation` / `hypothèse`.
+- Ne jamais inventer une donnée officielle (date, résultat, plafond, URL) : la sourcer dans `docs/SOURCES.md` ou l'étiqueter `estimation` / `hypothèse`. Les dates et paramètres de jeu vivent dans `packages/rulesets` (une modification = nouvelle version du jeu de règles).
+- Toute modification de ressource passe par le registre `Ledger` du moteur (facteurs explicatifs) ; toute évolution de `GameState` incrémente `SAVE_SCHEMA_VERSION` avec une migration dans `packages/save-engine`.
 - Codes géographiques toujours en chaînes de caractères (`2A`, `2B`, `01`…).
 - Aucun secret dans Git ; variables d'environnement documentées dans `.env.example`.
 - Documentation et interface en français.

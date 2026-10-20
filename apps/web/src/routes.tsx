@@ -5,6 +5,7 @@ import { Unavailable } from './components/Unavailable';
 import { Dashboard } from './screens/Dashboard';
 import { GameLayout } from './screens/GameLayout';
 import { Home } from './screens/Home';
+import { Journal } from './screens/Journal';
 import { NewGame } from './screens/NewGame';
 import { NotFound, RouteError } from './screens/NotFound';
 import { GAME_SCREENS } from './screens/registry';
@@ -12,6 +13,7 @@ import { Saves } from './screens/Saves';
 
 const IMPLEMENTED: Record<string, ComponentType> = {
   'tableau-de-bord': Dashboard,
+  journal: Journal,
   sauvegardes: Saves,
 };
 

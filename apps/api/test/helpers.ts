@@ -15,7 +15,7 @@ export function testDatabase(): Database {
 
 export async function resetDatabase(db: Database): Promise<void> {
   await db.$executeRawUnsafe(
-    'TRUNCATE "simulation_log", "game_event", "game_action", "game_save", "game", "app_user" CASCADE',
+    'TRUNCATE "simulation_log", "game_event", "game_action", "game_advance", "game_save", "game", "app_user" CASCADE',
   );
 }
 

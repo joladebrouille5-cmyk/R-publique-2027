@@ -5,6 +5,8 @@ import { ErrorMessage } from '../components/ErrorMessage';
 import { buttonDanger, buttonPrimary, buttonSecondary, card, input, label } from '../components/ui';
 import { formatGameDate, formatTimestamp } from '../labels';
 import { useCurrentGame } from './GameLayout';
+import { AutoSaves } from './saves/AutoSaves';
+import { ExchangePanel } from './saves/ExchangePanel';
 
 type Pending = { kind: 'ecraser' | 'restaurer'; slot: number } | null;
 
@@ -51,10 +53,10 @@ export function Saves() {
       </h1>
       <p className="text-sm text-slate-600 dark:text-slate-400">
         Les sauvegardes sont conservées sur le serveur. Chaque sauvegarde garde l’empreinte de
-        l’état : une restauration redonne exactement la même partie. La sauvegarde automatique
-        hebdomadaire arrive en phase 2.
+        l’état : une restauration redonne exactement la même partie.
       </p>
 
+      <h2 className="text-lg font-semibold">Emplacements manuels</h2>
       <div className="max-w-md space-y-1">
         <label htmlFor="libelle" className={label}>
           Libellé de la prochaine sauvegarde (facultatif)
@@ -164,6 +166,8 @@ export function Saves() {
           })}
         </ol>
       )}
+      {saves.data && <AutoSaves gameId={game.id} version={game.version} saves={saves.data} />}
+      <ExchangePanel gameId={game.id} />
     </section>
   );
 }

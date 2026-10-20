@@ -1,12 +1,15 @@
 import { z } from 'zod';
 import {
+  DecisionAnswerSchema,
   DifficultySchema,
   GameModeSchema,
   GamePhaseSchema,
   GameStateSchema,
   IsoDateSchema,
+  PlannedActionSchema,
   SeedSchema,
 } from './game';
+import { WeeklyReportSchema } from './report';
 
 // Contrats de l'API REST, partagés entre `apps/api` et `apps/web`.
 
@@ -103,3 +106,64 @@ export const ApiErrorSchema = z.object({
   }),
 });
 export type ApiError = z.infer<typeof ApiErrorSchema>;
+
+/** Fichier d'export d'une partie (JSON versionné, §12). L'état est validé selon sa version. */
+export const EXPORT_FORMAT = 'republique-2027/partie';
+export const ExportDocumentSchema = z
+  .object({
+    format: z.literal(EXPORT_FORMAT),
+    formatVersion: z.literal(1),
+    exportedAt: z.string(),
+    name: z.string().trim().min(1).max(80),
+    mode: GameModeSchema,
+    difficulty: DifficultySchema,
+    seed: SeedSchema,
+    engineVersion: z.string().min(1),
+    rulesetVersion: z.string().min(1),
+    saveSchemaVersion: z.number().int().positive(),
+    stateHash: z.string().regex(/^[0-9a-f]{64}$/),
+    state: z.unknown(),
+  })
+  .strict();
+export type ExportDocument = z.infer<typeof ExportDocumentSchema>;
+
+/** En-tête obligatoire de `POST /advance` : un même envoi répété n'avance qu'une fois. */
+export const IDEMPOTENCY_HEADER = 'idempotency-key';
+export const IdempotencyKeySchema = z.string().regex(/^[A-Za-z0-9_-]{8,100}$/, {
+  message: 'En-tête Idempotency-Key requis (8 à 100 caractères : lettres, chiffres, « _ », « - »)',
+});
+
+export const AdvanceRequestSchema = z
+  .object({
+    /** Semaine vue par le client : refus (409) si la partie a déjà avancé. */
+    expectedWeek: z.number().int().min(0),
+    actions: z.array(PlannedActionSchema).max(20).default([]),
+    decisions: z.array(DecisionAnswerSchema).max(20).default([]),
+  })
+  .strict();
+export type AdvanceRequest = z.input<typeof AdvanceRequestSchema>;
+
+export const AdvanceResponseSchema = z.object({
+  game: GameDetailSchema,
+  report: WeeklyReportSchema,
+});
+export type AdvanceResponse = z.infer<typeof AdvanceResponseSchema>;
+
+export const JournalEntrySchema = z.object({
+  id: z.string(),
+  week: z.number().int(),
+  type: z.string(),
+  nature: z.string(),
+  createdAt: z.string(),
+  /** Bilan complet pour une semaine résolue ; null pour les autres entrées. */
+  report: WeeklyReportSchema.nullable(),
+  details: z.record(z.string(), z.unknown()),
+});
+export type JournalEntry = z.infer<typeof JournalEntrySchema>;
+
+export const JournalPageSchema = z.object({
+  entries: z.array(JournalEntrySchema),
+  /** Curseur pour la page suivante (entrées plus anciennes), ou null. */
+  nextBefore: z.string().nullable(),
+});
+export type JournalPage = z.infer<typeof JournalPageSchema>;

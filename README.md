@@ -10,12 +10,18 @@ Simulation politique française : présidentielle, campagne et quinquennat. Jeu 
 |---|---|---|
 | 0 | Audit, architecture, sources, risques | ✅ terminée |
 | 1 | Squelette web, API, base, navigation, sauvegardes | ✅ terminée |
-| 2 | Calendrier hebdomadaire, actions, ressources, événements, journal | à faire |
-| 3–8 | Présidentielle, carte, campagne, quinquennat, contenu, mise en ligne | à faire |
+| 2 | Calendrier hebdomadaire, actions, ressources, événements, journal | ✅ terminée |
+| 3 | Candidats, sondages, participation, deux tours | à faire |
+| 4–8 | Carte, campagne, quinquennat, contenu, mise en ligne | à faire |
 
-**Ce qui fonctionne aujourd'hui** : créer une partie (mode candidat personnalisé ou observateur, difficulté, date de départ, graine), consulter son tableau de bord, la sauvegarder sur 5 emplacements, la restaurer et la reprendre sans perte (empreinte SHA-256 identique). Tous les écrans du cahier des charges figurent dans la navigation ; ceux qui ne sont pas encore implémentés l'indiquent avec leur phase prévue.
+**Ce qui fonctionne aujourd'hui** :
+- créer une partie (candidat personnalisé ou observateur, difficulté, date de départ, graine) ;
+- la jouer semaine par semaine : programmer des actions (meeting, tournée, interview, campagne numérique, recrutement, collecte, porte-à-porte, rencontre d'élus) avec leur coût, leur effet attendu, leur incertitude et leur risque ; trancher les décisions nées d'événements fictifs ; résoudre la semaine ;
+- lire le bilan de chaque semaine, où chaque variation de ressource est décomposée en facteurs, et le journal complet de la partie ;
+- suivre le calendrier électoral officiel (dates annoncées ou déduites, avec leur source) ;
+- sauvegarder (5 emplacements manuels, sauvegarde automatique chaque semaine et avant un événement majeur), restaurer, exporter en JSON et importer dans une nouvelle partie, sans perte (empreinte SHA-256 identique).
 
-**Ce qui ne fonctionne pas encore** : la progression semaine par semaine (phase 2), les candidats et l'élection (phase 3), la carte (phase 4), le mode « candidat réel » (phase 3).
+**Ce qui ne fonctionne pas encore** : candidats, adversaires, sondages et élection (phase 3) — la partie s'arrête explicitement la semaine du premier tour ; carte (phase 4) ; programme, finances réglementées, médias (phase 5) ; mode « candidat réel » (phase 3).
 
 ## Prérequis
 
@@ -77,9 +83,9 @@ Le pied de page de l'interface indique « Serveur connecté » quand l'API et la
 
 | Commande | Contenu | Prérequis |
 |---|---|---|
-| `pnpm test` | tests unitaires, de propriétés et de composants (moteur, sauvegardes, interface) | aucun |
-| `pnpm test:integration` | API réelle contre PostgreSQL : parties, sessions, sauvegardes, restauration, isolation, sécurité | `DATABASE_URL_TEST` |
-| `pnpm test:e2e` | Playwright, navigateur bureau + mobile : création, sauvegarde, restauration, reprise | `DATABASE_URL_TEST` ; navigateur : `pnpm exec playwright install chromium` |
+| `pnpm test` | tests unitaires, de propriétés et de composants (moteur, jeu de règles, sauvegardes, interface) | aucun |
+| `pnpm test:integration` | API réelle contre PostgreSQL : parties, progression idempotente, sauvegardes, journal, export/import, migrations, isolation, sécurité | `DATABASE_URL_TEST` |
+| `pnpm test:e2e` | Playwright, navigateur bureau + mobile : actions, progression, bilan, sauvegarde, restauration, journal, export/import, reprise | `DATABASE_URL_TEST` ; navigateur : `pnpm exec playwright install chromium` |
 | `pnpm lint` · `pnpm typecheck` · `pnpm format:check` | qualité du code | aucun |
 | `pnpm check` | lint + format + typecheck + tests unitaires | aucun |
 
@@ -92,6 +98,7 @@ apps/api            API Fastify + Prisma (sessions, parties, sauvegardes)
 apps/web            Interface React (Vite, React Router, TanStack Query, Zustand, Tailwind)
 apps/web/e2e        Tests Playwright
 packages/engine     Moteur de simulation pur et déterministe (aucune E/S)
+packages/rulesets   Jeux de règles versionnés et sourcés (calendrier, actions, événements)
 packages/save-engine  Sérialisation canonique et empreintes des sauvegardes
 packages/shared     Schémas Zod et contrats d'API partagés
 docs/               Cahier des charges, plan, architecture, sources, risques

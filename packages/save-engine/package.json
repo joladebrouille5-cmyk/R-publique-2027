@@ -10,9 +10,9 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@r2027/shared": "workspace:*"
-  },
-  "devDependencies": {
-    "@r2027/engine": "workspace:*"
+    "@r2027/engine": "workspace:*",
+    "@r2027/rulesets": "workspace:*",
+    "@r2027/shared": "workspace:*",
+    "zod": "4.6.7"
   }
 }

@@ -134,7 +134,7 @@ La numérotation suit le §16 du cahier des charges. La « phase 7 — Finalisat
 - Sauvegarde automatique hebdomadaire, export/import JSON et journal : phase 2.
 - Session anonyme uniquement (Q5) ; la démarche « tester depuis un téléphone » du README n'a pas été vérifiée sur un appareil physique (seulement en émulation mobile Playwright).
 
-### Phase 2 — Simulation hebdomadaire persistante
+### Phase 2 — Simulation hebdomadaire persistante ✅
 
 | ID | Tâche | Test d'acceptation |
 |---|---|---|
@@ -149,6 +149,35 @@ La numérotation suit le §16 du cahier des charges. La « phase 7 — Finalisat
 | P2-09 | UI : tableau de bord, choix d'actions, bouton « semaine suivante », journal, bilan. | Playwright : action → progression → effet visible → sauvegarde → reprise. |
 
 **Livrable** : simulation persistante. **Critères visés** : 3, 4, 12.
+
+**Bilan (20/10/2026)** — les neuf tâches sont réalisées.
+
+| Vérification | Résultat |
+|---|---|
+| `pnpm lint`, `pnpm format:check`, `pnpm typecheck` | sans erreur |
+| `pnpm test` | 87 tests réussis : moteur 43 (dont 4 propriétés fast-check), sauvegardes 15, jeu de règles 6, contrats 4, interface 19 |
+| `pnpm test:integration` (API + PostgreSQL 16 réel) | 39 tests réussis (23 de la phase 1, 16 nouveaux) |
+| `pnpm test:e2e` (Playwright, bureau + mobile) | 10 tests réussis |
+| Contrôle par mutation (rejeu idempotent désactivé) | détecté par le test d'idempotence |
+
+Réalisé :
+- **P2-01** : jeu de règles `presidentielle-2027@1.0.0` (paquet `packages/rulesets`) : scrutins annoncés, échéances déduites de leur règle (recalculées par test), sources, paramètres de jeu étiquetés « hypothèse ».
+- **P2-02** : pipeline des 12 étapes dans l'ordre du §2 ; les étapes 3, 4, 7 et 8 sont journalisées « inactives » avec la phase prévue.
+- **P2-03** : 5 ressources entières, 8 actions (coût, prérequis, portée, effets attendus avec incertitude et délai, risque), rejet motivé.
+- **P2-04** : 6 événements fictifs (conditions, probabilité, délai entre occurrences, effets immédiats et différés, choix), décisions obligatoires, événement majeur.
+- **P2-05** : bilan hebdomadaire décomposé en facteurs ; somme des facteurs = variation (propriété testée).
+- **P2-06** : `POST /advance` idempotent (clé obligatoire, rejeu, refus d'une clé réutilisée), verrou optimiste, envois simultanés départagés, sauvegarde automatique hebdomadaire (8 conservées) et avant événement majeur.
+- **P2-07** : export/import JSON versionné, empreinte vérifiée avant migration, import toujours dans une nouvelle partie ; migration du format 1 (phase 1) vers le format 2, à la lecture et à la restauration.
+- **P2-08** : déterminisme vérifié par propriétés (moteur) et de bout en bout (API).
+- **P2-09** : tableau de bord (ressources, décisions, plan d'actions, bilan, calendrier sourcé), écran Journal, sauvegardes automatiques, export et import.
+
+Écarts et limites :
+- Les actions sont envoyées avec la demande de progression (`POST /advance`), et non par une route `POST /actions` séparée : un seul envoi atomique et idempotent par semaine.
+- La partie se **bloque explicitement la semaine du premier tour** (12 avril 2027 pour un départ le 28 septembre 2026, soit 28 semaines) : le scrutin sera résolu par le moteur électoral de la phase 3.
+- Sans candidats ni adversaires, le mode observateur ne fait qu'avancer le temps.
+- Coûts, effets et probabilités ne sont pas calibrés (risque [R-24](./RISQUES.md)).
+- Les règles de financement (plafond des dons, compte de campagne) ne sont pas appliquées : la collecte de dons est un montant agrégé, comme l'indique l'interface (phase 5).
+- Pas encore d'« accélération » sur plusieurs semaines : une semaine par demande.
 
 ### Phase 3 — Présidentielle jouable
 
@@ -209,7 +238,7 @@ Durcissement sécurité (§14), mesure de performance et fixation des seuils (§
 
 | # | Question | Recommandation par défaut | Bloque |
 |---|---|---|---|
-| Q1 | Dates officielles des tours de 2027 | Dates annoncées le 1er juillet 2026 : 18 avril et 2 mai 2027 (samedi dans plusieurs territoires d'outre-mer). Les saisir dans le *ruleset* avec le statut `annoncé` jusqu'à la publication du décret ([SOURCES §4](./SOURCES.md#4-calendrier-de-la-présidentielle-2027)). | phase 2 (non bloquant) |
+| Q1 | Dates officielles des tours de 2027 | **Fait en phase 2** : 18 avril et 2 mai 2027 dans le jeu de règles avec le statut `annonce` ; à passer en `officiel` (nouvelle version du jeu de règles) à la publication du décret ([SOURCES §4](./SOURCES.md#4-calendrier-de-la-présidentielle-2027)). | — |
 | Q2 | Personnalités réelles proposées et politique d'affichage (photos, statut) | Commencer par le mode personnalisé ; profils réels ajoutés un par un, sourcés, sans photo. | phase 3 |
 | Q3 | Millésime géographique et source des contours | COG 2026 (34 875 communes) et IGN ADMIN EXPRESS COG CARTO 2026, Licence Ouverte 2.0 (décision D8). | phase 4 |
 | Q4 | Périmètre du scrutin | Périmètre officiel complet ; COM et Français de l'étranger dans une liste « Hors carte ». | phase 3 |
@@ -220,4 +249,4 @@ Durcissement sécurité (§14), mesure de performance et fixation des seuils (§
 
 ## 6. Prochaine étape
 
-**Phase 2 — simulation hebdomadaire persistante**, après validation de la phase 1.
+**Phase 3 — présidentielle jouable** (candidats, sondages, participation, deux tours), après validation de la phase 2.

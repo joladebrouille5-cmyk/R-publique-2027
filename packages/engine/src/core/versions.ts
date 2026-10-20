@@ -1,11 +1,8 @@
 /** Version du moteur, enregistrée dans chaque partie et chaque sauvegarde (§11). */
-export const ENGINE_VERSION = '0.1.0';
-
-/** Version du format de `GameState` ; toute évolution s'accompagne d'une migration. */
-export const SAVE_SCHEMA_VERSION = 1;
+export const ENGINE_VERSION = '0.2.0';
 
 /**
- * Jeu de règles chargé. Phase 1 : socle sans règles électorales ; le jeu de règles
- * `presidentielle-2027` (dates, parrainages, plafonds) arrive en phase 2.
+ * Version du format de `GameState` ; toute évolution s'accompagne d'une migration
+ * (packages/save-engine). 1 : phase 1 ; 2 : phase 2 (ressources, effets, décisions).
  */
-export const RULESET_VERSION = 'socle@0.1.0';
+export const SAVE_SCHEMA_VERSION = 2;

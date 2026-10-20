@@ -18,13 +18,17 @@ async function request<T>(
   path: string,
   schema: z.ZodType<T>,
   body?: unknown,
+  extraHeaders: Record<string, string> = {},
 ): Promise<T> {
   let response: Response;
   try {
     response = await fetch(path, {
       method,
       credentials: 'same-origin',
-      headers: body === undefined ? {} : { 'content-type': 'application/json' },
+      headers: {
+        ...(body === undefined ? {} : { 'content-type': 'application/json' }),
+        ...extraHeaders,
+      },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
   } catch {
@@ -57,6 +61,20 @@ async function request<T>(
 
 export const api = {
   get: <T>(path: string, schema: z.ZodType<T>) => request('GET', path, schema),
-  post: <T>(path: string, schema: z.ZodType<T>, body: unknown = {}) =>
-    request('POST', path, schema, body),
+  post: <T>(
+    path: string,
+    schema: z.ZodType<T>,
+    body: unknown = {},
+    headers: Record<string, string> = {},
+  ) => request('POST', path, schema, body, headers),
 };
+
+/**
+ * Clé d'idempotence d'une tentative de progression. `crypto.getRandomValues` reste disponible
+ * hors contexte sécurisé (test depuis un téléphone en http sur le réseau local), contrairement
+ * à `crypto.randomUUID`.
+ */
+export function newIdempotencyKey(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}

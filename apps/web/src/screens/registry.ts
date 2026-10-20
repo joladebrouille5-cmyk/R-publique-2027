@@ -15,7 +15,7 @@ export const GAME_SCREENS: readonly GameScreen[] = [
     label: 'Tableau de bord',
     phase: 1,
     available: true,
-    description: 'Date en jeu, semaine, phase et paramètres de la partie.',
+    description: 'Ressources, décisions, plan d’actions, progression et bilan de la semaine.',
   },
   {
     path: 'carte',
@@ -85,7 +85,7 @@ export const GAME_SCREENS: readonly GameScreen[] = [
     path: 'journal',
     label: 'Journal',
     phase: 2,
-    available: false,
+    available: true,
     description: 'Journal hebdomadaire des actions, événements et facteurs explicatifs.',
   },
   {
@@ -93,6 +93,6 @@ export const GAME_SCREENS: readonly GameScreen[] = [
     label: 'Sauvegardes',
     phase: 1,
     available: true,
-    description: 'Sauvegarde manuelle sur cinq emplacements et restauration.',
+    description: 'Sauvegardes manuelles et automatiques, restauration, export et import.',
   },
 ];

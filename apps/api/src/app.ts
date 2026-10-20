@@ -2,9 +2,13 @@ import cookie from '@fastify/cookie';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import { ENGINE_VERSION, SAVE_SCHEMA_VERSION } from '@r2027/engine';
+import { getRuleset, UnknownRulesetError } from '@r2027/rulesets';
 import {
+  AdvanceRequestSchema,
   CreateGameRequestSchema,
   CreateSaveRequestSchema,
+  IDEMPOTENCY_HEADER,
+  IdempotencyKeySchema,
   RestoreSaveRequestSchema,
   type ApiError,
   type HealthResponse,
@@ -14,14 +18,11 @@ import { z, ZodError } from 'zod';
 import type { Config } from './config';
 import type { Database } from './db';
 import { HttpError } from './errors';
-import {
-  createManualSave,
-  createNewGame,
-  getGame,
-  listGames,
-  listSaves,
-  restoreSave,
-} from './services/games';
+import { advanceGame } from './services/advance';
+import { exportGame, importGame } from './services/exchange';
+import { createNewGame, getGame, listGames } from './services/games';
+import { journalPage } from './services/journal';
+import { createManualSave, listSaves, restoreSave } from './services/saves';
 import { resolveUserId } from './session';
 import { API_VERSION } from './version';
 
@@ -32,6 +33,10 @@ export type AppOptions = {
 
 const GameParams = z.object({ gameId: z.uuid() });
 const SaveParams = z.object({ gameId: z.uuid(), saveId: z.uuid() });
+const JournalQuery = z.object({
+  before: z.iso.datetime().optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+});
 const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 const BODY_LIMIT_BYTES = 1024 * 1024;
 
@@ -74,6 +79,10 @@ export async function buildApp({ config, db }: AppOptions): Promise<FastifyInsta
       return reply
         .code(400)
         .send(errorBody('requete_invalide', 'Requête invalide.', z.treeifyError(error)));
+    }
+    if (error instanceof UnknownRulesetError) {
+      request.log.error({ err: error }, error.message);
+      return reply.code(500).send(errorBody('regles_inconnues', error.message));
     }
     if (error instanceof HttpError) {
       if (error.statusCode >= 500) request.log.error({ err: error }, error.message);
@@ -123,6 +132,49 @@ export async function buildApp({ config, db }: AppOptions): Promise<FastifyInsta
   app.get('/api/games/:gameId', async (request, reply) => {
     const { gameId } = GameParams.parse(request.params);
     return getGame(db, await userOf(request, reply), gameId);
+  });
+
+  app.post('/api/games/import', async (request, reply) => {
+    const game = await importGame(db, await userOf(request, reply), request.body);
+    return reply.code(201).send(game);
+  });
+
+  app.post('/api/games/:gameId/advance', async (request, reply) => {
+    const { gameId } = GameParams.parse(request.params);
+    const key = IdempotencyKeySchema.safeParse(request.headers[IDEMPOTENCY_HEADER]);
+    if (!key.success) {
+      throw new HttpError(400, 'cle_idempotence_requise', key.error.issues[0]!.message);
+    }
+    const body = AdvanceRequestSchema.parse(request.body);
+    const outcome = await advanceGame(db, await userOf(request, reply), gameId, key.data, body);
+    if (outcome.replayed) reply.header('idempotent-replay', 'true');
+    return outcome.response;
+  });
+
+  app.get('/api/games/:gameId/journal', async (request, reply) => {
+    const { gameId } = GameParams.parse(request.params);
+    const query = JournalQuery.parse(request.query);
+    return journalPage(db, await userOf(request, reply), gameId, query);
+  });
+
+  app.get('/api/games/:gameId/export', async (request, reply) => {
+    const { gameId } = GameParams.parse(request.params);
+    const { fileName, document } = await exportGame(db, await userOf(request, reply), gameId);
+    return reply
+      .header('content-disposition', `attachment; filename="${fileName}"`)
+      .header('cache-control', 'no-store')
+      .send(document);
+  });
+
+  app.get('/api/rulesets/:key', async (request) => {
+    const { key } = z.object({ key: z.string().min(1).max(100) }).parse(request.params);
+    try {
+      return getRuleset(key);
+    } catch (error) {
+      if (error instanceof UnknownRulesetError)
+        throw new HttpError(404, 'introuvable', error.message);
+      throw error;
+    }
   });
 
   app.get('/api/games/:gameId/saves', async (request, reply) => {

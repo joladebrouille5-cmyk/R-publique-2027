@@ -1,0 +1,530 @@
+{
+  "id": "presidentielle-2027",
+  "version": "1.0.0",
+  "libelle": "Élection présidentielle 2027",
+  "verifieLe": "2026-10-20",
+  "sources": {
+    "elysee-cm-2026-07-01": {
+      "titre": "Compte rendu du Conseil des ministres du mercredi 1er juillet 2026 — communication relative au calendrier électoral 2027",
+      "url": "https://www.elysee.fr/emmanuel-macron/2026/07/01/compte-rendu-du-conseil-des-ministres-du-mercredi-1er-juillet-2026",
+      "consulteLe": "2026-10-20"
+    },
+    "cnccfp-guide-2027": {
+      "titre": "CNCCFP — Guide à l'usage des candidats à l'élection du Président de la République 2027",
+      "url": "https://cnccfp.fr/wp-content/uploads/2026/04/Guide-a-lusage-des-candidats-a-lelection-du-President-de-la-Republique-2027.pdf",
+      "consulteLe": "2026-10-20"
+    },
+    "conception-du-jeu": {
+      "titre": "Paramètres de conception du jeu RÉPUBLIQUE 2027 (hypothèses, sans valeur officielle)",
+      "url": null,
+      "consulteLe": null
+    }
+  },
+  "calendrier": {
+    "scrutins": [
+      {
+        "id": "presidentielle-2027-t1",
+        "libelle": "Premier tour de l'élection présidentielle",
+        "date": "2027-04-18",
+        "statut": "annonce",
+        "sourceId": "elysee-cm-2026-07-01",
+        "votentLaVeille": ["971", "972", "973", "975", "977", "978", "987"]
+      },
+      {
+        "id": "presidentielle-2027-t2",
+        "libelle": "Second tour de l'élection présidentielle",
+        "date": "2027-05-02",
+        "statut": "annonce",
+        "sourceId": "elysee-cm-2026-07-01",
+        "votentLaVeille": ["971", "972", "973", "975", "977", "978", "987"]
+      }
+    ],
+    "echeances": [
+      {
+        "id": "presentation-candidatures",
+        "libelle": "Date limite de présentation des candidatures (parrainages) au Conseil constitutionnel",
+        "date": "2027-03-12",
+        "heure": "18:00",
+        "statut": "deduit",
+        "regle": "Sixième vendredi précédant le premier tour, à dix-huit heures (I de l'article 3 de la loi du 6 novembre 1962)",
+        "sourceId": "cnccfp-guide-2027"
+      },
+      {
+        "id": "depot-comptes-campagne",
+        "libelle": "Date limite de dépôt des comptes de campagne à la CNCCFP",
+        "date": "2027-07-02",
+        "heure": "18:00",
+        "statut": "deduit",
+        "regle": "Onzième vendredi suivant le premier tour, à dix-huit heures",
+        "sourceId": "cnccfp-guide-2027"
+      }
+    ]
+  },
+  "jeu": {
+    "statut": "hypothese",
+    "sourceId": "conception-du-jeu",
+    "tempsHebdomadaireHeures": 70,
+    "actionsMaxParSemaine": 8,
+    "evenementsMaxParSemaine": 2,
+    "ressourcesInitiales": {
+      "accessible": {
+        "budgetCentimes": 150000000,
+        "militants": 800,
+        "notoriete": 1200,
+        "popularite": 3500
+      },
+      "standard": {
+        "budgetCentimes": 80000000,
+        "militants": 400,
+        "notoriete": 600,
+        "popularite": 3000
+      },
+      "expert": {
+        "budgetCentimes": 40000000,
+        "militants": 150,
+        "notoriete": 300,
+        "popularite": 2500
+      }
+    },
+    "opinion": {
+      "erosionNotoriete": 0.01,
+      "popularite": { "reference": 3000, "rappel": 0.05 },
+      "attritionMilitants": 0.01
+    }
+  },
+  "actions": [
+    {
+      "id": "meeting",
+      "libelle": "Meeting public",
+      "description": "Grand rassemblement avec discours du candidat.",
+      "portee": "regionale",
+      "cout": { "budgetCentimes": 3000000, "tempsHeures": 8 },
+      "prerequis": { "militantsMin": 50 },
+      "effets": [
+        {
+          "ressource": "notoriete",
+          "base": 60,
+          "ecart": 30,
+          "delaiSemaines": 0,
+          "saturation": true
+        },
+        {
+          "ressource": "militants",
+          "base": 15,
+          "ecart": 10,
+          "delaiSemaines": 0,
+          "saturation": false
+        }
+      ],
+      "risque": {
+        "probabilite": 0.05,
+        "libelle": "Incident lors du meeting",
+        "effets": [
+          {
+            "ressource": "popularite",
+            "base": -80,
+            "ecart": 40,
+            "delaiSemaines": 0,
+            "saturation": false
+          }
+        ]
+      },
+      "note": null
+    },
+    {
+      "id": "tournee",
+      "libelle": "Tournée de terrain (3 jours)",
+      "description": "Déplacements, marchés et rencontres avec les habitants.",
+      "portee": "locale",
+      "cout": { "budgetCentimes": 1500000, "tempsHeures": 24 },
+      "prerequis": { "militantsMin": 0 },
+      "effets": [
+        {
+          "ressource": "popularite",
+          "base": 40,
+          "ecart": 30,
+          "delaiSemaines": 0,
+          "saturation": true
+        },
+        {
+          "ressource": "notoriete",
+          "base": 30,
+          "ecart": 20,
+          "delaiSemaines": 0,
+          "saturation": true
+        }
+      ],
+      "risque": {
+        "probabilite": 0.03,
+        "libelle": "Accueil hostile",
+        "effets": [
+          {
+            "ressource": "popularite",
+            "base": -50,
+            "ecart": 30,
+            "delaiSemaines": 0,
+            "saturation": false
+          }
+        ]
+      },
+      "note": null
+    },
+    {
+      "id": "interview",
+      "libelle": "Interview dans un média national",
+      "description": "Entretien d'une heure en direct ; effet sur l'image très incertain.",
+      "portee": "nationale",
+      "cout": { "budgetCentimes": 0, "tempsHeures": 3 },
+      "prerequis": { "militantsMin": 0 },
+      "effets": [
+        {
+          "ressource": "notoriete",
+          "base": 80,
+          "ecart": 60,
+          "delaiSemaines": 0,
+          "saturation": true
+        },
+        {
+          "ressource": "popularite",
+          "base": 0,
+          "ecart": 60,
+          "delaiSemaines": 0,
+          "saturation": true
+        }
+      ],
+      "risque": {
+        "probabilite": 0.08,
+        "libelle": "Petite phrase reprise en boucle",
+        "effets": [
+          {
+            "ressource": "popularite",
+            "base": -100,
+            "ecart": 50,
+            "delaiSemaines": 0,
+            "saturation": false
+          }
+        ]
+      },
+      "note": "Les médias seront modélisés individuellement (portée, audience, crédibilité) en phase 5."
+    },
+    {
+      "id": "numerique",
+      "libelle": "Campagne numérique ciblée",
+      "description": "Vidéos et publications sponsorisées ; effet visible la semaine suivante.",
+      "portee": "nationale",
+      "cout": { "budgetCentimes": 2000000, "tempsHeures": 2 },
+      "prerequis": { "militantsMin": 0 },
+      "effets": [
+        {
+          "ressource": "notoriete",
+          "base": 50,
+          "ecart": 25,
+          "delaiSemaines": 1,
+          "saturation": true
+        }
+      ],
+      "risque": null,
+      "note": null
+    },
+    {
+      "id": "recrutement",
+      "libelle": "Opération de recrutement de militants",
+      "description": "Réunions d'accueil et relances ; nouveaux militants actifs la semaine suivante.",
+      "portee": "locale",
+      "cout": { "budgetCentimes": 500000, "tempsHeures": 4 },
+      "prerequis": { "militantsMin": 0 },
+      "effets": [
+        {
+          "ressource": "militants",
+          "base": 60,
+          "ecart": 30,
+          "delaiSemaines": 1,
+          "saturation": false
+        }
+      ],
+      "risque": null,
+      "note": null
+    },
+    {
+      "id": "collecte",
+      "libelle": "Soirée de collecte de dons",
+      "description": "Dîner de soutien avec des sympathisants.",
+      "portee": "locale",
+      "cout": { "budgetCentimes": 200000, "tempsHeures": 6 },
+      "prerequis": { "militantsMin": 0 },
+      "effets": [
+        {
+          "ressource": "budgetCentimes",
+          "base": 3000000,
+          "ecart": 1500000,
+          "delaiSemaines": 0,
+          "saturation": false
+        }
+      ],
+      "risque": {
+        "probabilite": 0.02,
+        "libelle": "Don irrégulier à rembourser",
+        "effets": [
+          {
+            "ressource": "budgetCentimes",
+            "base": -500000,
+            "ecart": 0,
+            "delaiSemaines": 0,
+            "saturation": false
+          }
+        ]
+      },
+      "note": "Montant agrégé de nombreux dons individuels. Les règles de financement (plafond de 4 600 € par personne, interdiction des personnes morales, compte de campagne) seront appliquées en phase 5."
+    },
+    {
+      "id": "porte-a-porte",
+      "libelle": "Porte-à-porte",
+      "description": "Les militants vont à la rencontre des électeurs ; nécessite une équipe déjà constituée.",
+      "portee": "locale",
+      "cout": { "budgetCentimes": 0, "tempsHeures": 4 },
+      "prerequis": { "militantsMin": 100 },
+      "effets": [
+        {
+          "ressource": "popularite",
+          "base": 25,
+          "ecart": 20,
+          "delaiSemaines": 0,
+          "saturation": true
+        },
+        { "ressource": "militants", "base": 5, "ecart": 5, "delaiSemaines": 0, "saturation": false }
+      ],
+      "risque": null,
+      "note": null
+    },
+    {
+      "id": "elus-locaux",
+      "libelle": "Rencontre avec des élus locaux",
+      "description": "Échanges avec des maires et conseillers ; les promesses de parrainage seront suivies en phase 5.",
+      "portee": "regionale",
+      "cout": { "budgetCentimes": 300000, "tempsHeures": 6 },
+      "prerequis": { "militantsMin": 0 },
+      "effets": [
+        {
+          "ressource": "notoriete",
+          "base": 15,
+          "ecart": 10,
+          "delaiSemaines": 0,
+          "saturation": true
+        }
+      ],
+      "risque": null,
+      "note": "Les parrainages (promesses, intentions, présentations reçues et validées) arrivent en phase 5."
+    }
+  ],
+  "evenements": [
+    {
+      "id": "portrait-presse",
+      "libelle": "Portrait dans la presse régionale",
+      "description": "Un quotidien régional consacre une page à votre parcours.",
+      "nature": "fictif",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.08,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 4,
+      "occurrencesMax": null,
+      "effets": [
+        {
+          "ressource": "notoriete",
+          "base": 60,
+          "ecart": 30,
+          "delaiSemaines": 0,
+          "saturation": true
+        }
+      ],
+      "choix": [],
+      "choixParDefaut": null
+    },
+    {
+      "id": "elan-de-dons",
+      "libelle": "Élan de dons après une intervention remarquée",
+      "description": "De nombreux sympathisants font un petit don en ligne.",
+      "nature": "fictif",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.04,
+      "conditions": [{ "ressource": "popularite", "min": 2500, "max": null }],
+      "delaiMinEntreOccurrences": 6,
+      "occurrencesMax": null,
+      "effets": [
+        {
+          "ressource": "budgetCentimes",
+          "base": 2500000,
+          "ecart": 1000000,
+          "delaiSemaines": 0,
+          "saturation": false
+        }
+      ],
+      "choix": [],
+      "choixParDefaut": null
+    },
+    {
+      "id": "depart-militants",
+      "libelle": "Départ d'un groupe de militants",
+      "description": "Un groupe local, en désaccord avec la stratégie, quitte la campagne.",
+      "nature": "fictif",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.05,
+      "conditions": [{ "ressource": "militants", "min": 150, "max": null }],
+      "delaiMinEntreOccurrences": 6,
+      "occurrencesMax": null,
+      "effets": [
+        {
+          "ressource": "militants",
+          "base": -30,
+          "ecart": 15,
+          "delaiSemaines": 0,
+          "saturation": false
+        }
+      ],
+      "choix": [],
+      "choixParDefaut": null
+    },
+    {
+      "id": "greve-transports",
+      "libelle": "Grève des transports",
+      "description": "Les déplacements de la semaine prochaine seront plus difficiles.",
+      "nature": "fictif",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.03,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 8,
+      "occurrencesMax": null,
+      "effets": [
+        {
+          "ressource": "tempsHeures",
+          "base": -10,
+          "ecart": 0,
+          "delaiSemaines": 1,
+          "saturation": false
+        }
+      ],
+      "choix": [],
+      "choixParDefaut": null
+    },
+    {
+      "id": "polemique-reseaux",
+      "libelle": "Polémique sur les réseaux sociaux",
+      "description": "Une ancienne publication de votre équipe est exhumée et commentée.",
+      "nature": "fictif",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.06,
+      "conditions": [{ "ressource": "notoriete", "min": 800, "max": null }],
+      "delaiMinEntreOccurrences": 6,
+      "occurrencesMax": null,
+      "effets": [],
+      "choix": [
+        {
+          "id": "repondre",
+          "libelle": "Répondre publiquement",
+          "description": "Assumer et contre-attaquer : plus d'exposition, image incertaine.",
+          "effets": [
+            {
+              "ressource": "notoriete",
+              "base": 40,
+              "ecart": 20,
+              "delaiSemaines": 0,
+              "saturation": true
+            },
+            {
+              "ressource": "popularite",
+              "base": -40,
+              "ecart": 60,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        },
+        {
+          "id": "ignorer",
+          "libelle": "Laisser passer",
+          "description": "Ne rien dire : la polémique s'éteint lentement.",
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -60,
+              "ecart": 30,
+              "delaiSemaines": 1,
+              "saturation": false
+            }
+          ]
+        },
+        {
+          "id": "excuses",
+          "libelle": "Présenter des excuses",
+          "description": "Calmer le jeu, au prix d'un malaise chez certains militants.",
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -20,
+              "ecart": 20,
+              "delaiSemaines": 0,
+              "saturation": false
+            },
+            {
+              "ressource": "militants",
+              "base": -10,
+              "ecart": 5,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        }
+      ],
+      "choixParDefaut": "ignorer"
+    },
+    {
+      "id": "crise-equipe",
+      "libelle": "Crise au sein de l'équipe de campagne",
+      "description": "Deux responsables de la campagne s'opposent publiquement sur la stratégie.",
+      "nature": "fictif",
+      "majeur": true,
+      "probabiliteHebdomadaire": 0.025,
+      "conditions": [{ "ressource": "militants", "min": 200, "max": null }],
+      "delaiMinEntreOccurrences": 10,
+      "occurrencesMax": 2,
+      "effets": [],
+      "choix": [
+        {
+          "id": "trancher",
+          "libelle": "Trancher et écarter les responsables",
+          "description": "Fin rapide de la crise, mais des départs.",
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -30,
+              "ecart": 20,
+              "delaiSemaines": 0,
+              "saturation": false
+            },
+            {
+              "ressource": "militants",
+              "base": -40,
+              "ecart": 20,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        },
+        {
+          "id": "mediation",
+          "libelle": "Organiser une médiation",
+          "description": "Préserver l'équipe, au prix de temps pris la semaine suivante.",
+          "effets": [
+            {
+              "ressource": "tempsHeures",
+              "base": -20,
+              "ecart": 0,
+              "delaiSemaines": 1,
+              "saturation": false
+            }
+          ]
+        }
+      ],
+      "choixParDefaut": "mediation"
+    }
+  ]
+}

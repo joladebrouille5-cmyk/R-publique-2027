@@ -1,6 +1,6 @@
 # Modèle de données — RÉPUBLIQUE 2027
 
-> Statut : **phase 1 réalisée** pour les tables techniques (`User`, `Game`, `GameSave`, `GameAction`, `GameEvent`, `SimulationLog`) — schéma réel : [`apps/api/prisma/schema.prisma`](../apps/api/prisma/schema.prisma). Le reste du schéma ci-dessous reste indicatif et sera complété phase par phase.
+> Statut : **phases 1 et 2 réalisées** pour les tables techniques (`User`, `Game`, `GameSave`, `GameAdvance`, `GameAction`, `GameEvent`, `SimulationLog`) — schéma réel : [`apps/api/prisma/schema.prisma`](../apps/api/prisma/schema.prisma) ; état de partie réel (format 2) : [`packages/shared/src/game.ts`](../packages/shared/src/game.ts). Le reste du schéma ci-dessous reste indicatif et sera complété phase par phase.
 > Voir aussi [ARCHITECTURE.md §7](./ARCHITECTURE.md#7-persistance-et-sauvegardes-12).
 
 ## 1. Principe : trois familles de données
@@ -57,6 +57,8 @@ Stocker des valeurs par commune dans chaque instantané hebdomadaire serait proh
 - sauvegardes automatiques : conservation des N dernières semaines + toutes les sauvegardes manuelles + sauvegardes « avant événement majeur » ; les semaines intermédiaires se reconstruisent en rejouant le journal d'actions (déterminisme).
 
 ## 4. Esquisse du schéma `GameState` (Zod, `packages/shared`)
+
+> Phase 2 : le format 2 réellement implémenté contient `meta`, `player`, `actors` (campagne du joueur et ses ressources), `scheduled` (effets différés), `pendingDecisions`, `eventHistory` et `calendar` (blocage avant scrutin). L'aléa n'est plus stocké : il est dérivé de la graine. L'esquisse ci-dessous décrit la cible des phases suivantes.
 
 ```ts
 type GameState = {
@@ -154,19 +156,30 @@ model GameSave {
   @@index([gameId, week])
 }
 
+model GameAdvance {                                // progression idempotente (phase 2)
+  id             String   @id @default(uuid())
+  gameId         String
+  idempotencyKey String
+  requestHash    String                           // même clé + autre requête ⇒ refus
+  fromWeek       Int
+  toWeek         Int
+  response       Json                             // rejouée telle quelle
+  @@unique([gameId, idempotencyKey])
+}
+
 model GameAction {
   id              String       @id @default(uuid())
   gameId          String
   game            Game         @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  advanceId       String                         // progression qui l'a résolue
   week            Int
+  position        Int                            // ordre dans le plan de la semaine
   actorId         String                         // joueur ou adversaire IA
   type            String
   payload         Json
   status          ActionStatus
   rejectionReason String?
-  idempotencyKey  String?
   createdAt       DateTime     @default(now())
-  @@unique([gameId, idempotencyKey])
   @@index([gameId, week])
 }
 
@@ -392,5 +405,5 @@ model EconomicIndicator {
 - `Σ voix = exprimes`, `votants = blancs + nuls + exprimes`, `inscrits ≥ votants`, valeurs ≥ 0.
 - Agrégat d'un niveau = somme exacte des enfants inclus dans le périmètre.
 - Chaque `Territory` de type `commune` avec `mapped = true` a une et une seule géométrie (contrôlé à l'import).
-- Les tables d'historique (`GameAction`, `GameEvent`, `SimulationLog`, `ElectoralResult*`) ne sont jamais modifiées après écriture. Depuis la phase 1, des déclencheurs PostgreSQL refusent toute mise à jour de `game_action`, `game_event` et `simulation_log` (testé).
+- Les tables d'historique (`GameAction`, `GameEvent`, `SimulationLog`, `ElectoralResult*`) ne sont jamais modifiées après écriture. Depuis la phase 1, des déclencheurs PostgreSQL refusent toute mise à jour de `game_action`, `game_event` et `simulation_log`, et depuis la phase 2 de `game_advance` (testé).
 - `Game.stateHash` = SHA-256 de la sérialisation canonique de `Game.state`.

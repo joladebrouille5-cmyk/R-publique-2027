@@ -1,4 +1,4 @@
-// Schéma de la phase 1 : tables techniques des parties, sauvegardes et journaux.
+// Tables techniques des parties, sauvegardes, progressions et journaux (phases 1 et 2).
 // Voir docs/MODELE_DONNEES.md pour le modèle complet visé.
 
 generator client {
@@ -74,6 +74,7 @@ model Game {
   createdAt         DateTime        @default(now()) @map("created_at")
   updatedAt         DateTime        @updatedAt @map("updated_at")
   saves             GameSave[]
+  advances          GameAdvance[]
   actions           GameAction[]
   events            GameEvent[]
   logs              SimulationLog[]
@@ -103,21 +104,43 @@ model GameSave {
   @@map("game_save")
 }
 
+/// Progression d'une semaine (`POST /advance`). La clé d'idempotence garantit qu'un même
+/// envoi répété ne fait avancer la partie qu'une fois : la réponse enregistrée est rejouée.
+model GameAdvance {
+  id             String       @id @default(uuid()) @db.Uuid
+  gameId         String       @map("game_id") @db.Uuid
+  game           Game         @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  idempotencyKey String       @map("idempotency_key")
+  /// Empreinte de la requête : une même clé réutilisée pour une autre requête est refusée.
+  requestHash    String       @map("request_hash")
+  fromWeek       Int          @map("from_week")
+  toWeek         Int          @map("to_week")
+  response       Json
+  createdAt      DateTime     @default(now()) @map("created_at")
+  actions        GameAction[]
+
+  @@unique([gameId, idempotencyKey])
+  @@map("game_advance")
+}
+
 model GameAction {
   id              String       @id @default(uuid()) @db.Uuid
   gameId          String       @map("game_id") @db.Uuid
   game            Game         @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  advanceId       String       @map("advance_id") @db.Uuid
+  advance         GameAdvance  @relation(fields: [advanceId], references: [id], onDelete: Cascade)
   week            Int
+  /// Position de l'action dans le plan soumis pour la semaine.
+  position        Int
   actorId         String       @map("actor_id")
   type            String
   payload         Json
   status          ActionStatus
   rejectionReason String?      @map("rejection_reason")
-  idempotencyKey  String?      @map("idempotency_key")
   createdAt       DateTime     @default(now()) @map("created_at")
 
-  @@unique([gameId, idempotencyKey])
   @@index([gameId, week])
+  @@index([advanceId])
   @@map("game_action")
 }
 
@@ -132,6 +155,7 @@ model GameEvent {
   createdAt DateTime   @default(now()) @map("created_at")
 
   @@index([gameId, week])
+  @@index([gameId, createdAt])
   @@map("game_event")
 }
 
