@@ -201,7 +201,7 @@ La jointure géométrie ⇄ résultats se fait **côté client par `feature-stat
 
 ### 5.2 Métropole et encarts DROM
 
-- **Carte principale** : métropole (dont Corse — codes `2A`/`2B`, chaînes et non nombres), zoom, déplacement, sélection, rendu vectoriel.
+- **Carte principale** : métropole (dont Corse — codes `2A`/`2B`, chaînes et non nombres), zoom, déplacement, sélection, rendu vectoriel. Unité communale = les **34 875 communes du COG 2026** ; Paris, Lyon et Marseille sont représentées par leur commune parente, car les résultats 2022 par commune n'ont qu'une ligne par ville (les arrondissements sont exclus de la couche communale).
 - **Encarts DROM** : Guadeloupe (971), Martinique (972), Guyane (973), La Réunion (974), Mayotte (976). Chaque encart est une **instance MapLibre indépendante** avec ses propres limites (`maxBounds`), ses communes sélectionnables et la même source de résultats. Ce ne sont pas des points (cf. guide, étape 6).
   - **PC** : bandeau de 5 mini-cartes interactives sous ou à côté de la carte principale.
   - **Mobile** : bandeau de vignettes ; toucher une vignette ouvre l'encart en plein écran. Une seule carte DROM active à la fois sur mobile pour limiter les contextes WebGL et la mémoire.
@@ -222,7 +222,7 @@ La jointure géométrie ⇄ résultats se fait **côté client par `feature-stat
 
 ### 5.4 Pipeline géographique (`packages/data-import`)
 
-1. Télécharger les contours communaux du millésime retenu (source et licence : voir [SOURCES](./SOURCES.md)) ; enregistrer URL, date, licence, empreinte SHA-256, version de l'importeur.
+1. Télécharger les contours communaux du millésime retenu — proposition : IGN ADMIN EXPRESS COG CARTO 2026, Licence Ouverte 2.0 (décision D8, détails dans [SOURCES §2.2](./SOURCES.md#22-contours-communaux)) ; enregistrer URL, date, licence, empreinte SHA-256, version de l'importeur.
 2. Valider contre le Code officiel géographique (COG) INSEE du même millésime : **chaque commune du COG a exactement une géométrie** et inversement ; sinon l'import échoue (aucune attribution silencieuse, §3.1).
 3. Simplifier à plusieurs niveaux (ex. `mapshaper`, disponible sur npm) ; dériver départements et régions par fusion des communes pour garantir l'emboîtement exact.
 4. Générer les tuiles (PMTiles via `tippecanoe`, à installer ou exécuter via Docker en CI) **ou** des fichiers GeoJSON/TopoJSON par département chargés à la demande. Choix arrêté au spike de phase 4 après mesure (taille transférée, temps de rendu sur mobile).
@@ -231,7 +231,8 @@ La jointure géométrie ⇄ résultats se fait **côté client par `feature-stat
 ### 5.5 Contraintes connues
 
 - Aucun fond de carte tiers n'est requis : la carte choroplèthe se suffit à elle-même (critère 14 « sans clé API payante »). Un fond OSM optionnel pourra être ajouté plus tard si sa licence et son hébergement le permettent.
-- Les codes du ministère de l'Intérieur pour l'outre-mer et l'étranger diffèrent des codes INSEE : une table de correspondance explicite et testée est requise (voir [RISQUES](./RISQUES.md) R-03).
+- Les codes du ministère de l'Intérieur pour l'outre-mer et l'étranger diffèrent des codes INSEE (`ZA`…`ZM` pour les DROM, `ZZ` pour l'étranger, `ZN`, `ZP`, `ZS`, `ZW`, `ZX` pour les COM — vérifié sur les fichiers 2022, voir [SOURCES §3.1](./SOURCES.md#31-présidentielle-2022-par-commune-ministère-de-lintérieur-datagouvfr)) : une table de correspondance explicite et testée est requise ([RISQUES](./RISQUES.md) R-03).
+- Les tours de 2027 ont lieu le **samedi** dans plusieurs territoires d'outre-mer : la date de scrutin est portée par territoire dans le *ruleset*.
 
 ---
 
@@ -353,4 +354,5 @@ Les versions exactes seront figées par le *lockfile* en phase 1.
 | D4 | Voix entières par plus fort reste, agrégats = sommes | arrondis indépendants par niveau | Garantit l'égalité exacte des totaux (§3.3). |
 | D5 | Encarts DROM = instances MapLibre indépendantes | DROM déplacés sur la carte principale | Exigence « mini-cartes interactives indépendantes » (§3.2). |
 | D6 | Pas de fond de carte externe | fond de carte d'un service tiers | Pas de clé API (critère 14), hors ligne. |
-| D7 | Tuiles PMTiles **ou** GeoJSON par département | GeoJSON national unique | Le fichier national des ~35 000 communes est trop lourd pour un téléphone ; arbitrage au spike phase 4. |
+| D7 | Tuiles PMTiles **ou** GeoJSON par département | GeoJSON national unique | Le GeoJSON communal national pèse 32,5 Mo (8,2 Mo compressé) en simplification 100 m : trop lourd pour un téléphone ; arbitrage au spike phase 4. |
+| D8 | Contours IGN ADMIN EXPRESS COG CARTO 2026 (Licence Ouverte 2.0), simplifiés par nos soins | contours Etalab (ODbL) | Pas d'obligation de partage à l'identique ; mêmes géométries IGN pour la métropole et les DROM. Etalab reste utilisable pour le spike. |

@@ -34,7 +34,7 @@
 | Domaine | Résultat |
 |---|---|
 | `registry.npmjs.org` | accessible |
-| `www.insee.fr`, `etalab-datasets.geo.data.gouv.fr`, `cadastre.data.gouv.fr` | accessibles |
+| `www.insee.fr`, `data.geopf.fr` (IGN), `etalab-datasets.geo.data.gouv.fr` (intermittent), `cadastre.data.gouv.fr` | accessibles |
 | `www.assemblee-nationale.fr`, `data.assemblee-nationale.fr`, `www.senat.fr`, `api.github.com` | accessibles |
 | `www.cnccfp.fr`, `www.banque-france.fr`, `www.service-public.fr` | redirection (301) |
 | `www.data.gouv.fr`, `geo.api.gouv.fr`, `www.conseil-constitutionnel.fr` | **inaccessibles** (connexion coupée) |
@@ -94,7 +94,7 @@ La numérotation suit le §16 du cahier des charges. La « phase 7 — Finalisat
 - [x] Auditer le dépôt et les outils ; constater l'absence de tests existants.
 - [x] Vérifier l'accès réseau aux sources officielles.
 - [x] Produire `ARCHITECTURE.md`, `MODELE_DONNEES.md`, `SOURCES.md`, `RISQUES.md`, ce plan.
-- [ ] **Validation par le porteur du projet** des décisions D1–D7 ([ARCHITECTURE §13](./ARCHITECTURE.md#13-décisions-darchitecture-à-valider)) et des [questions ouvertes](#5-questions-ouvertes).
+- [ ] **Validation par le porteur du projet** des décisions D1–D8 ([ARCHITECTURE §13](./ARCHITECTURE.md#13-décisions-darchitecture-à-valider)) et des [questions ouvertes](#5-questions-ouvertes).
 
 **Livrable** : plan documenté (§16).
 
@@ -152,7 +152,7 @@ La numérotation suit le §16 du cahier des charges. La « phase 7 — Finalisat
 |---|---|---|
 | P4-01 | **Spike mesuré** : PMTiles vs GeoJSON par département sur un téléphone émulé (taille transférée, premier rendu, mémoire). Décision consignée dans `ARCHITECTURE.md`. | rapport de mesure. |
 | P4-02 | `data-import` : COG INSEE du millésime retenu, contours communaux (métropole + 971, 972, 973, 974, 976), métadonnées `DataImport` complètes. | l'import échoue si une commune n'a pas exactement une géométrie. |
-| P4-03 | Import des résultats présidentiels 2022 par commune (deux tours), table de correspondance des codes Intérieur ⇄ INSEE, tables de passage géographiques. | Σ communes = totaux officiels publiés (à l'unité, pour le périmètre importé). |
+| P4-03 | Import des résultats présidentiels 2022 par commune (deux tours ; Latin-1, `;`, blocs de candidats répétés), table de correspondance des codes Intérieur ⇄ INSEE, tables de passage COG 2022 → COG retenu (fusions et scissions). | Σ des lignes = totaux proclamés par le Conseil constitutionnel ([SOURCES §3.2](./SOURCES.md#32-totaux-nationaux-officiels-2022-contrôle-dagrégation)), à l'unité ; tout écart documenté. |
 | P4-04 | Jeu de démonstration hors ligne réduit, commité. | jeu jouable sans réseau. |
 | P4-05 | Carte métropole : zoom, déplacement, sélection, niveaux commune / département / région. | Playwright. |
 | P4-06 | Cinq encarts DROM interactifs (instances indépendantes), bandeau PC, plein écran mobile. | Playwright : ouvrir chaque encart, sélectionner une commune. |
@@ -189,13 +189,14 @@ Durcissement sécurité (§14), mesure de performance et fixation des seuils (§
 
 | # | Question | Recommandation par défaut | Bloque |
 |---|---|---|---|
-| Q1 | Dates officielles des tours de 2027 | Paramètres de *ruleset* marqués « à confirmer » jusqu'au décret de convocation ; voir [SOURCES](./SOURCES.md). | phase 2 (non bloquant) |
+| Q1 | Dates officielles des tours de 2027 | Dates annoncées le 1er juillet 2026 : 18 avril et 2 mai 2027 (samedi dans plusieurs territoires d'outre-mer). Les saisir dans le *ruleset* avec le statut `annoncé` jusqu'à la publication du décret ([SOURCES §4](./SOURCES.md#4-calendrier-de-la-présidentielle-2027)). | phase 2 (non bloquant) |
 | Q2 | Personnalités réelles proposées et politique d'affichage (photos, statut) | Commencer par le mode personnalisé ; profils réels ajoutés un par un, sourcés, sans photo. | phase 3 |
-| Q3 | Millésime géographique de référence | Dernier COG publié à la date de l'import. | phase 4 |
+| Q3 | Millésime géographique et source des contours | COG 2026 (34 875 communes) et IGN ADMIN EXPRESS COG CARTO 2026, Licence Ouverte 2.0 (décision D8). | phase 4 |
 | Q4 | Périmètre du scrutin | Périmètre officiel complet ; COM et Français de l'étranger dans une liste « Hors carte ». | phase 3 |
 | Q5 | Comptes utilisateurs | Session anonyme par cookie en phase 1 ; comptes plus tard si mise en ligne publique. | phase 1 (non bloquant) |
 | Q6 | Hébergeur | Choix avant la phase 8. | phase 8 |
 | Q7 | Accès réseau aux domaines publics dans l'environnement cloud | Autoriser `www.data.gouv.fr`, `static.data.gouv.fr`, `object.files.data.gouv.fr`, `geo.api.gouv.fr` (au minimum) ; sinon exécuter les imports en local. | phase 4 |
+| Q8 | Réutilisation des résultats 2022 (licence non précisée sur data.gouv.fr) | Clarifier avant de commiter des données dérivées ; à défaut, démo synthétique `fictif`. | phase 4 |
 
 ## 6. Prochaine étape
 
