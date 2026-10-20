@@ -56,6 +56,8 @@ export const DepartementInfoSchema = z
     region: Code,
     zone: MapZoneSchema,
     communes: z.number().int().positive(),
+    /** Population légale totale des communes (INSEE, via ADMIN EXPRESS). */
+    population: z.number().int().nonnegative(),
     bbox: BBox,
     /** Fichier TopoJSON des communes du département, relatif au manifeste ; null hors du jeu de démonstration. */
     fichier: z.string().min(1).nullable(),

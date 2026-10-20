@@ -31,6 +31,8 @@ type Searchable = { result: TerritorySearchResult; name: string; rank: number };
 /** Référentiel chargé en mémoire : manifeste, index de recherche et fichiers servis (compressés). */
 export class GeoRepository {
   readonly manifest: GeoManifest;
+  /** Index des communes : [code, nom, département, région, emprise…]. */
+  readonly index: CommuneIndexEntry[];
   private readonly entries: Searchable[];
   private readonly allowed: Set<string>;
   private readonly cache = new Map<string, { raw: Buffer; gzip: Buffer }>();
@@ -40,6 +42,7 @@ export class GeoRepository {
       JSON.parse(readFileSync(join(directory, name), 'utf8')) as unknown;
     this.manifest = GeoManifestSchema.parse(read('manifest.json'));
     const index = CommuneIndexSchema.parse(read(this.manifest.index));
+    this.index = index;
     this.allowed = new Set([
       this.manifest.apercu,
       this.manifest.index,

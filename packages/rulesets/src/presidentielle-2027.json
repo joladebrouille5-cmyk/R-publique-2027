@@ -1,6 +1,6 @@
 {
   "id": "presidentielle-2027",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "libelle": "Élection présidentielle 2027",
   "verifieLe": "2026-10-20",
   "sources": {
@@ -713,7 +713,69 @@
         },
         "participation": 0.34
       }
-    ]
+    ],
+    "baseHistorique": {
+      "statut": "hypothese",
+      "note": "Géographie électorale tirée du 1er tour de la présidentielle 2022 (fichier communal du ministère de l'Intérieur). La répartition des électeurs de chaque candidat de 2022 entre les groupes du jeu est une hypothèse de conception, à discuter : elle sert seulement à situer les groupes d'une commune à l'autre (la taille nationale des groupes reste celle de « groupes »). Les candidats de 2027 sont fictifs.",
+      "election": "presidentielle-2022",
+      "lissage": 200,
+      "participationLocale": {
+        "min": 0.7,
+        "max": 1.3
+      },
+      "candidats": {
+        "ARTHAUD": {
+          "gauche-radicale": 1
+        },
+        "POUTOU": {
+          "gauche-radicale": 1
+        },
+        "MÉLENCHON": {
+          "gauche-radicale": 0.55,
+          "gauche-sociale": 0.35,
+          "ecologistes": 0.1
+        },
+        "ROUSSEL": {
+          "gauche-sociale": 0.8,
+          "gauche-radicale": 0.2
+        },
+        "HIDALGO": {
+          "centre-gauche": 0.6,
+          "gauche-sociale": 0.3,
+          "ecologistes": 0.1
+        },
+        "JADOT": {
+          "ecologistes": 0.75,
+          "centre-gauche": 0.25
+        },
+        "MACRON": {
+          "centre-liberal": 0.65,
+          "centre-gauche": 0.2,
+          "droite-moderee": 0.15
+        },
+        "PÉCRESSE": {
+          "droite-moderee": 0.7,
+          "droite-conservatrice": 0.3
+        },
+        "LASSALLE": {
+          "eloignes": 0.5,
+          "droite-conservatrice": 0.3,
+          "gauche-sociale": 0.2
+        },
+        "DUPONT-AIGNAN": {
+          "droite-conservatrice": 0.5,
+          "droite-nationale": 0.5
+        },
+        "ZEMMOUR": {
+          "droite-nationale": 0.6,
+          "droite-conservatrice": 0.4
+        },
+        "LE PEN": {
+          "droite-nationale": 0.85,
+          "eloignes": 0.15
+        }
+      }
+    }
   },
   "modele": {
     "statut": "hypothese",

@@ -262,6 +262,7 @@
       "region": "84",
       "zone": "metropole",
       "communes": 391,
+      "population": 679344,
       "bbox": [
         4.7281,
         45.6111,
@@ -276,6 +277,7 @@
       "region": "32",
       "zone": "metropole",
       "communes": 797,
+      "population": 523342,
       "bbox": [
         2.958,
         48.8372,
@@ -290,6 +292,7 @@
       "region": "84",
       "zone": "metropole",
       "communes": 317,
+      "population": 333298,
       "bbox": [
         2.2768,
         45.9307,
@@ -304,6 +307,7 @@
       "region": "93",
       "zone": "metropole",
       "communes": 198,
+      "population": 168054,
       "bbox": [
         5.4968,
         43.6683,
@@ -318,6 +322,7 @@
       "region": "93",
       "zone": "metropole",
       "communes": 162,
+      "population": 143467,
       "bbox": [
         5.4184,
         44.1865,
@@ -332,6 +337,7 @@
       "region": "93",
       "zone": "metropole",
       "communes": 163,
+      "population": 1128418,
       "bbox": [
         6.6355,
         43.4803,
@@ -346,6 +352,7 @@
       "region": "84",
       "zone": "metropole",
       "communes": 335,
+      "population": 334231,
       "bbox": [
         3.8611,
         44.2643,
@@ -360,6 +367,7 @@
       "region": "44",
       "zone": "metropole",
       "communes": 447,
+      "population": 265893,
       "bbox": [
         4.0245,
         49.227,
@@ -374,6 +382,7 @@
       "region": "76",
       "zone": "metropole",
       "communes": 325,
+      "population": 155722,
       "bbox": [
         0.826,
         42.5715,
@@ -388,6 +397,7 @@
       "region": "44",
       "zone": "metropole",
       "communes": 431,
+      "population": 310447,
       "bbox": [
         3.3837,
         47.9237,
@@ -402,6 +412,7 @@
       "region": "76",
       "zone": "metropole",
       "communes": 433,
+      "population": 379648,
       "bbox": [
         1.6884,
         42.6489,
@@ -416,6 +427,7 @@
       "region": "76",
       "zone": "metropole",
       "communes": 285,
+      "population": 279609,
       "bbox": [
         1.8396,
         43.6906,
@@ -430,6 +442,7 @@
       "region": "93",
       "zone": "metropole",
       "communes": 119,
+      "population": 2087658,
       "bbox": [
         4.2302,
         43.1574,
@@ -444,6 +457,7 @@
       "region": "28",
       "zone": "metropole",
       "communes": 526,
+      "population": 709441,
       "bbox": [
         -1.1598,
         48.7517,
@@ -458,6 +472,7 @@
       "region": "84",
       "zone": "metropole",
       "communes": 250,
+      "population": 144196,
       "bbox": [
         2.0629,
         44.6158,
@@ -472,6 +487,7 @@
       "region": "75",
       "zone": "metropole",
       "communes": 359,
+      "population": 352683,
       "bbox": [
         -0.4632,
         45.1917,
@@ -486,6 +502,7 @@
       "region": "75",
       "zone": "metropole",
       "communes": 462,
+      "population": 672279,
       "bbox": [
         -1.5625,
         45.0887,
@@ -500,6 +517,7 @@
       "region": "24",
       "zone": "metropole",
       "communes": 286,
+      "population": 298660,
       "bbox": [
         1.7737,
         46.4205,
@@ -514,6 +532,7 @@
       "region": "75",
       "zone": "metropole",
       "communes": 277,
+      "population": 240826,
       "bbox": [
         1.2265,
         44.9203,
@@ -528,6 +547,7 @@
       "region": "27",
       "zone": "metropole",
       "communes": 698,
+      "population": 540100,
       "bbox": [
         4.0652,
         46.8998,
@@ -542,6 +562,7 @@
       "region": "53",
       "zone": "metropole",
       "communes": 344,
+      "population": 611859,
       "bbox": [
         -3.6659,
         48.0326,
@@ -556,6 +577,7 @@
       "region": "75",
       "zone": "metropole",
       "communes": 255,
+      "population": 115527,
       "bbox": [
         1.3726,
         45.6635,
@@ -570,6 +592,7 @@
       "region": "75",
       "zone": "metropole",
       "communes": 503,
+      "population": 417614,
       "bbox": [
         -0.0419,
         44.5707,
@@ -584,6 +607,7 @@
       "region": "27",
       "zone": "metropole",
       "communes": 563,
+      "population": 547163,
       "bbox": [
         5.6987,
         46.5538,
@@ -598,6 +622,7 @@
       "region": "84",
       "zone": "metropole",
       "communes": 362,
+      "population": 524207,
       "bbox": [
         4.6469,
         44.1155,
@@ -612,6 +637,7 @@
       "region": "28",
       "zone": "metropole",
       "communes": 585,
+      "population": 602714,
       "bbox": [
         0.2967,
         48.6664,
@@ -626,6 +652,7 @@
       "region": "24",
       "zone": "metropole",
       "communes": 363,
+      "population": 433129,
       "bbox": [
         0.7557,
         47.9538,
@@ -640,6 +667,7 @@
       "region": "53",
       "zone": "metropole",
       "communes": 277,
+      "population": 933455,
       "bbox": [
         -5.1413,
         47.7013,
@@ -654,6 +682,7 @@
       "region": "94",
       "zone": "metropole",
       "communes": 124,
+      "population": 168306,
       "bbox": [
         8.5347,
         41.3336,
@@ -668,6 +697,7 @@
       "region": "94",
       "zone": "metropole",
       "communes": 236,
+      "population": 187180,
       "bbox": [
         8.5733,
         41.8322,
@@ -682,6 +712,7 @@
       "region": "76",
       "zone": "metropole",
       "communes": 350,
+      "population": 770940,
       "bbox": [
         3.2624,
         43.4603,
@@ -696,6 +727,7 @@
       "region": "76",
       "zone": "metropole",
       "communes": 586,
+      "population": 1471468,
       "bbox": [
         0.4417,
         42.6892,
@@ -710,6 +742,7 @@
       "region": "76",
       "zone": "metropole",
       "communes": 458,
+      "population": 192645,
       "bbox": [
         -0.2823,
         43.3108,
@@ -724,6 +757,7 @@
       "region": "75",
       "zone": "metropole",
       "communes": 534,
+      "population": 1690493,
       "bbox": [
         -1.261,
         44.1939,
@@ -738,6 +772,7 @@
       "region": "76",
       "zone": "metropole",
       "communes": 341,
+      "population": 1230289,
       "bbox": [
         2.5396,
         43.2102,
@@ -752,6 +787,7 @@
       "region": "53",
       "zone": "metropole",
       "communes": 332,
+      "population": 1120666,
       "bbox": [
         -2.289,
         47.6316,
@@ -766,6 +802,7 @@
       "region": "24",
       "zone": "metropole",
       "communes": 241,
+      "population": 216069,
       "bbox": [
         0.8674,
         46.3469,
@@ -780,6 +817,7 @@
       "region": "24",
       "zone": "metropole",
       "communes": 272,
+      "population": 619362,
       "bbox": [
         0.0527,
         46.7367,
@@ -794,6 +832,7 @@
       "region": "84",
       "zone": "metropole",
       "communes": 512,
+      "population": 1298990,
       "bbox": [
         4.742,
         44.6959,
@@ -808,6 +847,7 @@
       "region": "27",
       "zone": "metropole",
       "communes": 492,
+      "population": 257973,
       "bbox": [
         5.252,
         46.2607,
@@ -822,6 +862,7 @@
       "region": "75",
       "zone": "metropole",
       "communes": 327,
+      "population": 433570,
       "bbox": [
         -1.5333,
         43.4874,
@@ -836,6 +877,7 @@
       "region": "24",
       "zone": "metropole",
       "communes": 267,
+      "population": 328543,
       "bbox": [
         0.5805,
         47.1864,
@@ -850,6 +892,7 @@
       "region": "84",
       "zone": "metropole",
       "communes": 320,
+      "population": 774133,
       "bbox": [
         3.6884,
         45.231,
@@ -864,6 +907,7 @@
       "region": "84",
       "zone": "metropole",
       "communes": 257,
+      "population": 228654,
       "bbox": [
         3.0822,
         44.744,
@@ -878,6 +922,7 @@
       "region": "52",
       "zone": "metropole",
       "communes": 207,
+      "population": 1487570,
       "bbox": [
         -2.625,
         46.8601,
@@ -892,6 +937,7 @@
       "region": "24",
       "zone": "metropole",
       "communes": 325,
+      "population": 691268,
       "bbox": [
         1.5124,
         47.483,
@@ -906,6 +952,7 @@
       "region": "76",
       "zone": "metropole",
       "communes": 312,
+      "population": 176473,
       "bbox": [
         0.9815,
         44.2033,
@@ -920,6 +967,7 @@
       "region": "75",
       "zone": "metropole",
       "communes": 319,
+      "population": 333602,
       "bbox": [
         -0.1407,
         43.9726,
@@ -934,6 +982,7 @@
       "region": "76",
       "zone": "metropole",
       "communes": 152,
+      "population": 76486,
       "bbox": [
         2.9812,
         44.1096,
@@ -948,6 +997,7 @@
       "region": "52",
       "zone": "metropole",
       "communes": 176,
+      "population": 833776,
       "bbox": [
         -1.3542,
         46.9689,
@@ -962,6 +1012,7 @@
       "region": "28",
       "zone": "metropole",
       "communes": 445,
+      "population": 497522,
       "bbox": [
         -1.9487,
         48.4558,
@@ -976,6 +1027,7 @@
       "region": "44",
       "zone": "metropole",
       "communes": 610,
+      "population": 563076,
       "bbox": [
         3.3959,
         48.5152,
@@ -990,6 +1042,7 @@
       "region": "44",
       "zone": "metropole",
       "communes": 426,
+      "population": 168331,
       "bbox": [
         4.6266,
         47.5766,
@@ -1004,6 +1057,7 @@
       "region": "52",
       "zone": "metropole",
       "communes": 240,
+      "population": 305468,
       "bbox": [
         -1.2388,
         47.7334,
@@ -1018,6 +1072,7 @@
       "region": "44",
       "zone": "metropole",
       "communes": 591,
+      "population": 732236,
       "bbox": [
         5.4261,
         48.349,
@@ -1032,6 +1087,7 @@
       "region": "44",
       "zone": "metropole",
       "communes": 499,
+      "population": 180290,
       "bbox": [
         4.8884,
         48.409,
@@ -1046,6 +1102,7 @@
       "region": "53",
       "zone": "metropole",
       "communes": 249,
+      "population": 783390,
       "bbox": [
         -3.7349,
         47.2779,
@@ -1060,6 +1117,7 @@
       "region": "44",
       "zone": "metropole",
       "communes": 725,
+      "population": 1051309,
       "bbox": [
         5.8919,
         48.5267,
@@ -1074,6 +1132,7 @@
       "region": "27",
       "zone": "metropole",
       "communes": 309,
+      "population": 201417,
       "bbox": [
         2.8449,
         46.651,
@@ -1088,6 +1147,7 @@
       "region": "32",
       "zone": "metropole",
       "communes": 647,
+      "population": 2615635,
       "bbox": [
         2.0893,
         49.9691,
@@ -1102,6 +1162,7 @@
       "region": "32",
       "zone": "metropole",
       "communes": 680,
+      "population": 829899,
       "bbox": [
         1.6889,
         49.0605,
@@ -1116,6 +1177,7 @@
       "region": "28",
       "zone": "metropole",
       "communes": 381,
+      "population": 275201,
       "bbox": [
         -0.8606,
         48.1799,
@@ -1130,6 +1192,7 @@
       "region": "32",
       "zone": "metropole",
       "communes": 887,
+      "population": 1457905,
       "bbox": [
         1.5554,
         50.0198,
@@ -1144,6 +1207,7 @@
       "region": "84",
       "zone": "metropole",
       "communes": 463,
+      "population": 664453,
       "bbox": [
         2.3881,
         45.2871,
@@ -1158,6 +1222,7 @@
       "region": "75",
       "zone": "metropole",
       "communes": 545,
+      "population": 706564,
       "bbox": [
         -1.7924,
         42.7779,
@@ -1172,6 +1237,7 @@
       "region": "76",
       "zone": "metropole",
       "communes": 469,
+      "population": 231349,
       "bbox": [
         -0.3272,
         42.6732,
@@ -1186,6 +1252,7 @@
       "region": "76",
       "zone": "metropole",
       "communes": 226,
+      "population": 496855,
       "bbox": [
         1.7215,
         42.3329,
@@ -1200,6 +1267,7 @@
       "region": "44",
       "zone": "metropole",
       "communes": 514,
+      "population": 1163810,
       "bbox": [
         6.9406,
         48.1204,
@@ -1214,6 +1282,7 @@
       "region": "44",
       "zone": "metropole",
       "communes": 366,
+      "population": 770738,
       "bbox": [
         6.841,
         47.4203,
@@ -1228,6 +1297,7 @@
       "region": "84",
       "zone": "metropole",
       "communes": 266,
+      "population": 1914667,
       "bbox": [
         4.2437,
         45.4541,
@@ -1242,6 +1312,7 @@
       "region": "27",
       "zone": "metropole",
       "communes": 536,
+      "population": 233185,
       "bbox": [
         5.3669,
         47.2525,
@@ -1256,6 +1327,7 @@
       "region": "27",
       "zone": "metropole",
       "communes": 563,
+      "population": 550310,
       "bbox": [
         3.6226,
         46.1561,
@@ -1270,6 +1342,7 @@
       "region": "52",
       "zone": "metropole",
       "communes": 352,
+      "population": 566733,
       "bbox": [
         -0.4481,
         47.5684,
@@ -1284,6 +1357,7 @@
       "region": "84",
       "zone": "metropole",
       "communes": 273,
+      "population": 448226,
       "bbox": [
         5.6219,
         45.0517,
@@ -1298,6 +1372,7 @@
       "region": "84",
       "zone": "metropole",
       "communes": 279,
+      "population": 861158,
       "bbox": [
         5.805,
         45.6817,
@@ -1312,6 +1387,7 @@
       "region": "11",
       "zone": "metropole",
       "communes": 1,
+      "population": 2103778,
       "bbox": [
         2.2242,
         48.8156,
@@ -1326,6 +1402,7 @@
       "region": "28",
       "zone": "metropole",
       "communes": 707,
+      "population": 1260964,
       "bbox": [
         0.0656,
         49.2507,
@@ -1340,6 +1417,7 @@
       "region": "11",
       "zone": "metropole",
       "communes": 507,
+      "population": 1468108,
       "bbox": [
         2.3923,
         48.1201,
@@ -1354,6 +1432,7 @@
       "region": "11",
       "zone": "metropole",
       "communes": 259,
+      "population": 1485086,
       "bbox": [
         1.4463,
         48.4386,
@@ -1368,6 +1447,7 @@
       "region": "75",
       "zone": "metropole",
       "communes": 252,
+      "population": 375229,
       "bbox": [
         -0.9035,
         45.9697,
@@ -1382,6 +1462,7 @@
       "region": "32",
       "zone": "metropole",
       "communes": 771,
+      "population": 565413,
       "bbox": [
         1.3802,
         49.5718,
@@ -1396,6 +1477,7 @@
       "region": "76",
       "zone": "metropole",
       "communes": 314,
+      "population": 397352,
       "bbox": [
         1.5352,
         43.3823,
@@ -1410,6 +1492,7 @@
       "region": "76",
       "zone": "metropole",
       "communes": 195,
+      "population": 265817,
       "bbox": [
         0.7378,
         43.7676,
@@ -1424,6 +1507,7 @@
       "region": "93",
       "zone": "metropole",
       "communes": 153,
+      "population": 1119307,
       "bbox": [
         5.6559,
         42.982,
@@ -1438,6 +1522,7 @@
       "region": "93",
       "zone": "metropole",
       "communes": 151,
+      "population": 572056,
       "bbox": [
         4.6491,
         43.6587,
@@ -1452,6 +1537,7 @@
       "region": "52",
       "zone": "metropole",
       "communes": 253,
+      "population": 713609,
       "bbox": [
         -2.4009,
         46.2667,
@@ -1466,6 +1552,7 @@
       "region": "75",
       "zone": "metropole",
       "communes": 265,
+      "population": 438897,
       "bbox": [
         -0.105,
         46.0483,
@@ -1480,6 +1567,7 @@
       "region": "75",
       "zone": "metropole",
       "communes": 195,
+      "population": 373167,
       "bbox": [
         0.6292,
         45.4366,
@@ -1494,6 +1582,7 @@
       "region": "44",
       "zone": "metropole",
       "communes": 506,
+      "population": 357248,
       "bbox": [
         5.3936,
         47.8133,
@@ -1508,6 +1597,7 @@
       "region": "27",
       "zone": "metropole",
       "communes": 423,
+      "population": 332267,
       "bbox": [
         2.8484,
         47.3104,
@@ -1522,6 +1612,7 @@
       "region": "27",
       "zone": "metropole",
       "communes": 101,
+      "population": 140255,
       "bbox": [
         6.7562,
         47.4333,
@@ -1536,6 +1627,7 @@
       "region": "11",
       "zone": "metropole",
       "communes": 194,
+      "population": 1338485,
       "bbox": [
         1.9145,
         48.2846,
@@ -1550,6 +1642,7 @@
       "region": "11",
       "zone": "metropole",
       "communes": 36,
+      "population": 1654712,
       "bbox": [
         2.1457,
         48.7294,
@@ -1564,6 +1657,7 @@
       "region": "11",
       "zone": "metropole",
       "communes": 39,
+      "population": 1704316,
       "bbox": [
         2.2883,
         48.8072,
@@ -1578,6 +1672,7 @@
       "region": "11",
       "zone": "metropole",
       "communes": 47,
+      "population": 1426929,
       "bbox": [
         2.3087,
         48.6876,
@@ -1592,6 +1687,7 @@
       "region": "11",
       "zone": "metropole",
       "communes": 183,
+      "population": 1281653,
       "bbox": [
         1.6087,
         48.9086,
@@ -1606,6 +1702,7 @@
       "region": "01",
       "zone": "971",
       "communes": 32,
+      "population": 384160,
       "bbox": [
         -61.8098,
         15.832,
@@ -1620,6 +1717,7 @@
       "region": "02",
       "zone": "972",
       "communes": 34,
+      "population": 360630,
       "bbox": [
         -61.229,
         14.3887,
@@ -1634,6 +1732,7 @@
       "region": "03",
       "zone": "973",
       "communes": 22,
+      "population": 293996,
       "bbox": [
         -54.6024,
         2.1111,
@@ -1648,6 +1747,7 @@
       "region": "04",
       "zone": "974",
       "communes": 24,
+      "population": 889679,
       "bbox": [
         55.2166,
         -21.3896,
@@ -1662,6 +1762,7 @@
       "region": "06",
       "zone": "976",
       "communes": 17,
+      "population": 256518,
       "bbox": [
         45.0183,
         -13.0054,

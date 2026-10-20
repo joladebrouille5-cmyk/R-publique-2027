@@ -151,6 +151,9 @@ importers:
       7zip-bin:
         specifier: 5.2.0
         version: 5.2.0
+      '@r2027/engine':
+        specifier: workspace:*
+        version: link:../engine
       '@r2027/shared':
         specifier: workspace:*
         version: link:../shared
@@ -161,6 +164,9 @@ importers:
       '@types/geojson':
         specifier: 7946.0.16
         version: 7946.0.16
+      fast-check:
+        specifier: 4.10.2
+        version: 4.10.2
       tsx:
         specifier: 4.23.15
         version: 4.23.15

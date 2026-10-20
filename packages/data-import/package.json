@@ -8,15 +8,18 @@
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
-    "geo": "node --disable-warning=ExperimentalWarning --max-old-space-size=8192 --import tsx src/cli/geo.ts"
+    "geo": "node --disable-warning=ExperimentalWarning --max-old-space-size=8192 --import tsx src/cli/geo.ts",
+    "resultats": "node --disable-warning=ExperimentalWarning --max-old-space-size=4096 --import tsx src/cli/resultats.ts"
   },
   "dependencies": {
     "7zip-bin": "5.2.0",
+    "@r2027/engine": "workspace:*",
     "@r2027/shared": "workspace:*",
     "mapshaper": "0.7.78"
   },
   "devDependencies": {
     "@types/geojson": "7946.0.16",
+    "fast-check": "4.10.2",
     "tsx": "4.23.15"
   }
 }

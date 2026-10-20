@@ -17,6 +17,7 @@ import { weeklyDrift } from '../election/opinion';
 import { publishPolls } from '../election/polls';
 import { resolveRound } from '../election/rounds';
 import { applyDecisions, drawEvents, validateDecisionAnswers } from '../event/events';
+import { nationalBaseline, type TerritorialBaseline } from '../territory/baseline';
 import { enterNextWeek } from './calendar';
 import { EngineInputError } from './errors';
 import { compareStrings, Ledger } from './ledger';
@@ -26,7 +27,11 @@ export type AdvanceInput = {
   decisions: readonly DecisionAnswer[];
 };
 
-export type EngineContext = { ruleset: Ruleset };
+export type EngineContext = {
+  ruleset: Ruleset;
+  /** Base électorale territoriale (communes) ; à défaut, un électorat national sans géographie. */
+  territory?: TerritorialBaseline;
+};
 
 export type AdvanceResult = {
   state: GameState;
@@ -62,7 +67,7 @@ const plural = (n: number, word: string) => `${n} ${word}${n > 1 ? 's' : ''}`;
 export function advanceWeek(
   input: GameState,
   plan: AdvanceInput,
-  { ruleset }: EngineContext,
+  { ruleset, territory }: EngineContext,
 ): AdvanceResult {
   if (input.calendar.blockedBy) {
     throw new EngineInputError(
@@ -195,7 +200,13 @@ export function advanceWeek(
         `Scrutin ${scrutin.scrutin.id} hors de la phase attendue (${state.meta.phase})`,
       );
     }
-    election = resolveRound(state, ruleset, scrutin.scrutin, scrutin.round);
+    election = resolveRound(
+      state,
+      ruleset,
+      scrutin.scrutin,
+      scrutin.round,
+      territory ?? nationalBaseline(ruleset),
+    );
     const concluded = concludeRound(state, ruleset, election);
     phaseChange = concluded.phaseChange;
     electionEvents.push(...concluded.events);

@@ -1,10 +1,16 @@
-import { advanceWeek, EngineInputError, type AdvanceResult } from '@r2027/engine';
+import {
+  advanceWeek,
+  EngineInputError,
+  type AdvanceResult,
+  type TerritorialBaseline,
+} from '@r2027/engine';
 import { getRuleset } from '@r2027/rulesets';
 import { canonicalStringify, sha256, snapshotState } from '@r2027/save-engine';
 import {
   AdvanceResponseSchema,
   type AdvanceRequestSchema,
   type AdvanceResponse,
+  type Ruleset,
   type WeeklyReport,
 } from '@r2027/shared';
 import type { z } from 'zod';
@@ -71,6 +77,7 @@ export async function advanceGame(
   gameId: string,
   idempotencyKey: string,
   body: AdvanceBody,
+  territoryFor: (ruleset: Ruleset) => TerritorialBaseline,
 ): Promise<AdvanceOutcome> {
   await findOwnedGame(db, userId, gameId);
   const requestHash = sha256(canonicalStringify(body));
@@ -88,7 +95,7 @@ export async function advanceGame(
   const result = runEngine(
     state,
     { actions: body.actions, decisions: body.decisions },
-    { ruleset },
+    { ruleset, territory: territoryFor(ruleset) },
   );
   const next = snapshotState(result.state);
   const { report } = result;

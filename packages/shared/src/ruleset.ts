@@ -255,6 +255,26 @@ export const RulesetSchema = z
           .strict(),
         statutGroupes: z.literal('hypothese'),
         groupes: z.array(ElectorateGroupSchema).min(2),
+        /**
+         * Géographie électorale (phase 4) : répartition des électeurs de chaque candidat d'une
+         * élection passée entre les groupes du jeu, pour situer les groupes commune par commune.
+         * Les abstentionnistes se répartissent selon l'abstention attendue de chaque groupe.
+         */
+        baseHistorique: z
+          .object({
+            statut: z.literal('hypothese'),
+            note: z.string().min(1),
+            election: Id,
+            /** Électeurs fictifs « nationaux » ajoutés à chaque commune (petites communes). */
+            lissage: z.number().int().min(0),
+            /** Bornes du facteur de participation locale (écart à 2022, à composition égale). */
+            participationLocale: z
+              .object({ min: Fraction, max: z.number().min(1).max(3) })
+              .strict(),
+            /** Nom du candidat (tel qu'écrit dans le fichier officiel) → part de ses électeurs par groupe. */
+            candidats: z.record(z.string().min(1), z.record(Id, Fraction)),
+          })
+          .strict(),
       })
       .strict(),
     modele: z
@@ -359,6 +379,13 @@ export const RulesetSchema = z
       'Institut',
       ruleset.sondages.instituts.map((i) => i.id),
     );
+    const groupIds = new Set(ruleset.electorat.groupes.map((g) => g.id));
+    for (const [name, shares] of Object.entries(ruleset.electorat.baseHistorique.candidats)) {
+      for (const id of Object.keys(shares))
+        if (!groupIds.has(id)) issue(`${name} : groupe inconnu ${id}`);
+      const sum = Object.values(shares).reduce((a, b) => a + b, 0);
+      if (Math.abs(sum - 1) > 1e-9) issue(`${name} : parts totalisant ${sum}, pas 1`);
+    }
     const totalShare = ruleset.electorat.groupes.reduce((sum, g) => sum + g.part, 0);
     if (Math.abs(totalShare - 1) > 1e-9)
       issue(`Les parts des groupes totalisent ${totalShare}, pas 1`);

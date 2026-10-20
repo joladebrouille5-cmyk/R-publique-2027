@@ -3,7 +3,10 @@ import { describe, expect, it } from 'vitest';
 import { compareStrings } from '../core/ledger';
 import { newGame, playUntil, QUIET, RULESET } from '../core/testing';
 import { aggregateCounts, checkCounts } from '../territory/aggregate';
+import { nationalBaseline } from '../territory/baseline';
 import { resolveRound } from './rounds';
+
+const NATIONAL = nationalBaseline(RULESET);
 
 const T1 = RULESET.calendrier.scrutins[0]!;
 const T2 = RULESET.calendrier.scrutins[1]!;
@@ -19,7 +22,7 @@ const national = (r: ReturnType<typeof resolveRound>) => ({
 
 describe('dépouillement d’un tour', () => {
   const state = newGame();
-  const result = resolveRound(state, RULESET, T1, 1);
+  const result = resolveRound(state, RULESET, T1, 1, NATIONAL);
 
   it('produit des nombres entiers cohérents ; le national est la somme exacte des groupes', () => {
     expect(checkCounts(national(result))).toEqual([]);
@@ -48,15 +51,15 @@ describe('dépouillement d’un tour', () => {
     const alone = JSON.parse(JSON.stringify(state)) as GameState;
     for (const actor of Object.values(alone.actors))
       if (actor.id !== 'joueur') actor.status = 'elimine';
-    const single = resolveRound(alone, RULESET, T1, 1);
+    const single = resolveRound(alone, RULESET, T1, 1, NATIONAL);
     expect(single.winner).toBe('joueur');
     expect(single.voix).toEqual({ joueur: single.exprimes });
   });
 
   it('ne dépend pas de la difficulté et reste déterministe', () => {
     const expert: GameState = { ...state, meta: { ...state.meta, difficulty: 'expert' } };
-    expect(resolveRound(expert, RULESET, T1, 1)).toEqual(result);
-    expect(resolveRound(state, RULESET, T1, 1)).toEqual(result);
+    expect(resolveRound(expert, RULESET, T1, 1, NATIONAL)).toEqual(result);
+    expect(resolveRound(state, RULESET, T1, 1, NATIONAL)).toEqual(result);
   });
 });
 
@@ -71,7 +74,7 @@ describe('second tour', () => {
 
   it('oppose les deux qualifiés et désigne le premier en voix', () => {
     expect(state.meta.phase).toBe('entre_deux_tours');
-    const result = resolveRound(state, RULESET, T2, 2);
+    const result = resolveRound(state, RULESET, T2, 2, NATIONAL);
     expect(Object.keys(result.voix).sort()).toEqual([a, b].sort());
     const [first] = Object.entries(result.voix).sort(
       (x, y) => y[1] - x[1] || compareStrings(x[0], y[0]),
@@ -92,8 +95,8 @@ describe('second tour', () => {
       { fromActorId: eliminated[0], toActorId: a, automatic: true },
     ];
 
-    const base = resolveRound(without, RULESET, T2, 2);
-    const endorsed = resolveRound(withConsigne, RULESET, T2, 2);
+    const base = resolveRound(without, RULESET, T2, 2, NATIONAL);
+    const endorsed = resolveRound(withConsigne, RULESET, T2, 2, NATIONAL);
     const gain = endorsed.voix[a]! - base.voix[a]!;
     expect(gain).toBeGreaterThan(0);
     expect(gain).toBeLessThan(eliminated[1]);

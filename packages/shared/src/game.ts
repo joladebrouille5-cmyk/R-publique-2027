@@ -250,8 +250,8 @@ const VoteCountsSchema = {
   voix: z.record(Id, z.number().int().min(0)),
 };
 
-/** Résultat simulé d'un tour : national et par groupe d'électeurs (le national est leur somme). */
-export const RoundResultSchema = z
+/** Résultat simulé d'un tour : national et par groupe d'électeurs (format 3, sans territoires). */
+const RoundResultV3Schema = z
   .object({
     scrutinId: Id,
     round: z.union([z.literal(1), z.literal(2)]),
@@ -264,6 +264,45 @@ export const RoundResultSchema = z
     nature: z.literal('simule'),
   })
   .strict();
+
+export const CountsSchema = z.object(VoteCountsSchema).strict();
+export type Counts = z.infer<typeof CountsSchema>;
+
+/** Comportement d'un groupe d'électeurs le jour du scrutin (permet de recalculer chaque commune). */
+export const GroupBehaviorSchema = z
+  .object({
+    groupId: Id,
+    turnout: z.number().min(0).max(1),
+    blancs: z.number().min(0).max(1),
+    nuls: z.number().min(0).max(1),
+    /** Probabilités de vote, dans l'ordre de `candidats`. */
+    probabilities: z.array(z.number().min(0).max(1)),
+  })
+  .strict();
+export type GroupBehavior = z.infer<typeof GroupBehaviorSchema>;
+
+/**
+ * Détail territorial d'un tour (phase 4) : agrégats exacts par département, région et territoire
+ * hors carte, et comportement des groupes. Les résultats communaux ne sont pas stockés : ils se
+ * recalculent à l'identique avec la même base électorale (`baselineId`).
+ */
+export const TerritorialResultSchema = z
+  .object({
+    baselineId: z.string().min(1),
+    nature: z.enum(['reel', 'fictif', 'national']),
+    candidats: z.array(Id),
+    comportement: z.array(GroupBehaviorSchema),
+    departements: z.record(z.string(), CountsSchema),
+    regions: z.record(z.string(), CountsSchema),
+    horsCarte: z.record(z.string(), CountsSchema),
+  })
+  .strict();
+export type TerritorialResult = z.infer<typeof TerritorialResultSchema>;
+
+/** Résultat simulé d'un tour : national, par groupe d'électeurs et par territoire (format 4). */
+export const RoundResultSchema = RoundResultV3Schema.extend({
+  territoire: TerritorialResultSchema.nullable(),
+}).strict();
 export type RoundResult = z.infer<typeof RoundResultSchema>;
 
 export const VoteInstructionSchema = z
@@ -271,15 +310,42 @@ export const VoteInstructionSchema = z
   .strict();
 export type VoteInstruction = z.infer<typeof VoteInstructionSchema>;
 
+/** État au format 3 (phase 3), figé pour les migrations. */
+export const GameStateV3Schema = z
+  .object({
+    meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(3) }).strict(),
+    player: PlayerSchema,
+    actors: z.record(Id, ActorSchema),
+    scheduled: z.array(ScheduledEffectSchema),
+    pendingDecisions: z.array(PendingDecisionSchema),
+    eventHistory: EventHistorySchema,
+    opinion: OpinionSchema.nullable(),
+    polls: z.array(PollSchema),
+    elections: z
+      .object({
+        t1: RoundResultV3Schema.nullable(),
+        t2: RoundResultV3Schema.nullable(),
+        consignes: z.array(VoteInstructionSchema),
+        /** Prestation de chaque finaliste au débat d'entre-deux-tours (−1 à +1), une fois tenu. */
+        debate: z.record(Id, z.number().min(-1).max(1)).nullable(),
+      })
+      .strict(),
+    calendar: z
+      .object({ blockedBy: Id.nullable(), blockedMessage: z.string().nullable() })
+      .strict(),
+  })
+  .strict();
+export type GameStateV3 = z.infer<typeof GameStateV3Schema>;
+
 /**
- * État complet d'une partie, format de sauvegarde n° 3 (phase 3). Toute évolution
+ * État complet d'une partie, format de sauvegarde n° 4 (phase 4). Toute évolution
  * s'accompagne d'un nouveau numéro de format et d'une migration (packages/save-engine).
  * L'aléa ne figure pas dans l'état : chaque tirage est dérivé de la graine, de la semaine
  * et de son contexte (module, action, événement, groupe d'électeurs…).
  */
 export const GameStateSchema = z
   .object({
-    meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(3) }).strict(),
+    meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(4) }).strict(),
     player: PlayerSchema,
     actors: z.record(Id, ActorSchema),
     scheduled: z.array(ScheduledEffectSchema),

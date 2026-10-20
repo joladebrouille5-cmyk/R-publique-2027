@@ -181,6 +181,9 @@ export async function buildGeo(input: GeoBuildInput): Promise<GeoBuildOutput> {
         region: d.region,
         zone: d.zone,
         communes: communesOf(d.code).length,
+        population: features
+          .filter((f) => f.properties.dep === d.code)
+          .reduce((sum, f) => sum + (f.properties.population ?? 0), 0),
         bbox: union(communesOf(d.code).map((c) => boxes.get(c.code)!)),
         fichier: departementCodes.includes(d.code) ? `communes/${d.code}.topo.json` : null,
       })),

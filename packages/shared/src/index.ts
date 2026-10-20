@@ -6,3 +6,4 @@ export * from './ruleset';
 export * from './report';
 export * from './politics';
 export * from './territory';
+export * from './electoral';

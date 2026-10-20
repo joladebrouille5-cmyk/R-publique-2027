@@ -19,6 +19,7 @@
     "db:migrate": "pnpm --filter @r2027/api run db:migrate",
     "db:deploy": "pnpm --filter @r2027/api run db:deploy",
     "data:geo": "pnpm --filter @r2027/data-import run geo",
+    "data:resultats": "pnpm --filter @r2027/data-import run resultats",
     "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test"
   },
   "devDependencies": {

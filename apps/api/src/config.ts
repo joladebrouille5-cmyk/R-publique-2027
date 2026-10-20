@@ -9,6 +9,8 @@ const ConfigSchema = z.object({
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(300),
   /** Référentiel cartographique (sinon : import complet de data/processed, puis démonstration). */
   GEO_DATA_DIR: z.string().min(1).optional(),
+  /** Résultats historiques importés (sinon data/processed/resultats/presidentielle-2022). */
+  RESULTS_DATA_DIR: z.string().min(1).optional(),
   /** Derrière un reverse proxy (hébergement), pour obtenir la vraie IP du client. */
   TRUST_PROXY: z
     .enum(['true', 'false'])

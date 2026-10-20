@@ -12,6 +12,7 @@ import {
   RestoreSaveRequestSchema,
   type ApiError,
   type HealthResponse,
+  type Ruleset,
 } from '@r2027/shared';
 import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest } from 'fastify';
 import { z, ZodError } from 'zod';
@@ -20,7 +21,9 @@ import type { Database } from './db';
 import { HttpError } from './errors';
 import { advanceGame } from './services/advance';
 import { exportGame, importGame } from './services/exchange';
+import { ElectoralRepository, resultsDirectory } from './services/electoral';
 import { geoDirectories, GeoRepository } from './services/geo';
+import { communeResultsOf, historicalStatus, historicalValues } from './services/results';
 import { createNewGame, getGame, listGames } from './services/games';
 import { journalPage } from './services/journal';
 import { createManualSave, listSaves, restoreSave } from './services/saves';
@@ -29,11 +32,20 @@ import { API_VERSION } from './version';
 
 export type AppOptions = {
   config: Pick<Config, 'NODE_ENV' | 'SESSION_SECRET' | 'RATE_LIMIT_MAX' | 'TRUST_PROXY'> &
-    Partial<Pick<Config, 'GEO_DATA_DIR'>>;
+    Partial<Pick<Config, 'GEO_DATA_DIR' | 'RESULTS_DATA_DIR'>>;
   db: Database;
   /** Référentiel cartographique ; chargé selon GEO_DATA_DIR s'il n'est pas fourni. */
   geo?: GeoRepository;
 };
+
+const TourParams = z.object({
+  gameId: z.uuid(),
+  tour: z.coerce.number().pipe(z.union([z.literal(1), z.literal(2)])),
+});
+const DepartementQuery = z.object({ departement: z.string().regex(/^[0-9AB]{2,3}$/) });
+const HistoryParams = z.object({
+  tour: z.coerce.number().pipe(z.union([z.literal(1), z.literal(2)])),
+});
 
 const GameParams = z.object({ gameId: z.uuid() });
 const SaveParams = z.object({ gameId: z.uuid(), saveId: z.uuid() });
@@ -50,6 +62,11 @@ function errorBody(code: string, message: string, details?: unknown): ApiError {
 
 export async function buildApp({ config, db, geo }: AppOptions): Promise<FastifyInstance> {
   const territories = geo ?? GeoRepository.load(geoDirectories(config.GEO_DATA_DIR));
+  const electoral = ElectoralRepository.load(
+    territories,
+    resultsDirectory(config.RESULTS_DATA_DIR),
+  );
+  const territoryFor = (ruleset: Ruleset) => electoral.baselineFor(ruleset);
   const app = Fastify({
     bodyLimit: BODY_LIMIT_BYTES,
     trustProxy: config.TRUST_PROXY,
@@ -151,7 +168,14 @@ export async function buildApp({ config, db, geo }: AppOptions): Promise<Fastify
       throw new HttpError(400, 'cle_idempotence_requise', key.error.issues[0]!.message);
     }
     const body = AdvanceRequestSchema.parse(request.body);
-    const outcome = await advanceGame(db, await userOf(request, reply), gameId, key.data, body);
+    const outcome = await advanceGame(
+      db,
+      await userOf(request, reply),
+      gameId,
+      key.data,
+      body,
+      territoryFor,
+    );
     if (outcome.replayed) reply.header('idempotent-replay', 'true');
     return outcome.response;
   });
@@ -187,6 +211,31 @@ export async function buildApp({ config, db, geo }: AppOptions): Promise<Fastify
       .header('vary', 'accept-encoding');
     if (gzip) reply.header('content-encoding', 'gzip');
     return reply.send(gzip ? file.gzip : file.raw);
+  });
+
+  app.get('/api/games/:gameId/resultats/:tour/communes', async (request, reply) => {
+    const { gameId, tour } = TourParams.parse(request.params);
+    const { departement } = DepartementQuery.parse(request.query);
+    return communeResultsOf(
+      db,
+      await userOf(request, reply),
+      gameId,
+      tour,
+      departement,
+      territoryFor,
+    );
+  });
+
+  // Résultats historiques réels (importés localement par `pnpm data:resultats`).
+  app.get('/api/geo/historique', async () => historicalStatus(electoral));
+  app.get('/api/geo/historique/:tour/apercu', async (request) => {
+    const { tour } = HistoryParams.parse(request.params);
+    return historicalValues(electoral, territories, tour, null);
+  });
+  app.get('/api/geo/historique/:tour/communes', async (request) => {
+    const { tour } = HistoryParams.parse(request.params);
+    const { departement } = DepartementQuery.parse(request.query);
+    return historicalValues(electoral, territories, tour, departement);
   });
 
   app.get('/api/geo/recherche', async (request) => {

@@ -10,3 +10,4 @@ dist/
 # Données générées par packages/data-import (JSON compact, reproductible).
 packages/data-import/demo/
 data/
+packages/save-engine/src/fixtures/

@@ -30,3 +30,13 @@ export {
   checkCounts,
   type VoteCounts,
 } from './territory/aggregate';
+export {
+  demoBaseline,
+  historicalBaseline,
+  nationalBaseline,
+  type CommuneRef,
+  type TerritorialBaseline,
+  type TerritorialUnit,
+} from './territory/baseline';
+export { BaselineMismatchError, communeResults } from './territory/communes';
+export { tallyBaseline, tallyUnit } from './territory/tally';

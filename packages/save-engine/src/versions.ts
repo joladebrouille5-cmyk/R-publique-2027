@@ -9,10 +9,12 @@ import {
   GameStateSchema,
   GameStateV1Schema,
   GameStateV2Schema,
+  GameStateV3Schema,
   type Actor,
   type GameState,
   type GameStateV1,
   type GameStateV2,
+  type GameStateV3,
 } from '@r2027/shared';
 import { z } from 'zod';
 import { hashState, sha256, canonicalStringify } from './canonical';
@@ -43,11 +45,13 @@ export const CURRENT_SAVE_SCHEMA_VERSION = SAVE_SCHEMA_VERSION;
 const SCHEMAS: Record<number, z.ZodType> = {
   1: GameStateV1Schema,
   2: GameStateV2Schema,
-  3: GameStateSchema,
+  3: GameStateV3Schema,
+  4: GameStateSchema,
 };
 
-/** Jeu de règles des parties au format 2 (phase 2). */
+/** Jeux de règles des parties aux formats 2 (phase 2) et 3 (phase 3). */
 const V2_RULESET_KEY = 'presidentielle-2027@1.0.0';
+const V3_RULESET_KEY = 'presidentielle-2027@2.0.0';
 
 /**
  * Format 1 → 2 (phase 2) : ajout des ressources de campagne, des effets programmés, des
@@ -103,7 +107,7 @@ export const MIGRATED_CANDIDATE = {
  * départ, les décisions en attente sont des réponses à des événements, et le blocage de la
  * phase 2 au premier tour est levé : le scrutin est désormais simulé.
  */
-function migrateV2ToV3(v2: GameStateV2): GameState {
+function migrateV2ToV3(v2: GameStateV2): GameStateV3 {
   const ruleset = getRuleset(CURRENT_RULESET_KEY);
   const actors: Record<string, Actor> = {};
   for (const [id, actor] of Object.entries(v2.actors)) {
@@ -123,8 +127,8 @@ function migrateV2ToV3(v2: GameStateV2): GameState {
   return {
     meta: {
       ...v2.meta,
-      engineVersion: ENGINE_VERSION,
-      rulesetVersion: CURRENT_RULESET_KEY,
+      engineVersion: '0.3.0',
+      rulesetVersion: V3_RULESET_KEY,
       saveSchemaVersion: 3,
     },
     player: v2.player,
@@ -139,9 +143,30 @@ function migrateV2ToV3(v2: GameStateV2): GameState {
   };
 }
 
+/**
+ * Format 3 → 4 (phase 4) : les résultats déjà dépouillés n'ont pas de détail territorial
+ * (`territoire: null`, l'écran Résultats et la carte l'indiquent) ; le jeu de règles passe à la
+ * version qui porte la géographie électorale. Les tours à venir seront dépouillés par commune.
+ */
+function migrateV3ToV4(v3: GameStateV3): GameState {
+  const round = (result: GameStateV3['elections']['t1']) =>
+    result ? { ...result, territoire: null } : null;
+  return {
+    ...v3,
+    meta: {
+      ...v3.meta,
+      engineVersion: ENGINE_VERSION,
+      rulesetVersion: CURRENT_RULESET_KEY,
+      saveSchemaVersion: 4,
+    },
+    elections: { ...v3.elections, t1: round(v3.elections.t1), t2: round(v3.elections.t2) },
+  };
+}
+
 const MIGRATIONS: Record<number, (state: never) => unknown> = {
   1: migrateV1ToV2,
   2: migrateV2ToV3,
+  3: migrateV3ToV4,
 };
 
 export type LoadedState = { state: GameState; stateHash: string; migratedFrom: number | null };
