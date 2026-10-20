@@ -1,6 +1,6 @@
 # Modèle de données — RÉPUBLIQUE 2027
 
-> Statut : **proposition de la phase 0**. Le schéma Prisma ci-dessous est indicatif ; il sera écrit, migré et testé en phase 1 (tables techniques) puis complété phase par phase.
+> Statut : **phase 1 réalisée** pour les tables techniques (`User`, `Game`, `GameSave`, `GameAction`, `GameEvent`, `SimulationLog`) — schéma réel : [`apps/api/prisma/schema.prisma`](../apps/api/prisma/schema.prisma). Le reste du schéma ci-dessous reste indicatif et sera complété phase par phase.
 > Voir aussi [ARCHITECTURE.md §7](./ARCHITECTURE.md#7-persistance-et-sauvegardes-12).
 
 ## 1. Principe : trois familles de données
@@ -96,7 +96,7 @@ Chaque valeur affichable qui n'est pas issue d'une source officielle porte `natu
 ## 5. Esquisse du schéma Prisma (tables)
 
 ```prisma
-enum DataNature    { reel estimation sondage projection simule fictif }
+enum DataNature    { reel estimation sondage projection simule fictif systeme }  // systeme : événement technique (création, sauvegarde)
 enum TerritoryType { pays region departement commune collectivite_outre_mer etranger }
 enum GameMode      { candidat_reel candidat_personnalise observateur }
 enum Difficulty    { accessible standard expert }
@@ -392,5 +392,5 @@ model EconomicIndicator {
 - `Σ voix = exprimes`, `votants = blancs + nuls + exprimes`, `inscrits ≥ votants`, valeurs ≥ 0.
 - Agrégat d'un niveau = somme exacte des enfants inclus dans le périmètre.
 - Chaque `Territory` de type `commune` avec `mapped = true` a une et une seule géométrie (contrôlé à l'import).
-- Les tables d'historique (`GameAction`, `GameEvent`, `SimulationLog`, `ElectoralResult*`) ne sont jamais modifiées après écriture.
+- Les tables d'historique (`GameAction`, `GameEvent`, `SimulationLog`, `ElectoralResult*`) ne sont jamais modifiées après écriture. Depuis la phase 1, des déclencheurs PostgreSQL refusent toute mise à jour de `game_action`, `game_event` et `simulation_log` (testé).
 - `Game.stateHash` = SHA-256 de la sérialisation canonique de `Game.state`.

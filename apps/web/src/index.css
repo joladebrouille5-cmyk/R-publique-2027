@@ -1,0 +1,30 @@
+@import 'tailwindcss';
+
+/* Thème sombre piloté par la classe `dark` sur <html> (choix clair / sombre / système). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans:
+    'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --color-republique-50: #eff4ff;
+  --color-republique-100: #dbe6fe;
+  --color-republique-500: #3b5bdb;
+  --color-republique-600: #2f4ac0;
+  --color-republique-700: #253b9b;
+  --color-republique-900: #172554;
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-republique-500;
+  }
+}

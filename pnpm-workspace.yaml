@@ -1,0 +1,9 @@
+packages:
+  - apps/*
+  - packages/*
+
+# Dépendances autorisées à exécuter un script d'installation (pnpm 10 les bloque par défaut).
+onlyBuiltDependencies:
+  - '@prisma/engines'
+  - esbuild
+  - prisma

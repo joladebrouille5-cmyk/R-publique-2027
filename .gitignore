@@ -21,3 +21,9 @@ test-results/
 # Divers
 .DS_Store
 *.log
+
+# Base PostgreSQL locale (scripts/pg-local.sh)
+.local/
+
+# Client Prisma généré
+apps/api/src/generated/

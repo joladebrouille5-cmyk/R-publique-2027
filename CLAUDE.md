@@ -10,3 +10,10 @@
 - Aucun secret dans Git ; variables d'environnement documentées dans `.env.example`.
 - Documentation et interface en français.
 - Compte rendu de fin de phase : résumé, fichiers modifiés, tests et résultats, limites, prochaine étape.
+
+## Commandes
+
+- Vérifications rapides : `pnpm check` (lint, format, typecheck, tests unitaires).
+- Avec base : `pnpm test:integration`, `pnpm test:e2e` (exigent `DATABASE_URL_TEST`).
+- Environnement cloud sans Docker : `scripts/pg-local.sh start`, puis `.env` créé depuis `.env.example` avec des URL sans mot de passe (`postgresql://postgres@localhost:5432/...`).
+- Après une modification de `apps/api/prisma/schema.prisma` : `pnpm db:migrate` (crée une migration versionnée, à commiter).

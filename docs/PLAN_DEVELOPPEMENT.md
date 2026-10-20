@@ -98,11 +98,11 @@ La numérotation suit le §16 du cahier des charges. La « phase 7 — Finalisat
 
 **Livrable** : plan documenté (§16).
 
-### Phase 1 — Squelette (application lançable)
+### Phase 1 — Squelette (application lançable) ✅
 
 | ID | Tâche | Test d'acceptation |
 |---|---|---|
-| P1-01 | Monorepo pnpm, TypeScript strict, ESLint, Prettier, Vitest ; versions figées (cf. [ARCHITECTURE §12](./ARCHITECTURE.md#12-versions-de-la-pile-vérifiées-sur-npm-le-20102026)). | `pnpm lint`, `pnpm typecheck`, `pnpm test` passent. |
+| P1-01 | Monorepo pnpm, TypeScript strict, ESLint, Prettier, Vitest ; versions figées (cf. [ARCHITECTURE §12](./ARCHITECTURE.md#12-versions-de-la-pile-figées-en-phase-1-le-20102026)). | `pnpm lint`, `pnpm typecheck`, `pnpm test` passent. |
 | P1-02 | `packages/shared` : premiers schémas Zod (`GameState` minimal, DTO de création). | tests de validation (entrées valides / invalides). |
 | P1-03 | `packages/engine/core` : PRNG à graine + flux dérivés, `createGame()`. | vecteurs de test du PRNG ; même graine ⇒ même état. |
 | P1-04 | `apps/api` : Fastify, `/api/health`, Zod, Prisma + migration initiale (`User`, `Game`, `GameSave`, `GameAction`, `GameEvent`, `SimulationLog`), session anonyme par cookie signé, limitation de débit, en-têtes de sécurité. | tests `inject` contre un PostgreSQL réel. |
@@ -113,6 +113,26 @@ La numérotation suit le §16 du cahier des charges. La « phase 7 — Finalisat
 | P1-09 | README : prérequis, installation, démarrage, tests. | relecture. |
 
 **Livrable** : application lançable (§16). **Critères visés** : 1, 2 (partie), 12 (base), 13, 14, 15.
+
+**Bilan (20/10/2026)** — les neuf tâches sont réalisées.
+
+| Vérification | Résultat |
+|---|---|
+| `pnpm lint`, `pnpm format:check`, `pnpm typecheck` | sans erreur |
+| `pnpm test` (unitaires, propriétés, composants) | 39 tests réussis |
+| `pnpm test:integration` (API + PostgreSQL 16 réel) | 23 tests réussis |
+| `pnpm test:e2e` (Playwright, bureau + mobile Pixel 7) | 8 tests réussis |
+| `pnpm build` (interface + API) | réussi ; l'API construite démarre et répond |
+| Séquence complète de la CI rejouée localement sans `.env` | réussie |
+| Contrôle des tests par mutation (bug volontaire dans la restauration) | détecté par le test de restauration |
+
+Écarts et limites :
+- **TypeScript 6.0.3** au lieu de 7.0 : `typescript-eslint` 8.72 n'accepte que TypeScript < 6.1. **Playwright 1.56.1**, qui correspond au Chromium préinstallé (révision 1194). **jsdom 29.1.1**, car la 30 exige Node 22.22.2. **Node ≥ 22.22** requis par React Router 8.5.
+- Le workflow GitHub Actions n'a pas encore tourné sur GitHub : la séquence a été rejouée localement, la CI réelle s'exécutera au premier push.
+- `docker-compose.yml` est validé syntaxiquement (`docker compose config`), mais n'a pas pu être lancé faute de démon Docker dans l'environnement cloud ; les tests ont utilisé un PostgreSQL 16 local (`scripts/pg-local.sh`).
+- La création de partie ne crée pas encore de candidat (critère 2 complet en phase 3) ; le mode « candidat réel » est refusé explicitement (422).
+- Sauvegarde automatique hebdomadaire, export/import JSON et journal : phase 2.
+- Session anonyme uniquement (Q5) ; la démarche « tester depuis un téléphone » du README n'a pas été vérifiée sur un appareil physique (seulement en émulation mobile Playwright).
 
 ### Phase 2 — Simulation hebdomadaire persistante
 
@@ -200,4 +220,4 @@ Durcissement sécurité (§14), mesure de performance et fixation des seuils (§
 
 ## 6. Prochaine étape
 
-Après validation de ce plan : **phase 1 — squelette** uniquement, puis arrêt pour vérification.
+**Phase 2 — simulation hebdomadaire persistante**, après validation de la phase 1.

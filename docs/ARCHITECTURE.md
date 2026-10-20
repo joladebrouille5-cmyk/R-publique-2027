@@ -318,31 +318,21 @@ Le moteur se teste sans navigateur, base ni API externe (§11).
 
 ---
 
-## 12. Versions de la pile (vérifiées sur npm le 20/10/2026)
+## 12. Versions de la pile (figées en phase 1, le 20/10/2026)
 
-| Paquet | Dernière version publiée | Remarque |
-|---|---|---|
-| react | 19.3.1 | |
-| vite | 8.3.4 | |
-| typescript | 7.0.2 | Compilateur réécrit (7.x) : vérifier la compatibilité de l'outillage (ESLint, Vite, Prisma) en phase 1 ; à défaut figer la dernière 5.x / 6.x compatible. |
-| react-router | 8.5.0 | |
-| @tanstack/react-query | 5.104.5 | |
-| zustand | 5.0.15 | |
-| tailwindcss | 4.3.3 | |
-| maplibre-gl | 6.15.0 | |
-| pmtiles | 4.5.0 | lecture de tuiles PMTiles côté client |
-| fastify | 5.12.7 | |
-| zod | 4.6.7 | |
-| prisma / @prisma/client | 8.0.0-rc.23 (`latest`) / 7.10.1 | L'étiquette `latest` de `prisma` pointe vers une **release candidate** : figer la version stable 7.10.1 pour les deux paquets. |
-| vitest | 5.0.5 | |
-| @testing-library/react | 16.3.3 | |
-| @playwright/test | 1.64.1 | Le Chromium préinstallé ici est la révision 1194 : utiliser `executablePath` localement, `playwright install` en CI. |
-| fast-check | 4.10.2 | tests de propriétés |
-| mapshaper | 0.7.91 | simplification des géométries |
+Versions exactes dans les `package.json` et `pnpm-lock.yaml`. Écarts volontaires avec la dernière version publiée :
 
-Les versions exactes seront figées par le *lockfile* en phase 1.
+| Paquet | Version retenue | Dernière publiée | Raison |
+|---|---|---|---|
+| typescript | 6.0.3 | 7.0.2 | `typescript-eslint` 8.72 exige TypeScript < 6.1. |
+| prisma / @prisma/client / @prisma/adapter-pg | 7.10.1 | 8.0.0-rc.23 (`latest`) | L'étiquette `latest` pointe vers une *release candidate*. |
+| @playwright/test | 1.56.1 | 1.64.1 | Correspond au Chromium préinstallé (révision 1194) ; la CI installe la même révision. |
+| jsdom | 29.1.1 | 30.1.3 | La 30 exige Node ≥ 22.22.2. |
+| @types/node | 22.20.5 | 26.6.5 | Aligné sur Node 22. |
 
----
+Autres versions : react 19.3.1, react-router 8.5.0 (exige Node ≥ 22.22), vite 8.3.4, @vitejs/plugin-react 6.1.2, tailwindcss 4.3.3, @tanstack/react-query 5.104.5, zustand 5.0.15, fastify 5.12.7, @fastify/cookie 11.1.3, @fastify/helmet 13.2.0, @fastify/rate-limit 11.2.1, zod 4.6.7, vitest 5.0.5, @testing-library/react 16.3.3, eslint 10.13.0, prettier 3.9.10, esbuild 0.28.2, tsx 4.23.15.
+
+Prévues pour les phases suivantes (non installées) : maplibre-gl 6.15.0, pmtiles 4.5.0, fast-check 4.10.2, mapshaper 0.7.91.
 
 ## 13. Décisions d'architecture à valider
 
