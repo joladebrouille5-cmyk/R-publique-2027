@@ -118,7 +118,15 @@ Ces totaux servent de **test d'acceptation de l'import** : Σ des lignes du fich
 
 ### 3.3 Législatives 2024 et circonscriptions (phase 6)
 
-- Résultats (Licence Ouverte 2.0, vérifié) : https://www.data.gouv.fr/datasets/elections-legislatives-des-30-juin-et-7-juillet-2024-resultats-definitifs-du-1er-tour · https://www.data.gouv.fr/datasets/elections-legislatives-des-30-juin-et-7-juillet-2024-resultats-definitifs-du-2nd-tour. Contrairement à 2022, les codes outre-mer y sont de style INSEE (`971;Guadeloupe;97101…`) ; `ZX` et `ZZ` subsistent. Présence des zéros initiaux en métropole : **non vérifiée**.
+- Résultats (Licence Ouverte 2.0, vérifié) : https://www.data.gouv.fr/datasets/elections-legislatives-des-30-juin-et-7-juillet-2024-resultats-definitifs-du-1er-tour · https://www.data.gouv.fr/datasets/elections-legislatives-des-30-juin-et-7-juillet-2024-resultats-definitifs-du-2nd-tour. Contrairement à 2022, les codes outre-mer y sont de style INSEE (`971;Guadeloupe;97101…`) ; `ZX` et `ZZ` subsistent.
+- **Import de la phase 6** (`pnpm data:legislatives`, 21/10/2026) : fichiers « résultats définitifs par circonscription » du 10/07/2024 (1er tour SHA-256 `dbeb0214…ab3f`, 2nd tour `bcc062b9…1083`). Constats, conservés tels quels et non masqués :
+  - le fichier du 1er tour omet les zéros initiaux des codes métropolitains (`1`, `101`) alors que celui du 2nd tour les porte (`01`, `0101`) : l'importeur les rétablit (point 6 du §9 résolu) ;
+  - 577 circonscriptions, dont **76 pourvues au premier tour** ;
+  - dans 4 circonscriptions (1602 : +2, 2704 : −1, 3404 : −1, 7502 : +2), la somme des voix par nuance diffère des exprimés publiés : l'écart est conservé dans un champ `ecart` ;
+  - Polynésie française, 3e circonscription (98703) : nuance de l'élu UG au 2nd tour, REG au 1er tour (nuances attribuées différemment d'un tour à l'autre) ; conservé tel quel.
+  Seules les voix **par nuance** et la nuance de l'élu sont lues : **aucun nom de candidat n'est conservé**. Sortie commitée : `packages/rulesets/src/legislatives-2024.json` (empreinte vérifiée par `presidentielle-2027@9.0.0`).
+- **Règles** (citées d'après Wikipédia, révisions datées ; Légifrance refusant l'accès) : dissolution, élections générales 20 à 40 jours plus tard, pas de nouvelle dissolution dans l'année qui suit (art. 12, révision 230532189) ; élu au premier tour avec la majorité absolue des exprimés et au moins 25 % des inscrits, second tour ouvert aux candidats ayant réuni 12,5 % des inscrits (sinon les deux premiers), fin des pouvoirs le troisième mardi de juin, cinq ans après l'élection (loi organique n° 2001-419) : article « Élections législatives en France », révision 239629789. Fin de la législature élue en 2024 : **mardi 19 juin 2029** (déduit). Dates des législatives de 2029 : 10 et 17 juin 2029 (**hypothèse** sur le modèle de 2022 ; dates réelles fixées par décret).
+- **Simulation** (hypothèses du jeu de règles) : nuances regroupées en cinq blocs (gauche, centre, droite, RN et alliés/extrême droite, régionalistes et divers) et groupes de l'Assemblée rattachés à ces blocs ; un candidat par bloc dans chaque circonscription ; voix de 2024 modulées par l'écart national de chaque bloc (élan présidentiel, popularité du président, aléa) et un aléa local ; reports de voix au second tour selon la proximité des blocs ; sièges d'un bloc répartis entre ses groupes au prorata de leurs sièges sortants. Les désistements entre les deux tours ne sont pas simulés.
 - Contours : fichier simplifié INSEE de mai 2022, 558 polygones (métropole + 5 DROM, sans les 11 circonscriptions des Français de l'étranger ni les 8 des COM), WGS84 : https://www.insee.fr/fr/statistiques/6441661 (licence de ce fichier **non vérifiée**). Alternative : https://www.data.gouv.fr/datasets/contours-geographiques-des-circonscriptions-legislatives (auteur individuel, Licence Ouverte 2.0, mise à jour 13/06/2024).
 - Découpage en vigueur depuis les législatives de 2012 : d'après un extrait de recherche, **texte de référence non vérifié**.
 
@@ -374,9 +382,9 @@ Règles et remarques :
 3. Conditions de réutilisation des résultats présidentiels 2022 (licence `notspecified`).
 4. ~~Structure du fichier communal du 1er tour 2022 pour Paris, Lyon, Marseille, et nombre exact de lignes `ZZ`.~~ Vérifié en phase 4 : une ligne par ville au 1er tour aussi (75056, 69123, 13055) ; 210 lignes `ZZ` à chaque tour.
 5. Licence du fichier INSEE des contours de circonscriptions ; texte de référence du découpage.
-6. Zéros initiaux des codes métropolitains dans les fichiers des législatives 2024.
+6. ~~Zéros initiaux des codes métropolitains dans les fichiers des législatives 2024.~~ Vérifié en phase 6 : absents du fichier du 1er tour, présents dans celui du 2nd tour (§3.3).
 7. ~~Sources des indicateurs économiques initiaux : à identifier en phase 6.~~ Fait (§7 bis, séries de l'Insee) ; conditions de réutilisation de l'Insee à relire avant une mise en ligne publique.
-9. Texte des articles 6 et 7 de la Constitution sur Légifrance (cités d'après Wikipédia, Légifrance refusant l'accès le 21/10/2026).
+9. Texte des articles 6, 7, 12, 28, 45 et 49 de la Constitution, du code électoral et de la loi organique n° 2001-419 sur Légifrance (cités d'après Wikipédia, Légifrance refusant l'accès le 21/10/2026).
 8. Conditions de réutilisation des relevés de temps de parole de l'Arcom (page sans licence), des mesures de Médiamétrie et des classements de l'ACPM : seuls quelques chiffres agrégés sont repris avec citation ; à confirmer avant une mise en ligne publique.
 
 ## 10. Métadonnées obligatoires de chaque import (§10)

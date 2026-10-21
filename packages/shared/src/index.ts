@@ -15,3 +15,5 @@ export * from './assemblee';
 export * from './parlement';
 export * from './economie';
 export * from './economie-reelle';
+export * from './legislatives';
+export * from './legislatives-etat';

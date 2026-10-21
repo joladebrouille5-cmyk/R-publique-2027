@@ -571,7 +571,9 @@ export function advanceParliament(
     if (applyChoice(context, bill, answer.optionId as BillChoice, presidentId, events)) fall();
   }
 
-  if (quinquennat.gouvernement === null || censured) return { events, censured };
+  // Matignon vacant ou Assemblée dissoute : les textes attendent.
+  const dissolved = state.legislatives?.prochaine?.motif === 'dissolution';
+  if (quinquennat.gouvernement === null || censured || dissolved) return { events, censured };
 
   // Dépôt du prochain texte de la feuille de route (une fois par quinquennat, dépendances adoptées).
   const { calendrier } = ruleset.parlement;

@@ -3,6 +3,7 @@ import { targetLabel, type ValidatedAction } from '../campaign/actions';
 import { formatFrenchDate } from '../core/calendar';
 import { compareStrings } from '../core/ledger';
 import { daysBetween, weekReaches } from './dates';
+import { dissolutionBlocked } from './legislatives';
 
 // Actions du président pendant le quinquennat (jeu de règles, `quinquennat.actions`) : mêmes
 // règles pour le joueur et pour l'IA. Elles ne coûtent que du temps : les dépenses de l'État ne
@@ -25,6 +26,7 @@ export function validatePresidencyActions(
   const started = weekReaches(state.meta.date, quinquennat.mandat.debut);
   let time = state.actors[actorId]!.resources.tempsHeures;
   let reshuffle = false;
+  let dissolution = false;
 
   planned.forEach((action, index) => {
     const definition = ruleset.quinquennat.actions.find((a) => a.id === action.actionId);
@@ -47,6 +49,9 @@ export function validatePresidencyActions(
       reason = 'Aucun gouvernement en place à remanier.';
     else if (definition.institution === 'remaniement' && reshuffle)
       reason = 'Un seul remaniement par semaine.';
+    else if (definition.institution === 'dissolution')
+      reason =
+        dissolutionBlocked(state, ruleset) ?? (dissolution ? 'Une seule dissolution.' : null);
 
     if (!definition || reason) {
       outcomes.push({
@@ -62,6 +67,7 @@ export function validatePresidencyActions(
       return;
     }
     if (definition.institution === 'remaniement') reshuffle = true;
+    if (definition.institution === 'dissolution') dissolution = true;
     time -= definition.cout.tempsHeures;
     const cible = action.cible ?? null;
     validated.push({ actorId, index, definition, cible });
@@ -94,7 +100,8 @@ const AI_ADDRESS_PERIOD = 4;
  * Plan hebdomadaire du président IA (règle déterministe, hors cible tirée au sort) : un
  * déplacement chaque semaine dans un département tiré au sort, une action nationale toutes
  * les quatre semaines (à tour de rôle), un remaniement si sa popularité passe sous 25 % et que
- * le gouvernement a au moins un an.
+ * le gouvernement a au moins un an ; une dissolution si ses soutiens sont minoritaires à
+ * l'Assemblée alors qu'il est populaire (seuils du jeu de règles, hypothèses).
  */
 export function planPresidentActions(
   state: GameState,
@@ -114,6 +121,18 @@ export function planPresidentActions(
     governmentAgeWeeks(state) >= AI_RESHUFFLE_MIN_WEEKS
   )
     planned.push({ actionId: reshuffle.id });
+  const dissolve = actions.find((a) => a.institution === 'dissolution');
+  const parliament = state.parlement;
+  if (dissolve && parliament && dissolutionBlocked(state, ruleset) === null) {
+    const seats = Object.values(parliament.groupes);
+    const filled = seats.reduce((sum, g) => sum + g.sieges, 0);
+    const supporters = seats
+      .filter((g) => g.alignement === 'soutien')
+      .reduce((sum, g) => sum + g.sieges, 0);
+    const { soutiensMax, populariteMin } = ruleset.legislatives.ia;
+    if (supporters < soutiensMax * filled && president.resources.popularite >= populariteMin)
+      planned.push({ actionId: dissolve.id });
+  }
   const national = actions.filter((a) => a.cible === null && !a.institution);
   const week = state.meta.week;
   if (national.length > 0 && week % AI_ADDRESS_PERIOD === 0)

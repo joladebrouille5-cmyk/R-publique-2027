@@ -1,4 +1,10 @@
-import { addDays, candidateName, MAX_FAST_FORWARD_WEEKS } from '@r2027/shared';
+import {
+  addDays,
+  candidateName,
+  MAX_FAST_FORWARD_WEEKS,
+  type GameState,
+  type Ruleset,
+} from '@r2027/shared';
 import { useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { ApiRequestError, newIdempotencyKey } from '../api/client';
@@ -24,6 +30,18 @@ import { CalendarPanel } from './dashboard/CalendarPanel';
 import { DecisionsPanel } from './dashboard/DecisionsPanel';
 import { ResourcesPanel } from './dashboard/ResourcesPanel';
 import { useCurrentGame } from './GameLayout';
+
+/** Même règle que le moteur (qui reste seul juge) : affichée avant de programmer la dissolution. */
+function dissolutionRestriction(state: GameState, ruleset: Ruleset): string | null {
+  const legislatives = state.legislatives;
+  if (!legislatives) return 'Aucune Assemblée à dissoudre.';
+  if (legislatives.prochaine?.motif === 'dissolution' || legislatives.premierTour)
+    return 'Des élections législatives sont déjà en cours.';
+  const allowed = addDays(legislatives.derniere.t2, ruleset.legislatives.regles.moratoireJours);
+  return state.meta.date < allowed
+    ? `Pas de nouvelle dissolution dans l’année qui suit les dernières élections (possible à partir du ${formatGameDate(allowed)}).`
+    : null;
+}
 
 const FAST_FORWARD_STOP_LABELS = {
   decision: 'une décision vous attend',
@@ -219,9 +237,15 @@ export function Dashboard() {
               {formatIndicator('inflation', state.economie.indicateurs.inflation ?? 0)}.
             </p>
           )}
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Législatives et dissolution : étape suivante de la phase 6, pas encore jouables.
-          </p>
+          {state.legislatives?.prochaine && (
+            <p>
+              {state.legislatives.prochaine.motif === 'dissolution'
+                ? 'Assemblée dissoute : législatives anticipées'
+                : 'Prochaines législatives'}{' '}
+              : premier tour le {formatGameDate(state.legislatives.prochaine.t1)}
+              {state.legislatives.derniere.cohabitation ? ' ; cohabitation en cours' : ''}.
+            </p>
+          )}
           <p className="flex flex-wrap gap-x-4">
             <Link
               to="../gouvernement"
@@ -240,6 +264,12 @@ export function Dashboard() {
               className="text-republique-600 underline dark:text-republique-100"
             >
               L’économie
+            </Link>
+            <Link
+              to="../legislatives"
+              className="text-republique-600 underline dark:text-republique-100"
+            >
+              Les législatives
             </Link>
             <Link
               to="../resultats"
@@ -392,7 +422,9 @@ export function Dashboard() {
               ? `Le mandat commence le ${formatGameDate(quinquennat.mandat.debut)}.`
               : action.institution === 'remaniement' && !quinquennat.gouvernement
                 ? 'Aucun gouvernement en place à remanier.'
-                : null
+                : action.institution === 'dissolution'
+                  ? dissolutionRestriction(state, ruleset.data!)
+                  : null
           }
           reservedHours={0}
           cap={0}

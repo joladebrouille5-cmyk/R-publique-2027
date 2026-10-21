@@ -1,7 +1,7 @@
 {
   "id": "presidentielle-2027",
-  "version": "8.0.0",
-  "libelle": "Présidentielle 2027 et quinquennat — campagne, parrainages, financement, médias réels, présidence, gouvernement, Parlement, économie et crises (phase 6)",
+  "version": "9.0.0",
+  "libelle": "Présidentielle 2027 et quinquennat — campagne, parrainages, financement, médias réels, présidence, gouvernement, Parlement, économie, crises et législatives (phase 6)",
   "verifieLe": "2026-10-21",
   "sources": {
     "elysee-cm-2026-07-01": {
@@ -57,6 +57,16 @@
     "constitution-art-49": {
       "titre": "Constitution du 4 octobre 1958, article 49 (motion de censure signée par un dixième des membres et adoptée à la majorité des membres ; engagement de responsabilité sur un texte autre que financier une fois par session) — texte cité par l'article Wikipédia « Article 49 de la Constitution de la Cinquième République française » (révision 240034355 du 03/10/2026) ; texte de Légifrance non relu (accès refusé)",
       "url": "https://fr.wikipedia.org/w/index.php?title=Article_49_de_la_Constitution_de_la_Cinqui%C3%A8me_R%C3%A9publique_fran%C3%A7aise&oldid=240034355",
+      "consulteLe": "2026-10-21"
+    },
+    "constitution-art-12": {
+      "titre": "Constitution du 4 octobre 1958, article 12 (dissolution ; élections générales vingt jours au moins et quarante jours au plus après ; pas de nouvelle dissolution dans l'année qui suit ces élections) — texte cité par l'article Wikipédia « Article 12 de la Constitution de la Cinquième République française » (révision 230532189 du 10/11/2025) ; texte de Légifrance non relu (accès refusé)",
+      "url": "https://fr.wikipedia.org/w/index.php?title=Article_12_de_la_Constitution_de_la_Cinqui%C3%A8me_R%C3%A9publique_fran%C3%A7aise&oldid=230532189",
+      "consulteLe": "2026-10-21"
+    },
+    "wikipedia-elections-legislatives": {
+      "titre": "Article Wikipédia « Élections législatives en France » (révision 239629789 du 19/09/2026) : 577 circonscriptions, élu au premier tour à la majorité absolue des exprimés représentant au moins 25 % des inscrits, second tour ouvert aux candidats ayant réuni 12,5 % des inscrits (sinon les deux premiers), fin des pouvoirs de l'Assemblée le troisième mardi de juin, cinq ans après son élection (loi organique n° 2001-419) ; code électoral non relu sur Légifrance (accès refusé)",
+      "url": "https://fr.wikipedia.org/w/index.php?title=%C3%89lections_l%C3%A9gislatives_en_France&oldid=239629789",
       "consulteLe": "2026-10-21"
     }
   },
@@ -3299,6 +3309,25 @@
         },
         "note": "Effets : hypothèses de jeu.",
         "institution": "remaniement"
+      },
+      {
+        "id": "dissolution",
+        "libelle": "Dissoudre l'Assemblée nationale",
+        "description": "Provoquer des élections législatives anticipées, 20 à 40 jours plus tard (Constitution, art. 12).",
+        "portee": "nationale",
+        "cible": null,
+        "cout": {
+          "budgetCentimes": 0,
+          "tempsHeures": 8
+        },
+        "prerequis": {
+          "militantsMin": 0
+        },
+        "effets": [],
+        "campagne": null,
+        "risque": null,
+        "note": "Impossible dans l'année qui suit les dernières élections législatives.",
+        "institution": "dissolution"
       }
     ]
   },
@@ -4127,6 +4156,82 @@
       "choixParDefaut": "aides"
     }
   ],
+  "legislatives": {
+    "note": "Règles citées : Constitution, art. 12 ; règles du code électoral et durée de la législature d'après une source secondaire. Résultats de 2024 par circonscription : ministère de l'Intérieur (fichier legislatives-2024.json, aucun nom de candidat). Simulation (hypothèses) : un candidat par bloc dans chaque circonscription ; voix de 2024 modulées par l'écart national de chaque bloc (élan présidentiel, popularité du président, aléa) ; reports au second tour selon la proximité des blocs ; sièges d'un bloc répartis entre ses groupes au prorata de leurs sièges avant l'élection. Les désistements entre les deux tours ne sont pas simulés.",
+    "fichier": "legislatives-2024.json",
+    "empreinte": "eb864f847cd7a706319dd9edc35ea6b7beb39ba1cb436be29b63050d5f9bcde9",
+    "regles": {
+      "statut": "officiel",
+      "sourceIds": ["constitution-art-12", "wikipedia-elections-legislatives"],
+      "premierTourInscrits": 0.25,
+      "qualificationInscrits": 0.125,
+      "delaiMinJours": 20,
+      "delaiMaxJours": 40,
+      "moratoireJours": 365,
+      "dureeAnnees": 5,
+      "regle": "Élu au premier tour : majorité absolue des suffrages exprimés et au moins 25 % des inscrits ; au second tour : candidats ayant réuni au moins 12,5 % des inscrits, sinon les deux premiers, le plus de voix l'emporte ; après une dissolution, élections générales 20 à 40 jours plus tard et aucune nouvelle dissolution dans l'année qui suit ; législature de cinq ans."
+    },
+    "finLegislature": {
+      "date": "2029-06-19",
+      "statut": "deduit",
+      "sourceId": "wikipedia-elections-legislatives",
+      "regle": "Troisième mardi de juin, cinq ans après l'élection de l'Assemblée en juillet 2024 (loi organique n° 2001-419) : mardi 19 juin 2029."
+    },
+    "echeance": {
+      "t1": "2029-06-10",
+      "t2": "2029-06-17",
+      "statut": "hypothese",
+      "regle": "Sur le modèle de 2022 (fin des pouvoirs le 21 juin, tours les 12 et 19 juin) : second tour le dimanche qui précède la fin des pouvoirs, premier tour une semaine plus tôt. Dates réelles fixées par décret."
+    },
+    "blocs": [
+      {
+        "id": "gauche",
+        "libelle": "Gauche",
+        "nuances": ["UG", "FI", "SOC", "COM", "VEC", "ECO", "DVG", "RDG", "EXG"],
+        "groupes": ["lfi-nfp", "soc", "ecos", "gdr"]
+      },
+      {
+        "id": "centre",
+        "libelle": "Centre et majorité sortante",
+        "nuances": ["ENS", "HOR", "DVC", "UDI"],
+        "groupes": ["epr", "dem", "hor"]
+      },
+      {
+        "id": "droite",
+        "libelle": "Droite",
+        "nuances": ["LR", "DVD", "DSV"],
+        "groupes": ["dr"]
+      },
+      {
+        "id": "extreme-droite",
+        "libelle": "Rassemblement national et alliés, extrême droite",
+        "nuances": ["RN", "UXD", "REC", "EXD"],
+        "groupes": ["rn", "udr"]
+      },
+      {
+        "id": "divers",
+        "libelle": "Régionalistes et divers",
+        "nuances": ["REG", "DIV"],
+        "groupes": ["liot", "ni"]
+      }
+    ],
+    "modele": {
+      "statut": "hypothese",
+      "elanPresidentiel": 0.06,
+      "elanSemaines": 26,
+      "effetPopularite": 0.5,
+      "aleaNational": 0.02,
+      "aleaLocal": 0.08,
+      "reportMax": 0.7,
+      "distanceReport": 1.2,
+      "blancsNulsT2": 0.06
+    },
+    "ia": {
+      "statut": "hypothese",
+      "soutiensMax": 0.35,
+      "populariteMin": 4500
+    }
+  },
   "debats": {
     "statut": "hypothese",
     "preparationMaxHeures": 40,

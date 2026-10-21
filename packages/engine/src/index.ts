@@ -85,6 +85,17 @@ export {
 } from './presidency/government';
 export { answerCrisis, drawCrises } from './presidency/crises';
 export {
+  blocPositions,
+  dissolutionBlocked,
+  firstRound,
+  legislativeWeek,
+  nationalTargets,
+  openLegislatives,
+  presidentBloc,
+  secondRound,
+  thirdTuesdayOfJune,
+} from './presidency/legislatives';
+export {
   applyReformToEconomy,
   EconomyBook,
   openEconomy,

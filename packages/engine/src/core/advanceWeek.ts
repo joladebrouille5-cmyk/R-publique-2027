@@ -360,6 +360,7 @@ export function advanceWeek(
         motif: p.strategie.motif,
       })),
       economie: [],
+      legislatives: null,
     },
   };
 }

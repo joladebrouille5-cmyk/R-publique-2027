@@ -319,7 +319,11 @@ export function ActionPlanner({
                   {[
                     ...(action.institution === 'remaniement'
                       ? ['Fin du gouvernement en place ; vous nommez un nouveau Premier ministre']
-                      : []),
+                      : action.institution === 'dissolution'
+                        ? [
+                            'Élections législatives 20 jours plus tard (577 circonscriptions, résultats simulés) ; travaux parlementaires suspendus ; nouveau gouvernement après le second tour',
+                          ]
+                        : []),
                     ...effects,
                   ].join(' ; ')}
                 </dd>

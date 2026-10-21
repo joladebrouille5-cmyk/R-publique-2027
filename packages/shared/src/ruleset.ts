@@ -4,6 +4,7 @@ import { AiObjectiveSchema } from './campaign';
 import { RealAssemblySchema } from './assemblee';
 import { EconomicIndicatorSchema } from './economie';
 import { RealEconomySchema } from './economie-reelle';
+import { RealLegislativesSchema } from './legislatives';
 import { RealMediaSchema } from './medias';
 import { RealPersonalitiesSchema } from './personalities';
 import { MinisterProfileSchema } from './quinquennat';
@@ -153,8 +154,8 @@ export const ActionDefinitionSchema = z
       .strict()
       .nullable(),
     note: z.string().nullable(),
-    /** Acte institutionnel du président (phase 6) : remaniement du gouvernement. */
-    institution: z.enum(['remaniement']).optional(),
+    /** Acte institutionnel du président (phase 6) : remaniement, dissolution de l'Assemblée. */
+    institution: z.enum(['remaniement', 'dissolution']).optional(),
   })
   .strict();
 export type ActionDefinition = z.infer<typeof ActionDefinitionSchema>;
@@ -443,6 +444,86 @@ export const CrisisDefinitionSchema = z
   })
   .strict();
 export type CrisisDefinition = z.infer<typeof CrisisDefinitionSchema>;
+
+/**
+ * Législatives (phase 6, P6-07) : règles citées (Constitution, art. 12 ; code électoral d'après
+ * une source secondaire), fin de la législature élue en 2024, blocs politiques (nuances du
+ * ministère de l'Intérieur et groupes de l'Assemblée) et modèle de simulation (hypothèses). Les
+ * résultats de 2024 par circonscription (`legislatives2024`) viennent de `pnpm data:legislatives`.
+ */
+export const LegislativeRulesSchema = z
+  .object({
+    note: z.string().min(1),
+    fichier: z.string().regex(/^[a-z0-9-]+\.json$/),
+    empreinte: z.string().regex(/^[0-9a-f]{64}$/),
+    regles: z
+      .object({
+        statut: DataStatusSchema,
+        sourceIds: z.array(Id).min(1),
+        /** Élu au premier tour : plus de la moitié des exprimés et au moins ce quart des inscrits. */
+        premierTourInscrits: Fraction,
+        /** Qualification au second tour : part des inscrits (sinon les deux premiers). */
+        qualificationInscrits: Fraction,
+        /** Élections générales 20 à 40 jours après la dissolution (art. 12). */
+        delaiMinJours: z.number().int().min(1),
+        delaiMaxJours: z.number().int().min(1),
+        /** Pas de nouvelle dissolution dans l'année qui suit ces élections (art. 12). */
+        moratoireJours: z.number().int().min(1),
+        dureeAnnees: z.number().int().min(1),
+        regle: z.string().min(1),
+      })
+      .strict(),
+    finLegislature: DatedRuleSchema,
+    /** Élections de fin de législature : dates de jeu (dimanches). */
+    echeance: z
+      .object({
+        t1: IsoDateSchema,
+        t2: IsoDateSchema,
+        statut: DataStatusSchema,
+        regle: z.string().min(1),
+      })
+      .strict(),
+    blocs: z
+      .array(
+        z
+          .object({
+            id: z.string().regex(/^[a-z]+(-[a-z]+)*$/),
+            libelle: z.string().min(1),
+            nuances: z.array(z.string().regex(/^[A-Z]{2,4}$/)).min(1),
+            groupes: z.array(Id).min(1),
+          })
+          .strict(),
+      )
+      .min(2),
+    modele: z
+      .object({
+        statut: z.literal('hypothese'),
+        /** Gain du camp présidentiel juste après la présidentielle (part des exprimés). */
+        elanPresidentiel: Fraction,
+        elanSemaines: z.number().int().min(1),
+        /** Gain du camp présidentiel par point de popularité au-dessus de la référence. */
+        effetPopularite: z.number().min(0),
+        aleaNational: Fraction,
+        aleaLocal: Fraction,
+        /** Part des voix d'un bloc éliminé qui se reporte au second tour. */
+        reportMax: Fraction,
+        /** Distance (axes du jeu) au-delà de laquelle aucun report ne se fait. */
+        distanceReport: z.number().positive(),
+        blancsNulsT2: Fraction,
+      })
+      .strict(),
+    ia: z
+      .object({
+        statut: z.literal('hypothese'),
+        /** Le président IA dissout si ses soutiens ont moins de cette part des sièges… */
+        soutiensMax: Fraction,
+        /** … et si sa popularité atteint ce niveau. */
+        populariteMin: z.number().int().min(0).max(10_000),
+      })
+      .strict(),
+  })
+  .strict();
+export type LegislativeRules = z.infer<typeof LegislativeRulesSchema>;
 
 export const EventConditionSchema = z
   .object({
@@ -845,6 +926,8 @@ export const RulesetSchema = z
     economie: EconomyRulesSchema,
     economieReelle: RealEconomySchema,
     crises: z.array(CrisisDefinitionSchema).min(1),
+    legislatives: LegislativeRulesSchema,
+    legislatives2024: RealLegislativesSchema,
     debats: z
       .object({
         statut: z.literal('hypothese'),
@@ -928,6 +1011,8 @@ export const RulesetSchema = z
       ruleset.quinquennat.investiture.sourceId,
       ruleset.quinquennat.finMandat.sourceId,
       ...ruleset.parlement.regles.sourceIds,
+      ...ruleset.legislatives.regles.sourceIds,
+      ruleset.legislatives.finLegislature.sourceId,
     ];
     for (const id of referenced) if (!sourceIds.has(id)) issue(`Source inconnue : ${id}`);
 
@@ -973,6 +1058,28 @@ export const RulesetSchema = z
     }
     if (ruleset.quinquennat.actions.filter((a) => a.institution === 'remaniement').length !== 1)
       issue('Quinquennat : une et une seule action de remaniement');
+    if (ruleset.quinquennat.actions.filter((a) => a.institution === 'dissolution').length > 1)
+      issue('Quinquennat : une seule action de dissolution');
+    // Législatives : chaque nuance de 2024 et chaque groupe de l'Assemblée dans un seul bloc.
+    const nuanceBloc = new Map<string, string>();
+    const groupBloc = new Map<string, string>();
+    for (const bloc of ruleset.legislatives.blocs) {
+      for (const n of bloc.nuances) {
+        if (nuanceBloc.has(n)) issue(`Nuance ${n} dans deux blocs`);
+        nuanceBloc.set(n, bloc.id);
+      }
+      for (const g of bloc.groupes) {
+        if (groupBloc.has(g)) issue(`Groupe ${g} dans deux blocs`);
+        groupBloc.set(g, bloc.id);
+      }
+    }
+    for (const d of ruleset.legislatives2024.circonscriptions)
+      for (const n of Object.keys(d.voix))
+        if (!nuanceBloc.has(n)) issue(`Nuance ${n} (${d.code}) rattachée à aucun bloc`);
+    for (const g of ruleset.assemblee.groupes)
+      if (!groupBloc.has(g.id)) issue(`Groupe ${g.id} rattaché à aucun bloc`);
+    for (const g of groupBloc.keys())
+      if (!ruleset.assemblee.groupes.some((a) => a.id === g)) issue(`Groupe inconnu : ${g}`);
     for (const action of ruleset.actions)
       if (action.institution) issue(`${action.id} : acte institutionnel hors du quinquennat`);
     unique(

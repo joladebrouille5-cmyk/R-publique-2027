@@ -20,6 +20,7 @@ import { applyDecisions, validateDecisionAnswers } from '../event/events';
 import { planPresidentActions, validatePresidencyActions } from './actions';
 import { answerCrisis, drawCrises } from './crises';
 import { EconomyBook, weeklyEconomy } from './economy';
+import { dissolve, legislativeNotices, legislativeWeek } from './legislatives';
 import { advanceParliament } from './parliament';
 import { nextCampaignStart, weekReaches } from './dates';
 import {
@@ -187,6 +188,8 @@ export function advancePresidencyWeek(
     validated,
     5,
   );
+  for (const action of validated)
+    if (action.definition.institution === 'dissolution') events.push(dissolve(state, ruleset));
   for (const action of validated) {
     if (action.definition.institution !== 'remaniement') continue;
     const quinquennat = state.quinquennat!;
@@ -275,10 +278,26 @@ export function advancePresidencyWeek(
       ? `${plural(economy.list().length, 'indicateur')} mis à jour avec leurs facteurs (modèle de jeu).`
       : 'Économie non initialisée.',
   );
-  set(8, false, 'Aucune élection en cours.');
+  // 8. Législatives : premier ou second tour de la semaine, nouvelle Assemblée.
+  const legislatives = legislativeWeek(state, ruleset, president);
+  events.push(...legislatives.events);
+  if (legislatives.newAssembly) {
+    endGovernment(state.quinquennat!, date, 'élections législatives');
+    if (!playerPresides)
+      events.push(nominate(state, ruleset, aiPrimeMinister(state, ruleset, president)));
+  }
+  set(
+    8,
+    legislatives.report !== null,
+    legislatives.report
+      ? `Législatives : ${legislatives.report.tour === 1 ? 'premier' : 'second'} tour dépouillé dans les 577 circonscriptions.`
+      : 'Aucune élection en cours.',
+  );
 
   // 9. Semaine suivante, décision de nomination à l'investiture, fin du quinquennat.
-  const { notices, appliedScheduled } = enterNextWeek(state, ruleset, ledger, finances, 9);
+  const entered = enterNextWeek(state, ruleset, ledger, finances, 9);
+  const appliedScheduled = entered.appliedScheduled;
+  const notices = [...entered.notices, ...legislativeNotices(state, ruleset)];
   requestGovernment(state, ruleset);
   endOfQuinquennat(state, ruleset);
   set(
@@ -326,6 +345,7 @@ export function advancePresidencyWeek(
       alliances: [],
       strategies: [],
       economie: economy?.list() ?? [],
+      legislatives: legislatives.report,
     },
   };
 }

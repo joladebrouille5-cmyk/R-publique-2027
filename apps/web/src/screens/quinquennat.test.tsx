@@ -1,6 +1,6 @@
 import { advanceWeek, openQuinquennat } from '@r2027/engine';
 import type { GameState } from '@r2027/shared';
-import { screen, waitFor, within } from '@testing-library/react';
+import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import {
@@ -214,5 +214,105 @@ describe('quinquennat', () => {
     expect(within(catalog).getAllByRole('listitem')).toHaveLength(RULESET.crises.length);
     expect(within(catalog).getAllByText('Fictif').length).toBe(RULESET.crises.length);
     expect(screen.getByText('Aucune crise n’attend de décision.')).toBeInTheDocument();
+  });
+
+  it('les législatives : Assemblée de 2024 réelle, filtre par département, sans nom', async () => {
+    mockApi(base(elected));
+    renderRoute(`/parties/${GAME_ID}/legislatives`);
+    const calendar = await screen.findByRole('region', { name: 'Calendrier' });
+    expect(within(calendar).getByText(/premier tour le dimanche 10 juin 2029/)).toBeInTheDocument();
+    expect(within(calendar).getByText(/Hypothèse : dates réelles fixées par décret/)).toBeVisible();
+    expect(within(calendar).getByText(/possible depuis le lundi 7 juillet 2025/)).toBeVisible();
+    const composition = screen.getByRole('region', { name: 'Dernières élections' });
+    expect(within(composition).getByText('Résultats réels')).toBeInTheDocument();
+    const blocs = within(composition).getByRole('table', {
+      name: 'Sièges et voix du premier tour par bloc',
+    });
+    expect(within(blocs).getAllByRole('row')).toHaveLength(RULESET.legislatives.blocs.length + 1);
+    const seats = within(blocs)
+      .getAllByRole('row')
+      .slice(1)
+      .map((row) => Number(within(row).getAllByRole('cell')[0]!.textContent));
+    expect(seats.reduce((a, b) => a + b, 0)).toBe(
+      Object.values(elected.parlement!.groupes).reduce((sum, g) => sum + g.sieges, 0),
+    );
+
+    const districts = screen.getByRole('region', {
+      name: 'Résultats par circonscription en 2024 (réels)',
+    });
+    const table = within(districts).getByRole('table');
+    const ain = RULESET.legislatives2024.circonscriptions.filter((d) => d.departement === '01');
+    expect(within(table).getAllByRole('row')).toHaveLength(ain.length + 1);
+    expect(
+      within(table).getByRole('rowheader', { name: 'Ain — 1ère circonscription' }),
+    ).toBeInTheDocument();
+    const user = userEvent.setup();
+    await user.selectOptions(within(districts).getByLabelText('Département'), '2A');
+    const corse = RULESET.legislatives2024.circonscriptions.filter((d) => d.departement === '2A');
+    expect(within(table).getAllByRole('row')).toHaveLength(corse.length + 1);
+    expect(within(districts).getByText(/sans aucun nom de candidat/)).toBeInTheDocument();
+  });
+
+  it('les législatives après une dissolution : premier tour, puis nouvelle Assemblée simulée', async () => {
+    let state = playerAtInvestiture();
+    while (!state.quinquennat!.gouvernement) state = step(state);
+    const dissolved = advanceWeek(
+      state,
+      { actions: [{ actionId: 'dissolution' }], decisions: [] },
+      { ruleset: RULESET },
+    ).state;
+    let current = dissolved;
+    while (!current.legislatives!.premierTour) current = step(current);
+    mockApi(base(current));
+    renderRoute(`/parties/${GAME_ID}/legislatives`);
+    const calendar = await screen.findByRole('region', { name: 'Calendrier' });
+    expect(within(calendar).getByText(/Élections anticipées après la dissolution/)).toBeVisible();
+    expect(within(calendar).getByText(/des élections législatives sont en cours/)).toBeVisible();
+    const pending = screen.getByRole('region', {
+      name: 'Premier tour en cours (résultats simulés)',
+    });
+    expect(within(pending).getAllByText('Second tour à venir').length).toBeGreaterThan(0);
+    cleanup();
+
+    while (current.legislatives!.premierTour) current = step(current);
+    mockApi(base(current));
+    renderRoute(`/parties/${GAME_ID}/legislatives`);
+    const composition = await screen.findByRole('region', { name: 'Dernières élections' });
+    expect(
+      within(composition).getByText(/anticipées après dissolution \(résultats simulés\)/),
+    ).toBeInTheDocument();
+    expect(within(composition).getByText('Simulation')).toBeInTheDocument();
+    expect(within(composition).getByText(/Majorité absolue : 289 sièges sur 577/)).toBeVisible();
+    expect(
+      within(composition).getByText(/Aucun résultat simulé n’est une prévision/),
+    ).toBeVisible();
+    expect(
+      screen.getByRole('region', { name: 'Résultats par circonscription (simulés)' }),
+    ).toBeInTheDocument();
+  });
+
+  it('le président joueur ne peut pas dissoudre deux fois dans l’année', async () => {
+    let state = playerAtInvestiture();
+    while (!state.quinquennat!.gouvernement) state = step(state);
+    mockApi(base(state));
+    renderRoute(`/parties/${GAME_ID}/tableau-de-bord`);
+    const label = `Ajouter ${RULESET.quinquennat.actions.find((a) => a.id === 'dissolution')!.libelle}`;
+    const dissolve = await screen.findByRole('button', { name: label });
+    expect(dissolve).toBeEnabled();
+    cleanup();
+
+    let current = advanceWeek(
+      state,
+      { actions: [{ actionId: 'dissolution' }], decisions: [] },
+      { ruleset: RULESET },
+    ).state;
+    while (current.legislatives!.derniere.motif === 'reelles-2024') current = step(current);
+    mockApi(base(current));
+    renderRoute(`/parties/${GAME_ID}/tableau-de-bord`);
+    const catalog = await screen.findByRole('list', { name: 'Catalogue des actions' });
+    expect(
+      within(catalog).getByText(/Pas de nouvelle dissolution dans l’année qui suit/),
+    ).toBeVisible();
+    expect(screen.getByRole('button', { name: label })).toBeDisabled();
   });
 });

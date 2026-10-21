@@ -19,6 +19,7 @@ import {
   CandidateIdentityV5Schema,
 } from './politics';
 import { EconomyStateSchema } from './economie';
+import { LegislativesStateSchema } from './legislatives-etat';
 import { ParliamentSchema } from './parlement';
 import { CycleSchema, QuinquennatSchema, QuinquennatSummarySchema } from './quinquennat';
 import { ResourceKeySchema, ResourcesSchema } from './resources';
@@ -525,19 +526,27 @@ export const GameStateV9Schema = GameStateV8Schema.extend({
 }).strict();
 export type GameStateV9 = z.infer<typeof GameStateV9Schema>;
 
-/**
- * État complet d'une partie, format de sauvegarde n° 10 (phase 6) : cycle électoral, présidence
- * et gouvernement, Parlement (groupes, textes, votes, réformes), économie (indicateurs, effets
- * différés, historique) et crises (décisions), archives des cycles précédents. Toute évolution
- * s'accompagne d'un nouveau numéro de format et d'une migration (packages/save-engine). L'aléa
- * ne figure pas dans l'état : chaque tirage est dérivé de la graine, de la semaine et de son
- * contexte (module, action, événement, groupe…).
- */
-export const GameStateSchema = GameStateV9Schema.extend({
+/** État au format 10 (phase 6, P6-05 et P6-06), figé pour les migrations. */
+export const GameStateV10Schema = GameStateV9Schema.extend({
   meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(10) }).strict(),
   pendingDecisions: z.array(PendingDecisionSchema),
   /** Économie du quinquennat ; null tant qu'aucun quinquennat n'a commencé. */
   economie: EconomyStateSchema.nullable(),
+}).strict();
+export type GameStateV10 = z.infer<typeof GameStateV10Schema>;
+
+/**
+ * État complet d'une partie, format de sauvegarde n° 11 (phase 6) : cycle électoral, présidence
+ * et gouvernement, Parlement (groupes, textes, votes, réformes), économie et crises,
+ * législatives (dernières élections, prochaines, fin de législature), archives des cycles
+ * précédents. Toute évolution s'accompagne d'un nouveau numéro de format et d'une migration
+ * (packages/save-engine). L'aléa ne figure pas dans l'état : chaque tirage est dérivé de la
+ * graine, de la semaine et de son contexte (module, action, événement, groupe…).
+ */
+export const GameStateSchema = GameStateV10Schema.extend({
+  meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(11) }).strict(),
+  /** Législatives ; null tant qu'aucun quinquennat n'a commencé. */
+  legislatives: LegislativesStateSchema.nullable(),
 }).strict();
 export type GameState = z.infer<typeof GameStateSchema>;
 

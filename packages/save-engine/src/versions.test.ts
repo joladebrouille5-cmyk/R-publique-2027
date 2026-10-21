@@ -18,6 +18,7 @@ import V6 from './fixtures/v6-phase-5-bis.json' with { type: 'json' };
 import V7 from './fixtures/v7-phase-5-ter.json' with { type: 'json' };
 import V8 from './fixtures/v8-phase-6.json' with { type: 'json' };
 import V9 from './fixtures/v9-phase-6.json' with { type: 'json' };
+import V10 from './fixtures/v10-phase-6.json' with { type: 'json' };
 import { loadStoredState, MIGRATED_CANDIDATE, SaveFormatError, upgradeState } from './versions';
 
 const ruleset = getRuleset(CURRENT_RULESET_KEY);
@@ -235,6 +236,7 @@ describe('migrations de sauvegarde', () => {
       historique: _historique,
       parlement: _parlement,
       economie: _economie,
+      legislatives: _legislatives,
       ...rest
     } = state;
     const { meta: _m, player: _p, actors: _a, medias: _md, ...restBefore } = V5.state;
@@ -273,6 +275,7 @@ describe('migrations de sauvegarde', () => {
       historique: _historique,
       parlement: _parlement,
       economie: _economie,
+      legislatives: _legislatives,
       ...rest
     } = state;
     const { meta: _m, medias: _md, ...restBefore } = V6.state;
@@ -335,6 +338,7 @@ describe('migrations de sauvegarde', () => {
       historique: _historique,
       parlement: _parlement,
       economie: _economie,
+      legislatives: _legislatives,
       ...rest
     } = state;
     const { meta: _m, calendar: _c, ...restBefore } = V7.state;
@@ -372,7 +376,13 @@ describe('migrations de sauvegarde', () => {
       rulesetVersion: CURRENT_RULESET_KEY,
     });
     // Rien d'autre ne change ; l'Assemblée est la composition importée, sans texte déposé.
-    const { meta: _meta, parlement, economie: _economie, ...rest } = state;
+    const {
+      meta: _meta,
+      parlement,
+      economie: _economie,
+      legislatives: _legislatives,
+      ...rest
+    } = state;
     const { meta: _m, ...restBefore } = V8.state;
     expect(rest).toEqual(restBefore);
     expect(Object.entries(parlement!.groupes).map(([id, g]) => [id, g.sieges])).toEqual(
@@ -412,7 +422,7 @@ describe('migrations de sauvegarde', () => {
       rulesetVersion: CURRENT_RULESET_KEY,
     });
     // Rien d'autre ne change ; l'économie part des valeurs de l'Insee du jeu de règles.
-    const { meta: _meta, economie, ...rest } = state;
+    const { meta: _meta, economie, legislatives: _legislatives, ...rest } = state;
     const { meta: _m, ...restBefore } = V9.state;
     expect(rest).toEqual(restBefore);
     expect(economie!.indicateurs.chomage).toBe(ruleset.economieReelle.indicateurs.chomage.valeur);
@@ -438,6 +448,44 @@ describe('migrations de sauvegarde', () => {
     );
   });
 
+  it('ouvre les législatives d’une partie réelle en cours de quinquennat (format 10)', () => {
+    const { state, migratedFrom } = loadStoredState(V10.state, V10.stateHash, 10);
+    expect(migratedFrom).toBe(10);
+    expect(state.meta).toMatchObject({
+      week: V10.state.meta.week,
+      phase: 'presidence',
+      saveSchemaVersion: SAVE_SCHEMA_VERSION,
+      engineVersion: ENGINE_VERSION,
+      rulesetVersion: CURRENT_RULESET_KEY,
+    });
+    // Rien d'autre ne change ; dernières élections : 2024 (réelles) ; prochaines : juin 2029.
+    const { meta: _meta, legislatives, ...rest } = state;
+    const { meta: _m, ...restBefore } = V10.state;
+    expect(rest).toEqual(restBefore);
+    expect(legislatives).toMatchObject({
+      derniere: { motif: 'reelles-2024', t2: '2024-07-07', circonscriptions: [] },
+      prochaine: { motif: 'fin-de-legislature', t1: '2029-06-10', t2: '2029-06-17' },
+      finLegislature: '2029-06-19',
+      premierTour: null,
+    });
+    expect(Object.values(legislatives!.derniere.siegesParBloc).reduce((a, b) => a + b, 0)).toBe(
+      Object.values(V10.state.parlement.groupes).reduce((a, g) => a + g.sieges, 0),
+    );
+    // La partie continue.
+    const next = advanceWeek(
+      state,
+      {
+        actions: [],
+        decisions: state.pendingDecisions.map((d) => ({
+          decisionId: d.id,
+          optionId: d.defaultOptionId,
+        })),
+      },
+      { ruleset },
+    ).state;
+    expect(next.meta.week).toBe(state.meta.week + 1);
+  });
+
   it('vérifie l’empreinte avant toute migration', () => {
     const altered = { ...V1_STATE, meta: { ...V1_STATE.meta, week: 3 } };
     expect(errorCode(() => loadStoredState(altered, V1_HASH, 1))).toBe('empreinte_incoherente');
@@ -458,6 +506,7 @@ describe('migrations de sauvegarde', () => {
     expect(errorCode(() => upgradeState(V7.state, 8))).toBe('etat_invalide');
     expect(errorCode(() => upgradeState(V8.state, 9))).toBe('etat_invalide');
     expect(errorCode(() => upgradeState(V9.state, 10))).toBe('etat_invalide');
+    expect(errorCode(() => upgradeState(V10.state, 11))).toBe('etat_invalide');
   });
 
   it('refuse un jeu de règles inconnu', () => {

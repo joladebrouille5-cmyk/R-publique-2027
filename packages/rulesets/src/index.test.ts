@@ -14,6 +14,7 @@ import { describe, expect, it } from 'vitest';
 import { CURRENT_RULESET_KEY, getRuleset, listRulesetKeys, UnknownRulesetError } from './index';
 import assemblee from './assemblee-2026.json';
 import economieReelle from './economie-2026.json';
+import legislatives2024 from './legislatives-2024.json';
 import mediasReels from './medias-2027.json';
 import personnalites from './personnalites-2027.json';
 import raw from './presidentielle-2027.json';
@@ -21,12 +22,20 @@ import raw from './presidentielle-2027.json';
 /** Jeu de règles complet (base + données importées), copié pour les tests de rejet. */
 const full = () =>
   JSON.parse(
-    JSON.stringify({ ...raw, personnalites, mediasReels, assemblee, economieReelle }),
+    JSON.stringify({
+      ...raw,
+      personnalites,
+      mediasReels,
+      assemblee,
+      economieReelle,
+      legislatives2024,
+    }),
   ) as typeof raw & {
     personnalites: typeof personnalites;
     mediasReels: typeof mediasReels;
     assemblee: typeof assemblee;
     economieReelle: typeof economieReelle;
+    legislatives2024: typeof legislatives2024;
   };
 
 const ruleset = getRuleset(CURRENT_RULESET_KEY);
@@ -513,5 +522,47 @@ describe('économie et crises (phase 6)', () => {
     const unknownDefault = full();
     unknownDefault.crises[0]!.choixParDefaut = 'absent';
     expect(RulesetSchema.safeParse(unknownDefault).success).toBe(false);
+  });
+});
+
+describe('législatives (phase 6)', () => {
+  it('a l’empreinte déclarée par le jeu de règles : une réimportation impose une nouvelle version', () => {
+    const hash = createHash('sha256').update(JSON.stringify(legislatives2024)).digest('hex');
+    expect(ruleset.legislatives.empreinte).toBe(hash);
+    expect(ruleset.legislatives.fichier).toBe('legislatives-2024.json');
+  });
+
+  it('cite les règles de la Constitution et du code électoral, et étiquette le reste', () => {
+    const l = ruleset.legislatives;
+    expect(l.regles).toMatchObject({
+      statut: 'officiel',
+      premierTourInscrits: 0.25,
+      qualificationInscrits: 0.125,
+      delaiMinJours: 20,
+      delaiMaxJours: 40,
+      moratoireJours: 365,
+      dureeAnnees: 5,
+    });
+    for (const id of l.regles.sourceIds) expect(ruleset.sources[id]!.url).toMatch(/oldid=\d+$/);
+    expect(l.finLegislature).toMatchObject({ date: '2029-06-19', statut: 'deduit' });
+    expect(l.echeance.statut).toBe('hypothese');
+    expect(weekday(l.echeance.t1)).toBe(7);
+    expect(addDays(l.echeance.t1, 7)).toBe(l.echeance.t2);
+    expect(l.modele.statut).toBe('hypothese');
+    for (const source of ruleset.legislatives2024.sources) {
+      expect(source.licence).toMatch(/Licence Ouverte/);
+      expect(source.url).toMatch(/^https:\/\/static\.data\.gouv\.fr\//);
+    }
+  });
+
+  it('rattache chaque nuance de 2024 et chaque groupe de l’Assemblée à un seul bloc', () => {
+    const orphan = full();
+    orphan.legislatives.blocs[0]!.nuances = orphan.legislatives.blocs[0]!.nuances.filter(
+      (n) => n !== 'UG',
+    );
+    expect(RulesetSchema.safeParse(orphan).success).toBe(false);
+    const twice = full();
+    twice.legislatives.blocs[1]!.groupes.push('rn');
+    expect(RulesetSchema.safeParse(twice).success).toBe(false);
   });
 });

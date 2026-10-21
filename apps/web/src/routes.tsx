@@ -12,6 +12,7 @@ import { Government } from './screens/Government';
 import { Parliament } from './screens/Parliament';
 import { Home } from './screens/Home';
 import { Journal } from './screens/Journal';
+import { Legislatives } from './screens/Legislatives';
 import { Medias } from './screens/Medias';
 import { NewGame } from './screens/NewGame';
 import { NotFound, RouteError } from './screens/NotFound';
@@ -44,6 +45,7 @@ const IMPLEMENTED: Record<string, ComponentType> = {
   parlement: Parliament,
   economie: Economy,
   crises: Crises,
+  legislatives: Legislatives,
   sondages: Polls,
   resultats: Results,
   journal: Journal,

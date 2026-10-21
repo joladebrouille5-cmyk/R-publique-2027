@@ -7,6 +7,7 @@ import {
   openingAccount,
   mandateDates,
   openEconomy,
+  openLegislatives,
   openParliament,
   PLAYER_ACTOR_ID,
   SAVE_SCHEMA_VERSION,
@@ -23,6 +24,7 @@ import {
   GameStateV7Schema,
   GameStateV8Schema,
   GameStateV9Schema,
+  GameStateV10Schema,
   type Actor,
   type ActorV4,
   type ActorV5,
@@ -36,6 +38,7 @@ import {
   type GameStateV7,
   type GameStateV8,
   type GameStateV9,
+  type GameStateV10,
 } from '@r2027/shared';
 import { z } from 'zod';
 import { hashState, sha256, canonicalStringify } from './canonical';
@@ -73,7 +76,8 @@ const SCHEMAS: Record<number, z.ZodType> = {
   7: GameStateV7Schema,
   8: GameStateV8Schema,
   9: GameStateV9Schema,
-  10: GameStateSchema,
+  10: GameStateV10Schema,
+  11: GameStateSchema,
 };
 
 /** Jeux de règles des parties aux formats 2 (phase 2) et 3 (phase 3). */
@@ -368,7 +372,7 @@ function migrateV8ToV9(v8: GameStateV8): GameStateV9 {
  * des valeurs de l'Insee du jeu de règles courant, comme au début d'un quinquennat (la
  * conjoncture des semaines déjà jouées n'est pas reconstituée).
  */
-function migrateV9ToV10(v9: GameStateV9): GameState {
+function migrateV9ToV10(v9: GameStateV9): GameStateV10 {
   return {
     ...v9,
     meta: {
@@ -378,6 +382,28 @@ function migrateV9ToV10(v9: GameStateV9): GameState {
       saveSchemaVersion: 10,
     },
     economie: v9.quinquennat ? openEconomy(getRuleset(CURRENT_RULESET_KEY), v9.meta.week) : null,
+  };
+}
+
+/**
+ * Format 10 → 11 (phase 6, P6-07) : la partie reçoit l'état des législatives. Pendant une
+ * campagne, rien (`null`) ; pendant un quinquennat, les dernières élections sont celles de 2024
+ * (réelles, sièges de l'Assemblée en place) et les prochaines celles de la fin de la
+ * législature, comme au début d'un quinquennat.
+ */
+function migrateV10ToV11(v10: GameStateV10): GameState {
+  return {
+    ...v10,
+    meta: {
+      ...v10.meta,
+      engineVersion: ENGINE_VERSION,
+      rulesetVersion: CURRENT_RULESET_KEY,
+      saveSchemaVersion: 11,
+    },
+    legislatives:
+      v10.quinquennat && v10.parlement
+        ? openLegislatives(getRuleset(CURRENT_RULESET_KEY), v10.parlement)
+        : null,
   };
 }
 
@@ -391,6 +417,7 @@ const MIGRATIONS: Record<number, (state: never) => unknown> = {
   7: migrateV7ToV8,
   8: migrateV8ToV9,
   9: migrateV9ToV10,
+  10: migrateV10ToV11,
 };
 
 export type LoadedState = { state: GameState; stateHash: string; migratedFrom: number | null };

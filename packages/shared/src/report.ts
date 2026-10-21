@@ -199,8 +199,21 @@ export const WeeklyReportSchema = z
     relations: z.array(RelationNoteSchema).default([]),
     alliances: z.array(AllianceSchema).default([]),
     strategies: z.array(StrategyNoteSchema).default([]),
-    // Ajout de la phase 6 : variations des indicateurs économiques et leurs facteurs.
+    // Ajouts de la phase 6 : variations des indicateurs économiques et leurs facteurs ;
+    // tour de législatives dépouillé dans la semaine.
     economie: z.array(EconomyChangeSchema).default([]),
+    legislatives: z
+      .object({
+        tour: z.union([z.literal(1), z.literal(2)]),
+        date: IsoDateSchema,
+        /** Élus à ce tour. */
+        elus: z.number().int().min(0),
+        /** Sièges par bloc après le second tour (null au premier tour). */
+        siegesParBloc: z.record(z.string(), z.number().int().min(0)).nullable(),
+      })
+      .strict()
+      .nullable()
+      .default(null),
   })
   .strict();
 export type WeeklyReport = z.infer<typeof WeeklyReportSchema>;

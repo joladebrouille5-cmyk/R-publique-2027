@@ -175,3 +175,70 @@ describe('avance rapide pendant le quinquennat', () => {
     expect(forbidden.json()).toMatchObject({ error: { code: 'actions_interdites' } });
   });
 });
+
+describe('dissolution et législatives', () => {
+  it('dissout, s’arrête sur chaque tour et sauvegarde le premier tour dépouillé', async () => {
+    const client = new Client(app);
+    const game = await electedGame(client, 'candidat_personnalise');
+    const nomination = AdvanceResponseSchema.parse(
+      (await advanceVia(client, game, { expectedWeek: game.week, semaines: 4 })).json(),
+    );
+    const decision = nomination.game.state.pendingDecisions[0]!;
+    const named = AdvanceResponseSchema.parse(
+      (
+        await advanceVia(client, nomination.game, {
+          expectedWeek: nomination.game.week,
+          decisions: [{ decisionId: decision.id, optionId: decision.defaultOptionId }],
+        })
+      ).json(),
+    );
+    const dissolved = await advanceVia(client, named.game, {
+      expectedWeek: named.game.week,
+      actions: [{ actionId: 'dissolution' }],
+    });
+    expect(dissolved.statusCode).toBe(200);
+    const afterDissolution = AdvanceResponseSchema.parse(dissolved.json());
+    expect(afterDissolution.game.state.legislatives!.prochaine!.motif).toBe('dissolution');
+
+    // Premier tour : événement majeur, l'avance rapide s'arrête ; l'état est sauvegardé.
+    const round1 = AdvanceResponseSchema.parse(
+      (
+        await advanceVia(client, afterDissolution.game, {
+          expectedWeek: afterDissolution.game.week,
+          semaines: 8,
+        })
+      ).json(),
+    );
+    expect(round1.avanceRapide!.arret).toBe('evenement_majeur');
+    expect(round1.report.legislatives).toMatchObject({ tour: 1, siegesParBloc: null });
+    const stored = await db.game.findUniqueOrThrow({ where: { id: game.id } });
+    expect((stored.state as GameState).legislatives!.premierTour).toHaveLength(577);
+
+    // Second tour : nouvelle Assemblée de 577 sièges, nouveau gouvernement à nommer.
+    const round2 = AdvanceResponseSchema.parse(
+      (
+        await advanceVia(client, round1.game, { expectedWeek: round1.game.week, semaines: 8 })
+      ).json(),
+    );
+    expect(round2.report.legislatives).toMatchObject({ tour: 2 });
+    const legislatives = round2.game.state.legislatives!;
+    expect(legislatives.derniere.motif).toBe('dissolution');
+    expect(Object.values(legislatives.derniere.siegesParBloc).reduce((a, b) => a + b, 0)).toBe(577);
+    expect(round2.game.state.pendingDecisions.map((d) => d.kind)).toContain('gouvernement');
+
+    // Pas de nouvelle dissolution dans l'année : l'action est rejetée par le moteur.
+    const again = AdvanceResponseSchema.parse(
+      (
+        await advanceVia(client, round2.game, {
+          expectedWeek: round2.game.week,
+          actions: [{ actionId: 'dissolution' }],
+          decisions: round2.game.state.pendingDecisions.map((d) => ({
+            decisionId: d.id,
+            optionId: d.defaultOptionId,
+          })),
+        })
+      ).json(),
+    );
+    expect(again.report.actions[0]).toMatchObject({ status: 'rejetee' });
+  });
+});

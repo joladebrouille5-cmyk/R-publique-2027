@@ -101,9 +101,17 @@ export const GAME_SCREENS: readonly GameScreen[] = [
     path: 'legislatives',
     label: 'Législatives',
     phase: 6,
-    available: false,
+    available: true,
     description:
       'Élections législatives sur les 577 circonscriptions, dissolution et recomposition de l’Assemblée.',
+  },
+  {
+    path: 'bilan',
+    label: 'Bilan du quinquennat',
+    phase: 6,
+    available: false,
+    description:
+      'Bilan de fin de mandat (indicateurs, réformes, popularité) avant la présidentielle suivante.',
   },
   {
     path: 'journal',

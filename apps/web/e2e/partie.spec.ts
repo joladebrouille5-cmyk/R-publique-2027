@@ -106,7 +106,7 @@ test('export puis import dans une nouvelle partie identique', async ({ page }) =
 
 test('les écrans non implémentés sont annoncés comme tels', async ({ page }) => {
   await createGame(page, 'Écrans', 'e2e-ecrans');
-  await openScreen(page, 'Législatives');
+  await openScreen(page, 'Bilan du quinquennat');
   await expect(page.getByText('Non disponible — prévu en phase 6')).toBeVisible();
 });
 
@@ -174,10 +174,12 @@ test('présidentielle complète puis quinquennat : deux tours, résultats, gouve
     [],
   );
 
-  // Économie (valeurs de départ de l'Insee, évolution simulée) et crises fictives.
+  // Économie (valeurs de départ de l'Insee, évolution simulée), crises fictives et législatives
+  // (Assemblée élue en 2024, résultats réels par circonscription).
   for (const [screenName, landmark] of [
     ['Économie', page.getByRole('listitem', { name: 'Taux de chômage' })],
     ['Crises', page.getByRole('region', { name: 'Crises possibles (fictives)' })],
+    ['Législatives', page.getByRole('region', { name: 'Dernières élections' })],
   ] as const) {
     await openScreen(page, screenName);
     await expect(landmark).toBeVisible();
@@ -188,6 +190,13 @@ test('présidentielle complète puis quinquennat : deux tours, résultats, gouve
       screenAudit.violations.map((v) => `${screenName} — ${v.id} : ${v.help} (${v.nodes.length})`),
     ).toEqual([]);
   }
+  const districts = page.getByRole('region', {
+    name: 'Résultats par circonscription en 2024 (réels)',
+  });
+  await districts.getByLabel('Département').selectOption('2A');
+  await expect(
+    districts.getByRole('rowheader', { name: /^Corse-du-Sud — 1ère circonscription$/ }),
+  ).toBeVisible();
 });
 
 test('une date de départ invalide est refusée par le serveur', async ({ page }) => {
@@ -213,6 +222,7 @@ test('aucun défilement horizontal de la page', async ({ page }) => {
     'Parlement',
     'Économie',
     'Crises',
+    'Législatives',
     'Journal',
     'Sauvegardes',
   ]) {

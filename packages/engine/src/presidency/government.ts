@@ -16,8 +16,10 @@ import {
 import { proximity } from '../ai/relations';
 import { compareStrings } from '../core/ledger';
 import { stream } from '../core/random';
+import { distance } from '../election/model';
 import { mandateDates, weekReaches } from './dates';
 import { openEconomy } from './economy';
+import { openLegislatives } from './legislatives';
 import { openParliament } from './parliament';
 
 // Investiture et gouvernement (phase 6, P6-03). Le président nomme le Premier ministre : le
@@ -109,11 +111,42 @@ function eligibleActors(state: GameState, ruleset: Ruleset, president: Actor) {
 
 /** Choix du Premier ministre par l'IA : l'allié le plus proche s'il y en a un, sinon un profil. */
 export function aiPrimeMinister(state: GameState, ruleset: Ruleset, president: Actor): MemberRef {
+  const majority = cohabitationMajority(state, ruleset);
+  if (majority) {
+    // Cohabitation : un profil fictif proche de la majorité de l'Assemblée (hypothèse de jeu).
+    const best = [...ruleset.quinquennat.profils].sort(
+      (a, b) =>
+        distance(a.positionnement, majority) - distance(b.positionnement, majority) ||
+        compareStrings(a.id, b.id),
+    )[0]!;
+    return { nature: 'profil', ref: best.id };
+  }
   const ally = eligibleActors(state, ruleset, president).find(
     (e) => e.proximite >= ruleset.quinquennat.acceptation.proximiteMin,
   );
   if (ally) return { nature: 'acteur', ref: ally.actor.id };
   return { nature: 'profil', ref: sortedProfiles(president, ruleset, new Set())[0]!.profile.id };
+}
+
+/**
+ * Position moyenne (pondérée par les sièges) des groupes d'opposition quand ils détiennent la
+ * majorité de l'Assemblée élue aux dernières législatives ; null hors cohabitation.
+ */
+export function cohabitationMajority(state: GameState, ruleset: Ruleset): Position | null {
+  if (!state.legislatives?.derniere.cohabitation || !state.parlement) return null;
+  const groups = ruleset.assemblee.groupes.filter(
+    (g) => state.parlement!.groupes[g.id]?.alignement === 'opposition',
+  );
+  const seats = groups.reduce((sum, g) => sum + state.parlement!.groupes[g.id]!.sieges, 0);
+  if (seats === 0) return null;
+  const weighted = (axis: keyof Position) =>
+    Math.round(
+      groups.reduce(
+        (sum, g) => sum + state.parlement!.groupes[g.id]!.sieges * g.position[axis],
+        0,
+      ) / seats,
+    );
+  return { economie: weighted('economie'), societe: weighted('societe') };
 }
 
 /** Réponse (simulée) d'un acteur sollicité pour Matignon. */
@@ -313,6 +346,7 @@ export function openQuinquennat(state: GameState, ruleset: Ruleset, winnerId: st
   };
   state.parlement = openParliament(ruleset, winner, state.parlement);
   state.economie ??= openEconomy(ruleset, state.meta.week);
+  state.legislatives ??= openLegislatives(ruleset, state.parlement);
   state.meta.phase = 'presidence';
   state.calendar = { blockedBy: null, blockedMessage: null };
   requestGovernment(state, ruleset);
