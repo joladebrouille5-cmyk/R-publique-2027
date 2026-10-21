@@ -316,7 +316,7 @@ Programme (17 domaines du §6 : coût, délai, faisabilité, dépendances, effet
 | Tests clés de la phase | dépassement de plafond détecté (dépense refusée à la validation ; dépense imprévue signalée) ; dons interdits refusés et journalisés ; présentations invalides jamais comptées, au plus 50 par département ; difficulté sans effet sur le décompte des voix ni sur les règles (propriétés) ; adversaires autonomes en observateur (stratégie motivée, parrainages réunis, campagne financée) |
 | Simulation de contrôle (12 parties complètes, observateur et joueur) | 6,6 ms par semaine simulée en moyenne ; un ralliement par partie en moyenne ; aucun candidat écarté quand chacun collecte ; **la même candidate gagne les 12 parties** (voir limites) |
 | Contrôle visuel (bureau, mobile, thèmes clair et sombre) | tableau de bord, plan d'actions ciblées, Programme, Finances, Candidats (relations, médias) lisibles, sans défilement horizontal de la page |
-| CI GitHub Actions | *à relever après le push* |
+| CI GitHub Actions (exécution n° 20, commit `40855f6`) | verte : lint, format, types, tests unitaires, intégration, bout en bout (bureau + mobile) et construction réussis en 5 min 40 s |
 
 Réalisé :
 - **P5-01** : jeu de règles `presidentielle-2027@3.0.0` (programme, parrainages, financement, médias, débats, alliances, IA ; valeurs officielles sourcées, le reste étiqueté hypothèse ou estimation — [SOURCES §8 ter](./SOURCES.md#8-ter-utilisation-dans-le-jeu-phase-5)) ; format de sauvegarde 5 et migration 4 → 5 testée sur un état réel de la phase 4 (semaine 29, entre les deux tours).
@@ -342,6 +342,23 @@ Réalisé :
 - Une partie migrée depuis le format 4 garde des parrainages « non modélisés » (personne n'y est écarté) et un compte « partiel » (budget courant repris comme apport).
 - Sources non relues pendant la phase (Légifrance refusé, CNCCFP et Conseil constitutionnel injoignables depuis l'environnement le 21/10/2026) : les valeurs reprises sont celles vérifiées en phases 0 et 4, sans ajout.
 
+### Phase 5 bis — Personnalités politiques réelles
+
+Décision Q2 du 21/10/2026 (ci-dessous, [§5](#5-questions-ouvertes)) : les personnalités réelles sont **jouables** (mode « candidat réel ») **et adversaires** (scénario « adversaires réels », le scénario fictif restant disponible) ; ne sont proposées que les personnes ayant **déclaré publiquement leur candidature** à la présidentielle de 2027, avec la date et la source de la déclaration ; **photos sous licence libre** (Wikimedia Commons) avec auteur, licence et lien affichés ; position sur les deux axes du jeu = position du **parti** dans le Chapel Hill Expert Survey (vague la plus récente), convertie selon une méthode documentée et étiquetée `estimation`.
+
+| ID | Tâche | Test d'acceptation |
+|---|---|---|
+| P5b-01 | Importeur `pnpm data:personnalites` : pour chaque candidature déclarée, faits publics sourcés et datés (nom, parti, mandat en cours, date et source de la déclaration), photo et métadonnées de licence (auteur, licence, lien), position du parti (CHES) ; manifeste avec URL, date de consultation et empreinte SHA-256. Fichier versionné dans `packages/rulesets`, photos redimensionnées et commitées avec leur crédit. | l'import échoue si un champ n'a pas de source, si une photo n'a pas de licence libre reconnue ou pas d'auteur, ou si un parti n'a pas de position (alors étiquetée `hypothese` explicitement). |
+| P5b-02 | Jeu de règles 4.0.0 : profils réels (statut de candidature, date de vérification), conversion CHES → axes du jeu, moyens de départ par personnalité (`hypothese`), scénarios « adversaires fictifs » / « adversaires réels ». | schéma : toute personnalité réelle a ses sources et sa date de vérification ; aucun champ de citation ; conversion testée. |
+| P5b-03 | Format de sauvegarde 6 (nature `reel` du candidat, références de sources, crédit photo) et migration 5 → 6. | migration testée sur un état réel de la phase 5. |
+| P5b-04 | Création de partie : choix d'une personnalité réelle (fiche sourcée) ou d'un candidat personnalisé, choix du scénario d'adversaires ; API validée par Zod. | intégration : personnalité inconnue refusée ; scénario réel ⇒ adversaires = candidatures déclarées (hors le joueur), aucun adversaire inventé. |
+| P5b-05 | Interface : fiche de chaque personnalité (sources, date de vérification, statut de candidature), photo avec crédit, avertissement « simulation », badge « comportement simulé » sur tout fait simulé concernant une personne réelle (actions, stratégie, ralliement, sondage, résultat). | tests de composants ; Playwright bureau + mobile ; axe-core sans violation. |
+| P5b-06 | Documentation : SOURCES (fiches, licences, méthode CHES), RISQUES (R-06), README. | — |
+
+**Règles** : aucun propos ni aucune citation attribués à une personne réelle ; aucune information personnelle hors faits publics liés au mandat et à la candidature ; tout comportement d'une personnalité dans la partie est une **simulation**, présentée comme telle ; une modification de la liste (nouvelle déclaration, retrait) donne une nouvelle version du jeu de règles. Relecture juridique recommandée avant toute mise en ligne publique ([R-06](./RISQUES.md)).
+
+**Prérequis bloquant** : accès réseau aux sources, injoignables depuis l'environnement cloud le 21/10/2026 : `www.wikidata.org` et `query.wikidata.org` (faits structurés, CC0), `fr.wikipedia.org` (liste des candidatures déclarées et leurs références), `commons.wikimedia.org` et `upload.wikimedia.org` (photos et licences), `www.chesdata.eu` (positions des partis).
+
 ### Phase 6 — Quinquennat jouable
 
 Gouvernement et Premier ministre, feuille de route ; législatives (moteur distinct, 577 circonscriptions) ; Assemblée nationale (groupes, sièges, coalitions, discipline, amendements, procédures) ; économie ; crises ; bilan de fin de mandat et poursuite.
@@ -363,7 +380,7 @@ Durcissement sécurité (§14), mesure de performance et fixation des seuils (§
 | # | Question | Recommandation par défaut | Bloque |
 |---|---|---|---|
 | Q1 | Dates officielles des tours de 2027 | **Fait en phase 2** : 18 avril et 2 mai 2027 dans le jeu de règles avec le statut `annonce` ; à passer en `officiel` (nouvelle version du jeu de règles) à la publication du décret ([SOURCES §4](./SOURCES.md#4-calendrier-de-la-présidentielle-2027)). | — |
-| Q2 | Personnalités réelles proposées et politique d'affichage (photos, statut) | Commencer par le mode personnalisé ; profils réels ajoutés un par un, sourcés, sans photo. **Phase 3 : défaut appliqué** (candidat personnalisé + adversaires fictifs) ; le mode « candidat réel » reste refusé tant que la liste et la politique ne sont pas validées. | mode « candidat réel » |
+| Q2 | Personnalités réelles proposées et politique d'affichage (photos, statut) | **Décidé par l'utilisateur le 21/10/2026** : personnalités réelles jouables et adversaires ; seules les candidatures **déclarées** publiquement (date et source de la déclaration) ; photos sous **licence libre** avec auteur et licence affichés ; positionnement d'après la position du parti dans le **Chapel Hill Expert Survey**, étiqueté `estimation`. Mise en œuvre : phase 5 bis. | accès réseau aux sources (phase 5 bis) |
 | Q3 | Millésime géographique et source des contours | **Fait en phase 4** : COG 2026 (34 875 communes) et IGN ADMIN EXPRESS COG CARTO 2026, Licence Ouverte 2.0 (décision D8 appliquée). | — |
 | Q4 | Périmètre du scrutin | Périmètre officiel complet ; COM et Français de l'étranger dans une liste « Hors carte ». **Fait en phase 4** : périmètre officiel complet ; COM (dont Saint-Pierre-et-Miquelon) et Français de l'étranger dans la liste « Hors carte », comptés dans le total national. | — |
 | Q5 | Comptes utilisateurs | Session anonyme par cookie en phase 1 ; comptes plus tard si mise en ligne publique. | phase 1 (non bloquant) |
@@ -373,4 +390,4 @@ Durcissement sécurité (§14), mesure de performance et fixation des seuils (§
 
 ## 6. Prochaine étape
 
-**Phase 6 — quinquennat jouable** (gouvernement et Premier ministre, législatives sur 577 circonscriptions, Assemblée nationale, économie, crises, bilan de fin de mandat et nouvelle présidentielle), après validation de la phase 5. Elle exigera des données sourcées : composition de l'Assemblée (`data.assemblee-nationale.fr`, injoignable depuis l'environnement cloud au 21/10/2026), résultats des législatives 2024 et contours des circonscriptions (`www.data.gouv.fr` et `www.insee.fr`, joignables), indicateurs économiques initiaux (INSEE, Banque de France — `www.banque-france.fr` injoignable). Les questions Q2 (personnalités réelles) et Q8 (licence des résultats 2022) restent ouvertes.
+**Phase 5 bis — personnalités politiques réelles** (décision Q2 du 21/10/2026), dès que l'accès réseau aux sources est ouvert (prérequis ci-dessus) ; puis **phase 6 — quinquennat jouable** (gouvernement et Premier ministre, législatives sur 577 circonscriptions, Assemblée nationale, économie, crises, bilan de fin de mandat et nouvelle présidentielle). La phase 6 exigera aussi des données sourcées : composition de l'Assemblée (`data.assemblee-nationale.fr`, injoignable au 21/10/2026), résultats des législatives 2024 et contours des circonscriptions (`www.data.gouv.fr` et `www.insee.fr`, joignables), indicateurs économiques initiaux (INSEE, Banque de France — `www.banque-france.fr` injoignable). La question Q8 (licence des résultats 2022) reste ouverte.

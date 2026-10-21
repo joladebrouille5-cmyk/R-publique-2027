@@ -14,6 +14,7 @@ Simulation politique française : présidentielle, campagne et quinquennat. Jeu 
 | 3 | Candidats, adversaires autonomes, sondages, participation, deux tours | ✅ terminée |
 | 4 | Carte interactive (communes de métropole et des DROM), résultats territoriaux | ✅ terminée |
 | 5 | Campagne approfondie : programme, parrainages, financement, médias, débats, alliances | ✅ terminée |
+| 5 bis | Personnalités politiques réelles (jouables et adversaires, candidatures déclarées, sources et photos sous licence libre) | à faire : accès réseau aux sources requis |
 | 6–8 | Quinquennat, contenu, mise en ligne | à faire |
 
 **Ce qui fonctionne aujourd'hui** :
@@ -33,7 +34,7 @@ Simulation politique française : présidentielle, campagne et quinquennat. Jeu 
 - suivre le calendrier électoral officiel (dates annoncées ou déduites, avec leur source) ;
 - sauvegarder (5 emplacements manuels, sauvegarde automatique chaque semaine et avant un événement majeur), restaurer, exporter en JSON et importer dans une nouvelle partie, sans perte (empreinte SHA-256 identique).
 
-**Ce qui ne fonctionne pas encore** : la suite après le second tour (gouvernement, législatives, quinquennat : phase 6) — la partie s'arrête explicitement une fois le président élu ; dépôt et contrôle du compte de campagne par la CNCCFP (le remboursement affiché reste prévisionnel) ; mode « candidat réel » (en attente de la décision Q2 : profils sourcés et validation juridique). Sans import local, la carte n'a que le jeu de démonstration (communes de l'Ain, de la Corse et des DROM ; base électorale **fictive**, affichée comme telle).
+**Ce qui ne fonctionne pas encore** : la suite après le second tour (gouvernement, législatives, quinquennat : phase 6) — la partie s'arrête explicitement une fois le président élu ; dépôt et contrôle du compte de campagne par la CNCCFP (le remboursement affiché reste prévisionnel) ; mode « candidat réel » et adversaires réels (décidés le 21/10/2026, phase 5 bis : fiches à sourcer, accès réseau aux sources requis). Sans import local, la carte n'a que le jeu de démonstration (communes de l'Ain, de la Corse et des DROM ; base électorale **fictive**, affichée comme telle).
 
 ## Prérequis
 
