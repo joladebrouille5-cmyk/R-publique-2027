@@ -16,7 +16,8 @@ Simulation politique française : présidentielle, campagne et quinquennat. Jeu 
 | 5 | Campagne approfondie : programme, parrainages, financement, médias, débats, alliances | ✅ terminée |
 | 5 bis | Personnalités politiques réelles (jouables et adversaires, candidatures déclarées, sources et photos sous licence libre) | ✅ terminée |
 | 5 ter | Médias réels (presse, télévision, radio), émissions et journalistes politiques | ✅ terminée |
-| 6–8 | Quinquennat, contenu, mise en ligne | à faire |
+| 6 | Quinquennat jouable : gouvernement (personnalités réelles possibles), Assemblée nationale réelle et dissolution, législatives, économie, crises, présidentielle 2032 | en cours |
+| 7–8 | Contenu approfondi, mise en ligne, application Android (APK) | à faire |
 
 **Ce qui fonctionne aujourd'hui** :
 - créer une partie avec son candidat (prénom, nom, parti, positionnement économique et sociétal, parcours, profil de départ) ou en observateur, avec difficulté, date de départ et graine ;

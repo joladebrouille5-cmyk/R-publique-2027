@@ -433,11 +433,36 @@ Réalisé :
 - **Licences** des relevés de l'Arcom, de Médiamétrie et de l'ACPM non précisées : quelques chiffres agrégés seulement, avec citation ; à confirmer avant une mise en ligne publique ([R-30](./RISQUES.md)).
 - **Cloudflare Workers** (relié au dépôt par l'utilisateur) : seule l'interface y est publiée ; l'API et PostgreSQL restent à héberger (Q6).
 
-### Phase 6 — Quinquennat jouable
+### Phase 6 — Quinquennat jouable (en cours)
 
 Gouvernement et Premier ministre, feuille de route ; législatives (moteur distinct, 577 circonscriptions) ; Assemblée nationale (groupes, sièges, coalitions, discipline, amendements, procédures) ; économie ; crises ; bilan de fin de mandat et poursuite.
 
-**Tests clés** : réforme rejetée jamais appliquée ; effets différés des réformes ; fin de quinquennat ⇒ nouvelle présidentielle. **Critères visés** : 10, 11, 17.
+**Tests clés** : réforme rejetée jamais appliquée ; effets différés des réformes ; fin de quinquennat ⇒ nouvelle présidentielle. **Critères visés** : 10 (la victoire ouvre la phase gouvernementale), 11 (les votes parlementaires et réformes ont des conséquences), 17 (la partie continue après le quinquennat).
+
+Décisions de l'utilisateur du 21/10/2026 :
+- **défaite du joueur** : le vainqueur gouverne (IA, mêmes règles que le joueur) ; le joueur suit le quinquennat simulé et peut se représenter à la présidentielle de 2032 ;
+- **Assemblée de départ** : composition réelle en vigueur (groupes et sièges importés de `data.assemblee-nationale.fr`, sans nom de député) ; le président peut **dissoudre** (législatives anticipées sur les 577 circonscriptions), sinon législatives à la fin de la législature ;
+- **gouvernement** : Premier ministre et ministres choisis parmi des profils fictifs **ou** parmi les personnalités réelles de la partie (comportement simulé et étiqueté comme tel, aucun propos attribué) ;
+- **économie** : modèle simple sourcé (valeurs de départ INSEE / Banque de France, évolution par un modèle de jeu étiqueté hypothèse).
+
+Découpage (une sous-étape = un commit vérifié ; compte rendu à la fin de la phase) :
+
+| ID | Tâche | Test d'acceptation |
+|---|---|---|
+| P6-01 | **Calendrier institutionnel** (jeu de règles 6.0.0) : investiture et fin du mandat (Constitution, art. 6 et 7 ; mandat 2022 « à compter du 14 mai 2022 à 0 heure »), fenêtre de la présidentielle 2032, fin de la législature élue en 2024, règles de la dissolution (art. 12), postes du gouvernement, profils fictifs, paramètres de jeu étiquetés. Chaque date est `deduit` (règle citée) ou `hypothese`. | dates 2032 dans la fenêtre constitutionnelle (dimanches) ; aucune date sans source ni statut. |
+| P6-02 | **Format de sauvegarde 8** : présidence (président, mandat), gouvernement (Premier ministre, ministres réels ou fictifs, feuille de route), parlement, économie, crises, phase `quinquennat` ; migration 7 → 8 (une partie terminée au second tour reprend au début du quinquennat). | migration testée sur un état réel de la phase 5 ter terminé au second tour ; reprise et rejeu déterministes. |
+| P6-03 | **Investiture et gouvernement** (government-engine) : passation, choix du Premier ministre (décision du joueur ou règle de l'IA), composition proposée puis remaniements ; une personnalité réelle peut refuser (simulé, d'après sa proximité) ; feuille de route tirée du programme ; président IA en cas de défaite ; quinquennat semaine par semaine avec **avance rapide** arrêtée avant toute décision obligatoire. | la victoire ouvre la phase gouvernementale (critère 10) ; défaite ⇒ président IA ; même graine ⇒ même gouvernement. |
+| P6-04 | **Assemblée nationale** (import, parliament-engine) : groupes et sièges réels, position de chaque groupe (CHES du parti de référence, ou hypothèse documentée), majorité, opposition et soutiens ; textes issus de la feuille de route : dépôt, examen, amendements négociés (concessions qui réduisent l'effet), vote par groupe avec discipline, procédure de l'article 49 alinéa 3 et motion de censure (majorité absolue), Sénat simplifié (navette, dernier mot à l'Assemblée). | **réforme rejetée jamais appliquée** (propriété) ; texte adopté ⇒ effets **différés** selon le délai de la proposition ; censure adoptée ⇒ démission du gouvernement ; totaux de votes ≤ sièges. |
+| P6-05 | **Économie** (economy-engine) : croissance, inflation, chômage, dette, déficit, pouvoir d'achat, confiance des ménages (valeurs de départ sourcées), tensions sociales (indicateur de jeu) ; effets des réformes, des crises et de la conjoncture (hypothèses) ; facteurs explicatifs affichés. | indicateurs bornés ; décomposition = somme des facteurs ; déterminisme. |
+| P6-06 | **Crises** (event-engine) : bibliothèque de crises fictives étiquetées (conditions, probabilité, choix, effets immédiats et différés), décision obligatoire avant de continuer. | une crise exige une décision ; ses effets passent par le registre. |
+| P6-07 | **Législatives** (moteur distinct) : import des résultats de 2024 par circonscription (Licence Ouverte 2.0, §3.3 des sources), rattachement des nuances aux familles ; dissolution (élections 20 à 40 jours plus tard, pas de nouvelle dissolution dans l'année) et législatives de fin de législature ; deux tours (seuil de 12,5 % des inscrits, deux premiers qualifiés), répartition des sièges, recomposition de l'Assemblée ; cohabitation possible. | 577 sièges attribués exactement ; résultat de chaque circonscription cohérent (voix ≤ exprimés ≤ votants ≤ inscrits) ; dissolution impossible moins d'un an après les précédentes législatives. |
+| P6-08 | **Fin de mandat et poursuite** : bilan du quinquennat (indicateurs, réformes, popularité), campagne et présidentielle 2032 avec le même moteur (le président sortant peut se représenter une fois : art. 6), la partie continue. | fin de quinquennat ⇒ nouvelle présidentielle (critère 17) ; parrainages et comptes remis à zéro. |
+| P6-09 | **Interface** : écrans Gouvernement, Parlement (hémicycle, textes, votes par groupe), Économie, Crises, Législatives (résultats par circonscription) ; bilans hebdomadaires du quinquennat ; avance rapide. | tests de composants ; Playwright bureau + mobile (de l'investiture à un vote, puis à la présidentielle suivante) ; axe-core. |
+| P6-10 | Documentation (SOURCES, RISQUES, README, ARCHITECTURE, MODELE_DONNEES). | — |
+
+**Règles** : aucune personne réelle n'est nommée à un poste sans l'étiquette « simulé » ; aucun propos ni vote individuel attribué à un député réel (les votes sont ceux des groupes, simulés) ; les indicateurs économiques de départ sont sourcés et datés, leur évolution est une simulation ; les crises sont fictives et étiquetées.
+
+**Prérequis** : `data.assemblee-nationale.fr`, `www.insee.fr` et `www.banque-france.fr` joignables le 21/10/2026 ; `www.data.gouv.fr` joignable par intermittence ; `www.legifrance.gouv.fr` refusé (403) : les articles de la Constitution et du code électoral sont cités d'après leur texte connu et marqués « à vérifier sur Légifrance » tant qu'ils n'y ont pas été relus.
 
 ### Phase 7 — Contenu approfondi
 
@@ -446,6 +471,8 @@ Scénarios de départ, bibliothèque d'événements et de crises, conséquences 
 ### Phase 8 — Version publiable
 
 Durcissement sécurité (§14), mesure de performance et fixation des seuils (§15), documentation complète, image Docker, CI de déploiement, sauvegardes automatiques et **test de restauration**, test complet PC et téléphone. **Critères visés** : 1, 13, 14, 15.
+
+**Application Android (APK)** — demandée par l'utilisateur le 21/10/2026 pour la fin du projet : empaquetage de l'interface (enveloppe native, par exemple Capacitor) et signature de l'APK. Le jeu s'appuyant sur un serveur (API et PostgreSQL), l'APK devra soit se connecter à un serveur hébergé (question Q6), soit embarquer un mode hors ligne (moteur et sauvegardes sur l'appareil : changement d'architecture, décision D3 à revoir) — question Q9.
 
 ---
 
@@ -461,7 +488,8 @@ Durcissement sécurité (§14), mesure de performance et fixation des seuils (§
 | Q6 | Hébergeur | Choix avant la phase 8. **21/10/2026** : dépôt relié par l'utilisateur à Cloudflare Workers Builds (Worker `republique-2027`) ; seule l'interface y est publiée (`wrangler.jsonc`), l'API et PostgreSQL restent à héberger (les requêtes `/api/*` y reçoivent une erreur 503 explicite). | phase 8 (API) |
 | Q7 | Accès réseau aux domaines publics dans l'environnement cloud | **Phase 4** : `www.data.gouv.fr` et `static.data.gouv.fr` autorisés le temps de l'import (fichiers conservés dans `data/raw/`) ; `static.data.gouv.fr` à nouveau coupé le 21/10 ; les imports peuvent aussi s'exécuter en local. **Phase 5** : aucun accès nécessaire. Constat du 21/10 en fin de phase : `www.data.gouv.fr` et `www.insee.fr` joignables ; `www.legifrance.gouv.fr` refusé (403) ; `data.assemblee-nationale.fr`, `www.conseil-constitutionnel.fr`, `cnccfp.fr`, `www.elections.interieur.gouv.fr` et `www.banque-france.fr` injoignables. | réimport depuis le cloud ; données de la phase 6 |
 | Q8 | Réutilisation des résultats 2022 (licence non précisée sur data.gouv.fr) | Clarifier avant de commiter des données dérivées ; à défaut, démo synthétique `fictif`. **Phase 4 : défaut appliqué** (import local, jamais commité ; démonstration fictive). | mise en ligne de données dérivées |
+| Q9 | APK Android : enveloppe connectée à un serveur hébergé, ou mode hors ligne sur l'appareil | Enveloppe connectée à un serveur (architecture inchangée), décidée avec l'hébergeur (Q6) ; le mode hors ligne exigerait de faire tourner le moteur et les sauvegardes dans l'application. | phase 8 |
 
 ## 6. Prochaine étape
 
-Phase 5 ter terminée (médias réels). Prochaine : **phase 6 — quinquennat jouable** (gouvernement et Premier ministre, législatives sur 577 circonscriptions, Assemblée nationale, économie, crises, bilan de fin de mandat et nouvelle présidentielle), qui exigera `data.assemblee-nationale.fr` et `www.banque-france.fr` (injoignables au 21/10/2026) ; `www.data.gouv.fr` et `www.insee.fr` sont joignables. La question Q8 (licence des résultats 2022) reste ouverte.
+Phase 5 ter terminée et fusionnée dans `main` le 21/10/2026 (PR #1). En cours : **phase 6 — quinquennat jouable** (gouvernement et Premier ministre, législatives sur 577 circonscriptions, Assemblée nationale, économie, crises, bilan de fin de mandat et nouvelle présidentielle), qui exigera `data.assemblee-nationale.fr` et `www.banque-france.fr` (injoignables au 21/10/2026) ; `www.data.gouv.fr` et `www.insee.fr` sont joignables. La question Q8 (licence des résultats 2022) reste ouverte.
