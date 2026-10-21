@@ -145,7 +145,11 @@ test('présidentielle complète : candidat, sondages, deux tours et résultats',
   await expect(page.getByRole('region', { name: 'Premier tour' })).toBeVisible();
 
   await openScreen(page, 'Tableau de bord');
-  await expect(page.getByRole('alert').filter({ hasText: /élu\(e\)/ })).toBeVisible();
+  // Alerte du tableau de bord (le bilan de la dernière semaine, chargé ensuite, en a une autre).
+  const blocked = page
+    .getByRole('alert')
+    .filter({ has: page.getByRole('link', { name: 'Voir les résultats' }) });
+  await expect(blocked).toContainText(/élu\(e\)/);
   await expect(page.getByRole('button', { name: /Résoudre la semaine/ })).toBeDisabled();
 });
 
