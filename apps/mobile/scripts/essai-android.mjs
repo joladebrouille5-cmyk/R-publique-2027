@@ -5,7 +5,11 @@
 // inspectable). L'émulateur est mis hors réseau ; l'application ne demande aucune permission.
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { _android as android, expect } from '@playwright/test';
+import { _android as android, expect as baseExpect } from '@playwright/test';
+
+// Émulateur sans accélération graphique (rendu logiciel, deux cœurs) : environ dix fois plus
+// lent qu'un ordinateur ; les vérifications attendent donc jusqu'à deux minutes.
+const expect = baseExpect.configure({ timeout: 120_000 });
 
 const PKG = 'io.github.joladebrouille5cmyk.republique2027';
 const [apk, captures = 'essai-android'] = process.argv.slice(2);
@@ -31,8 +35,8 @@ async function launch() {
   await shell(`am start -W -n ${PKG}/.MainActivity`);
   const webview = await device.webView({ pkg: PKG });
   const page = await webview.page();
-  page.setDefaultTimeout(60_000);
-  return page;
+  page.setDefaultTimeout(120_000);
+  return { webview, page };
 }
 
 try {
@@ -46,7 +50,7 @@ try {
   if (/android\.permission\.INTERNET/.test(dump)) throw new Error('Permission INTERNET présente.');
 
   step('Démarrage hors ligne');
-  let page = await launch();
+  let { webview, page } = await launch();
   await expect(page.getByText(/Hors ligne · moteur .* sur l’appareil/)).toBeVisible();
   const native = await page.evaluate(() => [
     globalThis.Capacitor?.isNativePlatform?.(),
@@ -83,7 +87,7 @@ try {
   await nav.getByRole('link', { name: 'Sauvegardes' }).click();
   await page.getByRole('button', { name: 'Exporter la partie (JSON)' }).click();
   let exported = '';
-  for (let i = 0; i < 20 && !exported.includes('.json'); i++) {
+  for (let i = 0; i < 120 && !exported.includes('.json'); i++) {
     exported = await shell(`run-as ${PKG} ls cache/exports`);
     if (!exported.includes('.json')) await new Promise((r) => setTimeout(r, 500));
   }
@@ -95,8 +99,11 @@ try {
   await expect(page.getByRole('alert')).toHaveCount(0);
 
   step('Relance de l’application : la partie est conservée');
+  // Attendre la fermeture de l'ancienne WebView : sinon l'essai pourrait la reprendre.
+  const closed = new Promise((resolve) => webview.once('close', resolve));
   await shell(`am force-stop ${PKG}`);
-  page = await launch();
+  await Promise.race([closed, new Promise((resolve) => setTimeout(resolve, 30_000))]);
+  ({ webview, page } = await launch());
   await expect(page.getByRole('link', { name: /Partie Android/ })).toBeVisible();
   await writeFile(join(captures, '4-reprise.png'), await device.screenshot());
   step('Essai réussi');
