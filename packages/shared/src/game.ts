@@ -21,7 +21,13 @@ import {
 import { EconomyStateSchema } from './economie';
 import { LegislativesStateSchema } from './legislatives-etat';
 import { ParliamentSchema } from './parlement';
-import { CycleSchema, QuinquennatSchema, QuinquennatSummarySchema } from './quinquennat';
+import {
+  CycleSchema,
+  QuinquennatSchema,
+  QuinquennatSummarySchema,
+  QuinquennatSummaryV8Schema,
+  QuinquennatV8Schema,
+} from './quinquennat';
 import { ResourceKeySchema, ResourcesSchema } from './resources';
 
 export const GAME_MODES = ['candidat_reel', 'candidat_personnalise', 'observateur'] as const;
@@ -197,7 +203,13 @@ const CANDIDATE_STATUSES_V4 = ['candidat', 'qualifie', 'elimine', 'elu', 'battu'
  * Statuts d'un candidat. Depuis la phase 5 : `ecarte` (présentations insuffisantes à la
  * clôture, absent du premier tour) et `retire` (ralliement à un autre candidat).
  */
-export const CANDIDATE_STATUSES = [...CANDIDATE_STATUSES_V4, 'ecarte', 'retire'] as const;
+const CANDIDATE_STATUSES_V5 = [...CANDIDATE_STATUSES_V4, 'ecarte', 'retire'] as const;
+
+/**
+ * Statuts d'un candidat. Depuis le format 12 (phase 6) : `ineligible` (président sortant au
+ * terme de deux mandats consécutifs, Constitution, art. 6).
+ */
+export const CANDIDATE_STATUSES = [...CANDIDATE_STATUSES_V5, 'ineligible'] as const;
 export const CandidateStatusSchema = z.enum(CANDIDATE_STATUSES);
 export type CandidateStatus = z.infer<typeof CandidateStatusSchema>;
 
@@ -225,7 +237,7 @@ export type ActorV4 = z.infer<typeof ActorV4Schema>;
  * sa stratégie (§6, §7).
  */
 const ActorV5Schema = ActorV4Schema.extend({
-  status: CandidateStatusSchema,
+  status: z.enum(CANDIDATE_STATUSES_V5),
   /** Qualité de l'équipe de campagne (0 à 1) : maîtrise des débats, conversion des parrainages. */
   equipe: z.number().min(0).max(1),
   /** Régions où le candidat compte le plus d'élus (codes INSEE). */
@@ -242,8 +254,12 @@ const ActorV5Schema = ActorV4Schema.extend({
 }).strict();
 export type ActorV5 = z.infer<typeof ActorV5Schema>;
 
-/** Candidat et sa campagne (format 6) : l'identité peut être une personnalité réelle sourcée. */
-export const ActorSchema = ActorV5Schema.extend({ candidate: CandidateIdentitySchema }).strict();
+/** Candidat et sa campagne aux formats 6 à 11 (figé) : l'identité peut être une personnalité réelle. */
+const ActorV6Schema = ActorV5Schema.extend({ candidate: CandidateIdentitySchema }).strict();
+export type ActorV6 = z.infer<typeof ActorV6Schema>;
+
+/** Candidat et sa campagne (format 12) : statut `ineligible` possible. */
+export const ActorSchema = ActorV6Schema.extend({ status: CandidateStatusSchema }).strict();
 export type Actor = z.infer<typeof ActorSchema>;
 
 /** Décision obligatoire aux formats 3 à 7 (événement ou consigne de vote), figée. */
@@ -479,7 +495,7 @@ export type GameStateV5 = z.infer<typeof GameStateV5Schema>;
 export const GameStateV6Schema = GameStateV5Schema.extend({
   meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(6) }).strict(),
   player: PlayerSchema,
-  actors: z.record(Id, ActorSchema),
+  actors: z.record(Id, ActorV6Schema),
 }).strict();
 export type GameStateV6 = z.infer<typeof GameStateV6Schema>;
 
@@ -507,11 +523,11 @@ export const GameStateV8Schema = GameStateV7Schema.extend({
   pendingDecisions: z.array(PendingDecisionV8Schema),
   cycle: CycleSchema,
   /** Présidence en cours ; null pendant une campagne présidentielle. */
-  quinquennat: QuinquennatSchema.nullable(),
+  quinquennat: QuinquennatV8Schema.nullable(),
   historique: z
     .object({
       presidentielles: z.array(PresidentialArchiveSchema),
-      quinquennats: z.array(QuinquennatSummarySchema),
+      quinquennats: z.array(QuinquennatSummaryV8Schema),
     })
     .strict(),
 }).strict();
@@ -535,18 +551,33 @@ export const GameStateV10Schema = GameStateV9Schema.extend({
 }).strict();
 export type GameStateV10 = z.infer<typeof GameStateV10Schema>;
 
-/**
- * État complet d'une partie, format de sauvegarde n° 11 (phase 6) : cycle électoral, présidence
- * et gouvernement, Parlement (groupes, textes, votes, réformes), économie et crises,
- * législatives (dernières élections, prochaines, fin de législature), archives des cycles
- * précédents. Toute évolution s'accompagne d'un nouveau numéro de format et d'une migration
- * (packages/save-engine). L'aléa ne figure pas dans l'état : chaque tirage est dérivé de la
- * graine, de la semaine et de son contexte (module, action, événement, groupe…).
- */
-export const GameStateSchema = GameStateV10Schema.extend({
+/** État au format 11 (phase 6, P6-07), figé pour les migrations. */
+export const GameStateV11Schema = GameStateV10Schema.extend({
   meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(11) }).strict(),
   /** Législatives ; null tant qu'aucun quinquennat n'a commencé. */
   legislatives: LegislativesStateSchema.nullable(),
+}).strict();
+export type GameStateV11 = z.infer<typeof GameStateV11Schema>;
+
+/**
+ * État complet d'une partie, format de sauvegarde n° 12 (phase 6) : cycle électoral, présidence
+ * et gouvernement (avec le relevé de départ du quinquennat), Parlement (groupes, textes, votes,
+ * réformes), économie et crises, législatives, archives des cycles précédents (présidentielles,
+ * quinquennats et leur bilan) ; statut `ineligible` (art. 6). Toute évolution s'accompagne d'un
+ * nouveau numéro de format et d'une migration (packages/save-engine). L'aléa ne figure pas dans
+ * l'état : chaque tirage est dérivé de la graine, de la semaine et de son contexte (module,
+ * action, événement, groupe…).
+ */
+export const GameStateSchema = GameStateV11Schema.extend({
+  meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(12) }).strict(),
+  actors: z.record(Id, ActorSchema),
+  quinquennat: QuinquennatSchema.nullable(),
+  historique: z
+    .object({
+      presidentielles: z.array(PresidentialArchiveSchema),
+      quinquennats: z.array(QuinquennatSummarySchema),
+    })
+    .strict(),
 }).strict();
 export type GameState = z.infer<typeof GameStateSchema>;
 

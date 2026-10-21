@@ -19,7 +19,7 @@ import { compareStrings } from '../core/ledger';
 import { stream } from '../core/random';
 import { largestRemainder } from '../election/apportion';
 import { distance } from '../election/model';
-import { daysBetween, weekReaches } from './dates';
+import { daysBetween, nextCampaignStart, weekReaches } from './dates';
 import { alignmentOf, membersMajority } from './parliament';
 
 // Législatives (phase 6, P6-07). Base : résultats de 2024 par circonscription (ministère de
@@ -159,6 +159,11 @@ export function dissolutionBlocked(state: GameState, ruleset: Ruleset): string |
   const allowed = addDays(legislatives.derniere.t2, ruleset.legislatives.regles.moratoireJours);
   if (state.meta.date < allowed)
     return `Pas de nouvelle dissolution dans l’année qui suit les élections du ${legislatives.derniere.t2} (possible à partir du ${allowed}).`;
+  // Simplification du jeu : les législatives doivent se tenir avant la campagne présidentielle
+  // suivante, pendant laquelle le Parlement n'est pas simulé.
+  const campaign = nextCampaignStart(state, ruleset);
+  if (campaign && addDays(state.meta.date, ruleset.legislatives.regles.delaiMaxJours) >= campaign)
+    return `Plus de dissolution à l’approche de la campagne présidentielle du ${campaign} (simplification du jeu).`;
   return null;
 }
 

@@ -262,14 +262,42 @@ function initialPromiseCount(state: GameState, ruleset: Ruleset, actor: Actor): 
 
 /**
  * Promesses de parrainage de départ : celles des partis (jeu de règles) et, pour le joueur,
- * selon la difficulté. Attribuées dans l'ordre des identifiants, dans la limite des élus libres.
+ * selon la difficulté. Attribuées dans l'ordre des identifiants, dans la limite des élus libres,
+ * aux seuls candidats en lice (pas à un président sortant inéligible).
  */
 export function distributeInitialPromises(state: GameState, ruleset: Ruleset): void {
   for (const id of Object.keys(state.actors).sort(compareStrings)) {
     const actor = state.actors[id]!;
+    if (actor.status !== 'candidat') continue;
     const total = initialPromiseCount(state, ruleset, actor);
     actor.parrainages.promesses = initialPromises(state, ruleset, total, actor.implantation);
   }
+}
+
+/**
+ * Moyens de départ d'un candidat, recalculés comme à la création de la partie (budget,
+ * militants, notoriété) : ils dotent chaque candidat au début d'une nouvelle présidentielle
+ * (phase 6, P6-08).
+ */
+export function initialMeans(state: GameState, ruleset: Ruleset, actor: Actor): Resources {
+  const { difficulty } = state.meta;
+  const personalityId = actor.candidate.personnaliteId;
+  if (personalityId) {
+    const personality = findPersonality(ruleset, personalityId);
+    return createRealActor(personality, difficulty, ruleset, actor.kind === 'joueur').resources;
+  }
+  if (actor.kind === 'joueur') {
+    const { prenom, nom, parti, positionnement, parcours, profilId } = actor.candidate;
+    return createPlayerActor(difficulty, ruleset, {
+      prenom,
+      nom,
+      parti,
+      positionnement,
+      parcours,
+      profilId,
+    }).resources;
+  }
+  return createOpponents(difficulty, ruleset)[actor.id]?.resources ?? actor.resources;
 }
 
 export function createGame(input: CreateGameInput, ruleset: Ruleset): GameState {

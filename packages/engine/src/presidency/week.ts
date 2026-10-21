@@ -22,6 +22,7 @@ import { answerCrisis, drawCrises } from './crises';
 import { EconomyBook, weeklyEconomy } from './economy';
 import { dissolve, legislativeNotices, legislativeWeek } from './legislatives';
 import { advanceParliament } from './parliament';
+import { openNextCampaign } from './cycle';
 import { nextCampaignStart, weekReaches } from './dates';
 import {
   aiPrimeMinister,
@@ -35,8 +36,8 @@ import {
 
 // Semaine du quinquennat (phase 6). Même découpage en 12 étapes que la campagne : actions du
 // président (joueur ou IA, mêmes règles), nomination et remaniements du gouvernement, opinion
-// et usure du pouvoir, calendrier. Le Parlement, l'économie, les crises et les législatives
-// arrivent dans les étapes suivantes de la phase 6 : le bilan l'indique explicitement.
+// et usure du pouvoir, Parlement, économie et crises, législatives, calendrier ; à la fin du
+// quinquennat, bilan et ouverture de la présidentielle suivante (même moteur).
 
 const HISTORY_LENGTH = 8;
 const plural = (n: number, word: string) => `${n} ${word}${n > 1 ? 's' : ''}`;
@@ -54,15 +55,10 @@ export type PresidencyResult = {
   majorEvent: boolean;
 };
 
-function endOfQuinquennat(state: GameState, ruleset: Ruleset): void {
-  const nextStart = nextCampaignStart(state, ruleset);
+/** Dernier cycle du jeu de règles : la partie s'arrête à la fin du mandat. */
+function endOfGame(state: GameState, ruleset: Ruleset): void {
   const mandate = state.quinquennat!.mandat;
-  if (nextStart !== null && state.meta.date >= nextStart) {
-    state.calendar = {
-      blockedBy: 'fin-du-quinquennat',
-      blockedMessage: `La campagne de la présidentielle suivante commence le ${formatFrenchDate(nextStart)}. Elle arrive avec la fin de la phase 6 (étape P6-08) : la partie ne peut pas encore continuer.`,
-    };
-  } else if (nextStart === null && state.meta.date > mandate.fin) {
+  if (nextCampaignStart(state, ruleset) === null && state.meta.date > mandate.fin) {
     state.calendar = {
       blockedBy: 'fin-de-partie',
       blockedMessage: `Le jeu de règles ne prévoit pas de présidentielle après ${state.cycle.annee} : la partie s'arrête à la fin du mandat, le ${formatFrenchDate(mandate.fin)}.`,
@@ -298,12 +294,19 @@ export function advancePresidencyWeek(
   const entered = enterNextWeek(state, ruleset, ledger, finances, 9);
   const appliedScheduled = entered.appliedScheduled;
   const notices = [...entered.notices, ...legislativeNotices(state, ruleset)];
-  requestGovernment(state, ruleset);
-  endOfQuinquennat(state, ruleset);
+  // Fin du quinquennat : bilan et nouvelle campagne présidentielle (même moteur).
+  const transition = openNextCampaign(state, ruleset, ledger, 9);
+  if (transition) {
+    events.push(...transition);
+  } else {
+    requestGovernment(state, ruleset);
+    endOfGame(state, ruleset);
+  }
   set(
     9,
     true,
-    `Semaine ${state.meta.week} : ${plural(appliedScheduled, 'effet différé')} appliqué(s).`,
+    `Semaine ${state.meta.week} : ${plural(appliedScheduled, 'effet différé')} appliqué(s)` +
+      (transition ? ' ; quinquennat clos, campagne présidentielle ouverte.' : '.'),
   );
 
   // 10. Journal ; 11. sauvegarde (API) ; 12. bilan.
@@ -337,7 +340,7 @@ export function advancePresidencyWeek(
       intentions: null,
       polls: [],
       election: null,
-      phaseChange: null,
+      phaseChange: transition ? { from: 'presidence', to: 'campagne' } : null,
       programme: [],
       parrainages: [],
       finances: finances.list(),

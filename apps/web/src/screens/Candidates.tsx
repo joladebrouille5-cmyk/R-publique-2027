@@ -36,6 +36,7 @@ const STATUS_TONES = {
   battu: 'neutre',
   ecarte: 'danger',
   retire: 'neutre',
+  ineligible: 'neutre',
 } as const;
 
 /** Valeur signée à deux décimales, sans « −0,00 ». */
@@ -46,7 +47,16 @@ const formatSigned = (value: number) => {
 
 /** Candidats triés : le joueur d'abord, puis par statut et par nom. */
 export function sortedActors(state: GameState): Actor[] {
-  const order = ['elu', 'qualifie', 'battu', 'candidat', 'elimine', 'retire', 'ecarte'];
+  const order = [
+    'elu',
+    'qualifie',
+    'battu',
+    'candidat',
+    'elimine',
+    'retire',
+    'ecarte',
+    'ineligible',
+  ];
   return Object.values(state.actors).sort(
     (a, b) =>
       Number(b.id === state.player.actorId) - Number(a.id === state.player.actorId) ||
@@ -129,7 +139,7 @@ function RealSources({ ruleset }: { ruleset: Ruleset }) {
 
 export function Candidates() {
   const game = useCurrentGame();
-  const ruleset = useRuleset(game.rulesetVersion);
+  const ruleset = useRuleset(game.rulesetVersion, game.state.cycle);
   const plan = useWeeklyPlan(game.id, game.week);
   const { state } = game;
   const actors = sortedActors(state);

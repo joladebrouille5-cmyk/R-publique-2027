@@ -25,9 +25,14 @@ import {
   GameStateV8Schema,
   GameStateV9Schema,
   GameStateV10Schema,
+  GameStateV11Schema,
+  addDays,
+  daysFromCivil,
+  parseIsoDate,
   type Actor,
   type ActorV4,
   type ActorV5,
+  type ActorV6,
   type GameState,
   type GameStateV1,
   type GameStateV2,
@@ -39,6 +44,7 @@ import {
   type GameStateV8,
   type GameStateV9,
   type GameStateV10,
+  type GameStateV11,
 } from '@r2027/shared';
 import { z } from 'zod';
 import { hashState, sha256, canonicalStringify } from './canonical';
@@ -77,7 +83,8 @@ const SCHEMAS: Record<number, z.ZodType> = {
   8: GameStateV8Schema,
   9: GameStateV9Schema,
   10: GameStateV10Schema,
-  11: GameStateSchema,
+  11: GameStateV11Schema,
+  12: GameStateSchema,
 };
 
 /** Jeux de règles des parties aux formats 2 (phase 2) et 3 (phase 3). */
@@ -266,7 +273,7 @@ function migrateV4ToV5(v4: GameStateV4): GameStateV5 {
  * n'ajoutait que les personnalités réelles et leurs paramètres).
  */
 function migrateV5ToV6(v5: GameStateV5): GameStateV6 {
-  const actors: Record<string, Actor> = {};
+  const actors: Record<string, ActorV6> = {};
   for (const [id, actor] of Object.entries(v5.actors)) {
     actors[id] = { ...actor, candidate: { ...actor.candidate, personnaliteId: null } };
   }
@@ -391,7 +398,7 @@ function migrateV9ToV10(v9: GameStateV9): GameStateV10 {
  * (réelles, sièges de l'Assemblée en place) et les prochaines celles de la fin de la
  * législature, comme au début d'un quinquennat.
  */
-function migrateV10ToV11(v10: GameStateV10): GameState {
+function migrateV10ToV11(v10: GameStateV10): GameStateV11 {
   return {
     ...v10,
     meta: {
@@ -407,6 +414,50 @@ function migrateV10ToV11(v10: GameStateV10): GameState {
   };
 }
 
+/**
+ * Format 11 → 12 (phase 6, P6-08) : bilan du quinquennat et présidentielle suivante. Un
+ * quinquennat en cours reçoit son relevé de départ : semaine du second tour de 2027 (seul cycle
+ * jouable avant ce format), premières valeurs enregistrées de l'économie ; la popularité du
+ * président à son élection n'était pas enregistrée (null, signalé dans le bilan). Aucun
+ * quinquennat ne pouvait être achevé avant ce format (la partie se bloquait à la fin du mandat).
+ */
+function migrateV11ToV12(v11: GameStateV11): GameState {
+  if (v11.historique.quinquennats.length > 0) {
+    throw new SaveFormatError(
+      'incoherence',
+      'Quinquennat archivé dans un format antérieur au 12 : impossible, la fin du mandat y bloquait la partie.',
+    );
+  }
+  let quinquennat: GameState['quinquennat'] = null;
+  if (v11.quinquennat) {
+    const t2 = getRuleset(CURRENT_RULESET_KEY).calendrier.scrutins.at(-1)!.date;
+    const day = (iso: string) => daysFromCivil(parseIsoDate(iso)!);
+    const semaine = Math.max(0, Math.floor((day(t2) - day(v11.meta.startDate)) / 7));
+    const recorded =
+      v11.economie?.historique.find((h) => h.semaine >= semaine) ?? v11.economie?.historique[0];
+    quinquennat = {
+      ...v11.quinquennat,
+      depart: {
+        semaine,
+        date: addDays(v11.meta.startDate, 7 * semaine),
+        popularite: null,
+        indicateurs: recorded ? { ...recorded.valeurs } : null,
+      },
+    };
+  }
+  return {
+    ...v11,
+    meta: {
+      ...v11.meta,
+      engineVersion: ENGINE_VERSION,
+      rulesetVersion: CURRENT_RULESET_KEY,
+      saveSchemaVersion: 12,
+    },
+    quinquennat,
+    historique: { presidentielles: v11.historique.presidentielles, quinquennats: [] },
+  };
+}
+
 const MIGRATIONS: Record<number, (state: never) => unknown> = {
   1: migrateV1ToV2,
   2: migrateV2ToV3,
@@ -418,6 +469,7 @@ const MIGRATIONS: Record<number, (state: never) => unknown> = {
   8: migrateV8ToV9,
   9: migrateV9ToV10,
   10: migrateV10ToV11,
+  11: migrateV11ToV12,
 };
 
 export type LoadedState = { state: GameState; stateHash: string; migratedFrom: number | null };

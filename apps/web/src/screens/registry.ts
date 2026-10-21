@@ -109,9 +109,9 @@ export const GAME_SCREENS: readonly GameScreen[] = [
     path: 'bilan',
     label: 'Bilan du quinquennat',
     phase: 6,
-    available: false,
+    available: true,
     description:
-      'Bilan de fin de mandat (indicateurs, réformes, popularité) avant la présidentielle suivante.',
+      'Bilan de fin de mandat (indicateurs, réformes, popularité, gouvernements) et présidentielles précédentes.',
   },
   {
     path: 'journal',

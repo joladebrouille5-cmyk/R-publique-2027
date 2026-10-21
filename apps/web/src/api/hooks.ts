@@ -1,4 +1,5 @@
 import {
+  cycleRuleset,
   AdvanceResponseSchema,
   GameDetailSchema,
   GameSummarySchema,
@@ -10,6 +11,8 @@ import {
   type AdvanceRequest,
   type CreateGameRequest,
   type CreateSaveRequest,
+  type Cycle,
+  type Ruleset,
 } from '@r2027/shared';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, ApiRequestError } from './client';
@@ -54,11 +57,16 @@ export function useSaves(gameId: string) {
 }
 
 /** Jeu de règles de la partie (catalogue d'actions, calendrier sourcé), servi par l'API. */
-export function useRuleset(key: string) {
+/**
+ * Jeu de règles d'une partie. Avec le cycle électoral de la partie, le calendrier de campagne
+ * est celui de ce cycle (2027, puis transposé pour 2032…), exactement comme pour le moteur.
+ */
+export function useRuleset(key: string, cycle?: Cycle) {
   return useQuery({
     queryKey: queryKeys.ruleset(key),
     queryFn: () => api.get(`/api/rulesets/${encodeURIComponent(key)}`, RulesetSchema),
     staleTime: Infinity,
+    select: (ruleset: Ruleset) => (cycle ? cycleRuleset(ruleset, cycle) : ruleset),
   });
 }
 

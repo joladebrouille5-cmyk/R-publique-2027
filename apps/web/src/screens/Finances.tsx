@@ -157,7 +157,7 @@ function Account({ state, actor, ruleset }: { state: GameState; actor: Actor; ru
  */
 export function Finances() {
   const game = useCurrentGame();
-  const ruleset = useRuleset(game.rulesetVersion);
+  const ruleset = useRuleset(game.rulesetVersion, game.state.cycle);
   const { state } = game;
   const actor = state.player.actorId ? state.actors[state.player.actorId] : undefined;
   if (ruleset.isError)

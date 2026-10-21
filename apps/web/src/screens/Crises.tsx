@@ -78,7 +78,7 @@ function Content({ state, ruleset }: { state: GameState; ruleset: Ruleset }) {
 
 export function Crises() {
   const game = useCurrentGame();
-  const ruleset = useRuleset(game.rulesetVersion);
+  const ruleset = useRuleset(game.rulesetVersion, game.state.cycle);
   return (
     <section aria-labelledby="titre-ecran-crises" className="space-y-6">
       <h1 id="titre-ecran-crises" className="text-2xl font-bold">

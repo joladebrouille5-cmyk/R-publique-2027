@@ -334,7 +334,7 @@ function Content({ state, ruleset }: { state: GameState; ruleset: Ruleset }) {
 
 export function Legislatives() {
   const game = useCurrentGame();
-  const ruleset = useRuleset(game.rulesetVersion);
+  const ruleset = useRuleset(game.rulesetVersion, game.state.cycle);
   return (
     <section aria-labelledby="titre-ecran-legislatives" className="space-y-6">
       <h1 id="titre-ecran-legislatives" className="text-2xl font-bold">

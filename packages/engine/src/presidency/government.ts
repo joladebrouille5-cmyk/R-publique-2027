@@ -10,6 +10,7 @@ import {
   type PendingDecision,
   type Position,
   type Quinquennat,
+  type QuinquennatSnapshot,
   type ReportEvent,
   type Ruleset,
 } from '@r2027/shared';
@@ -323,6 +324,16 @@ export function answerGovernment(
   };
 }
 
+/** Relevé du quinquennat à la date de la partie (popularité du président, économie). */
+export function snapshot(state: GameState, presidentId: string): QuinquennatSnapshot {
+  return {
+    semaine: state.meta.week,
+    date: state.meta.date,
+    popularite: state.actors[presidentId]?.resources.popularite ?? null,
+    indicateurs: state.economie ? { ...state.economie.indicateurs } : null,
+  };
+}
+
 /**
  * Ouverture du quinquennat après la victoire au second tour (ou au premier) : mandat du
  * président, feuille de route tirée de son programme, partie débloquée en phase `presidence`.
@@ -343,10 +354,18 @@ export function openQuinquennat(state: GameState, ruleset: Ruleset, winnerId: st
     anciensGouvernements: [],
     feuilleDeRoute: [...winner.programme.propositions],
     refus: [],
+    depart: {
+      semaine: state.meta.week,
+      date: state.meta.date,
+      popularite: null,
+      indicateurs: null,
+    },
   };
   state.parlement = openParliament(ruleset, winner, state.parlement);
   state.economie ??= openEconomy(ruleset, state.meta.week);
   state.legislatives ??= openLegislatives(ruleset, state.parlement);
+  // Relevé de départ (bilan de fin de mandat) : popularité du président élu, économie.
+  state.quinquennat.depart = snapshot(state, winnerId);
   state.meta.phase = 'presidence';
   state.calendar = { blockedBy: null, blockedMessage: null };
   requestGovernment(state, ruleset);

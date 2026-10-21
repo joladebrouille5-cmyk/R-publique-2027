@@ -269,23 +269,24 @@ describe('quinquennat du président IA', () => {
     ).toThrow(EngineInputError);
   });
 
-  it('se déroule jusqu’à la campagne de 2032, où la partie s’arrête explicitement', () => {
+  it('se déroule jusqu’à la campagne de 2032, qui s’ouvre avec le même moteur', () => {
     const { state, reports } = playUntil(elected, () => false, RULES);
-    // playUntil s'arrête au plus tard après 80 semaines : on poursuit jusqu'au blocage.
+    // playUntil s'arrête au plus tard après 80 semaines : on poursuit jusqu'à la campagne.
     let current = state;
     const all = [...reports];
-    while (!current.calendar.blockedBy) {
+    while (current.meta.phase === 'presidence') {
       const result = advance(current, [], defaults(current), RULES);
       all.push(result.report);
       current = result.state;
     }
-    expect(current.calendar.blockedBy).toBe('fin-du-quinquennat');
-    expect(current.meta.date).toBe('2031-09-29');
-    expect(current.calendar.blockedMessage).toMatch(/P6-08/);
-    expect(all.at(-1)!.blocked).toMatchObject({ scrutinId: 'fin-du-quinquennat' });
-    const president = presidentOf(current);
-    expect(all.filter((r) => r.actions.some((a) => a.actorId === president.id)).length).toBe(
-      all.filter((r) => r.date >= '2027-05-10').length,
+    expect(current.calendar.blockedBy).toBeNull();
+    expect(current.meta).toMatchObject({ date: '2031-09-29', phase: 'campagne' });
+    expect(current.cycle).toEqual({ annee: 2032, decalageSemaines: 261 });
+    expect(all.at(-1)!.phaseChange).toEqual({ from: 'presidence', to: 'campagne' });
+    const president = presidentOf(state);
+    const inOffice = all.slice(0, -1);
+    expect(inOffice.filter((r) => r.actions.some((a) => a.actorId === president.id)).length).toBe(
+      inOffice.filter((r) => r.date >= '2027-05-10').length,
     );
     for (const report of all)
       for (const change of report.changes)

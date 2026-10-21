@@ -82,7 +82,9 @@ export {
   memberLabel,
   openQuinquennat,
   presidentOf,
+  snapshot,
 } from './presidency/government';
+export { openNextCampaign, reviewQuinquennat } from './presidency/cycle';
 export { answerCrisis, drawCrises } from './presidency/crises';
 export {
   blocPositions,

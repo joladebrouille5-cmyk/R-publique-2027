@@ -26,6 +26,8 @@ export const gameIdOf = (page: Page) => /\/parties\/([0-9a-f-]{36})\//.exec(page
 export async function advanceViaApi(
   page: Page,
   done: (game: GameDetail) => boolean,
+  /** Avance rapide (semaines par requête, arrêtée par le serveur avant toute décision). */
+  semaines?: number,
 ): Promise<GameDetail> {
   const id = gameIdOf(page);
   let game = GameDetailSchema.parse(await (await page.request.get(`/api/games/${id}`)).json());
@@ -39,6 +41,7 @@ export async function advanceViaApi(
           decisionId: d.id,
           optionId: d.defaultOptionId,
         })),
+        ...(semaines ? { semaines } : {}),
       },
     });
     expect(response.status()).toBe(200);

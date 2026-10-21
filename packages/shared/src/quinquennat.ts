@@ -1,5 +1,7 @@
 import { z } from 'zod';
 import { isValidIsoDate } from './dates';
+import { EconomicIndicatorSchema } from './economie';
+import { LEGISLATIVE_MOTIVES } from './legislatives-etat';
 import { PositionSchema } from './politics';
 
 // Présidence et quinquennat (phase 6) : cycle électoral en cours, mandat du président,
@@ -79,7 +81,8 @@ export type Refusal = z.infer<typeof RefusalSchema>;
 /** Poste du Premier ministre dans les refus (les ministres ne sont sollicités que s'ils acceptent). */
 export const PRIME_MINISTER_POST = 'premier-ministre';
 
-export const QuinquennatSchema = z
+/** Quinquennat aux formats 8 à 11 (figé pour les migrations). */
+export const QuinquennatV8Schema = z
   .object({
     mandat: MandateSchema,
     /** null tant que le Premier ministre n'est pas nommé. */
@@ -90,15 +93,79 @@ export const QuinquennatSchema = z
     refus: z.array(RefusalSchema),
   })
   .strict();
+export type QuinquennatV8 = z.infer<typeof QuinquennatV8Schema>;
+
+/** Relevé du quinquennat à une date : popularité du président et indicateurs économiques. */
+export const QuinquennatSnapshotSchema = z
+  .object({
+    semaine: z.number().int().min(0),
+    date: IsoDateSchema,
+    /** Popularité du président (centièmes de point) ; null si elle n'a pas été enregistrée. */
+    popularite: z.number().int().min(0).max(10_000).nullable(),
+    /** Indicateurs économiques (centièmes) ; null sans économie simulée. */
+    indicateurs: z.record(EconomicIndicatorSchema, z.number().int()).nullable(),
+  })
+  .strict();
+export type QuinquennatSnapshot = z.infer<typeof QuinquennatSnapshotSchema>;
+
+/** Quinquennat en cours (format 12) : relevé de départ, à l'ouverture du mandat. */
+export const QuinquennatSchema = QuinquennatV8Schema.extend({
+  depart: QuinquennatSnapshotSchema,
+}).strict();
 export type Quinquennat = z.infer<typeof QuinquennatSchema>;
 
-/** Quinquennat achevé (archivé au début de la campagne présidentielle suivante). */
-export const QuinquennatSummarySchema = z
+const Count = z.number().int().min(0);
+
+/**
+ * Bilan d'un quinquennat (phase 6, P6-08), arrêté au début de la campagne présidentielle
+ * suivante : relevés de départ et de fin, textes et réformes, gouvernements, dernières
+ * législatives. Tout y est simulé (sauf les valeurs de départ sourcées de l'économie).
+ */
+export const QuinquennatReviewSchema = z
+  .object({
+    debut: QuinquennatSnapshotSchema,
+    fin: QuinquennatSnapshotSchema,
+    reformes: z
+      .object({
+        /** Propositions adoptées pendant le quinquennat, dans l'ordre d'adoption. */
+        adoptees: z.array(Id),
+        /** Réformes du quinquennat déjà en vigueur à la fin. */
+        enVigueur: Count,
+        rejetees: Count,
+        retirees: Count,
+        /** Textes en cours à la fin du quinquennat (devenus caducs, simplification du jeu). */
+        caducs: Count,
+        engagements49_3: Count,
+        censures: Count,
+      })
+      .strict(),
+    gouvernements: Count,
+    /** Dernières législatives tenues pendant le quinquennat ; null s'il n'y en a pas eu. */
+    legislatives: z
+      .object({
+        motif: z.enum(LEGISLATIVE_MOTIVES),
+        t2: IsoDateSchema,
+        cohabitation: z.boolean(),
+        siegesParBloc: z.record(z.string().min(1), Count),
+      })
+      .strict()
+      .nullable(),
+  })
+  .strict();
+export type QuinquennatReview = z.infer<typeof QuinquennatReviewSchema>;
+
+/** Quinquennat achevé aux formats 8 à 11 (figé pour les migrations). */
+export const QuinquennatSummaryV8Schema = z
   .object({
     mandat: MandateSchema,
     gouvernements: z.array(PastGovernmentSchema),
   })
   .strict();
+
+/** Quinquennat achevé (archivé au début de la campagne présidentielle suivante), avec son bilan. */
+export const QuinquennatSummarySchema = QuinquennatSummaryV8Schema.extend({
+  bilan: QuinquennatReviewSchema,
+}).strict();
 export type QuinquennatSummary = z.infer<typeof QuinquennatSummarySchema>;
 
 /** Profil fictif proposé pour Matignon ou un ministère (jeu de règles). */

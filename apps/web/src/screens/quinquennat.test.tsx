@@ -315,4 +315,41 @@ describe('quinquennat', () => {
     ).toBeVisible();
     expect(screen.getByRole('button', { name: label })).toBeDisabled();
   });
+
+  it('la fin du quinquennat : bilan, archives et campagne de 2032 au calendrier transposé', async () => {
+    let state = elected;
+    while (state.meta.phase === 'presidence') state = step(state);
+    expect(state.meta.date).toBe('2031-09-29');
+    mockApi(base(state));
+    renderRoute(`/parties/${GAME_ID}/bilan`);
+    const review = await screen.findByRole('region', { name: /Quinquennat 2027–2032/ });
+    expect(within(review).getByText('Simulation')).toBeInTheDocument();
+    const table = within(review).getByRole('table', {
+      name: 'Indicateurs au début et à la fin du quinquennat',
+    });
+    expect(within(table).getByRole('rowheader', { name: 'Popularité du président' })).toBeVisible();
+    expect(within(table).getByRole('rowheader', { name: 'Taux de chômage' })).toBeVisible();
+    const { bilan } = state.historique.quinquennats[0]!;
+    expect(
+      within(review).getByText(
+        new RegExp(`^${bilan.reformes.adoptees.length} réforme\\(s\\) adoptée\\(s\\)`),
+      ),
+    ).toBeInTheDocument();
+    expect(
+      within(review).getByText(/Aucune n’est une prévision|aucune n’est une prévision/),
+    ).toBeVisible();
+    const archives = screen.getByRole('region', { name: 'Présidentielles précédentes' });
+    expect(within(archives).getByText('2027')).toBeInTheDocument();
+    cleanup();
+
+    mockApi(base(state));
+    renderRoute(`/parties/${GAME_ID}/tableau-de-bord`);
+    const panel = await screen.findByRole('region', { name: 'Présidentielle 2032' });
+    expect(within(panel).getByText(/Le quinquennat 2027–2032 de/)).toBeVisible();
+    expect(within(panel).getByRole('link', { name: 'Le bilan du quinquennat' })).toBeVisible();
+    const calendar = await screen.findByRole('region', { name: 'Calendrier électoral' });
+    expect(within(calendar).getByText(/dimanche 18 avril 2032/)).toBeVisible();
+    expect(within(calendar).getAllByText('Date hypothèse de jeu').length).toBeGreaterThan(1);
+    expect(screen.queryByRole('region', { name: /Quinquennat 2027–2032/ })).toBeNull();
+  });
 });

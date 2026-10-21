@@ -126,7 +126,7 @@ describe('Assemblée nationale', () => {
     );
     expect(deposits.length).toBeGreaterThanOrEqual(2);
     const [first, second] = state.parlement!.textes;
-    expect(first).toMatchObject({ id: 'texte-1', propositionId: PROGRAMME[0] });
+    expect(first).toMatchObject({ id: 'texte-2027-1', propositionId: PROGRAMME[0] });
     expect(second!.propositionId).toBe(PROGRAMME[1]);
     expect(second!.deposeSemaine - first!.deposeSemaine).toBe(
       RULES.parlement.calendrier.intervalleDepotSemaines,

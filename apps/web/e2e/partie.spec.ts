@@ -104,10 +104,42 @@ test('export puis import dans une nouvelle partie identique', async ({ page }) =
   expect(await readStateHash(page)).toBe(hash);
 });
 
-test('les écrans non implémentés sont annoncés comme tels', async ({ page }) => {
+test('tous les écrans du cahier des charges ont leur moteur', async ({ page }) => {
   await createGame(page, 'Écrans', 'e2e-ecrans');
   await openScreen(page, 'Bilan du quinquennat');
-  await expect(page.getByText('Non disponible — prévu en phase 6')).toBeVisible();
+  await expect(page.getByText(/Aucun quinquennat achevé/)).toBeVisible();
+  await expect(page.getByText(/Non disponible/)).toHaveCount(0);
+});
+
+test('fin du quinquennat : bilan, puis campagne de la présidentielle 2032', async ({ page }) => {
+  test.setTimeout(180_000);
+  await createGame(page, 'Cycle 2032', 'e2e-cycle');
+  await advanceViaApi(page, (g) => g.state.quinquennat !== null);
+  // Avance rapide du quinquennat (président IA) jusqu'à la campagne suivante (critère 17).
+  const campaign = await advanceViaApi(page, (g) => g.state.cycle.annee === 2032, 52);
+  expect(campaign.state.meta).toMatchObject({ phase: 'campagne', date: '2031-09-29' });
+  await page.reload();
+  const panel = page.getByRole('region', { name: 'Présidentielle 2032' });
+  await expect(panel).toContainText('Le quinquennat 2027–2032');
+  await expect(
+    page.getByRole('region', { name: 'Calendrier électoral' }).getByText(/dimanche 18 avril 2032/),
+  ).toBeVisible();
+  // Le joueur, battu en 2027, fait de nouveau campagne.
+  await expect(page.getByRole('list', { name: 'Catalogue des actions' })).toBeVisible();
+  await resolveWeek(page, campaign.week);
+
+  await openScreen(page, 'Bilan du quinquennat');
+  const review = page.getByRole('region', { name: /Quinquennat 2027–2032/ });
+  await expect(review.getByRole('rowheader', { name: 'Popularité du président' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Présidentielles précédentes' })).toContainText(
+    '2027',
+  );
+  const audit = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze();
+  expect(audit.violations.map((v) => `Bilan — ${v.id} : ${v.help} (${v.nodes.length})`)).toEqual(
+    [],
+  );
 });
 
 test('présidentielle complète puis quinquennat : deux tours, résultats, gouvernement, avance rapide', async ({
@@ -223,6 +255,7 @@ test('aucun défilement horizontal de la page', async ({ page }) => {
     'Économie',
     'Crises',
     'Législatives',
+    'Bilan du quinquennat',
     'Journal',
     'Sauvegardes',
   ]) {

@@ -242,3 +242,38 @@ describe('dissolution et législatives', () => {
     expect(again.report.actions[0]).toMatchObject({ status: 'rejetee' });
   });
 });
+
+describe('fin du quinquennat', () => {
+  it('l’avance rapide s’arrête à l’ouverture de la présidentielle suivante, sauvegardée', async () => {
+    const client = new Client(app);
+    const game = await electedGame(client, 'observateur');
+    // Fin du quinquennat jouée par le moteur, jusqu'à la semaine qui précède la campagne.
+    let state = game.state;
+    while (state.meta.date < '2031-09-22') {
+      const decisions = state.pendingDecisions.map((d) => ({
+        decisionId: d.id,
+        optionId: d.defaultOptionId,
+      }));
+      state = advanceWeek(state, { actions: [], decisions }, { ruleset }).state;
+    }
+    await forceState(game.id, state);
+    const response = await advanceVia(client, game, { expectedWeek: state.meta.week, semaines: 8 });
+    expect(response.statusCode).toBe(200);
+    const body = AdvanceResponseSchema.parse(response.json());
+    expect(body.avanceRapide).toEqual({ demandees: 8, resolues: 1, arret: 'changement_de_phase' });
+    expect(body.report.phaseChange).toEqual({ from: 'presidence', to: 'campagne' });
+    expect(body.game.state.meta).toMatchObject({ phase: 'campagne', date: '2031-09-29' });
+    expect(body.game.state.cycle.annee).toBe(2032);
+    expect(body.game.state.historique.quinquennats).toHaveLength(1);
+    const stored = await db.game.findUniqueOrThrow({ where: { id: game.id } });
+    expect(stored.phase).toBe('campagne');
+    expect(stored.stateHash).toBe(hashState(body.game.state));
+
+    // La campagne de 2032 avance ensuite comme celle de 2027.
+    const next = AdvanceResponseSchema.parse(
+      (await advanceVia(client, body.game, { expectedWeek: body.game.week })).json(),
+    );
+    expect(next.game.week).toBe(body.game.week + 1);
+    expect(next.report.notices.every((n) => n.date >= '2031-10-06')).toBe(true);
+  });
+});

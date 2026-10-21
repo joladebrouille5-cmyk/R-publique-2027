@@ -135,7 +135,7 @@ function Content({
 
 export function Economy() {
   const game = useCurrentGame();
-  const ruleset = useRuleset(game.rulesetVersion);
+  const ruleset = useRuleset(game.rulesetVersion, game.state.cycle);
   const journal = useJournal(game.id);
   const lastReport = journal.data?.pages[0]?.entries.find((entry) => entry.report)?.report ?? null;
   return (

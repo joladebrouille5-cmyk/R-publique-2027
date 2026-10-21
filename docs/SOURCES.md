@@ -154,6 +154,7 @@ Ces totaux servent de **test d'acceptation de l'import** : Σ des lignes du fich
 | Fin de ce mandat | jeudi 13 mai 2032 à minuit ; les mandats suivants se décalent de cinq ans jour pour jour | déduit | art. 6 |
 | Présidentielle 2032 (jeu) | calendrier de 2027 décalé de 261 semaines : 1er tour dimanche 18 avril 2032 (fenêtre de l'art. 7 : du 9 au 24 avril 2032), 2nd tour 2 mai 2032 | **hypothèse** (dates réelles fixées par décret le moment venu) | règle du jeu de règles `presidentielle-2027@6.0.0` |
 | Présidentielle 2037 (jeu) | décalage de 522 semaines : 1er tour dimanche 19 avril 2037 (fenêtre : du 9 au 24 avril 2037), 2nd tour 3 mai 2037 | **hypothèse** | idem |
+| Échéances de campagne de 2032 et 2037 (jeu) | ouverture et clôture des présentations, dépôt des comptes : dates de 2027 transposées du même nombre de semaines (étape P6-08) | **hypothèse** (source : conception du jeu) | fonction `cycleRuleset` de `@r2027/shared` |
 
 Remarque : la page de l'Élysée mentionne une consultation des partis « le 29 juillet 2026 » dans un compte rendu du 1er juillet, et un décret qui « interviendra en début d'année 2026 » : incohérences apparentes de la page officielle, signalées telles quelles.
 

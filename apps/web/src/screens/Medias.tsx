@@ -278,7 +278,7 @@ function Sources({ ruleset }: { ruleset: Ruleset }) {
 /** Médias réels (§8, phase 5 ter) : organes, audiences, temps de parole, émissions, couverture. */
 export function Medias() {
   const game = useCurrentGame();
-  const ruleset = useRuleset(game.rulesetVersion);
+  const ruleset = useRuleset(game.rulesetVersion, game.state.cycle);
   const { state } = game;
   if (ruleset.isError)
     return <ErrorMessage error={ruleset.error} onRetry={() => void ruleset.refetch()} />;

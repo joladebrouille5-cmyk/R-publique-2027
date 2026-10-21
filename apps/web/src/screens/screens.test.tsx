@@ -1,6 +1,7 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
+import { Unavailable } from '../components/Unavailable';
 import { GAME_SCREENS } from './registry';
 import {
   GAME_ID,
@@ -64,11 +65,24 @@ describe('navigation de partie', () => {
     expect(screen.getByText('Aucune semaine résolue pour l’instant.')).toBeInTheDocument();
   });
 
-  it('annonce un écran non implémenté sans données factices', async () => {
-    mockApi(gameHandlers);
-    renderRoute(`/parties/${GAME_ID}/bilan`);
-    expect(await screen.findByText('Non disponible — prévu en phase 6')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Bilan du quinquennat' })).toBeInTheDocument();
+  it('tous les écrans du cahier des charges ont désormais leur moteur', () => {
+    expect(GAME_SCREENS.filter((s) => !s.available)).toEqual([]);
+  });
+
+  it('annoncerait un écran non implémenté sans données factices', () => {
+    render(
+      <Unavailable
+        screen={{
+          path: 'exemple',
+          label: 'Écran à venir',
+          phase: 7,
+          available: false,
+          description: 'Description de l’écran prévu.',
+        }}
+      />,
+    );
+    expect(screen.getByText('Non disponible — prévu en phase 7')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Écran à venir' })).toBeInTheDocument();
   });
 
   it('signale une partie introuvable', async () => {

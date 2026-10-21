@@ -34,7 +34,7 @@ function announceBlocker(
  */
 export function Programme() {
   const game = useCurrentGame();
-  const ruleset = useRuleset(game.rulesetVersion);
+  const ruleset = useRuleset(game.rulesetVersion, game.state.cycle);
   const plan = useWeeklyPlan(game.id, game.week);
   const { state } = game;
   const actor = state.player.actorId ? state.actors[state.player.actorId] : undefined;

@@ -6,7 +6,7 @@ import {
   SAVE_SCHEMA_VERSION,
 } from '@r2027/engine';
 import { CURRENT_RULESET_KEY, getRuleset } from '@r2027/rulesets';
-import { GameStateSchema } from '@r2027/shared';
+import { GameStateSchema, type GameState } from '@r2027/shared';
 import { describe, expect, it } from 'vitest';
 import { canonicalStringify, hashState, sha256 } from './canonical';
 import { buildExport, readExport } from './exchange';
@@ -19,6 +19,7 @@ import V7 from './fixtures/v7-phase-5-ter.json' with { type: 'json' };
 import V8 from './fixtures/v8-phase-6.json' with { type: 'json' };
 import V9 from './fixtures/v9-phase-6.json' with { type: 'json' };
 import V10 from './fixtures/v10-phase-6.json' with { type: 'json' };
+import V11 from './fixtures/v11-phase-6.json' with { type: 'json' };
 import { loadStoredState, MIGRATED_CANDIDATE, SaveFormatError, upgradeState } from './versions';
 
 const ruleset = getRuleset(CURRENT_RULESET_KEY);
@@ -42,6 +43,12 @@ const V1_STATE = {
   player: { mode: 'candidat_personnalise', actorId: null },
 };
 const V1_HASH = sha256(canonicalStringify(V1_STATE));
+
+/** État migré sans le relevé de départ du quinquennat (ajouté par le format 12). */
+const withoutDepart = <T extends { quinquennat: GameState['quinquennat'] }>(state: T) => ({
+  ...state,
+  quinquennat: state.quinquennat ? { ...state.quinquennat, depart: undefined } : null,
+});
 
 const errorCode = (fn: () => unknown) => {
   try {
@@ -328,6 +335,13 @@ describe('migrations de sauvegarde', () => {
       anciensGouvernements: [],
       feuilleDeRoute: V7.state.actors[PLAYER_ACTOR_ID].programme.propositions,
       refus: [],
+      // Format 12 : semaine du second tour ; popularité de départ non enregistrée auparavant.
+      depart: {
+        semaine: 30,
+        date: '2027-04-26',
+        popularite: null,
+        indicateurs: state.economie!.historique[0]!.valeurs,
+      },
     });
     // Rien d'autre ne change : candidats, résultats, médias, relations.
     const {
@@ -384,7 +398,7 @@ describe('migrations de sauvegarde', () => {
       ...rest
     } = state;
     const { meta: _m, ...restBefore } = V8.state;
-    expect(rest).toEqual(restBefore);
+    expect(withoutDepart(rest)).toEqual(restBefore);
     expect(Object.entries(parlement!.groupes).map(([id, g]) => [id, g.sieges])).toEqual(
       ruleset.assemblee.groupes.map((g) => [g.id, g.sieges]),
     );
@@ -424,7 +438,7 @@ describe('migrations de sauvegarde', () => {
     // Rien d'autre ne change ; l'économie part des valeurs de l'Insee du jeu de règles.
     const { meta: _meta, economie, legislatives: _legislatives, ...rest } = state;
     const { meta: _m, ...restBefore } = V9.state;
-    expect(rest).toEqual(restBefore);
+    expect(withoutDepart(rest)).toEqual(restBefore);
     expect(economie!.indicateurs.chomage).toBe(ruleset.economieReelle.indicateurs.chomage.valeur);
     expect(economie!.historique).toEqual([{ semaine: 61, valeurs: economie!.indicateurs }]);
 
@@ -461,7 +475,7 @@ describe('migrations de sauvegarde', () => {
     // Rien d'autre ne change ; dernières élections : 2024 (réelles) ; prochaines : juin 2029.
     const { meta: _meta, legislatives, ...rest } = state;
     const { meta: _m, ...restBefore } = V10.state;
-    expect(rest).toEqual(restBefore);
+    expect(withoutDepart(rest)).toEqual(restBefore);
     expect(legislatives).toMatchObject({
       derniere: { motif: 'reelles-2024', t2: '2024-07-07', circonscriptions: [] },
       prochaine: { motif: 'fin-de-legislature', t1: '2029-06-10', t2: '2029-06-17' },
@@ -486,6 +500,49 @@ describe('migrations de sauvegarde', () => {
     expect(next.meta.week).toBe(state.meta.week + 1);
   });
 
+  it('ajoute le relevé de départ d’une partie réelle en cours de quinquennat (format 11)', () => {
+    const { state, migratedFrom } = loadStoredState(V11.state, V11.stateHash, 11);
+    expect(migratedFrom).toBe(11);
+    expect(state.meta).toMatchObject({
+      week: V11.state.meta.week,
+      phase: 'presidence',
+      saveSchemaVersion: SAVE_SCHEMA_VERSION,
+      engineVersion: ENGINE_VERSION,
+    });
+    // Rien d'autre ne change ; départ : semaine du second tour, économie de cette semaine.
+    const { meta: _meta, ...rest } = state;
+    const { meta: _m, ...restBefore } = V11.state;
+    expect(withoutDepart(rest)).toEqual(restBefore);
+    const opening = V11.state.economie.historique.find((h) => h.semaine === 30)!;
+    expect(state.quinquennat!.depart).toEqual({
+      semaine: 30,
+      date: '2027-04-26',
+      popularite: null,
+      indicateurs: opening.valeurs,
+    });
+    // La partie continue jusqu'à la campagne de 2032, dont le bilan signale la popularité
+    // de départ non enregistrée.
+    let current = state;
+    while (current.meta.phase === 'presidence')
+      current = advanceWeek(
+        current,
+        {
+          actions: [],
+          decisions: current.pendingDecisions.map((d) => ({
+            decisionId: d.id,
+            optionId: d.defaultOptionId,
+          })),
+        },
+        { ruleset },
+      ).state;
+    expect(current.meta).toMatchObject({ phase: 'campagne', date: '2031-09-29' });
+    const { bilan } = current.historique.quinquennats[0]!;
+    expect(bilan.debut.popularite).toBeNull();
+    expect(bilan.reformes.adoptees.length).toBeGreaterThanOrEqual(
+      V11.state.parlement.reformes.length,
+    );
+  });
+
   it('vérifie l’empreinte avant toute migration', () => {
     const altered = { ...V1_STATE, meta: { ...V1_STATE.meta, week: 3 } };
     expect(errorCode(() => loadStoredState(altered, V1_HASH, 1))).toBe('empreinte_incoherente');
@@ -507,6 +564,7 @@ describe('migrations de sauvegarde', () => {
     expect(errorCode(() => upgradeState(V8.state, 9))).toBe('etat_invalide');
     expect(errorCode(() => upgradeState(V9.state, 10))).toBe('etat_invalide');
     expect(errorCode(() => upgradeState(V10.state, 11))).toBe('etat_invalide');
+    expect(errorCode(() => upgradeState(V11.state, 12))).toBe('etat_invalide');
   });
 
   it('refuse un jeu de règles inconnu', () => {

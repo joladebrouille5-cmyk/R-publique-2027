@@ -174,6 +174,14 @@ describe('dissolution', () => {
     expect(rejected).toMatchObject({ status: 'rejetee' });
   });
 
+  it('n’est plus possible à l’approche de la campagne présidentielle suivante', () => {
+    const late = JSON.parse(JSON.stringify(playerInOffice())) as GameState;
+    late.meta.date = '2031-08-25';
+    expect(dissolutionBlocked(late, RULES)).toMatch(/approche de la campagne présidentielle/);
+    late.meta.date = '2031-08-11';
+    expect(dissolutionBlocked(late, RULES)).toBeNull();
+  });
+
   it('suspend les travaux parlementaires jusqu’à l’élection de la nouvelle Assemblée', () => {
     const start = playerInOffice();
     const dissolved = step(start, [{ actionId: 'dissolution' }]).state;

@@ -155,6 +155,7 @@ export const CANDIDATE_STATUS_LABELS: Record<CandidateStatus, string> = {
   battu: 'Battu(e) au second tour',
   ecarte: 'Écarté(e) : parrainages insuffisants',
   retire: 'Retiré(e) : ralliement',
+  ineligible: 'Inéligible : deux mandats consécutifs (Constitution, art. 6)',
 };
 
 // --- Campagne (phase 5) ---

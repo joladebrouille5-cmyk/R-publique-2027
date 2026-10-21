@@ -1,16 +1,17 @@
-import type {
-  AlliancePlan,
-  DecisionAnswer,
-  GameState,
-  PlannedAction,
-  Poll,
-  ProgrammeChange,
-  ProgrammeReport,
-  ReportEvent,
-  RoundResult,
-  Ruleset,
-  StepSummary,
-  WeeklyReport,
+import {
+  cycleRuleset,
+  type AlliancePlan,
+  type DecisionAnswer,
+  type GameState,
+  type PlannedAction,
+  type Poll,
+  type ProgrammeChange,
+  type ProgrammeReport,
+  type ReportEvent,
+  type RoundResult,
+  type Ruleset,
+  type StepSummary,
+  type WeeklyReport,
 } from '@r2027/shared';
 import { planOpponentActions } from '../ai/opponents';
 import { resolveAlliances, updateRelations } from '../ai/relations';
@@ -91,8 +92,11 @@ function hopelessCandidates(state: GameState, ruleset: Ruleset): Set<string> {
 export function advanceWeek(
   input: GameState,
   plan: AdvanceInput,
-  { ruleset, territory }: EngineContext,
+  context: EngineContext,
 ): AdvanceResult {
+  // Calendrier de campagne du cycle en cours (2027, puis transposé pour 2032, 2037…).
+  const ruleset = cycleRuleset(context.ruleset, input.cycle);
+  const { territory } = context;
   if (input.calendar.blockedBy) {
     throw new EngineInputError(
       'progression_bloquee',

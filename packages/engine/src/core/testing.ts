@@ -1,12 +1,13 @@
 // Outils partagés par les tests du moteur (non exportés par le paquet).
 import { CURRENT_RULESET_KEY, getRuleset } from '@r2027/rulesets';
-import type {
-  DecisionAnswer,
-  GameState,
-  PlannedAction,
-  Resources,
-  Ruleset,
-  WeeklyReport,
+import {
+  cycleRuleset,
+  type DecisionAnswer,
+  type GameState,
+  type PlannedAction,
+  type Resources,
+  type Ruleset,
+  type WeeklyReport,
 } from '@r2027/shared';
 import { departements, presentationWindow } from '../campaign/parrainages';
 import { advanceWeek } from './advanceWeek';
@@ -69,7 +70,8 @@ export function advance(
  * les présentations restent ouvertes — de quoi atteindre le seuil des parrainages.
  */
 export function sponsorship(state: GameState, ruleset: Ruleset = RULESET): string[] {
-  if (state.meta.phase !== 'campagne' || presentationWindow(state.meta.date, ruleset).closed)
+  const calendar = cycleRuleset(ruleset, state.cycle);
+  if (state.meta.phase !== 'campagne' || presentationWindow(state.meta.date, calendar).closed)
     return [];
   const deps = departements(ruleset);
   const week = state.meta.week;

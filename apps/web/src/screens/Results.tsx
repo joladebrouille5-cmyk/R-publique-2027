@@ -184,7 +184,7 @@ function RoundCard({
 
 export function Results() {
   const game = useCurrentGame();
-  const ruleset = useRuleset(game.rulesetVersion);
+  const ruleset = useRuleset(game.rulesetVersion, game.state.cycle);
   const { state } = game;
   const { t1, t2, consignes, debate, debateDetail } = state.elections;
   const scrutins = ruleset.data?.calendrier.scrutins ?? [];

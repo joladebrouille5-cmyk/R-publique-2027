@@ -2,6 +2,7 @@ import { lazy, Suspense, type ComponentType } from 'react';
 import { Navigate, type RouteObject } from 'react-router';
 import { AppLayout } from './components/AppLayout';
 import { Unavailable } from './components/Unavailable';
+import { Bilan } from './screens/Bilan';
 import { Candidates } from './screens/Candidates';
 import { Dashboard } from './screens/Dashboard';
 import { Finances } from './screens/Finances';
@@ -46,6 +47,7 @@ const IMPLEMENTED: Record<string, ComponentType> = {
   economie: Economy,
   crises: Crises,
   legislatives: Legislatives,
+  bilan: Bilan,
   sondages: Polls,
   resultats: Results,
   journal: Journal,

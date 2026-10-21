@@ -37,9 +37,14 @@ function dissolutionRestriction(state: GameState, ruleset: Ruleset): string | nu
   if (!legislatives) return 'Aucune Assemblée à dissoudre.';
   if (legislatives.prochaine?.motif === 'dissolution' || legislatives.premierTour)
     return 'Des élections législatives sont déjà en cours.';
-  const allowed = addDays(legislatives.derniere.t2, ruleset.legislatives.regles.moratoireJours);
-  return state.meta.date < allowed
-    ? `Pas de nouvelle dissolution dans l’année qui suit les dernières élections (possible à partir du ${formatGameDate(allowed)}).`
+  const { moratoireJours, delaiMaxJours } = ruleset.legislatives.regles;
+  const allowed = addDays(legislatives.derniere.t2, moratoireJours);
+  if (state.meta.date < allowed)
+    return `Pas de nouvelle dissolution dans l’année qui suit les dernières élections (possible à partir du ${formatGameDate(allowed)}).`;
+  const next = ruleset.quinquennat.cycles.find((c) => c.annee > state.cycle.annee);
+  const campaign = next ? addDays(state.meta.startDate, 7 * next.decalageSemaines) : null;
+  return campaign && addDays(state.meta.date, delaiMaxJours) >= campaign
+    ? `Plus de dissolution à l’approche de la campagne présidentielle du ${formatGameDate(campaign)} (simplification du jeu).`
     : null;
 }
 
@@ -53,7 +58,7 @@ const FAST_FORWARD_STOP_LABELS = {
 
 export function Dashboard() {
   const game = useCurrentGame();
-  const ruleset = useRuleset(game.rulesetVersion);
+  const ruleset = useRuleset(game.rulesetVersion, game.state.cycle);
   const journal = useJournal(game.id);
   const advance = useAdvance(game.id);
   const plan = useWeeklyPlan(game.id, game.week);
@@ -70,6 +75,9 @@ export function Dashboard() {
     actor !== undefined && (actor.status === 'candidat' || actor.status === 'qualifie');
   // Phase 6 : quinquennat (président joueur ou IA).
   const quinquennat = state.meta.phase === 'presidence' ? state.quinquennat : null;
+  // Phase 6 (P6-08) : campagne d'un cycle suivant, après un quinquennat achevé.
+  const previousTerm =
+    state.cycle.annee > 2027 ? (state.historique.quinquennats.at(-1) ?? null) : null;
   const presiding = quinquennat !== null && quinquennat.mandat.presidentId === actor?.id;
   const mandateStarted = quinquennat !== null && addDays(game.date, 6) >= quinquennat.mandat.debut;
   const round = state.meta.phase === 'entre_deux_tours' ? 'intentions_t2' : 'intentions_t1';
@@ -276,6 +284,37 @@ export function Dashboard() {
               className="text-republique-600 underline dark:text-republique-100"
             >
               Résultats de la présidentielle
+            </Link>
+          </p>
+        </section>
+      )}
+
+      {!quinquennat && previousTerm && (
+        <section aria-labelledby="titre-nouveau-cycle" className={`${card} space-y-2 text-sm`}>
+          <h2 id="titre-nouveau-cycle" className="text-lg font-semibold">
+            Présidentielle {state.cycle.annee}
+          </h2>
+          <p>
+            Le quinquennat {previousTerm.mandat.debut.slice(0, 4)}–
+            {previousTerm.mandat.fin.slice(0, 4)} de {nameOf(previousTerm.mandat.presidentId)} est
+            terminé : son bilan est arrêté ; le mandat s’achève le{' '}
+            {formatGameDate(previousTerm.mandat.fin)}.
+          </p>
+          {actor?.status === 'ineligible' && (
+            <p>
+              Vous avez accompli deux mandats consécutifs : vous ne pouvez pas vous représenter
+              (Constitution, art. 6). La campagne se déroule sans vous.
+            </p>
+          )}
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Calendrier : celui de 2027 transposé en {state.cycle.annee} (hypothèse, dates réelles
+            fixées par décret). Parrainages et comptes de campagne repartent de zéro. Pendant la
+            campagne, l’action du gouvernement sortant, le Parlement et l’économie ne sont pas
+            simulés (simplification du jeu).
+          </p>
+          <p>
+            <Link to="../bilan" className="text-republique-600 underline dark:text-republique-100">
+              Le bilan du quinquennat
             </Link>
           </p>
         </section>

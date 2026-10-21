@@ -589,7 +589,8 @@ export function advanceParliament(
     );
     if (next) {
       const bill: Bill = {
-        id: `texte-${parliament.textes.length + 1}`,
+        // Identifiant unique sur toute la partie (les réformes adoptées survivent au quinquennat).
+        id: `texte-${state.cycle.annee}-${parliament.textes.length + 1}`,
         propositionId: next,
         deposeSemaine: week,
         etape: 'commission',
