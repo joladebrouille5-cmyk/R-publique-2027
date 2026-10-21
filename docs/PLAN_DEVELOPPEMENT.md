@@ -259,7 +259,7 @@ Réalisé :
 | `pnpm data:resultats` (présidentielle 2022) | 35 245 lignes par tour ; **somme = totaux proclamés par le Conseil constitutionnel à l'unité**, aux deux tours |
 | `pnpm mesure:carte` (spike P4-01) | TopoJSON par département : premier rendu 1,6 s, 0,43 Mo, 11,5 Mo de mémoire sur téléphone émulé ([MESURES_CARTE.md](./MESURES_CARTE.md)) |
 | Contrôle visuel avec le référentiel et les résultats réels (bureau, mobile, thèmes clair et sombre, motifs) | carte, encarts, fiche, légende et tableau lisibles ; Marseille, Ajaccio, Mamoudzou retrouvées par la recherche |
-| CI GitHub Actions | à compléter après le push |
+| CI GitHub Actions (exécution n° 16, commit `4a77434`) | verte : toutes les étapes réussies en 3 min 43 s (l'échec de l'exécution n° 12 venait d'un sélecteur ambigu du test « présidentielle complète », corrigé) |
 
 Réalisé :
 - **P4-01** : mesure sur Pixel 7 émulé (processeur ralenti 4×, 4G) de deux formats ; **décision D7** : aperçu national des départements et régions, puis TopoJSON des communes par département, chargé à la demande (13 fois plus rapide, 19 fois moins de données que le fichier national).
