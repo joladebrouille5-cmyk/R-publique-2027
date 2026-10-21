@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import {
+  AlliancePlanSchema,
   DecisionAnswerSchema,
   DifficultySchema,
   GameModeSchema,
@@ -7,6 +8,7 @@ import {
   GameStateSchema,
   IsoDateSchema,
   PlannedActionSchema,
+  ProgrammeChangeSchema,
   SeedSchema,
 } from './game';
 import { PositionSchema } from './politics';
@@ -170,6 +172,8 @@ export const AdvanceRequestSchema = z
     expectedWeek: z.number().int().min(0),
     actions: z.array(PlannedActionSchema).max(20).default([]),
     decisions: z.array(DecisionAnswerSchema).max(20).default([]),
+    programme: ProgrammeChangeSchema.default({ ajouter: [], retirer: [] }),
+    alliances: AlliancePlanSchema.default({ proposer: [] }),
   })
   .strict();
 export type AdvanceRequest = z.input<typeof AdvanceRequestSchema>;

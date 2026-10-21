@@ -53,3 +53,18 @@ export async function openScreen(page: Page, label: string) {
     .getByRole('link', { name: label })
     .click();
 }
+
+/** Résout la semaine depuis le tableau de bord (décisions : première option). */
+export async function resolveWeek(page: Page, week: number) {
+  const decisions = page.getByRole('region', { name: 'Décisions à prendre' });
+  if (await decisions.isVisible()) {
+    for (const group of await decisions.getByRole('group').all()) {
+      await group.getByRole('radio').first().check();
+    }
+  }
+  await page.getByRole('button', { name: `Résoudre la semaine ${week}` }).click();
+  await expect(
+    page.getByRole('heading', { name: `Bilan de la semaine ${week}`, exact: false }),
+  ).toBeVisible();
+  await expect(page.getByRole('button', { name: `Résoudre la semaine ${week + 1}` })).toBeVisible();
+}

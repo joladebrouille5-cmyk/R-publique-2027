@@ -7,6 +7,7 @@ import type {
   Ruleset,
   WeeklyReport,
 } from '@r2027/shared';
+import { processDonations, type FinanceBook } from '../campaign/finances';
 import { applyOrSchedule } from '../core/effects';
 import { EngineInputError } from '../core/errors';
 import { compareStrings, type Ledger } from '../core/ledger';
@@ -65,6 +66,7 @@ export function applyDecisions(
   state: GameState,
   ruleset: Ruleset,
   ledger: Ledger,
+  book: FinanceBook,
   answers: readonly ResolvedAnswer[],
   step: number,
 ): AppliedDecision[] {
@@ -93,6 +95,7 @@ export function applyDecisions(
       const context = {
         state,
         ledger,
+        book,
         actorId: decision.actorId,
         week,
         step,
@@ -139,6 +142,7 @@ export function drawEvents(
   state: GameState,
   ruleset: Ruleset,
   ledger: Ledger,
+  book: FinanceBook,
   step: number,
 ): ReportEvent[] {
   const actorId = state.player.actorId;
@@ -186,6 +190,7 @@ export function drawEvents(
     const context = {
       state,
       ledger,
+      book,
       actorId,
       week,
       step,
@@ -194,6 +199,19 @@ export function drawEvents(
       source: 'evenement' as const,
     };
     event.effets.forEach((effect, i) => applyOrSchedule(context, effect, drawAlea(rng, effect), i));
+    if (event.campagne?.dons) {
+      processDonations(
+        book,
+        ruleset,
+        actorId,
+        event.campagne.dons,
+        rng,
+        event.libelle,
+        'evenement',
+        step,
+        week,
+      );
+    }
 
     triggered.push({
       id,

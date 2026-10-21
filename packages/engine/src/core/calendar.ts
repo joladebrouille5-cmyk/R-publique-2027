@@ -6,7 +6,8 @@ import {
   type Notice,
   type Ruleset,
 } from '@r2027/shared';
-import { effectFactors } from './effects';
+import type { FinanceBook } from '../campaign/finances';
+import { applyFactors, effectFactors } from './effects';
 import { compareStrings, type Ledger } from './ledger';
 
 const MONTHS = [
@@ -77,6 +78,7 @@ export function enterNextWeek(
   state: GameState,
   ruleset: Ruleset,
   ledger: Ledger,
+  book: FinanceBook,
   step: number,
 ): { notices: Notice[]; appliedScheduled: number } {
   const nextWeek = state.meta.week + 1;
@@ -104,7 +106,9 @@ export function enterNextWeek(
     if (!state.actors[effect.actorId]) continue;
     const current = ledger.current(effect.actorId, effect.ressource);
     const label = `${effect.origin.label} (effet différé de la semaine ${effect.origin.week})`;
-    ledger.apply(
+    applyFactors(
+      ledger,
+      book,
       effect.actorId,
       effect.ressource,
       effectFactors(effect, current, label, 'differe', step),

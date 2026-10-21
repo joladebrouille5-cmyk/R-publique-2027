@@ -284,11 +284,63 @@ Réalisé :
 - Saint-Pierre-et-Miquelon (collectivité d'outre-mer) est volontairement hors carte, comme les autres COM et les Français de l'étranger.
 - L'écran de carte pèse 289 Ko compressés (MapLibre compris), chargés seulement à son ouverture ; budget de performance à fixer en phase 8.
 
-### Phase 5 — Campagne approfondie
+### Phase 5 — Campagne approfondie ✅
 
 Programme (17 domaines du §6 : coût, délai, faisabilité, dépendances, effets, confiance) ; parrainages (promesses → intentions → reçus → validés, règle des 500 du *ruleset*) ; financement (recettes, dépenses, dons autorisés, emprunts, plafonds, compte de campagne) ; médias (portée, audience, crédibilité, priorités) et débats (préparation, maîtrise, cohérence, réponse) ; IA adverse complète avec graphe d'alliances (§7) ; niveaux de difficulté et mode observateur (§1.3).
 
+| ID | Tâche | Test d'acceptation |
+|---|---|---|
+| P5-01 | Jeu de règles 3.0.0 (programme, parrainages, financement, médias, débats, alliances, IA) ; format de sauvegarde 5 et migration 4 → 5. | schéma du jeu de règles validé ; migration testée sur un état réel de la phase 4. |
+| P5-02 | Programme : 17 domaines, propositions avec coût, délai, faisabilité, dépendances, incompatibilités, effets et niveau de confiance ; ajout et retrait dans le plan de la semaine ; facteurs « Programme » et « Crédibilité » du score latent (§5.1). | proposition sans sa dépendance ou incompatible refusée ; revirement pénalisé ; facteurs présents dans la décomposition. |
+| P5-03 | Parrainages : promesses → intentions → présentations reçues → validées, par département ; réservoir d'élus partagé entre candidats ; règle des 500 (30 départements, au plus un dixième par département) ; clôture du 12 mars 2027 ; candidat écarté sans parrainages suffisants. | présentations invalides exclues ; plafond par département respecté ; un candidat sous le seuil n'est pas au premier tour (propriétés). |
+| P5-04 | Financement : compte de campagne (recettes par origine, dépenses), plafonds légaux, dons des personnes physiques plafonnés, personnes morales et espèces au-delà de 150 € refusées, emprunts, avance forfaitaire, remboursement prévisionnel. | dépassement de plafond détecté (dépense refusée ou signalée) ; dons interdits refusés et journalisés ; trésorerie = recettes − dépenses (propriété). |
+| P5-05 | Médias : organes fictifs (portée, audience, crédibilité, priorités), couverture hebdomadaire de chaque candidat, interview ciblée ; facteur « Médias ». | couverture explicable par ses facteurs ; une interview accroît l'exposition dans l'organe choisi. |
+| P5-06 | Débats : préparation (action dédiée), maîtrise, cohérence, réponse ; décomposition publiée ; effet au second tour. | une meilleure préparation améliore la prestation attendue ; composantes bornées. |
+| P5-07 | Relations et alliances : graphe confiance / proximité / rivalité / historique (étape 4 active) ; ralliements avant le premier tour, proposés par le joueur ou décidés par l'IA ; facteur « Alliances ». | un candidat rallié ne figure pas au premier tour ; un ralliement n'est jamais imposé au joueur. |
+| P5-08 | IA adverse complète : objectifs, analyse de la situation, stratégie motivée et mise à jour, actions ciblées (élus, médias, emprunts…) avec les mêmes règles que le joueur. | mode observateur : les adversaires agissent, collectent leurs parrainages et financent leur campagne sans le joueur. |
+| P5-09 | Difficulté (§1.3) : capacités des adversaires et pression de gestion seulement. | propriété : la difficulté ne modifie jamais le décompte des voix ni les règles (parrainages, plafonds). |
+| P5-10 | API : plan hebdomadaire étendu (cibles, programme, propositions d'alliance) validé par Zod. | tests d'intégration : campagne et parrainages jusqu'à la clôture. |
+| P5-11 | Interface : écrans Programme et Finances, parrainages, médias, relations et alliances, stratégie des adversaires, débat ; bilan hebdomadaire enrichi. | tests de composants. |
+| P5-12 | Tests de bout en bout et documentation. | Playwright bureau + mobile : programme, finances, parrainages, partie en observateur. |
+
 **Tests clés** : dépassement de plafond détecté ; dons interdits refusés ; parrainages invalides exclus ; la difficulté ne modifie jamais le décompte des voix ; adversaires autonomes. **Critères visés** : 5.
+
+**Bilan (21/10/2026)** — les douze tâches sont réalisées, avec les limites signalées ci-dessous.
+
+| Vérification | Résultat |
+|---|---|
+| `pnpm lint`, `pnpm format:check`, `pnpm typecheck` | sans erreur |
+| `pnpm test` | 231 tests réussis : moteur 120 (30 nouveaux, dont 3 propriétés fast-check), interface 50, import de données 27, sauvegardes 19, jeu de règles 11, contrats 4 |
+| `pnpm test:integration` (API + PostgreSQL 16 réel) | 70 tests réussis (5 nouveaux : programme avec refus motivé, actions ciblées et requête mal formée, proposition de ralliement hors fenêtre, actions refusées en observateur, liste des candidats arrêtée à la clôture avec sauvegarde préalable) |
+| `pnpm test:e2e` (Playwright, bureau + mobile) | 30 tests réussis, dont 4 nouveaux scénarios par appareil : programme et actions ciblées jusqu'au bilan et au compte, candidat écarté à la clôture, partie en observateur, audit axe-core des écrans Programme, Finances et Candidats |
+| Tests clés de la phase | dépassement de plafond détecté (dépense refusée à la validation ; dépense imprévue signalée) ; dons interdits refusés et journalisés ; présentations invalides jamais comptées, au plus 50 par département ; difficulté sans effet sur le décompte des voix ni sur les règles (propriétés) ; adversaires autonomes en observateur (stratégie motivée, parrainages réunis, campagne financée) |
+| Simulation de contrôle (12 parties complètes, observateur et joueur) | 6,6 ms par semaine simulée en moyenne ; un ralliement par partie en moyenne ; aucun candidat écarté quand chacun collecte ; **la même candidate gagne les 12 parties** (voir limites) |
+| Contrôle visuel (bureau, mobile, thèmes clair et sombre) | tableau de bord, plan d'actions ciblées, Programme, Finances, Candidats (relations, médias) lisibles, sans défilement horizontal de la page |
+| CI GitHub Actions | *à relever après le push* |
+
+Réalisé :
+- **P5-01** : jeu de règles `presidentielle-2027@3.0.0` (programme, parrainages, financement, médias, débats, alliances, IA ; valeurs officielles sourcées, le reste étiqueté hypothèse ou estimation — [SOURCES §8 ter](./SOURCES.md#8-ter-utilisation-dans-le-jeu-phase-5)) ; format de sauvegarde 5 et migration 4 → 5 testée sur un état réel de la phase 4 (semaine 29, entre les deux tours).
+- **P5-02** : programme de 51 propositions dans les 17 domaines ; dépendances (une dépendance annoncée la même semaine suffit), incompatibilités, 15 propositions au plus, 3 h de préparation chacune ; revirement compté ; facteurs « Programme » et « Crédibilité » dans la décomposition du vote.
+- **P5-03** : parrainages par département (promesses → intentions → reçues → validées, 1,5 % invalidées), réservoir d'élus partagé (un élu ne s'engage qu'une fois, propriété), règle des 500 / 30 départements / 50 comptées par département, clôture le 12 mars 2027 ; candidat sous le seuil écarté (joueur compris, la partie continue en spectateur) ; avance forfaitaire aux candidats retenus.
+- **P5-04** : compte de campagne (`FinanceBook`) : recettes par origine et dépenses, trésorerie = recettes − dépenses (propriété) ; plafonds légaux des deux tours ; dons triés selon la loi (personnes morales, espèces au-delà de 150 €, part au-delà de 4 600 €) et refus journalisés ; emprunt bancaire accordé dans la limite du remboursement attendu ; remboursement forfaitaire prévisionnel après chaque tour.
+- **P5-05** : six médias fictifs ; couverture hebdomadaire (exposition, tonalité) expliquée par la notoriété, les actions et la rencontre programme ⇄ priorités ; interview ciblée ; facteur « Médias ».
+- **P5-06** : débat décomposé (préparation, maîtrise, cohérence, réponse) et publié ; action « Préparation des débats » ; la préparation améliore la prestation attendue (propriété).
+- **P5-07** : relations (proximité, confiance, rivalité, historique) mises à jour à l'étape 4 ; ralliements dans les 10 semaines avant le premier tour, décidés par l'IA ou proposés par le joueur et acceptés ou refusés par le candidat sollicité ; facteur « Ralliement de X » ; le joueur n'est jamais rallié d'office.
+- **P5-08** : IA à objectif (victoire, qualification, visibilité), priorité motivée chaque semaine, actions ciblées (département, média), emprunt seulement s'il peut être accordé, mêmes règles que le joueur.
+- **P5-09** : difficulté limitée aux moyens des adversaires (budget, actions par semaine, température) et à la pression de gestion du joueur (ressources et promesses de départ).
+- **P5-10** : `POST /advance` accepte les cibles, `programme: { ajouter, retirer }` et `alliances: { proposer }`, validés par Zod puis par le moteur (motif renvoyé en cas de refus) ; sauvegarde automatique « Avant la clôture des parrainages ».
+- **P5-11** : écrans Programme et Finances ; tableau de bord (parrainages, compte, cibles, programme et ralliements prévus, plan conservé par semaine) ; Candidats (statuts, stratégies, relations, médias) ; débat dans Résultats ; bilan hebdomadaire enrichi.
+- **P5-12** : scénarios Playwright bureau et mobile, audit axe-core, documentation (README, ARCHITECTURE, MODELE_DONNEES, SOURCES, RISQUES).
+
+Écarts et limites :
+- **Calibration** : la candidate fictive du centre (Boussole) gagne encore toutes les parties de contrôle ; les nouveaux facteurs ne compensent pas l'avantage structurel du centre ([R-12](./RISQUES.md)). Rééquilibrage et test de diversité des issues reportés à la phase 7.
+- **Réservoir de parrainages** limité aux maires du COG 2026 (`estimation`) : autres élus habilités non comptés, collectivités d'outre-mer et Français de l'étranger sans présentations ([R-25](./RISQUES.md)).
+- **Ouverture de l'envoi des présentations** au 22 février 2027 : `hypothese` (décret de convocation non publié).
+- **Dons** : chaque offre est réputée venir d'une personne distincte ; le cumul de 4 600 € d'une même personne entre plusieurs candidats n'est pas suivi.
+- **Emprunts** comptés en apport personnel (hypothèse) ; remboursement **prévisionnel** seulement : ni dépôt du compte (2 juillet 2027) ni contrôle de la CNCCFP.
+- Les adversaires ne modifient pas leur programme (repris du jeu de règles) ; le joueur peut solliciter un ralliement mais ne peut pas se rallier lui-même ; seule la forme « ralliement avant le premier tour » est modélisée (les consignes d'entre-deux-tours restent celles de la phase 3).
+- Une partie migrée depuis le format 4 garde des parrainages « non modélisés » (personne n'y est écarté) et un compte « partiel » (budget courant repris comme apport).
+- Sources non relues pendant la phase (Légifrance refusé, CNCCFP et Conseil constitutionnel injoignables depuis l'environnement le 21/10/2026) : les valeurs reprises sont celles vérifiées en phases 0 et 4, sans ajout.
 
 ### Phase 6 — Quinquennat jouable
 
@@ -316,9 +368,9 @@ Durcissement sécurité (§14), mesure de performance et fixation des seuils (§
 | Q4 | Périmètre du scrutin | Périmètre officiel complet ; COM et Français de l'étranger dans une liste « Hors carte ». **Fait en phase 4** : périmètre officiel complet ; COM (dont Saint-Pierre-et-Miquelon) et Français de l'étranger dans la liste « Hors carte », comptés dans le total national. | — |
 | Q5 | Comptes utilisateurs | Session anonyme par cookie en phase 1 ; comptes plus tard si mise en ligne publique. | phase 1 (non bloquant) |
 | Q6 | Hébergeur | Choix avant la phase 8. | phase 8 |
-| Q7 | Accès réseau aux domaines publics dans l'environnement cloud | **Phase 4** : `www.data.gouv.fr` et `static.data.gouv.fr` autorisés le temps de l'import (fichiers conservés dans `data/raw/`) ; `static.data.gouv.fr` à nouveau coupé le 21/10 ; les imports peuvent aussi s'exécuter en local. | réimport depuis le cloud |
+| Q7 | Accès réseau aux domaines publics dans l'environnement cloud | **Phase 4** : `www.data.gouv.fr` et `static.data.gouv.fr` autorisés le temps de l'import (fichiers conservés dans `data/raw/`) ; `static.data.gouv.fr` à nouveau coupé le 21/10 ; les imports peuvent aussi s'exécuter en local. **Phase 5** : aucun accès nécessaire. Constat du 21/10 en fin de phase : `www.data.gouv.fr` et `www.insee.fr` joignables ; `www.legifrance.gouv.fr` refusé (403) ; `data.assemblee-nationale.fr`, `www.conseil-constitutionnel.fr`, `cnccfp.fr`, `www.elections.interieur.gouv.fr` et `www.banque-france.fr` injoignables. | réimport depuis le cloud ; données de la phase 6 |
 | Q8 | Réutilisation des résultats 2022 (licence non précisée sur data.gouv.fr) | Clarifier avant de commiter des données dérivées ; à défaut, démo synthétique `fictif`. **Phase 4 : défaut appliqué** (import local, jamais commité ; démonstration fictive). | mise en ligne de données dérivées |
 
 ## 6. Prochaine étape
 
-**Phase 5 — campagne approfondie** (programme, parrainages, financement, médias et débats, IA adverse avec alliances, difficulté et mode observateur), après validation de la phase 4. Elle exigera de sourcer les règles de parrainage et de financement (Légifrance et CNCCFP, refusés par le proxy de l'environnement cloud au 21/10/2026 : [SOURCES §9](./SOURCES.md#9-points-restant-non-vérifiés), point 1) ; les questions Q2 (personnalités réelles) et Q8 (licence des résultats 2022) restent ouvertes.
+**Phase 6 — quinquennat jouable** (gouvernement et Premier ministre, législatives sur 577 circonscriptions, Assemblée nationale, économie, crises, bilan de fin de mandat et nouvelle présidentielle), après validation de la phase 5. Elle exigera des données sourcées : composition de l'Assemblée (`data.assemblee-nationale.fr`, injoignable depuis l'environnement cloud au 21/10/2026), résultats des législatives 2024 et contours des circonscriptions (`www.data.gouv.fr` et `www.insee.fr`, joignables), indicateurs économiques initiaux (INSEE, Banque de France — `www.banque-france.fr` injoignable). Les questions Q2 (personnalités réelles) et Q8 (licence des résultats 2022) restent ouvertes.

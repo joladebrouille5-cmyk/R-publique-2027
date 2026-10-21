@@ -1,4 +1,10 @@
-import { advanceWeek, createGame, ENGINE_VERSION, SAVE_SCHEMA_VERSION } from '@r2027/engine';
+import {
+  advanceWeek,
+  createGame,
+  ENGINE_VERSION,
+  presentationWindow,
+  SAVE_SCHEMA_VERSION,
+} from '@r2027/engine';
 import { CURRENT_RULESET_KEY, getRuleset } from '@r2027/rulesets';
 import type { GameDetail, GameState, SaveSummary, WeeklyReport } from '@r2027/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -35,7 +41,23 @@ export function initialState(
   );
 }
 
-/** Fait avancer le vrai moteur jusqu'à `done(state)` (décisions par défaut, sans action). */
+const DEPARTEMENTS = Object.keys(RULESET.parrainages.reservoir.departements).sort();
+
+/**
+ * Plan par défaut des états de test : deux rencontres d'élus par semaine tant que les
+ * présentations sont ouvertes, pour que le candidat du joueur figure au premier tour.
+ */
+function sponsorship(state: GameState) {
+  const player = state.player.actorId ? state.actors[state.player.actorId] : undefined;
+  if (!player || player.status !== 'candidat') return [];
+  if (presentationWindow(state.meta.date, RULESET).closed) return [];
+  return [0, 1].map((k) => ({
+    actionId: 'elus-locaux',
+    cible: DEPARTEMENTS[(state.meta.week * 2 + k) % DEPARTEMENTS.length]!,
+  }));
+}
+
+/** Fait avancer le vrai moteur jusqu'à `done(state)` (décisions par défaut, parrainages). */
 export function playedState(
   done: (state: GameState) => boolean,
   start = initialState(),
@@ -46,7 +68,11 @@ export function playedState(
       decisionId: d.id,
       optionId: d.defaultOptionId,
     }));
-    state = advanceWeek(state, { actions: [], decisions }, { ruleset: RULESET }).state;
+    state = advanceWeek(
+      state,
+      { actions: sponsorship(state), decisions },
+      { ruleset: RULESET },
+    ).state;
   }
   return state;
 }
@@ -163,16 +189,19 @@ export function reportFixture(overrides: Partial<WeeklyReport> = {}): WeeklyRepo
         label: 'Meeting public',
         status: 'validee',
         reason: null,
-        cost: { budgetCentimes: 3_000_000, tempsHeures: 8 },
+        cible: null,
+        cost: { budgetCentimes: 12_000_000, tempsHeures: 8 },
       },
     ],
     changes: [
       {
         actorId: 'joueur',
         ressource: 'budgetCentimes',
-        before: 80_000_000,
-        after: 77_000_000,
-        factors: [{ label: 'Meeting public : coût', value: -3_000_000, source: 'action', step: 2 }],
+        before: 300_000_000,
+        after: 288_000_000,
+        factors: [
+          { label: 'Meeting public : coût', value: -12_000_000, source: 'action', step: 2 },
+        ],
       },
     ],
     events: [],
@@ -183,6 +212,12 @@ export function reportFixture(overrides: Partial<WeeklyReport> = {}): WeeklyRepo
     polls: [],
     election: null,
     phaseChange: null,
+    programme: [],
+    parrainages: [],
+    finances: [],
+    relations: [],
+    alliances: [],
+    strategies: [],
     ...overrides,
   };
 }

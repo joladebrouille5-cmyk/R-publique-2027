@@ -208,6 +208,28 @@ Les dates déduites sont recalculées par un test à partir de leur règle. Tous
 | Présidentielle 2022, fichiers communaux des deux tours (17 688 915 et 6 092 257 octets) | géographie électorale du jeu ; couche « résultats officiels 2022 » de la carte | importés localement ; **somme des lignes = totaux proclamés à l'unité** (vérifié par l'import) ; non commités (licence non précisée, Q8) |
 | Répartition des électeurs de chaque candidat de 2022 entre les groupes du jeu | situer les groupes commune par commune | `hypothese` (jeu de règles 2.1.0, `electorat.baseHistorique`) |
 
+## 8 ter. Utilisation dans le jeu (phase 5)
+
+Jeu de règles `presidentielle-2027@3.0.0` :
+
+| Donnée | Valeur dans le jeu | Statut | Source |
+|---|---|---|---|
+| Seuil des parrainages | 500 présentations, d'au moins 30 départements ou collectivités d'outre-mer, au plus 1/10 d'un même département | `officiel` | §5 ; lecture retenue : au plus **50 présentations comptées** par département pour atteindre le seuil (texte Légifrance non relu, §9 point 1) |
+| Clôture des présentations | 12 mars 2027, 18 h | `deduit` | §5 et §8 (règle du sixième vendredi) |
+| Ouverture de l'envoi des présentations | **22 février 2027** | `hypothese` | règle vérifiée (lendemain du décret de convocation, §5) ; décret non publié : date supposée trois semaines avant la clôture (« conception du jeu ») |
+| Réservoir d'élus par département | un maire par commune du COG 2026 (34 875 dans 101 départements) ; 45 % mobilisables | `estimation` (effectifs) et `hypothese` (part mobilisable) | INSEE, COG 2026 (§2.1) ; les autres élus habilités (parlementaires, conseillers départementaux et régionaux, élus des COM et des Français de l'étranger) ne sont pas comptés |
+| Rythme de la collecte (conversion des promesses, renoncements, envoi, 1,5 % de présentations invalidées) | paramètres de jeu | `hypothese` | conception du jeu |
+| Plafonds de dépenses | 16 851 000 € (1er tour), 22 509 000 € (2nd tour) | `officiel` | guide CNCCFP 2027 (§6) |
+| Dons des personnes physiques | 4 600 € par personne et par élection ; au-delà de 150 €, pas d'espèces ; personnes morales interdites hors partis | `officiel` | guide CNCCFP 2027, art. L. 52-8 (§6) ; simplification : chaque offre de don vient d'une personne distincte |
+| Avance forfaitaire | 200 000 € (montant) ; versés dans le jeu à chaque candidat retenu, à la clôture des présentations | `officiel` (montant) | guide CNCCFP 2027 (§6) |
+| Remboursement forfaitaire | 4,75 % du plafond du 1er tour sous 5 % des exprimés ; 47,5 % au-dessus ; 47,5 % du plafond du 2nd tour pour les finalistes ; dans la limite des dépenses et de l'apport personnel, avance déduite | `officiel` | guide CNCCFP 2027 (§6) ; le jeu affiche un remboursement **prévisionnel** (pas de dépôt ni de contrôle du compte) |
+| Apport personnel initial (20 % du budget de départ), taux et conditions d'emprunt | paramètres de jeu | `hypothese` | conception du jeu ; les emprunts sont comptés en apport personnel et la banque ne prête que dans la limite du remboursement attendu |
+| Programme : 17 domaines, 51 propositions, coûts, délais, faisabilité, effets | estimations de jeu | `hypothese` | conception du jeu ; sans valeur de chiffrage officiel, affiché « Estimations de jeu » |
+| Médias : six organes **fictifs** (audience, crédibilité, priorités) | paramètres de jeu | `hypothese` | conception du jeu ; aucun média réel représenté |
+| Débats (poids des composantes), alliances (fenêtre de 10 semaines, seuils), IA (budget, actions, température par difficulté) | paramètres de jeu | `hypothese` | conception du jeu |
+
+Les valeurs `officiel` et `deduit` sont vérifiées par les tests du jeu de règles ; aucune n'a été inventée pour combler les sources inaccessibles (Légifrance, CNCCFP et INSEE refusés par le proxy de l'environnement cloud le 21/10/2026 : les valeurs reprises sont celles relevées en phases 0 et 4).
+
 ## 9. Points restant non vérifiés
 
 1. Texte exact, sur Légifrance, de la loi n° 62-1292 (parrainages, financement) et de l'article L. 52-11.

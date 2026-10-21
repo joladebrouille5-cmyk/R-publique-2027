@@ -1,6 +1,14 @@
 // Outils partagés par les tests du moteur (non exportés par le paquet).
 import { CURRENT_RULESET_KEY, getRuleset } from '@r2027/rulesets';
-import type { DecisionAnswer, GameState, Resources, Ruleset, WeeklyReport } from '@r2027/shared';
+import type {
+  DecisionAnswer,
+  GameState,
+  PlannedAction,
+  Resources,
+  Ruleset,
+  WeeklyReport,
+} from '@r2027/shared';
+import { departements, presentationWindow } from '../campaign/parrainages';
 import { advanceWeek } from './advanceWeek';
 import { createGame, PLAYER_ACTOR_ID, type CreateGameInput } from './createGame';
 
@@ -41,17 +49,31 @@ export function newGame(
   );
 }
 
+/** « interview@canal-hexagone » → action et sa cible ; « meeting » → action sans cible. */
+export function planned(action: string): PlannedAction {
+  const [actionId, cible] = action.split('@') as [string, string | undefined];
+  return cible === undefined ? { actionId } : { actionId, cible };
+}
+
 export function advance(
   state: GameState,
   actions: string[] = [],
   decisions: DecisionAnswer[] = [],
   ruleset: Ruleset = QUIET,
 ) {
-  return advanceWeek(
-    state,
-    { actions: actions.map((actionId) => ({ actionId })), decisions },
-    { ruleset },
-  );
+  return advanceWeek(state, { actions: actions.map(planned), decisions }, { ruleset });
+}
+
+/**
+ * Plan de test : deux rencontres d'élus par semaine dans des départements différents, tant que
+ * les présentations restent ouvertes — de quoi atteindre le seuil des parrainages.
+ */
+export function sponsorship(state: GameState, ruleset: Ruleset = RULESET): string[] {
+  if (state.meta.phase !== 'campagne' || presentationWindow(state.meta.date, ruleset).closed)
+    return [];
+  const deps = departements(ruleset);
+  const week = state.meta.week;
+  return [0, 1].map((k) => `elus-locaux@${deps[(week * 2 + k) % deps.length]!}`);
 }
 
 export const playerResources = (state: GameState) => state.actors[PLAYER_ACTOR_ID]!.resources;
@@ -97,11 +119,7 @@ export function playUntil(
     const player = state.player.actorId ? state.actors[state.player.actorId] : undefined;
     const active = player && (player.status === 'candidat' || player.status === 'qualifie');
     const actions = active ? plan(state) : [];
-    const result = advanceWeek(
-      state,
-      { actions: actions.map((actionId) => ({ actionId })), decisions },
-      { ruleset },
-    );
+    const result = advanceWeek(state, { actions: actions.map(planned), decisions }, { ruleset });
     reports.push(result.report);
     state = result.state;
   }

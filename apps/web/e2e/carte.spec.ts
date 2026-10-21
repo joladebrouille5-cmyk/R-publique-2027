@@ -130,7 +130,8 @@ test('après le premier tour, la carte colore les territoires et donne le détai
   page,
 }) => {
   await createGame(page, 'Carte au premier tour', 'e2e-carte-t1');
-  await advanceViaApi(page, (g) => g.state.elections.t1 !== null);
+  const game = await advanceViaApi(page, (g) => g.state.elections.t1 !== null);
+  const candidates = Object.keys(game.state.elections.t1!.voix).length;
   await page.reload();
   await openScreen(page, 'Carte électorale');
   await expect(page.getByRole('region', { name: 'Carte de la métropole' })).toHaveAttribute(
@@ -154,7 +155,7 @@ test('après le premier tour, la carte colore les territoires et donne le détai
   await expect(sheet.getByText(/^En tête :/)).toBeVisible();
   await expect(
     sheet.getByRole('table', { name: 'Voix par candidat' }).getByRole('row'),
-  ).toHaveCount(9);
+  ).toHaveCount(candidates + 1);
   await expect(
     page
       .getByRole('region', { name: /Tableau des territoires \(communes\)/ })

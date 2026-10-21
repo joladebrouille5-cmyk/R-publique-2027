@@ -4,12 +4,14 @@ import { AppLayout } from './components/AppLayout';
 import { Unavailable } from './components/Unavailable';
 import { Candidates } from './screens/Candidates';
 import { Dashboard } from './screens/Dashboard';
+import { Finances } from './screens/Finances';
 import { GameLayout } from './screens/GameLayout';
 import { Home } from './screens/Home';
 import { Journal } from './screens/Journal';
 import { NewGame } from './screens/NewGame';
 import { NotFound, RouteError } from './screens/NotFound';
 import { Polls } from './screens/Polls';
+import { Programme } from './screens/Programme';
 import { GAME_SCREENS } from './screens/registry';
 import { Results } from './screens/Results';
 import { Saves } from './screens/Saves';
@@ -30,6 +32,8 @@ const IMPLEMENTED: Record<string, ComponentType> = {
   'tableau-de-bord': Dashboard,
   carte: MapScreen,
   candidats: Candidates,
+  programme: Programme,
+  finances: Finances,
   sondages: Polls,
   resultats: Results,
   journal: Journal,

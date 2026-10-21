@@ -1,4 +1,16 @@
 import { z } from 'zod';
+import {
+  AiObjectiveSchema,
+  AllianceSchema,
+  CampaignRegimeSchema,
+  DebateDetailSchema,
+  FinancesStateSchema,
+  MediaStateSchema,
+  ParrainagesStateSchema,
+  ProgrammeStateSchema,
+  RelationSchema,
+  StrategySchema,
+} from './campaign';
 import { isValidIsoDate } from './dates';
 import { CampaignStyleSchema, CandidateIdentitySchema } from './politics';
 import { ResourceKeySchema, ResourcesSchema } from './resources';
@@ -161,12 +173,19 @@ export const GameStateV2Schema = z
   .strict();
 export type GameStateV2 = z.infer<typeof GameStateV2Schema>;
 
-export const CANDIDATE_STATUSES = ['candidat', 'qualifie', 'elimine', 'elu', 'battu'] as const;
+/** Statuts des formats 3 et 4, figés. */
+const CANDIDATE_STATUSES_V4 = ['candidat', 'qualifie', 'elimine', 'elu', 'battu'] as const;
+
+/**
+ * Statuts d'un candidat. Depuis la phase 5 : `ecarte` (présentations insuffisantes à la
+ * clôture, absent du premier tour) et `retire` (ralliement à un autre candidat).
+ */
+export const CANDIDATE_STATUSES = [...CANDIDATE_STATUSES_V4, 'ecarte', 'retire'] as const;
 export const CandidateStatusSchema = z.enum(CANDIDATE_STATUSES);
 export type CandidateStatus = z.infer<typeof CandidateStatusSchema>;
 
-/** Candidat et sa campagne : le joueur ou un adversaire autonome (IA). */
-export const ActorSchema = z
+/** Candidat et sa campagne aux formats 3 et 4 (figé pour les migrations). */
+const ActorV4Schema = z
   .object({
     id: Id,
     kind: z.enum(['joueur', 'adversaire']),
@@ -176,11 +195,33 @@ export const ActorSchema = z
     style: CampaignStyleSchema.nullable(),
     toleranceRisque: z.number().min(0).max(1).nullable(),
     resources: ResourcesSchema,
-    status: CandidateStatusSchema,
+    status: z.enum(CANDIDATE_STATUSES_V4),
     /** Popularité des dernières semaines (la plus récente en dernier), pour la dynamique. */
     history: z.object({ popularite: z.array(z.number().int()).max(8) }).strict(),
   })
   .strict();
+export type ActorV4 = z.infer<typeof ActorV4Schema>;
+
+/**
+ * Candidat et sa campagne (format 5) : le joueur ou un adversaire autonome (IA), avec son
+ * programme, ses parrainages, son compte de campagne et, pour l'IA, sa stratégie (§6, §7).
+ */
+export const ActorSchema = ActorV4Schema.extend({
+  status: CandidateStatusSchema,
+  /** Qualité de l'équipe de campagne (0 à 1) : maîtrise des débats, conversion des parrainages. */
+  equipe: z.number().min(0).max(1),
+  /** Régions où le candidat compte le plus d'élus (codes INSEE). */
+  implantation: z.array(z.string().regex(/^\d{2}$/)),
+  /** Objectif de l'adversaire (§7) ; null pour le joueur. */
+  objectif: AiObjectiveSchema.nullable(),
+  programme: ProgrammeStateSchema,
+  parrainages: ParrainagesStateSchema,
+  finances: FinancesStateSchema,
+  /** Heures consacrées à la préparation des débats. */
+  preparationDebat: z.number().int().min(0),
+  /** Stratégie de la semaine pour un adversaire ; null pour le joueur. */
+  strategie: StrategySchema.nullable(),
+}).strict();
 export type Actor = z.infer<typeof ActorSchema>;
 
 /** Décision obligatoire : réponse à un événement, ou consigne de vote entre les deux tours. */
@@ -315,7 +356,7 @@ export const GameStateV3Schema = z
   .object({
     meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(3) }).strict(),
     player: PlayerSchema,
-    actors: z.record(Id, ActorSchema),
+    actors: z.record(Id, ActorV4Schema),
     scheduled: z.array(ScheduledEffectSchema),
     pendingDecisions: z.array(PendingDecisionSchema),
     eventHistory: EventHistorySchema,
@@ -337,15 +378,46 @@ export const GameStateV3Schema = z
   .strict();
 export type GameStateV3 = z.infer<typeof GameStateV3Schema>;
 
+const ElectionsV4Schema = z
+  .object({
+    t1: RoundResultSchema.nullable(),
+    t2: RoundResultSchema.nullable(),
+    consignes: z.array(VoteInstructionSchema),
+    /** Prestation de chaque finaliste au débat d'entre-deux-tours (−1 à +1), une fois tenu. */
+    debate: z.record(Id, z.number().min(-1).max(1)).nullable(),
+  })
+  .strict();
+
+const CalendarSchema = z
+  .object({ blockedBy: Id.nullable(), blockedMessage: z.string().nullable() })
+  .strict();
+
+/** État au format 4 (phase 4), figé pour les migrations. */
+export const GameStateV4Schema = z
+  .object({
+    meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(4) }).strict(),
+    player: PlayerSchema,
+    actors: z.record(Id, ActorV4Schema),
+    scheduled: z.array(ScheduledEffectSchema),
+    pendingDecisions: z.array(PendingDecisionSchema),
+    eventHistory: EventHistorySchema,
+    opinion: OpinionSchema.nullable(),
+    polls: z.array(PollSchema),
+    elections: ElectionsV4Schema,
+    calendar: CalendarSchema,
+  })
+  .strict();
+export type GameStateV4 = z.infer<typeof GameStateV4Schema>;
+
 /**
- * État complet d'une partie, format de sauvegarde n° 4 (phase 4). Toute évolution
+ * État complet d'une partie, format de sauvegarde n° 5 (phase 5). Toute évolution
  * s'accompagne d'un nouveau numéro de format et d'une migration (packages/save-engine).
  * L'aléa ne figure pas dans l'état : chaque tirage est dérivé de la graine, de la semaine
  * et de son contexte (module, action, événement, groupe d'électeurs…).
  */
 export const GameStateSchema = z
   .object({
-    meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(4) }).strict(),
+    meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(5) }).strict(),
     player: PlayerSchema,
     actors: z.record(Id, ActorSchema),
     scheduled: z.array(ScheduledEffectSchema),
@@ -353,25 +425,41 @@ export const GameStateSchema = z
     eventHistory: EventHistorySchema,
     opinion: OpinionSchema.nullable(),
     polls: z.array(PollSchema),
-    elections: z
-      .object({
-        t1: RoundResultSchema.nullable(),
-        t2: RoundResultSchema.nullable(),
-        consignes: z.array(VoteInstructionSchema),
-        /** Prestation de chaque finaliste au débat d'entre-deux-tours (−1 à +1), une fois tenu. */
-        debate: z.record(Id, z.number().min(-1).max(1)).nullable(),
-      })
-      .strict(),
-    calendar: z
-      .object({ blockedBy: Id.nullable(), blockedMessage: z.string().nullable() })
-      .strict(),
+    elections: ElectionsV4Schema.extend({
+      /** Composantes de la prestation de chaque finaliste au débat (§8), une fois tenu. */
+      debateDetail: z.record(Id, DebateDetailSchema).nullable(),
+    }).strict(),
+    calendar: CalendarSchema,
+    campagne: CampaignRegimeSchema,
+    medias: MediaStateSchema.nullable(),
+    /** Relations entre candidats, par paire (clé « a|b », identifiants triés). */
+    relations: z.record(z.string(), RelationSchema),
+    alliances: z.array(AllianceSchema),
   })
   .strict();
 export type GameState = z.infer<typeof GameStateSchema>;
 
-/** Action programmée par le joueur pour la semaine en cours. */
-export const PlannedActionSchema = z.object({ actionId: Id }).strict();
+/**
+ * Action programmée pour la semaine en cours, avec sa cible si l'action en demande une
+ * (département pour les élus locaux, organe de presse pour une interview).
+ */
+export const PlannedActionSchema = z
+  .object({ actionId: Id, cible: z.string().min(1).max(60).optional() })
+  .strict();
 export type PlannedAction = z.infer<typeof PlannedActionSchema>;
 
 export const DecisionAnswerSchema = z.object({ decisionId: Id, optionId: Id }).strict();
+
+/** Changements de programme demandés pour la semaine (§6) : annonces et retraits. */
+export const ProgrammeChangeSchema = z
+  .object({
+    ajouter: z.array(Id).max(20).default([]),
+    retirer: z.array(Id).max(20).default([]),
+  })
+  .strict();
+export type ProgrammeChange = z.infer<typeof ProgrammeChangeSchema>;
+
+/** Propositions de ralliement adressées par le joueur à d'autres candidats (§7). */
+export const AlliancePlanSchema = z.object({ proposer: z.array(Id).max(7).default([]) }).strict();
+export type AlliancePlan = z.infer<typeof AlliancePlanSchema>;
 export type DecisionAnswer = z.infer<typeof DecisionAnswerSchema>;

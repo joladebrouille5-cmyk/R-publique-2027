@@ -30,20 +30,21 @@ export const GAME_SCREENS: readonly GameScreen[] = [
     label: 'Candidats',
     phase: 3,
     available: true,
-    description: 'Candidats en lice, positionnements, statuts et facteurs du vote.',
+    description:
+      'Candidats, positionnements, parrainages, stratégies, relations, alliances et médias.',
   },
   {
     path: 'programme',
     label: 'Programme',
     phase: 5,
-    available: false,
+    available: true,
     description: 'Propositions par domaine avec coût, délai, faisabilité et effets.',
   },
   {
     path: 'finances',
     label: 'Finances',
     phase: 5,
-    available: false,
+    available: true,
     description: 'Compte de campagne : recettes, dépenses, dons, plafonds.',
   },
   {

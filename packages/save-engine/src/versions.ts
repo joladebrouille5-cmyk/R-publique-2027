@@ -1,6 +1,9 @@
 import {
   createOpponents,
+  emptyParrainages,
   ENGINE_VERSION,
+  initialRelations,
+  openingAccount,
   PLAYER_ACTOR_ID,
   SAVE_SCHEMA_VERSION,
 } from '@r2027/engine';
@@ -10,11 +13,14 @@ import {
   GameStateV1Schema,
   GameStateV2Schema,
   GameStateV3Schema,
+  GameStateV4Schema,
   type Actor,
+  type ActorV4,
   type GameState,
   type GameStateV1,
   type GameStateV2,
   type GameStateV3,
+  type GameStateV4,
 } from '@r2027/shared';
 import { z } from 'zod';
 import { hashState, sha256, canonicalStringify } from './canonical';
@@ -46,7 +52,8 @@ const SCHEMAS: Record<number, z.ZodType> = {
   1: GameStateV1Schema,
   2: GameStateV2Schema,
   3: GameStateV3Schema,
-  4: GameStateSchema,
+  4: GameStateV4Schema,
+  5: GameStateSchema,
 };
 
 /** Jeux de règles des parties aux formats 2 (phase 2) et 3 (phase 3). */
@@ -99,7 +106,23 @@ export const MIGRATED_CANDIDATE = {
   parcours: 'Candidature créée avant la phase 3 : identité et positionnement par défaut.',
   nature: 'personnalise',
   profilId: null,
-} as const satisfies Actor['candidate'];
+} as const satisfies ActorV4['candidate'];
+
+/** Acteur au format 4 (sans les champs de campagne de la phase 5). */
+function toV4Actor(actor: Actor): ActorV4 {
+  const { id, kind, label, candidate, style, toleranceRisque, resources, history } = actor;
+  return {
+    id,
+    kind,
+    label,
+    candidate,
+    style,
+    toleranceRisque,
+    resources,
+    status: 'candidat',
+    history,
+  };
+}
 
 /**
  * Format 2 → 3 (phase 3) : le joueur devient un candidat (identité par défaut, au centre),
@@ -109,7 +132,7 @@ export const MIGRATED_CANDIDATE = {
  */
 function migrateV2ToV3(v2: GameStateV2): GameStateV3 {
   const ruleset = getRuleset(CURRENT_RULESET_KEY);
-  const actors: Record<string, Actor> = {};
+  const actors: Record<string, ActorV4> = {};
   for (const [id, actor] of Object.entries(v2.actors)) {
     actors[id] = {
       ...actor,
@@ -123,7 +146,8 @@ function migrateV2ToV3(v2: GameStateV2): GameStateV3 {
       history: { popularite: [actor.resources.popularite] },
     };
   }
-  Object.assign(actors, createOpponents(v2.meta.difficulty, ruleset));
+  for (const [id, opponent] of Object.entries(createOpponents(v2.meta.difficulty, ruleset)))
+    actors[id] = toV4Actor(opponent);
   return {
     meta: {
       ...v2.meta,
@@ -148,7 +172,7 @@ function migrateV2ToV3(v2: GameStateV2): GameStateV3 {
  * (`territoire: null`, l'écran Résultats et la carte l'indiquent) ; le jeu de règles passe à la
  * version qui porte la géographie électorale. Les tours à venir seront dépouillés par commune.
  */
-function migrateV3ToV4(v3: GameStateV3): GameState {
+function migrateV3ToV4(v3: GameStateV3): GameStateV4 {
   const round = (result: GameStateV3['elections']['t1']) =>
     result ? { ...result, territoire: null } : null;
   return {
@@ -163,10 +187,52 @@ function migrateV3ToV4(v3: GameStateV3): GameState {
   };
 }
 
+/**
+ * Format 4 → 5 (phase 5) : chaque candidat reçoit un programme (celui de son parti pour les
+ * adversaires, vide pour le joueur), un compte de campagne ouvert avec sa trésorerie actuelle
+ * (les dépenses antérieures ne sont pas comptabilisées : régime « partiel ») et des parrainages
+ * vides ; les parrainages ne sont pas modélisés pour une partie déjà commencée (personne n'est
+ * écarté). Relations initiales selon les positionnements ; jeu de règles courant.
+ */
+function migrateV4ToV5(v4: GameStateV4): GameState {
+  const ruleset = getRuleset(CURRENT_RULESET_KEY);
+  const actors: Record<string, Actor> = {};
+  for (const [id, actor] of Object.entries(v4.actors)) {
+    const fictional = ruleset.candidatsFictifs.find((c) => c.id === id);
+    actors[id] = {
+      ...actor,
+      equipe: fictional?.equipe ?? ruleset.jeu.equipeJoueur,
+      implantation: fictional ? [...fictional.implantation] : [],
+      objectif: fictional?.objectif ?? null,
+      programme: { propositions: fictional ? [...fictional.programme] : [], revirements: 0 },
+      parrainages: emptyParrainages(),
+      finances: openingAccount(actor.resources.budgetCentimes, ruleset),
+      preparationDebat: 0,
+      strategie: null,
+    };
+  }
+  return {
+    ...v4,
+    meta: {
+      ...v4.meta,
+      engineVersion: ENGINE_VERSION,
+      rulesetVersion: CURRENT_RULESET_KEY,
+      saveSchemaVersion: 5,
+    },
+    actors,
+    elections: { ...v4.elections, debateDetail: null },
+    campagne: { parrainages: 'non_modelise', finances: 'partiel' },
+    medias: null,
+    relations: initialRelations(actors),
+    alliances: [],
+  };
+}
+
 const MIGRATIONS: Record<number, (state: never) => unknown> = {
   1: migrateV1ToV2,
   2: migrateV2ToV3,
   3: migrateV3ToV4,
+  4: migrateV4ToV5,
 };
 
 export type LoadedState = { state: GameState; stateHash: string; migratedFrom: number | null };

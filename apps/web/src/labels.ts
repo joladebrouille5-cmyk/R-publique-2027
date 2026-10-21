@@ -1,4 +1,5 @@
 import type {
+  AiObjective,
   CandidateStatus,
   DataStatus,
   Difficulty,
@@ -6,7 +7,10 @@ import type {
   GameMode,
   GamePhase,
   Poll,
+  ReceiptKind,
+  RefusalOrigin,
   ResourceKey,
+  StrategyPriority,
 } from '@r2027/shared';
 
 export const MODE_LABELS: Record<GameMode, string> = {
@@ -133,7 +137,63 @@ export const CANDIDATE_STATUS_LABELS: Record<CandidateStatus, string> = {
   elimine: 'Éliminé(e)',
   elu: 'Élu(e)',
   battu: 'Battu(e) au second tour',
+  ecarte: 'Écarté(e) : parrainages insuffisants',
+  retire: 'Retiré(e) : ralliement',
 };
+
+// --- Campagne (phase 5) ---
+
+export const RECEIPT_LABELS: Record<ReceiptKind, string> = {
+  parti: 'Contribution du parti',
+  apportPersonnel: 'Apport personnel du candidat',
+  dons: 'Dons de personnes physiques',
+  emprunts: 'Emprunts bancaires',
+  avance: 'Avance forfaitaire de l’État',
+  autres: 'Autres recettes',
+};
+
+export const REFUSAL_LABELS: Record<RefusalOrigin, string> = {
+  personne_morale: 'Don d’une personne morale',
+  depassement: 'Part au-delà du maximum légal',
+  especes: 'Espèces au-delà du seuil',
+};
+
+export const PRIORITY_LABELS: Record<StrategyPriority, string> = {
+  parrainages: 'Parrainages',
+  financement: 'Financement',
+  notoriete: 'Notoriété',
+  popularite: 'Conquête d’électeurs',
+  mobilisation: 'Mobilisation',
+  debat: 'Préparation du débat',
+};
+
+export const OBJECTIVE_LABELS: Record<AiObjective, string> = {
+  victoire: 'Gagner l’élection',
+  qualification: 'Se qualifier au second tour',
+  visibilite: 'Faire entendre ses idées',
+};
+
+export const CONFIDENCE_LABELS = {
+  faible: 'faible',
+  moyenne: 'moyenne',
+  elevee: 'élevée',
+} as const;
+
+/** Montant en centimes → « 1 234 567 € ». */
+export function formatEuros(centimes: number): string {
+  return euros.format(centimes / 100);
+}
+
+/** Millions d'euros (estimation de jeu) → « 2,5 Md€ / an », « 300 M€ / an », « économie de 3 Md€ ». */
+export function formatAnnualCost(millions: number): string {
+  const magnitude = Math.abs(millions);
+  const text =
+    magnitude >= 1_000
+      ? `${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 }).format(magnitude / 1_000)} Md€`
+      : `${integer.format(magnitude)} M€`;
+  if (millions < 0) return `économie de ${text} par an`;
+  return millions === 0 ? 'sans coût budgétaire' : `${text} par an`;
+}
 
 export const POLL_KIND_LABELS: Record<Poll['kind'], string> = {
   intentions_t1: 'Intentions de vote au premier tour',

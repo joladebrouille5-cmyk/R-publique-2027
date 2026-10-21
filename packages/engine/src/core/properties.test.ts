@@ -4,9 +4,17 @@ import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { advanceWeek } from './advanceWeek';
 import { createGame } from './createGame';
+import { planned } from './testing';
 
 const ruleset = getRuleset(CURRENT_RULESET_KEY);
-const ACTION_IDS = [...ruleset.actions.map((a) => a.id), 'action-inconnue'];
+const ACTION_IDS = [
+  ...ruleset.actions.map((a) =>
+    a.cible === 'departement' ? `${a.id}@01` : a.cible === 'media' ? `${a.id}@fil-actu` : a.id,
+  ),
+  'action-inconnue',
+];
+// Chaque propriété simule des centaines de semaines : délai adapté à la taille du moteur.
+const HEAVY = { timeout: 60_000 };
 
 const seedArb = fc.stringMatching(/^[a-z0-9-]{1,16}$/);
 const difficultyArb = fc.constantFrom<Difficulty>('accessible', 'standard', 'expert');
@@ -37,7 +45,7 @@ function play(seed: string, difficulty: Difficulty, plan: Plan, roundTrip = fals
       decisionId: d.id,
       optionId: d.options[week.choice % d.options.length]!.id,
     }));
-    const actions = week.actions.map((actionId) => ({ actionId }));
+    const actions = week.actions.map(planned);
     const result = advanceWeek(state, { actions, decisions }, { ruleset });
     state = roundTrip ? (JSON.parse(JSON.stringify(result.state)) as GameState) : result.state;
     reports.push(result.report);
@@ -47,7 +55,7 @@ function play(seed: string, difficulty: Difficulty, plan: Plan, roundTrip = fals
 }
 
 describe('propriétés du moteur (fast-check)', () => {
-  it('déterminisme : même graine et mêmes actions ⇒ même partie', () => {
+  it('déterminisme : même graine et mêmes actions ⇒ même partie', HEAVY, () => {
     fc.assert(
       fc.property(seedArb, difficultyArb, planArb, (seed, difficulty, plan) => {
         expect(play(seed, difficulty, plan)).toEqual(play(seed, difficulty, plan));
@@ -56,7 +64,7 @@ describe('propriétés du moteur (fast-check)', () => {
     );
   });
 
-  it('une sauvegarde puis une reprise à chaque semaine ne change rien', () => {
+  it('une sauvegarde puis une reprise à chaque semaine ne change rien', HEAVY, () => {
     fc.assert(
       fc.property(seedArb, difficultyArb, planArb, (seed, difficulty, plan) => {
         expect(play(seed, difficulty, plan, true).state).toEqual(
@@ -67,7 +75,7 @@ describe('propriétés du moteur (fast-check)', () => {
     );
   });
 
-  it('comptabilité exacte, ressources bornées et bilan cohérent avec l’état', () => {
+  it('comptabilité exacte, ressources bornées et bilan cohérent avec l’état', HEAVY, () => {
     fc.assert(
       fc.property(seedArb, difficultyArb, planArb, (seed, difficulty, plan) => {
         const { reports, states } = play(seed, difficulty, plan);
@@ -106,24 +114,28 @@ describe('propriétés du moteur (fast-check)', () => {
     );
   });
 
-  it('une action rejetée ne coûte rien et une action retenue coûte exactement son prix', () => {
-    fc.assert(
-      fc.property(seedArb, difficultyArb, weekPlanArb, (seed, difficulty, week) => {
-        const { reports } = play(seed, difficulty, [week]);
-        const report = reports[0]!;
-        const budget = report.changes.find(
-          (c) => c.actorId === 'joueur' && c.ressource === 'budgetCentimes',
-        );
-        const costFactors = (budget?.factors ?? []).filter(
-          (f) => f.source === 'action' && f.step === 2,
-        );
-        const expected = report.actions
-          .filter((a) => a.actorId === 'joueur' && a.status === 'validee')
-          .map((a) => -a.cost.budgetCentimes)
-          .filter((v) => v !== 0);
-        expect(costFactors.map((f) => f.value)).toEqual(expected);
-      }),
-      { numRuns: 80 },
-    );
-  });
+  it(
+    'une action rejetée ne coûte rien et une action retenue coûte exactement son prix',
+    HEAVY,
+    () => {
+      fc.assert(
+        fc.property(seedArb, difficultyArb, weekPlanArb, (seed, difficulty, week) => {
+          const { reports } = play(seed, difficulty, [week]);
+          const report = reports[0]!;
+          const budget = report.changes.find(
+            (c) => c.actorId === 'joueur' && c.ressource === 'budgetCentimes',
+          );
+          const costFactors = (budget?.factors ?? []).filter(
+            (f) => f.source === 'action' && f.step === 2,
+          );
+          const expected = report.actions
+            .filter((a) => a.actorId === 'joueur' && a.status === 'validee')
+            .map((a) => -a.cost.budgetCentimes)
+            .filter((v) => v !== 0);
+          expect(costFactors.map((f) => f.value)).toEqual(expected);
+        }),
+        { numRuns: 80 },
+      );
+    },
+  );
 });

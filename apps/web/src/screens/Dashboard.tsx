@@ -2,6 +2,7 @@ import { candidateName } from '@r2027/shared';
 import { useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { ApiRequestError, newIdempotencyKey } from '../api/client';
+import { spendingCapOf } from '../campaign';
 import { useAdvance, useJournal, useRuleset } from '../api/hooks';
 import { ErrorMessage } from '../components/ErrorMessage';
 import { buttonPrimary, card } from '../components/ui';
@@ -14,7 +15,9 @@ import {
   MODE_LABELS,
   PHASE_LABELS,
 } from '../labels';
+import { useWeeklyPlan } from '../stores/plan';
 import { ActionPlanner } from './dashboard/ActionPlanner';
+import { CampaignPanel } from './dashboard/CampaignPanel';
 import { CalendarPanel } from './dashboard/CalendarPanel';
 import { DecisionsPanel } from './dashboard/DecisionsPanel';
 import { ResourcesPanel } from './dashboard/ResourcesPanel';
@@ -25,7 +28,7 @@ export function Dashboard() {
   const ruleset = useRuleset(game.rulesetVersion);
   const journal = useJournal(game.id);
   const advance = useAdvance(game.id);
-  const [plan, setPlan] = useState<string[]>([]);
+  const plan = useWeeklyPlan(game.id, game.week);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   // Une clé par tentative ; conservée si le réseau coupe, pour qu'un renvoi ne rejoue rien.
   const attemptKey = useRef<string | null>(null);
@@ -55,10 +58,26 @@ export function Dashboard() {
     journal.data?.pages[0]?.entries.find((entry) => entry.report)?.report ??
     null;
 
-  const changePlan = (next: string[]) => {
-    attemptKey.current = null;
-    setPlan(next);
+  // Toute modification du plan invalide la clé d'idempotence de la tentative précédente.
+  const changePlan = <T extends unknown[]>(change: (...args: T) => void) => {
+    return (...args: T) => {
+      attemptKey.current = null;
+      change(...args);
+    };
   };
+  const reservedHours = ruleset.data
+    ? plan.ajouter.length * ruleset.data.programme.heuresParProposition
+    : 0;
+  const missingTargets = ruleset.data
+    ? plan.actions.filter(
+        (a) =>
+          a.cible === undefined && ruleset.data.actions.find((d) => d.id === a.actionId)?.cible,
+      ).length
+    : 0;
+  const nameOf = (id: string) =>
+    state.actors[id] ? candidateName(state.actors[id].candidate) : id;
+  const programmeLabel = (id: string) =>
+    ruleset.data?.programme.propositions.find((p) => p.id === id)?.libelle ?? id;
   const answer = (decisionId: string, optionId: string) => {
     attemptKey.current = null;
     setAnswers((current) => ({ ...current, [decisionId]: optionId }));
@@ -71,7 +90,9 @@ export function Dashboard() {
         idempotencyKey: attemptKey.current,
         body: {
           expectedWeek: game.week,
-          actions: plan.map((actionId) => ({ actionId })),
+          actions: plan.actions,
+          programme: { ajouter: plan.ajouter, retirer: plan.retirer },
+          alliances: { proposer: plan.proposer },
           decisions: Object.entries(answers)
             .filter(([decisionId]) => state.pendingDecisions.some((d) => d.id === decisionId))
             .map(([decisionId, optionId]) => ({ decisionId, optionId })),
@@ -80,7 +101,7 @@ export function Dashboard() {
       {
         onSuccess: () => {
           attemptKey.current = null;
-          setPlan([]);
+          plan.clear();
           setAnswers({});
         },
         onError: (error) => {
@@ -204,6 +225,9 @@ export function Dashboard() {
       {ruleset.data && actor && (
         <ResourcesPanel resources={actor.resources} ruleset={ruleset.data} />
       )}
+      {ruleset.data && actor && (
+        <CampaignPanel state={state} actor={actor} ruleset={ruleset.data} />
+      )}
       {observer && (
         <p className="text-sm text-slate-600 dark:text-slate-400">
           Mode observateur : aucune campagne n’est contrôlée. Les candidats fictifs mènent leur
@@ -216,20 +240,60 @@ export function Dashboard() {
       )}
 
       {ruleset.data && actor && campaigning && !blocked && (
-        <ActionPlanner
-          ruleset={ruleset.data}
-          resources={actor.resources}
-          plan={plan}
-          onAdd={(id) => changePlan([...plan, id])}
-          onRemove={(index) => changePlan(plan.filter((_, i) => i !== index))}
-        />
+        <>
+          <section aria-labelledby="titre-engagements" className={`${card} space-y-2 text-sm`}>
+            <h2 id="titre-engagements" className="text-lg font-semibold">
+              Programme et alliances cette semaine
+            </h2>
+            {plan.ajouter.length + plan.retirer.length > 0 ? (
+              <p>
+                {plan.ajouter.length > 0 &&
+                  `À annoncer : ${plan.ajouter.map(programmeLabel).join(', ')} (${reservedHours} h de préparation). `}
+                {plan.retirer.length > 0 &&
+                  `À retirer : ${plan.retirer.map(programmeLabel).join(', ')} (un revirement coûte de la crédibilité).`}
+              </p>
+            ) : (
+              <p className="text-slate-600 dark:text-slate-400">
+                Aucun changement de programme prévu ({actor.programme.propositions.length}{' '}
+                proposition(s) annoncée(s)).
+              </p>
+            )}
+            {plan.proposer.length > 0 && (
+              <p>Propositions de ralliement : {plan.proposer.map(nameOf).join(', ')}.</p>
+            )}
+            <p className="flex flex-wrap gap-x-4">
+              <Link
+                to="../programme"
+                className="text-republique-600 underline dark:text-republique-100"
+              >
+                Composer le programme
+              </Link>
+              <Link
+                to="../candidats"
+                className="text-republique-600 underline dark:text-republique-100"
+              >
+                Relations et alliances
+              </Link>
+            </p>
+          </section>
+          <ActionPlanner
+            ruleset={ruleset.data}
+            actor={actor}
+            plan={plan.actions}
+            reservedHours={reservedHours}
+            cap={spendingCapOf(state, actor, ruleset.data)}
+            onAdd={changePlan(plan.addAction)}
+            onRemove={changePlan(plan.removeAction)}
+            onTarget={changePlan(plan.setTarget)}
+          />
+        </>
       )}
 
       <div className={`${card} space-y-3`}>
         <button
           type="button"
           className={buttonPrimary}
-          disabled={blocked || advance.isPending || unanswered.length > 0}
+          disabled={blocked || advance.isPending || unanswered.length > 0 || missingTargets > 0}
           onClick={submit}
         >
           {advance.isPending ? 'Résolution de la semaine…' : `Résoudre la semaine ${game.week}`}
@@ -237,6 +301,11 @@ export function Dashboard() {
         {unanswered.length > 0 && (
           <p className="text-sm text-amber-800 dark:text-amber-300">
             Répondez d’abord aux décisions en attente.
+          </p>
+        )}
+        {missingTargets > 0 && (
+          <p className="text-sm text-amber-800 dark:text-amber-300">
+            Choisissez la cible (département ou média) de chaque action qui en demande une.
           </p>
         )}
         {advance.isError && <ErrorMessage error={advance.error} />}
@@ -249,7 +318,7 @@ export function Dashboard() {
             : 'Bilan hebdomadaire'}
         </h2>
         {lastReport ? (
-          <WeeklyReportView report={lastReport} state={state} />
+          <WeeklyReportView report={lastReport} state={state} proposalLabel={programmeLabel} />
         ) : (
           <p className="text-sm text-slate-500 dark:text-slate-400">
             Aucune semaine résolue pour l’instant.

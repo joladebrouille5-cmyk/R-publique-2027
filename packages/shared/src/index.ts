@@ -1,4 +1,5 @@
 export * from './api';
+export * from './campaign';
 export * from './dates';
 export * from './game';
 export * from './resources';

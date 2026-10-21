@@ -10,12 +10,17 @@ import {
   playUntil,
   QUIET,
   RULESET,
+  sponsorship,
   TEST_CANDIDATE,
   withResources,
 } from './testing';
 
 describe('présidentielle complète', () => {
-  const { state, reports } = playToEnd(newGame(), RULESET, () => ['meeting', 'interview']);
+  const { state, reports } = playToEnd(newGame(), RULESET, (s) => [
+    ...sponsorship(s),
+    'meeting',
+    'interview@canal-hexagone',
+  ]);
   const t1 = reports.find((r) => r.election?.round === 1)!;
   const t2 = reports.find((r) => r.election?.round === 2);
 
@@ -44,11 +49,19 @@ describe('présidentielle complète', () => {
     expect(state.polls.length).toBe(reports.reduce((n, r) => n + r.polls.length, 0));
   });
 
+  it('le joueur, parrainé, figure au premier tour', () => {
+    expect(Object.keys(state.elections.t1!.voix)).toContain(PLAYER_ACTOR_ID);
+  });
+
   it('termine sur un élu, met à jour les statuts et bloque la progression', () => {
     const statuses = Object.values(state.actors).map((a) => a.status);
+    const ran = Object.keys(state.elections.t1!.voix).length;
     expect(statuses.filter((s) => s === 'elu')).toHaveLength(1);
     expect(statuses.filter((s) => s === 'battu')).toHaveLength(1);
-    expect(statuses.filter((s) => s === 'elimine')).toHaveLength(statuses.length - 2);
+    expect(statuses.filter((s) => s === 'elimine')).toHaveLength(ran - 2);
+    expect(statuses.filter((s) => s === 'ecarte' || s === 'retire')).toHaveLength(
+      statuses.length - ran,
+    );
     const winner = Object.values(state.actors).find((a) => a.status === 'elu')!;
     expect(state.elections.t2!.winner).toBe(winner.id);
     expect(state.meta.phase).toBe(winner.id === PLAYER_ACTOR_ID ? 'presidence' : 'bilan');
@@ -73,7 +86,12 @@ describe('candidat éliminé au premier tour', () => {
     ),
     { notoriete: 100 },
   );
-  const { state } = playUntil(start, (s) => s.meta.phase === 'entre_deux_tours', QUIET);
+  const { state } = playUntil(
+    start,
+    (s) => s.meta.phase === 'entre_deux_tours',
+    QUIET,
+    (s) => sponsorship(s, QUIET),
+  );
   const decision = state.pendingDecisions.find((d) => d.kind === 'consigne')!;
 
   it('le joueur éliminé doit choisir une consigne de vote entre les finalistes', () => {

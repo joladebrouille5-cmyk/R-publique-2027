@@ -5,26 +5,45 @@ import type {
   PlannedAction,
   ResourceKey,
   Ruleset,
+  Strategy,
+  StrategyPriority,
 } from '@r2027/shared';
+import { expectedReimbursementCap, formatEuros, spendingCap } from '../campaign/finances';
+import {
+  available,
+  committedByDepartement,
+  departements,
+  perDepartementCap,
+  presentationWindow,
+  projectedPresentations,
+} from '../campaign/parrainages';
+import { proposalsById } from '../campaign/programme';
+import { formatFrenchDate } from '../core/calendar';
 import { compareStrings } from '../core/ledger';
 import { stream } from '../core/random';
 import { softmax } from '../election/model';
 
+// IA des adversaires (§7) : chaque adversaire analyse sa situation, en déduit une priorité
+// motivée (sa stratégie de la semaine), évalue le coût et le bénéfice de chaque action
+// possible avec sa meilleure cible, puis choisit. Mêmes actions, mêmes coûts et mêmes règles
+// de validation que le joueur ; aucun modèle de langage. La difficulté ne change que ses
+// moyens (budget, nombre d'actions) et la finesse de ses choix (température).
+
 /** Échelle d'une unité de « gain » par ressource, pour comparer des effets hétérogènes. */
 const SCALE: Record<ResourceKey, number> = {
-  budgetCentimes: 2_000_000,
+  budgetCentimes: 10_000_000,
   tempsHeures: 10,
   militants: 50,
   notoriete: 100,
   popularite: 100,
 };
-const TEMPERATURE = 0.5;
+const PRIORITY_WEIGHT = 1.5;
 
 /** Importance que l'adversaire accorde à chaque ressource, selon sa situation. */
 function needs(actor: Actor): Record<ResourceKey, number> {
   const r = actor.resources;
   return {
-    budgetCentimes: r.budgetCentimes < 20_000_000 ? 1 : 0.2,
+    budgetCentimes: r.budgetCentimes < 100_000_000 ? 1 : 0.2,
     tempsHeures: 0,
     militants: r.militants < 300 ? 0.6 : 0.2,
     notoriete: 1 - r.notoriete / 10_000,
@@ -33,8 +52,8 @@ function needs(actor: Actor): Record<ResourceKey, number> {
 }
 
 /**
- * Valeur attendue d'une action pour un adversaire : gains attendus pondérés par ses
- * besoins, moins le risque (pondéré par son goût du risque et son style) et le poids du coût.
+ * Valeur attendue d'une action : gains attendus pondérés par les besoins, moins le risque
+ * (pondéré par le goût du risque et le style) et le poids du coût dans le budget restant.
  */
 export function scoreAction(
   actor: Actor,
@@ -63,49 +82,238 @@ export function scoreAction(
   return gain + exposure - riskLoss * (1 - tolerance) * prudence * 4 - costShare;
 }
 
-/**
- * Étape 3 : chaque adversaire encore en lice choisit ses actions de la semaine dans le même
- * catalogue que le joueur, aux mêmes coûts, sans intervention du joueur (§7). Le choix est
- * tiré parmi les actions abordables, avec une probabilité croissante avec leur valeur.
- */
-export function planOpponentActions(
+const pct = (centiemes: number) => `${(centiemes / 100).toFixed(1).replace('.', ',')} %`;
+
+/** Coût de l'action la plus chère : en dessous, la trésorerie limite la campagne. */
+function comfortableBudget(ruleset: Ruleset): number {
+  return Math.max(...ruleset.actions.map((a) => a.cout.budgetCentimes)) * 1.1;
+}
+
+function needsSponsorship(state: GameState, ruleset: Ruleset, actor: Actor): boolean {
+  if (state.campagne.parrainages !== 'modelise' || state.meta.phase !== 'campagne') return false;
+  if (presentationWindow(state.meta.date, ruleset).closed) return false;
+  const projected = projectedPresentations(actor, ruleset);
+  const { seuil, departementsMin } = ruleset.parrainages;
+  return projected.counted < seuil * 1.2 || projected.departements < departementsMin + 3;
+}
+
+/** Étape 3 (analyse) : priorité de la semaine et motif lisible. */
+export function analyzeSituation(state: GameState, ruleset: Ruleset, actor: Actor): Strategy {
+  const week = state.meta.week;
+  const make = (priorite: StrategyPriority, motif: string): Strategy => ({
+    priorite,
+    motif,
+    semaine: week,
+  });
+  if (needsSponsorship(state, ruleset, actor)) {
+    const projected = projectedPresentations(actor, ruleset);
+    const closing = presentationWindow(state.meta.date, ruleset).closing;
+    return make(
+      'parrainages',
+      `Environ ${projected.counted} présentations en vue dans ${projected.departements} départements : il en faut ${ruleset.parrainages.seuil} de ${ruleset.parrainages.departementsMin} départements avant le ${formatFrenchDate(closing)}.`,
+    );
+  }
+  if (actor.resources.budgetCentimes < comfortableBudget(ruleset)) {
+    return make(
+      'financement',
+      `Trésorerie de ${formatEuros(actor.resources.budgetCentimes)} : priorité aux dons et à l'emprunt.`,
+    );
+  }
+  if (state.meta.phase === 'entre_deux_tours' && actor.status === 'qualifie') {
+    const max = ruleset.debats.preparationMaxHeures;
+    if (actor.preparationDebat < max) {
+      return make(
+        'debat',
+        `Débat d'entre-deux-tours à préparer (${actor.preparationDebat} h sur ${max} h utiles).`,
+      );
+    }
+  }
+  if (actor.resources.notoriete < 3_000) {
+    return make(
+      'notoriete',
+      `Notoriété de ${pct(actor.resources.notoriete)} : se faire connaître.`,
+    );
+  }
+  if (actor.resources.militants < 300) {
+    return make('mobilisation', `${actor.resources.militants} militants : renforcer le terrain.`);
+  }
+  const intentions = state.opinion?.intentions[actor.id];
+  return make(
+    'popularite',
+    intentions === undefined
+      ? 'Convaincre de nouveaux électeurs.'
+      : `${pct(intentions)} d'intentions de vote : convaincre de nouveaux électeurs.`,
+  );
+}
+
+/** Intérêt d'une action pour la priorité de la semaine (0 si elle ne la sert pas). */
+function relevance(action: ActionDefinition, priority: StrategyPriority): number {
+  const effect = (r: ResourceKey) =>
+    action.effets.filter((e) => e.ressource === r).reduce((sum, e) => sum + e.base, 0);
+  switch (priority) {
+    case 'parrainages':
+      return action.campagne?.promesses ? 3 : 0;
+    case 'financement':
+      return action.campagne?.dons || action.campagne?.emprunt ? 2.5 : 0;
+    case 'debat':
+      return action.campagne?.preparationDebat ? 3 : 0;
+    case 'notoriete':
+      return effect('notoriete') / 100 + (action.campagne?.exposition ?? 0) / 1_000;
+    case 'popularite':
+      return effect('popularite') / 50;
+    case 'mobilisation':
+      return effect('militants') / 30;
+  }
+}
+
+/** Bonus selon l'objectif de l'adversaire (§7). */
+function objectiveBonus(actor: Actor, action: ActionDefinition): number {
+  if (actor.objectif === 'victoire' && action.portee === 'nationale') return 0.3;
+  if (actor.objectif === 'visibilite' && (action.campagne?.exposition ?? 0) > 0) return 0.3;
+  if (actor.objectif === 'qualification' && action.effets.some((e) => e.ressource === 'popularite'))
+    return 0.2;
+  return 0;
+}
+
+/** Meilleur département pour chercher des parrainages : élus libres, implantation, plafond. */
+function bestDepartement(
   state: GameState,
   ruleset: Ruleset,
-): { actorId: string; planned: PlannedAction[] }[] {
+  actor: Actor,
+  used: ReadonlySet<string>,
+  engaged: ReadonlyMap<string, number>,
+): string | null {
+  const cap = perDepartementCap(ruleset);
+  const p = actor.parrainages;
+  const reservoir = ruleset.parrainages.reservoir.departements;
+  let best: string | null = null;
+  let bestValue = 0;
+  for (const dep of departements(ruleset)) {
+    const mine = (p.promesses[dep] ?? 0) + (p.intentions[dep] ?? 0) + (p.validees[dep] ?? 0);
+    if (mine >= cap * 1.4) continue;
+    const free = available(state, ruleset, dep, engaged);
+    if (free <= 0) continue;
+    const value =
+      Math.min(free, 40) *
+      (actor.implantation.includes(reservoir[dep]!.region) ? 1.5 : 1) *
+      (mine === 0 ? 1.3 : 1) *
+      (used.has(dep) ? 0.3 : 1);
+    if (value > bestValue) {
+      bestValue = value;
+      best = dep;
+    }
+  }
+  return best;
+}
+
+/** Média le plus utile : audience, crédibilité et priorités proches de son programme. */
+function bestOutlet(ruleset: Ruleset, actor: Actor, used: ReadonlySet<string>): string {
+  const proposals = proposalsById(ruleset);
+  const domains = actor.programme.propositions.map((id) => proposals.get(id)?.domaine);
+  let best = ruleset.medias.organes[0]!.id;
+  let bestValue = -1;
+  for (const outlet of ruleset.medias.organes) {
+    const matches = domains.filter((d) => d !== undefined && outlet.priorites.includes(d)).length;
+    const value =
+      outlet.audience * outlet.credibilite * (1 + 0.3 * matches) * (used.has(outlet.id) ? 0.4 : 1);
+    if (value > bestValue) {
+      bestValue = value;
+      best = outlet.id;
+    }
+  }
+  return best;
+}
+
+/** Une action est-elle utile à tenter ? (pas de prêt voué au refus, pas de parrainages tardifs) */
+function worthTrying(state: GameState, ruleset: Ruleset, actor: Actor, action: ActionDefinition) {
+  if (action.campagne?.promesses) {
+    if (state.campagne.parrainages !== 'modelise' || state.meta.phase !== 'campagne') return false;
+    if (presentationWindow(state.meta.date, ruleset).closed) return false;
+  }
+  if (action.campagne?.emprunt) {
+    const share = (state.opinion?.intentions[actor.id] ?? 0) / 10_000;
+    const room = expectedReimbursementCap(ruleset, share) - actor.finances.recettes.emprunts;
+    if (room < action.campagne.emprunt.montantCentimes) return false;
+  }
+  if (action.campagne?.preparationDebat && state.meta.phase !== 'entre_deux_tours') return false;
+  return true;
+}
+
+export type OpponentPlan = { actorId: string; planned: PlannedAction[]; strategie: Strategy };
+
+/**
+ * Étape 3 : chaque adversaire encore en lice analyse sa situation, met à jour sa stratégie et
+ * choisit ses actions de la semaine parmi celles qu'il peut payer (budget, temps, plafond
+ * légal), avec leur meilleure cible. Le choix est tiré avec une probabilité croissante avec la
+ * valeur estimée (température selon la difficulté).
+ */
+export function planOpponentActions(state: GameState, ruleset: Ruleset): OpponentPlan[] {
   const level = ruleset.ia[state.meta.difficulty];
   const active = state.meta.phase === 'entre_deux_tours' ? 'qualifie' : 'candidat';
+  const engaged = committedByDepartement(state);
   return Object.values(state.actors)
     .filter((actor) => actor.kind === 'adversaire' && actor.status === active)
     .sort((a, b) => compareStrings(a.id, b.id))
     .map((actor) => {
+      const strategie = analyzeSituation(state, ruleset, actor);
       let budget = actor.resources.budgetCentimes;
       let time = actor.resources.tempsHeures;
+      let spent = actor.finances.depenses;
+      const cap = spendingCap(state, actor.id, ruleset);
+      const usedDeps = new Set<string>();
+      const usedOutlets = new Set<string>();
       const planned: PlannedAction[] = [];
       for (let k = 0; k < level.actionsParSemaine; k++) {
-        const affordable = ruleset.actions.filter(
-          (a) =>
-            a.cout.budgetCentimes <= budget &&
-            a.cout.tempsHeures <= time &&
-            actor.resources.militants >= a.prerequis.militantsMin,
-        );
-        if (affordable.length === 0) break;
+        const options = ruleset.actions
+          .filter(
+            (a) =>
+              a.cout.budgetCentimes <= budget &&
+              a.cout.tempsHeures <= time &&
+              spent + a.cout.budgetCentimes <= cap &&
+              actor.resources.militants >= a.prerequis.militantsMin &&
+              worthTrying(state, ruleset, actor, a),
+          )
+          .map((action) => {
+            let cible: string | undefined;
+            if (action.cible === 'departement') {
+              cible = bestDepartement(state, ruleset, actor, usedDeps, engaged) ?? undefined;
+            } else if (action.cible === 'media') {
+              cible = bestOutlet(ruleset, actor, usedOutlets);
+            }
+            return { action, cible };
+          })
+          .filter(({ action, cible }) => action.cible === null || cible !== undefined);
+        if (options.length === 0) break;
         const probabilities = softmax(
-          affordable.map((a) => scoreAction(actor, a, budget) / TEMPERATURE),
+          options.map(
+            ({ action }) =>
+              (scoreAction(actor, action, budget) +
+                PRIORITY_WEIGHT * relevance(action, strategie.priorite) +
+                objectiveBonus(actor, action)) /
+              level.temperature,
+          ),
         );
         const rng = stream(state.meta.seed, state.meta.week, 'ia', actor.id, k);
         let target = rng.nextFloat();
-        let choice = affordable[affordable.length - 1]!;
-        for (let i = 0; i < affordable.length; i++) {
+        let choice = options[options.length - 1]!;
+        for (let i = 0; i < options.length; i++) {
           target -= probabilities[i]!;
           if (target < 0) {
-            choice = affordable[i]!;
+            choice = options[i]!;
             break;
           }
         }
-        planned.push({ actionId: choice.id });
-        budget -= choice.cout.budgetCentimes;
-        time -= choice.cout.tempsHeures;
+        planned.push(
+          choice.cible === undefined
+            ? { actionId: choice.action.id }
+            : { actionId: choice.action.id, cible: choice.cible },
+        );
+        if (choice.action.cible === 'departement' && choice.cible) usedDeps.add(choice.cible);
+        if (choice.action.cible === 'media' && choice.cible) usedOutlets.add(choice.cible);
+        budget -= choice.action.cout.budgetCentimes;
+        spent += choice.action.cout.budgetCentimes;
+        time -= choice.action.cout.tempsHeures;
       }
-      return { actorId: actor.id, planned };
+      return { actorId: actor.id, planned, strategie };
     });
 }

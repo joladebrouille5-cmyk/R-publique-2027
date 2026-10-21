@@ -1,11 +1,14 @@
 import {
   candidateName,
+  type DebateDetail,
   type GamePhase,
   type GameState,
   type ReportEvent,
   type RoundResult,
   type Ruleset,
 } from '@r2027/shared';
+import { provisionalReimbursement } from '../campaign/finances';
+import { credibility } from '../campaign/programme';
 import { scrutinInWeek } from '../core/calendar';
 import { compareStrings } from '../core/ledger';
 import { stream } from '../core/random';
@@ -51,6 +54,7 @@ export function concludeRound(
   const week = state.meta.week;
   if (result.round === 1) state.elections.t1 = result;
   else state.elections.t2 = result;
+  updateReimbursements(state, ruleset, result);
 
   if (result.winner) {
     for (const actor of Object.values(state.actors)) {
@@ -137,20 +141,86 @@ export function concludeRound(
   return { phaseChange: { from, to: 'entre_deux_tours' }, events };
 }
 
-/** Débat d'entre-deux-tours : prestation simulée de chaque finaliste, de −1 à +1 (§5.3). */
-export function holdDebate(state: GameState): ReportEvent | null {
+/**
+ * Remboursement forfaitaire prévisionnel de chaque candidat présent au tour, d'après son score
+ * au premier tour ; recalculé au second tour pour les finalistes (plafond du second tour).
+ */
+function updateReimbursements(state: GameState, ruleset: Ruleset, result: RoundResult) {
+  const t1 = state.elections.t1;
+  if (!t1) return;
+  for (const actorId of Object.keys(result.voix)) {
+    const actor = state.actors[actorId];
+    if (!actor) continue;
+    const share = t1.exprimes > 0 ? (t1.voix[actorId] ?? 0) / t1.exprimes : 0;
+    const secondRound = result.round === 2;
+    actor.finances.remboursementPrevisionnel = provisionalReimbursement(
+      actor,
+      ruleset,
+      share,
+      secondRound,
+    );
+  }
+}
+
+const round2 = (value: number) => Math.round(value * 100) / 100 + 0; // −0 → 0
+const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
+
+/**
+ * Composantes de la prestation d'un finaliste (§8) : préparation (heures consacrées),
+ * maîtrise (notoriété et équipe), cohérence (crédibilité du programme), réponse (part
+ * d'aléa, d'autant plus resserrée que le candidat s'est préparé).
+ */
+export function debateComponents(
+  state: GameState,
+  ruleset: Ruleset,
+  actorId: string,
+  u: number,
+): DebateDetail {
+  const actor = state.actors[actorId]!;
+  const preparation = clamp01(actor.preparationDebat / ruleset.debats.preparationMaxHeures);
+  const maitrise = clamp01(0.5 * (actor.resources.notoriete / 10_000) + 0.5 * actor.equipe);
+  const coherence =
+    actor.programme.propositions.length === 0
+      ? 0.4
+      : clamp01((credibility(actor.programme, ruleset).value + 1) / 2);
+  const reponse = clamp01(
+    0.5 + (u - 0.5) * (1.2 - 0.6 * preparation) + (actor.style === 'offensif' ? 0.05 : 0),
+  );
+  return {
+    preparation: round2(preparation),
+    maitrise: round2(maitrise),
+    coherence: round2(coherence),
+    reponse: round2(reponse),
+  };
+}
+
+/** Prestation (−1 à +1) à partir des composantes pondérées par le jeu de règles. */
+export function debatePerformance(detail: DebateDetail, ruleset: Ruleset): number {
+  const w = ruleset.debats.poids;
+  const total =
+    w.preparation * detail.preparation +
+    w.maitrise * detail.maitrise +
+    w.coherence * detail.coherence +
+    w.reponse * detail.reponse;
+  return round2(Math.max(-1, Math.min(1, 2 * total - 1)));
+}
+
+/** Débat d'entre-deux-tours : prestation simulée de chaque finaliste, de −1 à +1 (§5.3, §8). */
+export function holdDebate(state: GameState, ruleset: Ruleset): ReportEvent | null {
   if (state.meta.phase !== 'entre_deux_tours' || state.elections.debate) return null;
   const finalists = Object.values(state.actors)
     .filter((a) => a.status === 'qualifie')
     .sort((a, b) => compareStrings(a.id, b.id));
   if (finalists.length !== 2) return null;
   const debate: Record<string, number> = {};
+  const detail: Record<string, DebateDetail> = {};
   for (const finalist of finalists) {
     const rng = stream(state.meta.seed, state.meta.week, 'debat', finalist.id);
-    const raw = rng.nextFloat() * 2 - 1 + (finalist.resources.popularite - 3000) / 10_000;
-    debate[finalist.id] = Math.round(Math.max(-1, Math.min(1, raw)) * 100) / 100 + 0; // −0 → 0
+    detail[finalist.id] = debateComponents(state, ruleset, finalist.id, rng.nextFloat());
+    debate[finalist.id] = debatePerformance(detail[finalist.id]!, ruleset);
   }
   state.elections.debate = debate;
+  state.elections.debateDetail = detail;
   const [a, b] = finalists as [(typeof finalists)[0], (typeof finalists)[0]];
   const leader = debate[a.id]! >= debate[b.id]! ? a : b;
   return {
@@ -163,7 +233,9 @@ export function holdDebate(state: GameState): ReportEvent | null {
         (f) =>
           `${candidateName(f.candidate)} ${debate[f.id]! >= 0 ? '+' : ''}${debate[f.id]!.toFixed(2).replace('.', ',')}`,
       )
-      .join(' ; ')} (échelle de −1 à +1). La préparation des débats sera modélisée en phase 5.`,
+      .join(
+        ' ; ',
+      )} (échelle de −1 à +1), d'après la préparation, la maîtrise, la cohérence du programme et la qualité des réponses.`,
     nature: 'simule',
     majeur: false,
     decisionId: null,

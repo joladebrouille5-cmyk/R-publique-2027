@@ -1,8 +1,24 @@
-import type { ElectorateGroup, GameState, Opinion, Ruleset, UtilityFactor } from '@r2027/shared';
+import {
+  candidateName,
+  type ElectorateGroup,
+  type GameState,
+  type Opinion,
+  type Ruleset,
+  type UtilityFactor,
+} from '@r2027/shared';
+import { credibility, programmeAppeal } from '../campaign/programme';
 import { compareStrings } from '../core/ledger';
 import { stream } from '../core/random';
 import { largestRemainder } from './apportion';
-import { blankRate, softmax, sumFactors, turnout, utilityFactors, type Contender } from './model';
+import {
+  blankRate,
+  distance,
+  softmax,
+  sumFactors,
+  turnout,
+  utilityFactors,
+  type Contender,
+} from './model';
 
 export type Round = 1 | 2;
 
@@ -38,6 +54,43 @@ export function contendersFromState(state: GameState, round: Round): Contender[]
         dynamique: actor.resources.popularite - past,
       };
     });
+}
+
+/**
+ * Facteurs de campagne (phase 5, §5.1) : attrait du programme pour le groupe, crédibilité du
+ * programme, indice médiatique de la semaine passée et soutien des candidats ralliés.
+ */
+function campaignFactors(
+  state: GameState,
+  ruleset: Ruleset,
+  group: ElectorateGroup,
+  contender: Contender,
+): UtilityFactor[] {
+  const model = ruleset.modele;
+  const actor = state.actors[contender.id]!;
+  const factors: UtilityFactor[] = [
+    {
+      label: 'Programme',
+      value: model.programme * programmeAppeal(actor.programme, group, ruleset),
+    },
+    {
+      label: 'Crédibilité',
+      value: model.credibilite * credibility(actor.programme, ruleset).value,
+    },
+    { label: 'Médias', value: model.medias * (state.medias?.indice[contender.id] ?? 0) },
+  ];
+  for (const alliance of state.alliances) {
+    if (alliance.vers !== contender.id) continue;
+    const ally = state.actors[alliance.de];
+    if (!ally) continue;
+    const weight = ally.resources.popularite / 10_000;
+    const closeness = Math.max(0, 1 - distance(group.position, ally.candidate.positionnement));
+    factors.push({
+      label: `Ralliement de ${candidateName(ally.candidate)}`,
+      value: model.alliances * weight * closeness,
+    });
+  }
+  return factors;
 }
 
 /** Facteurs propres au second tour : consignes de vote partielles et débat (§5.3). */
@@ -90,7 +143,10 @@ export function distribute(
     const factors = contenders.map((contender) => {
       const rng = stream(state.meta.seed, week, purpose, round, group.id, contender.id);
       const alea = (rng.nextFloat() * 2 - 1) * model.alea;
-      const extra = round === 2 ? secondRoundFactors(state, ruleset, group.id, contender) : [];
+      const extra = [
+        ...campaignFactors(state, ruleset, group, contender),
+        ...(round === 2 ? secondRoundFactors(state, ruleset, group.id, contender) : []),
+      ];
       return utilityFactors(group, contender, model, alea, extra);
     });
     return {

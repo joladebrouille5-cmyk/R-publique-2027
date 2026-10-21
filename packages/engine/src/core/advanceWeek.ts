@@ -1,8 +1,11 @@
 import type {
+  AlliancePlan,
   DecisionAnswer,
   GameState,
   PlannedAction,
   Poll,
+  ProgrammeChange,
+  ProgrammeReport,
   ReportEvent,
   RoundResult,
   Ruleset,
@@ -10,7 +13,17 @@ import type {
   WeeklyReport,
 } from '@r2027/shared';
 import { planOpponentActions } from '../ai/opponents';
+import { resolveAlliances, updateRelations } from '../ai/relations';
 import { consumeActions, resolveActionEffects, validateActions } from '../campaign/actions';
+import { FinanceBook } from '../campaign/finances';
+import { updateMedia } from '../campaign/medias';
+import {
+  ParrainageBook,
+  presentationWindow,
+  projectedPresentations,
+  weeklyParrainages,
+} from '../campaign/parrainages';
+import { applyProgramme, programmeReport, validateProgrammeChange } from '../campaign/programme';
 import { distribute, summarize } from '../election/distribution';
 import { concludeRound, holdDebate, scrutinOfWeek } from '../election/flow';
 import { weeklyDrift } from '../election/opinion';
@@ -25,6 +38,10 @@ import { compareStrings, Ledger } from './ledger';
 export type AdvanceInput = {
   actions: readonly PlannedAction[];
   decisions: readonly DecisionAnswer[];
+  /** Annonces et retraits de propositions du programme (phase 5). */
+  programme?: ProgrammeChange;
+  /** Propositions de ralliement adressées à d'autres candidats (phase 5). */
+  alliances?: AlliancePlan;
 };
 
 export type EngineContext = {
@@ -58,6 +75,24 @@ export const WEEKLY_STEPS = [
 
 const HISTORY_LENGTH = 8;
 const plural = (n: number, word: string) => `${n} ${word}${n > 1 ? 's' : ''}`;
+const NO_CHANGE: ProgrammeChange = { ajouter: [], retirer: [] };
+
+/**
+ * Candidats dont les parrainages semblent hors d'atteinte à l'approche de la clôture : ils
+ * envisagent plus volontiers un ralliement.
+ */
+function hopelessCandidates(state: GameState, ruleset: Ruleset): Set<string> {
+  const hopeless = new Set<string>();
+  if (state.campagne.parrainages !== 'modelise' || state.meta.phase !== 'campagne') return hopeless;
+  const window = presentationWindow(state.meta.date, ruleset);
+  if (window.closed || !window.open) return hopeless;
+  for (const actor of Object.values(state.actors)) {
+    if (actor.status !== 'candidat') continue;
+    if (projectedPresentations(actor, ruleset).counted < 0.8 * ruleset.parrainages.seuil)
+      hopeless.add(actor.id);
+  }
+  return hopeless;
+}
 
 /**
  * Résout une semaine. Fonction pure : l'état reçu n'est jamais modifié, aucune horloge,
@@ -77,19 +112,27 @@ export function advanceWeek(
   }
   const state = JSON.parse(JSON.stringify(input)) as GameState;
   const ledger = new Ledger(state);
+  const finances = new FinanceBook(state, ruleset, ledger);
+  const parrainages = new ParrainageBook();
   const week = state.meta.week;
   const date = state.meta.date;
   const playerId = state.player.actorId;
   const player = playerId ? state.actors[playerId] : undefined;
   const playerActive =
     player !== undefined && (player.status === 'candidat' || player.status === 'qualifie');
+  const programmeChange = plan.programme ?? NO_CHANGE;
+  const proposals = plan.alliances?.proposer ?? [];
   const summaries = new Map<number, { active: boolean; summary: string }>();
   const set = (step: number, active: boolean, summary: string) =>
     summaries.set(step, { active, summary });
 
-  // 1. Valider les actions du joueur et ses réponses aux décisions en attente.
+  // 1. Valider les actions du joueur, son programme et ses réponses aux décisions en attente.
   const answers = validateDecisionAnswers(state, plan.decisions);
-  if (plan.actions.length > 0) {
+  const wantsToAct =
+    plan.actions.length > 0 ||
+    programmeChange.ajouter.length + programmeChange.retirer.length > 0 ||
+    proposals.length > 0;
+  if (wantsToAct) {
     if (!player)
       throw new EngineInputError('actions_interdites', 'Le mode observateur ne permet pas d’agir.');
     if (!playerActive) {
@@ -105,48 +148,89 @@ export function advanceWeek(
       );
     }
   }
+  const programmeReports: ProgrammeReport[] = [];
+  let programmeHours = 0;
+  if (playerActive && player) {
+    const validation = validateProgrammeChange(
+      player.programme,
+      programmeChange,
+      ruleset,
+      player.resources.tempsHeures,
+    );
+    player.programme = applyProgramme(player.programme, validation);
+    programmeHours = validation.hours;
+    const report = programmeReport(player.id, validation);
+    if (report) programmeReports.push(report);
+  }
   const own = playerActive
-    ? validateActions(state, playerId!, plan.actions, ruleset)
+    ? validateActions(state, playerId!, plan.actions, ruleset, programmeHours)
     : { outcomes: [], validated: [] };
   const rejected = own.outcomes.filter((o) => o.status === 'rejetee').length;
+  const announced = programmeReports[0]?.ajoutees.length ?? 0;
   set(
     1,
     true,
     `${plural(own.validated.length, 'action retenue')}, ${plural(rejected, 'action rejetée')}` +
+      (announced ? `, ${plural(announced, 'proposition annoncée')}` : '') +
       (answers.length ? `, ${plural(answers.length, 'décision')} à appliquer` : ''),
   );
 
-  // 2. Consommer les ressources du joueur.
-  consumeActions(ledger, own.validated, 2);
+  // 2. Consommer les ressources du joueur (dépenses électorales et temps).
+  if (programmeHours > 0) {
+    ledger.apply(playerId!, 'tempsHeures', [
+      {
+        label: 'Préparation des propositions du programme',
+        value: -programmeHours,
+        source: 'action',
+        step: 2,
+      },
+    ]);
+  }
+  consumeActions(ledger, finances, own.validated, 2);
   const spent = own.validated.reduce((sum, v) => sum + v.definition.cout.budgetCentimes, 0);
   const hours = own.validated.reduce((sum, v) => sum + v.definition.cout.tempsHeures, 0);
-  set(2, true, `Dépenses : ${Math.round(spent / 100)} € et ${hours} h`);
+  set(2, true, `Dépenses : ${Math.round(spent / 100)} € et ${hours + programmeHours} h`);
 
-  // 3. Décisions adverses : mêmes actions, mêmes coûts, mêmes règles de validation.
-  const opponents = planOpponentActions(state, ruleset).map((p) =>
-    validateActions(state, p.actorId, p.planned, ruleset),
-  );
+  // 3. Décisions adverses : analyse, stratégie, actions ciblées ; mêmes règles que le joueur.
+  const plans = planOpponentActions(state, ruleset);
+  for (const p of plans) state.actors[p.actorId]!.strategie = p.strategie;
+  const opponents = plans.map((p) => validateActions(state, p.actorId, p.planned, ruleset));
   const opponentValidated = opponents.flatMap((o) => o.validated);
-  consumeActions(ledger, opponentValidated, 3);
+  consumeActions(ledger, finances, opponentValidated, 3);
   set(
     3,
-    opponents.length > 0,
-    `${plural(opponentValidated.length, 'action')} de ${plural(opponents.length, 'adversaire')}`,
+    plans.length > 0,
+    `${plural(opponentValidated.length, 'action')} de ${plural(plans.length, 'adversaire')}`,
   );
 
-  // 4. Alliances : phase 5.
-  set(4, false, 'Alliances et relations modélisées en phase 5.');
+  // 4. Relations et alliances.
+  const relationNotes = updateRelations(state);
+  const allianceOutcome = resolveAlliances(
+    state,
+    ruleset,
+    proposals,
+    hopelessCandidates(state, ruleset),
+  );
+  relationNotes.push(...allianceOutcome.notes);
+  set(
+    4,
+    true,
+    `${plural(allianceOutcome.alliances.length, 'ralliement')}, ${plural(relationNotes.length, 'fait')} marquant(s) entre candidats.`,
+  );
 
   // 5. Décisions de la semaine passée, débat, effets des actions, nouveaux événements.
-  const decisions = applyDecisions(state, ruleset, ledger, answers, 5);
-  const debate = holdDebate(state);
-  const risks: ReportEvent[] = resolveActionEffects(
+  const decisions = applyDecisions(state, ruleset, ledger, finances, answers, 5);
+  const debate = holdDebate(state, ruleset);
+  const allValidated = [...own.validated, ...opponentValidated];
+  const { risks, incidents } = resolveActionEffects(
     state,
+    ruleset,
     ledger,
-    [...own.validated, ...opponentValidated],
+    { finances, parrainages },
+    allValidated,
     5,
   );
-  const events = drawEvents(state, ruleset, ledger, 5);
+  const events = drawEvents(state, ruleset, ledger, finances, 5);
   set(
     5,
     true,
@@ -154,14 +238,15 @@ export function advanceWeek(
       (debate ? ', débat d’entre-deux-tours' : ''),
   );
 
-  // 6. Opinion : dynamique hebdomadaire de chaque campagne, puis historique de popularité.
+  // 6. Médias, puis dynamique de l'opinion et historique de popularité.
+  state.medias = updateMedia(state, ruleset, ledger, allValidated, incidents, 6) ?? state.medias;
   weeklyDrift(state, ruleset, ledger, 6);
   for (const actor of Object.values(state.actors)) {
     actor.history.popularite = [...actor.history.popularite, actor.resources.popularite].slice(
       -HISTORY_LENGTH,
     );
   }
-  set(6, true, 'Érosion, retour à la moyenne et attrition appliqués à chaque campagne.');
+  set(6, true, 'Couverture médiatique, érosion, retour à la moyenne et attrition appliqués.');
 
   // 7. Économie : phase 6.
   set(7, false, 'Indicateurs économiques et sociaux calculés à partir de la phase 6.');
@@ -188,7 +273,8 @@ export function advanceWeek(
       : 'Aucune élection en cours.',
   );
 
-  // 9. Échéances : scrutin de la semaine, puis passage à la semaine suivante.
+  // 9. Échéances : parrainages, scrutin de la semaine, puis passage à la semaine suivante.
+  const nominationEvents = weeklyParrainages(state, ruleset, parrainages, finances, 9);
   let election: RoundResult | null = null;
   let phaseChange: WeeklyReport['phaseChange'] = null;
   const scrutin = scrutinOfWeek(state, ruleset);
@@ -211,11 +297,12 @@ export function advanceWeek(
     phaseChange = concluded.phaseChange;
     electionEvents.push(...concluded.events);
   }
-  const { notices, appliedScheduled } = enterNextWeek(state, ruleset, ledger, 9);
+  const { notices, appliedScheduled } = enterNextWeek(state, ruleset, ledger, finances, 9);
   set(
     9,
     true,
-    (election ? `${election.round === 1 ? 'Premier' : 'Second'} tour dépouillé ; ` : '') +
+    (nominationEvents.length ? 'Liste des candidats arrêtée ; ' : '') +
+      (election ? `${election.round === 1 ? 'Premier' : 'Second'} tour dépouillé ; ` : '') +
       `semaine ${state.meta.week} : ${plural(appliedScheduled, 'effet différé')} appliqué(s), ` +
       `${plural(notices.length, 'échéance')} dans les 4 semaines.`,
   );
@@ -227,7 +314,14 @@ export function advanceWeek(
   set(12, true, 'Bilan hebdomadaire généré.');
 
   const steps: StepSummary[] = WEEKLY_STEPS.map((s) => ({ ...s, ...summaries.get(s.step)! }));
-  const allEvents = [...events, ...(debate ? [debate] : []), ...electionEvents, ...risks];
+  const allEvents = [
+    ...events,
+    ...allianceOutcome.events,
+    ...(debate ? [debate] : []),
+    ...nominationEvents,
+    ...electionEvents,
+    ...risks,
+  ];
   // Actions du joueur d'abord, puis celles des adversaires par identifiant, dans l'ordre du plan.
   const rank = (actorId: string) => (actorId === playerId ? '' : actorId);
   const actions = [...own.outcomes, ...opponents.flatMap((o) => o.outcomes)].sort(
@@ -235,7 +329,7 @@ export function advanceWeek(
   );
   return {
     state,
-    majorEvent: events.some((e) => e.majeur) || election !== null,
+    majorEvent: allEvents.some((e) => e.majeur) || election !== null,
     report: {
       week,
       date,
@@ -254,6 +348,16 @@ export function advanceWeek(
       polls,
       election,
       phaseChange,
+      programme: programmeReports,
+      parrainages: parrainages.list(),
+      finances: finances.list(),
+      relations: relationNotes,
+      alliances: allianceOutcome.alliances,
+      strategies: plans.map((p) => ({
+        actorId: p.actorId,
+        priorite: p.strategie.priorite,
+        motif: p.strategie.motif,
+      })),
     },
   };
 }

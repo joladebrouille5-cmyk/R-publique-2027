@@ -461,7 +461,7 @@ describe('migration des parties des phases 1 et 2', () => {
     });
 
     const migrated = GameDetailSchema.parse((await client.get(`/api/games/${game.id}`)).json());
-    expect(migrated).toMatchObject({ saveSchemaVersion: 4, rulesetVersion: CURRENT_RULESET_KEY });
+    expect(migrated).toMatchObject({ saveSchemaVersion: 5, rulesetVersion: CURRENT_RULESET_KEY });
     expect(migrated.state.actors.joueur).toBeDefined();
     await client.get(`/api/games/${game.id}`);
     const events = await db.gameEvent.findMany({
@@ -489,7 +489,7 @@ describe('migration des parties des phases 1 et 2', () => {
     });
     const restored = await client.post(`/api/games/${game.id}/saves/${save.id}/restore`, {});
     expect(restored.statusCode).toBe(200);
-    expect(GameDetailSchema.parse(restored.json()).saveSchemaVersion).toBe(4);
+    expect(GameDetailSchema.parse(restored.json()).saveSchemaVersion).toBe(5);
   });
 
   it('migre une partie réelle de la phase 2 et la rend jouable', async () => {
@@ -509,7 +509,7 @@ describe('migration des parties des phases 1 et 2', () => {
     const migrated = GameDetailSchema.parse((await client.get(`/api/games/${game.id}`)).json());
     expect(migrated).toMatchObject({
       week: 20,
-      saveSchemaVersion: 4,
+      saveSchemaVersion: 5,
       rulesetVersion: CURRENT_RULESET_KEY,
     });
     expect(migrated.state.actors.joueur!.resources).toEqual(V2.state.actors.joueur.resources);

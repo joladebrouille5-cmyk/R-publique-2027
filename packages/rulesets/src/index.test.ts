@@ -32,12 +32,60 @@ describe('jeu de règles presidentielle-2027', () => {
   });
 
   it('étiquette chaque donnée avec un statut et une source', () => {
+    for (const item of ruleset.calendrier.scrutins) expect(item.statut).not.toBe('hypothese');
     for (const item of [...ruleset.calendrier.scrutins, ...ruleset.calendrier.echeances]) {
       expect(ruleset.sources[item.sourceId]).toBeDefined();
-      expect(item.statut).not.toBe('hypothese');
     }
+    // Seule échéance supposée : l'ouverture des présentations, liée à un décret non encore publié.
+    const assumed = ruleset.calendrier.echeances.filter((e) => e.statut === 'hypothese');
+    expect(assumed.map((e) => e.id)).toEqual(['ouverture-presentations']);
+    expect(assumed[0]!.sourceId).toBe('conception-du-jeu');
+    expect(assumed[0]!.regle).toMatch(/non encore publié/);
     expect(ruleset.jeu.statut).toBe('hypothese');
     expect(ruleset.sources[ruleset.jeu.sourceId]?.url).toBeNull();
+  });
+
+  it('reprend les règles officielles de parrainage et de financement (SOURCES §5 et §6)', () => {
+    expect(ruleset.parrainages).toMatchObject({
+      statut: 'officiel',
+      seuil: 500,
+      departementsMin: 30,
+      partMaxParDepartement: 0.1,
+      clotureEcheanceId: 'presentation-candidatures',
+    });
+    expect(ruleset.finances).toMatchObject({
+      statut: 'officiel',
+      sourceId: 'cnccfp-guide-2027',
+      plafondT1Centimes: 1_685_100_000,
+      plafondT2Centimes: 2_250_900_000,
+      donMaxCentimes: 460_000,
+      donEspecesMaxCentimes: 15_000,
+      avanceForfaitaireCentimes: 20_000_000,
+      remboursement: { seuilExprimes: 0.05, tauxSousSeuil: 0.0475, tauxAuDessus: 0.475 },
+    });
+    const reservoir = Object.values(ruleset.parrainages.reservoir.departements);
+    expect(reservoir).toHaveLength(101);
+    expect(reservoir.reduce((sum, d) => sum + d.elus, 0)).toBe(34_875);
+    expect(ruleset.parrainages.reservoir.statut).toBe('estimation');
+  });
+
+  it('couvre les 17 domaines du programme, avec des estimations étiquetées', () => {
+    expect(ruleset.programme.statut).toBe('hypothese');
+    expect(ruleset.programme.domaines).toHaveLength(17);
+    for (const domaine of ruleset.programme.domaines) {
+      expect(ruleset.programme.propositions.some((p) => p.domaine === domaine.id)).toBe(true);
+    }
+    for (const outlet of ruleset.medias.organes) expect(outlet.nature).toBe('fictif');
+  });
+
+  it('refuse un programme incohérent et une incompatibilité non réciproque', () => {
+    const missingDependency = JSON.parse(JSON.stringify(raw)) as typeof raw;
+    missingDependency.candidatsFictifs[0]!.programme = ['emploi-garantie-emploi'];
+    expect(RulesetSchema.safeParse(missingDependency).success).toBe(false);
+
+    const oneWay = JSON.parse(JSON.stringify(raw)) as typeof raw;
+    oneWay.programme.propositions.find((p) => p.id === 'ret-age-60')!.incompatibilites = [];
+    expect(RulesetSchema.safeParse(oneWay).success).toBe(false);
   });
 
   it('refuse les références croisées incohérentes', () => {

@@ -15,6 +15,10 @@ import {
   type Resources,
   type Ruleset,
 } from '@r2027/shared';
+import { initialRelations } from '../ai/relations';
+import { openingAccount } from '../campaign/finances';
+import { emptyParrainages, initialPromises } from '../campaign/parrainages';
+import { compareStrings } from './ledger';
 import { ENGINE_VERSION, SAVE_SCHEMA_VERSION } from './versions';
 
 /** Identifiant de la campagne du joueur. */
@@ -94,6 +98,14 @@ export function createPlayerActor(
     resources,
     status: 'candidat',
     history: { popularite: [resources.popularite] },
+    equipe: ruleset.jeu.equipeJoueur,
+    implantation: [],
+    objectif: null,
+    programme: { propositions: [], revirements: 0 },
+    parrainages: emptyParrainages(),
+    finances: openingAccount(resources.budgetCentimes, ruleset),
+    preparationDebat: 0,
+    strategie: null,
   };
 }
 
@@ -125,9 +137,32 @@ export function createOpponents(difficulty: Difficulty, ruleset: Ruleset): Recor
       resources,
       status: 'candidat',
       history: { popularite: [resources.popularite] },
+      equipe: c.equipe,
+      implantation: [...c.implantation],
+      objectif: c.objectif,
+      programme: { propositions: [...c.programme], revirements: 0 },
+      parrainages: emptyParrainages(),
+      finances: openingAccount(resources.budgetCentimes, ruleset),
+      preparationDebat: 0,
+      strategie: null,
     };
   }
   return opponents;
+}
+
+/**
+ * Promesses de parrainage de départ : celles des partis (jeu de règles) et, pour le joueur,
+ * selon la difficulté. Attribuées dans l'ordre des identifiants, dans la limite des élus libres.
+ */
+export function distributeInitialPromises(state: GameState, ruleset: Ruleset): void {
+  for (const id of Object.keys(state.actors).sort(compareStrings)) {
+    const actor = state.actors[id]!;
+    const total =
+      actor.kind === 'joueur'
+        ? ruleset.jeu.promessesInitialesJoueur[state.meta.difficulty]
+        : (ruleset.candidatsFictifs.find((c) => c.id === id)?.promessesInitiales ?? 0);
+    actor.parrainages.promesses = initialPromises(state, ruleset, total, actor.implantation);
+  }
 }
 
 export function createGame(input: CreateGameInput, ruleset: Ruleset): GameState {
@@ -163,7 +198,7 @@ export function createGame(input: CreateGameInput, ruleset: Ruleset): GameState 
   if (input.mode === 'candidat_personnalise') {
     actors[PLAYER_ACTOR_ID] = createPlayerActor(input.difficulty, ruleset, input.candidate!);
   }
-  return {
+  const state: GameState = {
     meta: {
       seed: input.seed,
       week: 0,
@@ -185,7 +220,13 @@ export function createGame(input: CreateGameInput, ruleset: Ruleset): GameState 
     eventHistory: {},
     opinion: null,
     polls: [],
-    elections: { t1: null, t2: null, consignes: [], debate: null },
+    elections: { t1: null, t2: null, consignes: [], debate: null, debateDetail: null },
     calendar: { blockedBy: null, blockedMessage: null },
+    campagne: { parrainages: 'modelise', finances: 'complet' },
+    medias: null,
+    relations: initialRelations(actors),
+    alliances: [],
   };
+  distributeInitialPromises(state, ruleset);
+  return state;
 }

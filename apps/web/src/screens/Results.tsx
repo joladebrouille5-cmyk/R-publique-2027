@@ -186,7 +186,7 @@ export function Results() {
   const game = useCurrentGame();
   const ruleset = useRuleset(game.rulesetVersion);
   const { state } = game;
-  const { t1, t2, consignes, debate } = state.elections;
+  const { t1, t2, consignes, debate, debateDetail } = state.elections;
   const scrutins = ruleset.data?.calendrier.scrutins ?? [];
 
   return (
@@ -199,8 +199,8 @@ export function Results() {
         nationaux (hypothèse de jeu). Les inscrits reprennent le chiffre officiel du second tour de
         2022 (
         {ruleset.data ? DATA_STATUS_LABELS[ruleset.data.electorat.inscrits.statut] : 'estimation'}).
-        Les résultats par commune, département et région arrivent avec la carte électorale (phase
-        4).
+        Le détail par commune, département et région est consultable sur la carte électorale. Seuls
+        les candidats ayant réuni leurs parrainages figurent au premier tour.
       </p>
 
       {!t1 && (
@@ -242,8 +242,43 @@ export function Results() {
                 </li>
               ))}
           </ul>
+          {debateDetail && (
+            <table className="w-full text-left text-xs">
+              <caption className="mb-1 text-left font-medium">
+                Composantes de la prestation au débat (0 à 1)
+              </caption>
+              <thead>
+                <tr className="text-slate-500 dark:text-slate-400">
+                  <th scope="col" className="py-1 font-medium">
+                    Finaliste
+                  </th>
+                  {['Préparation', 'Maîtrise', 'Cohérence', 'Réponse'].map((h) => (
+                    <th key={h} scope="col" className="py-1 text-right font-medium">
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {Object.entries(debateDetail).map(([id, d]) => (
+                  <tr key={id} className="border-t border-slate-100 dark:border-slate-800">
+                    <th scope="row" className="py-1 font-normal">
+                      {nameOf(state, id)}
+                    </th>
+                    {[d.preparation, d.maitrise, d.coherence, d.reponse].map((v, i) => (
+                      <td key={i} className="py-1 text-right tabular-nums">
+                        {v.toFixed(2).replace('.', ',')}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Une consigne de vote ne transfère qu’une partie des électeurs du candidat éliminé.
+            Une consigne de vote ne transfère qu’une partie des électeurs du candidat éliminé. La
+            prestation au débat combine la préparation (heures consacrées), la maîtrise (notoriété
+            et équipe), la cohérence du programme et la qualité des réponses (part d’aléa).
           </p>
         </section>
       )}

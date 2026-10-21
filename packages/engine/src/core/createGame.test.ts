@@ -41,7 +41,13 @@ describe('createGame', () => {
         profilId: null,
       },
     });
-    expect(state.elections).toEqual({ t1: null, t2: null, consignes: [], debate: null });
+    expect(state.elections).toEqual({
+      t1: null,
+      t2: null,
+      consignes: [],
+      debate: null,
+      debateDetail: null,
+    });
   });
 
   it('ajoute les adversaires fictifs, aux moyens dépendant de la difficulté', () => {

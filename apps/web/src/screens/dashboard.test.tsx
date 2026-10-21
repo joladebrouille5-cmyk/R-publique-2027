@@ -25,7 +25,9 @@ describe('tableau de bord', () => {
   it('affiche les ressources de la campagne avec leur unité', async () => {
     mockApi(base());
     renderRoute(`/parties/${GAME_ID}/tableau-de-bord`);
-    expect(await screen.findByTestId('ressource-budgetCentimes')).toHaveTextContent(/800\s000\s€/);
+    expect(await screen.findByTestId('ressource-budgetCentimes')).toHaveTextContent(
+      /3\s000\s000\s€/,
+    );
     expect(screen.getByTestId('ressource-notoriete')).toHaveTextContent(/6,00\s%/);
     expect(screen.getByTestId('ressource-tempsHeures')).toHaveTextContent('70 h');
     expect(screen.getByText('Valeurs simulées')).toBeInTheDocument();
@@ -50,7 +52,7 @@ describe('tableau de bord', () => {
     const planned = screen.getByRole('list', { name: 'Actions programmées' });
     expect(within(planned).getAllByRole('listitem')).toHaveLength(2);
     expect(
-      screen.getByText(/Reste après le plan : 770\s000\s€ · 59 h · 2\/8 actions/),
+      screen.getByText(/Reste après le plan : 2\s880\s000\s€ · 59 h · 2\/8 actions/),
     ).toBeInTheDocument();
 
     await user.click(
@@ -63,6 +65,8 @@ describe('tableau de bord', () => {
     expect(post.body).toEqual({
       expectedWeek: 0,
       actions: [{ actionId: 'meeting' }],
+      programme: { ajouter: [], retirer: [] },
+      alliances: { proposer: [] },
       decisions: [],
     });
     expect(post.headers['idempotency-key']).toMatch(/^[0-9a-f]{32}$/);

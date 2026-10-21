@@ -13,21 +13,27 @@ Simulation politique française : présidentielle, campagne et quinquennat. Jeu 
 | 2 | Calendrier hebdomadaire, actions, ressources, événements, journal | ✅ terminée |
 | 3 | Candidats, adversaires autonomes, sondages, participation, deux tours | ✅ terminée |
 | 4 | Carte interactive (communes de métropole et des DROM), résultats territoriaux | ✅ terminée |
-| 5–8 | Campagne approfondie, quinquennat, contenu, mise en ligne | à faire |
+| 5 | Campagne approfondie : programme, parrainages, financement, médias, débats, alliances | ✅ terminée |
+| 6–8 | Quinquennat, contenu, mise en ligne | à faire |
 
 **Ce qui fonctionne aujourd'hui** :
 - créer une partie avec son candidat (prénom, nom, parti, positionnement économique et sociétal, parcours, profil de départ) ou en observateur, avec difficulté, date de départ et graine ;
-- affronter 7 adversaires **fictifs** qui mènent leur campagne seuls, avec le même catalogue d'actions et les mêmes coûts ;
+- affronter 7 adversaires **fictifs** qui mènent leur campagne seuls, avec le même catalogue d'actions, les mêmes coûts et les mêmes règles : chacun a un objectif (victoire, qualification, visibilité), analyse sa situation, choisit chaque semaine une priorité motivée (parrainages, financement, notoriété…) et des actions ciblées ; ils peuvent se rallier à un autre candidat avant le premier tour ;
+- composer son **programme** parmi les propositions des 17 domaines (coût, délai, faisabilité, dépendances, incompatibilités, électeurs sensibles, niveau de confiance — estimations de jeu affichées comme telles) ; un revirement se paie en crédibilité ;
+- réunir ses **parrainages** département par département (promesses, intentions, présentations reçues puis validées par le Conseil constitutionnel, quelques-unes invalidées) selon la règle officielle des 500 présentations d'au moins 30 départements, au plus 50 comptées par département ; à la clôture du 12 mars 2027, un candidat sous le seuil est écarté, joueur compris ;
+- tenir son **compte de campagne** : recettes par origine (apport du parti, apport personnel, dons, emprunts, avance forfaitaire), dépenses, plafond légal de 16 851 000 € (22 509 000 € au second tour), dons des personnes physiques plafonnés à 4 600 €, dons de personnes morales et en espèces au-delà de 150 € refusés et journalisés, emprunts bancaires bornés par le remboursement attendu, remboursement forfaitaire prévisionnel ;
+- suivre la couverture de six **médias** fictifs (exposition, tonalité), cibler une interview, préparer le **débat** d'entre-deux-tours (préparation, maîtrise, cohérence, réponse : décomposition publiée), proposer un **ralliement** à un autre candidat (il accepte ou refuse) ;
 - suivre les sondages simulés de deux instituts fictifs (fiche technique complète, marge d'erreur, cote de popularité distincte, hypothèses de second tour) ;
 - jouer la présidentielle jusqu'au bout : premier tour (18 avril 2027), consignes de vote, débat, second tour (2 mai 2027), avec des résultats simulés en voix entières (inscrits, votants, blancs, nuls, exprimés), dépouillés **commune par commune** puis additionnés exactement (départements, régions, national), et le détail par groupe d'électeurs ;
 - explorer la **carte électorale** : métropole et cinq encarts DROM, niveaux région / département / commune, recherche par nom ou code INSEE, fiche de chaque territoire, couleurs « candidat en tête », participation, score d'un candidat ou écart entre deux candidats, motifs en option (daltonisme, impression), tableau équivalent accessible au clavier et liste des territoires « hors carte » (collectivités d'outre-mer, Français de l'étranger) ;
 - afficher sur la carte les **résultats officiels de la présidentielle 2022** commune par commune, après un import local (`pnpm data:resultats`), qui sert aussi de géographie électorale à la partie ;
-- la jouer semaine par semaine : programmer des actions (meeting, tournée, interview, campagne numérique, recrutement, collecte, porte-à-porte, rencontre d'élus) avec leur coût, leur effet attendu, leur incertitude et leur risque ; trancher les décisions nées d'événements fictifs ; résoudre la semaine ;
+- la jouer semaine par semaine : programmer des actions (meeting, tournée, interview dans le média choisi, campagne numérique, recrutement, collecte, emprunt, porte-à-porte, rencontre d'élus dans le département choisi, préparation du débat) avec leur coût, leur effet attendu, leur incertitude et leur risque ; trancher les décisions nées d'événements fictifs ; résoudre la semaine ;
+- regarder une partie en **observateur** : les adversaires collectent leurs parrainages, financent leur campagne et motivent leurs choix sans aucun joueur ;
 - lire le bilan de chaque semaine, où chaque variation de ressource est décomposée en facteurs, et le journal complet de la partie ;
 - suivre le calendrier électoral officiel (dates annoncées ou déduites, avec leur source) ;
 - sauvegarder (5 emplacements manuels, sauvegarde automatique chaque semaine et avant un événement majeur), restaurer, exporter en JSON et importer dans une nouvelle partie, sans perte (empreinte SHA-256 identique).
 
-**Ce qui ne fonctionne pas encore** : la suite après le second tour (gouvernement, législatives, quinquennat : phase 6) — la partie s'arrête explicitement une fois le président élu ; programme, parrainages, finances réglementées, médias, alliances (phase 5) ; mode « candidat réel » (en attente de la décision Q2 : profils sourcés et validation juridique). Sans import local, la carte n'a que le jeu de démonstration (communes de l'Ain, de la Corse et des DROM ; base électorale **fictive**, affichée comme telle).
+**Ce qui ne fonctionne pas encore** : la suite après le second tour (gouvernement, législatives, quinquennat : phase 6) — la partie s'arrête explicitement une fois le président élu ; dépôt et contrôle du compte de campagne par la CNCCFP (le remboursement affiché reste prévisionnel) ; mode « candidat réel » (en attente de la décision Q2 : profils sourcés et validation juridique). Sans import local, la carte n'a que le jeu de démonstration (communes de l'Ain, de la Corse et des DROM ; base électorale **fictive**, affichée comme telle).
 
 ## Prérequis
 
@@ -103,8 +109,8 @@ Les fichiers téléchargés sont gardés dans `data/raw/` (avec leur empreinte S
 | Commande | Contenu | Prérequis |
 |---|---|---|
 | `pnpm test` | tests unitaires, de propriétés et de composants (moteur, jeu de règles, sauvegardes, import de données, interface) | aucun |
-| `pnpm test:integration` | API réelle contre PostgreSQL : parties, progression idempotente, sauvegardes, journal, export/import, migrations, isolation, sécurité, référentiel cartographique, résultats communaux | `DATABASE_URL_TEST` |
-| `pnpm test:e2e` | Playwright, navigateur bureau + mobile : création du candidat, actions, progression, bilan, sauvegarde, restauration, journal, export/import, reprise, présidentielle complète jusqu'aux résultats, carte (encarts DROM, recherche, sélection, résultats, motifs, audit d'accessibilité axe-core) | `DATABASE_URL_TEST` ; navigateur : `pnpm exec playwright install chromium` |
+| `pnpm test:integration` | API réelle contre PostgreSQL : parties, progression idempotente, sauvegardes, journal, export/import, migrations, isolation, sécurité, référentiel cartographique, résultats communaux, campagne (actions ciblées, programme, parrainages jusqu'à la clôture, ralliements) | `DATABASE_URL_TEST` |
+| `pnpm test:e2e` | Playwright, navigateur bureau + mobile : création du candidat, actions, progression, bilan, sauvegarde, restauration, journal, export/import, reprise, présidentielle complète jusqu'aux résultats, carte (encarts DROM, recherche, sélection, résultats, motifs, audit d'accessibilité axe-core), campagne (programme, actions ciblées, parrainages, finances, candidat écarté à la clôture, partie en observateur, audit axe-core) | `DATABASE_URL_TEST` ; navigateur : `pnpm exec playwright install chromium` |
 | `pnpm lint` · `pnpm typecheck` · `pnpm format:check` | qualité du code | aucun |
 | `pnpm check` | lint + format + typecheck + tests unitaires | aucun |
 
@@ -117,7 +123,7 @@ apps/api            API Fastify + Prisma (sessions, parties, sauvegardes, carte)
 apps/web            Interface React (Vite, React Router, TanStack Query, Zustand, Tailwind, MapLibre GL)
 apps/web/e2e        Tests Playwright
 packages/engine     Moteur de simulation pur et déterministe (aucune E/S)
-packages/rulesets   Jeux de règles versionnés et sourcés (calendrier, actions, événements, électorat, adversaires)
+packages/rulesets   Jeux de règles versionnés et sourcés (calendrier, actions, événements, électorat, adversaires, programme, parrainages, financement, médias, alliances)
 packages/save-engine  Sérialisation canonique, empreintes, migrations et export/import des sauvegardes
 packages/data-import  Imports sourcés (COG, contours IGN, résultats 2022) et jeu de démonstration commité
 packages/shared     Schémas Zod et contrats d'API partagés

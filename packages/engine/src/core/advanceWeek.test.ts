@@ -35,7 +35,7 @@ describe('cycle hebdomadaire', () => {
     const { steps } = advance(newGame()).report;
     expect(steps.map((s) => s.step)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
     expect(steps.map((s) => s.label)).toEqual(WEEKLY_STEPS.map((s) => s.label));
-    expect(steps.filter((s) => !s.active).map((s) => s.step)).toEqual([4, 7]);
+    expect(steps.filter((s) => !s.active).map((s) => s.step)).toEqual([7]);
     for (const step of steps.filter((s) => !s.active)) expect(step.summary).toMatch(/phase \d/);
   });
 
@@ -48,7 +48,7 @@ describe('cycle hebdomadaire', () => {
 describe('actions et ressources', () => {
   it('débite exactement le coût des actions retenues', () => {
     const state = newGame();
-    const result = advance(state, ['meeting', 'interview']);
+    const result = advance(state, ['meeting', 'interview@canal-hexagone']);
     const meeting = RULESET.actions.find((a) => a.id === 'meeting')!;
     expect(own(result).map((a) => a.status)).toEqual(['validee', 'validee']);
     expect(playerResources(result.state).budgetCentimes).toBe(
@@ -83,7 +83,7 @@ describe('actions et ressources', () => {
 
   it('refuse les actions en mode observateur et au-delà du plafond hebdomadaire', () => {
     expect(() => advance(newGame({ mode: 'observateur' }), ['meeting'])).toThrow(EngineInputError);
-    const tooMany = Array.from({ length: RULESET.jeu.actionsMaxParSemaine + 1 }, () => 'interview');
+    const tooMany = Array.from({ length: RULESET.jeu.actionsMaxParSemaine + 1 }, () => 'tournee');
     expect(() => advance(newGame(), tooMany)).toThrow(/Au plus/);
   });
 
@@ -130,7 +130,10 @@ describe('comptabilité des facteurs', () => {
 
   it('journalise l’écrêtement aux bornes comme un facteur', () => {
     const state = withResources(newGame(), { budgetCentimes: 100, notoriete: 10_000 });
-    const notoriete = playerChange(advance(state, ['interview']).report, 'notoriete')!;
+    const notoriete = playerChange(
+      advance(state, ['interview@canal-hexagone']).report,
+      'notoriete',
+    )!;
     expect(notoriete.after).toBeLessThanOrEqual(10_000);
     expect(notoriete.before + notoriete.factors.reduce((s, f) => s + f.value, 0)).toBe(
       notoriete.after,

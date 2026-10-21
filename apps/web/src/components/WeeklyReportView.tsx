@@ -15,6 +15,7 @@ import {
   RESOURCE_LABELS,
 } from '../labels';
 import { Badge } from './Badge';
+import { CampaignReport } from './CampaignReport';
 
 const sum = (values: number[]) => values.reduce((total, value) => total + value, 0);
 
@@ -93,7 +94,16 @@ function ChangesList({
  * Bilan hebdomadaire : chaque variation est détaillée par les facteurs du moteur (§13).
  * Les actions et variations du joueur sont séparées de celles des campagnes adverses.
  */
-export function WeeklyReportView({ report, state }: { report: WeeklyReport; state?: GameState }) {
+export function WeeklyReportView({
+  report,
+  state,
+  proposalLabel,
+}: {
+  report: WeeklyReport;
+  state?: GameState;
+  /** Libellé d'une proposition du programme (jeu de règles chargé), sinon son identifiant. */
+  proposalLabel?: (id: string) => string;
+}) {
   const playerId = state?.player.actorId ?? null;
   const nameOf = (actorId: string) => {
     const actor = state?.actors[actorId];
@@ -153,7 +163,10 @@ export function WeeklyReportView({ report, state }: { report: WeeklyReport; stat
                 <Badge tone={action.status === 'validee' ? 'succes' : 'danger'}>
                   {action.status === 'validee' ? 'Retenue' : 'Rejetée'}
                 </Badge>
-                <span>{action.label}</span>
+                <span>
+                  {action.label}
+                  {action.cible && ` — ${action.cible}`}
+                </span>
                 {action.reason && (
                   <span className="text-slate-600 dark:text-slate-400">— {action.reason}</span>
                 )}
@@ -173,6 +186,7 @@ export function WeeklyReportView({ report, state }: { report: WeeklyReport; stat
                 .map((action) => (
                   <li key={`${action.actorId}-${action.index}`}>
                     <span className="font-medium">{nameOf(action.actorId)}</span> : {action.label}
+                    {action.cible && ` — ${action.cible}`}
                   </li>
                 ))}
             </ul>
@@ -219,6 +233,13 @@ export function WeeklyReportView({ report, state }: { report: WeeklyReport; stat
           </ul>
         </section>
       )}
+
+      <CampaignReport
+        report={report}
+        playerId={playerId}
+        nameOf={nameOf}
+        {...(proposalLabel ? { proposalLabel } : {})}
+      />
 
       <section aria-label="Variations des ressources">
         <h3 className="mb-2 font-semibold">Variations et facteurs</h3>

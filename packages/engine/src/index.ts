@@ -1,4 +1,27 @@
-export { planOpponentActions, scoreAction } from './ai/opponents';
+export { analyzeSituation, planOpponentActions, scoreAction } from './ai/opponents';
+export { initialRelations, proximity, weeksBeforeFirstRound } from './ai/relations';
+export { targetLabel } from './campaign/actions';
+export {
+  emptyFinances,
+  expectedReimbursementCap,
+  formatEuros,
+  openingAccount,
+  spendingCap,
+} from './campaign/finances';
+export {
+  countedPresentations,
+  emptyParrainages,
+  meetsThreshold,
+  perDepartementCap,
+  presentationWindow,
+  projectedPresentations,
+} from './campaign/parrainages';
+export {
+  credibility,
+  programmeAppeal,
+  programmeCost,
+  validateProgrammeChange,
+} from './campaign/programme';
 export {
   advanceWeek,
   WEEKLY_STEPS,
@@ -11,6 +34,7 @@ export {
   createGame,
   createOpponents,
   createPlayerActor,
+  distributeInitialPromises,
   GameCreationError,
   PLAYER_ACTOR_ID,
   type CreateGameInput,
@@ -21,6 +45,7 @@ export { sha256Hex } from './core/sha256';
 export { ENGINE_VERSION, SAVE_SCHEMA_VERSION } from './core/versions';
 export { largestRemainder } from './election/apportion';
 export { distribute, summarize } from './election/distribution';
+export { debateComponents, debatePerformance } from './election/flow';
 export { distance, softmax } from './election/model';
 export { marginOfError } from './election/polls';
 export { resolveRound } from './election/rounds';

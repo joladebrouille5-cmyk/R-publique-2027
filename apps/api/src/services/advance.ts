@@ -94,7 +94,12 @@ export async function advanceGame(
   const ruleset = getRuleset(state.meta.rulesetVersion);
   const result = runEngine(
     state,
-    { actions: body.actions, decisions: body.decisions },
+    {
+      actions: body.actions,
+      decisions: body.decisions,
+      programme: body.programme,
+      alliances: body.alliances,
+    },
     { ruleset, territory: territoryFor(ruleset) },
   );
   const next = snapshotState(result.state);
@@ -121,7 +126,9 @@ export async function advanceGame(
             kind: 'avant_evenement',
             label: report.election
               ? `Avant le ${report.election.round === 1 ? 'premier' : 'second'} tour`
-              : 'Avant événement majeur',
+              : report.events.some((e) => e.refId === 'liste-des-candidats')
+                ? 'Avant la clôture des parrainages'
+                : 'Avant événement majeur',
             ...saveColumns(state, stateHash),
           },
         });
@@ -150,7 +157,7 @@ export async function advanceGame(
             position: action.index,
             actorId: action.actorId,
             type: action.actionId,
-            payload: { label: action.label, cost: action.cost },
+            payload: { label: action.label, cost: action.cost, cible: action.cible },
             status: action.status,
             rejectionReason: action.reason,
           })),

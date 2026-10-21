@@ -1,9 +1,20 @@
 import { candidateName, type Actor, type GameState, type UtilityFactor } from '@r2027/shared';
 import { useRuleset } from '../api/hooks';
+import { presentationSummary } from '../campaign';
 import { Badge } from '../components/Badge';
 import { PositionMap } from '../components/PositionMap';
 import { card } from '../components/ui';
-import { CANDIDATE_STATUS_LABELS, describePosition, formatResource } from '../labels';
+import {
+  CANDIDATE_STATUS_LABELS,
+  describePosition,
+  formatCount,
+  formatResource,
+  OBJECTIVE_LABELS,
+  PRIORITY_LABELS,
+} from '../labels';
+import { useWeeklyPlan } from '../stores/plan';
+import { Media } from './candidates/Media';
+import { Relations } from './candidates/Relations';
 import { useCurrentGame } from './GameLayout';
 
 const STATUS_TONES = {
@@ -12,11 +23,13 @@ const STATUS_TONES = {
   elimine: 'danger',
   elu: 'succes',
   battu: 'neutre',
+  ecarte: 'danger',
+  retire: 'neutre',
 } as const;
 
 /** Candidats triés : le joueur d'abord, puis par statut et par nom. */
 export function sortedActors(state: GameState): Actor[] {
-  const order = ['elu', 'qualifie', 'battu', 'candidat', 'elimine'];
+  const order = ['elu', 'qualifie', 'battu', 'candidat', 'elimine', 'retire', 'ecarte'];
   return Object.values(state.actors).sort(
     (a, b) =>
       Number(b.id === state.player.actorId) - Number(a.id === state.player.actorId) ||
@@ -47,6 +60,7 @@ function Breakdown({ factors }: { factors: UtilityFactor[] }) {
 export function Candidates() {
   const game = useCurrentGame();
   const ruleset = useRuleset(game.rulesetVersion);
+  const plan = useWeeklyPlan(game.id, game.week);
   const { state } = game;
   const actors = sortedActors(state);
   const families = new Map(ruleset.data?.candidatsFictifs.map((c) => [c.id, c.famille]) ?? []);
@@ -59,9 +73,10 @@ export function Candidates() {
       <p className="text-sm text-slate-600 dark:text-slate-400">
         Les adversaires sont des <strong>personnages fictifs</strong> : toute ressemblance avec des
         personnalités réelles serait fortuite. Les personnalités réelles nécessitent des profils
-        sourcés et une validation juridique (question Q2 du plan). Les parrainages et le dépôt des
-        candidatures sont modélisés en phase 5 : tous les candidats sont considérés présents au
-        premier tour.
+        sourcés et une validation juridique (question Q2 du plan).{' '}
+        {state.campagne.parrainages === 'modelise'
+          ? 'Seuls les candidats ayant réuni assez de présentations valides à la clôture figurent au premier tour ; les présentations validées sont publiques, les promesses ne le sont pas.'
+          : 'Partie créée avant la phase 5 : les parrainages ne sont pas modélisés et tous les candidats figurent au premier tour.'}
       </p>
 
       <div className={card}>
@@ -115,6 +130,47 @@ export function Candidates() {
                 {describePosition(actor.candidate.positionnement)}
               </p>
               {actor.candidate.parcours && <p className="text-sm">{actor.candidate.parcours}</p>}
+              {ruleset.data && state.campagne.parrainages === 'modelise' && (
+                <p className="text-sm">
+                  Présentations validées :{' '}
+                  <strong>
+                    {formatCount(presentationSummary(actor.parrainages, ruleset.data).validees)}
+                  </strong>{' '}
+                  dans {presentationSummary(actor.parrainages, ruleset.data).departements}{' '}
+                  départements
+                </p>
+              )}
+              {actor.status === 'retire' && (
+                <p className="text-sm">
+                  {(() => {
+                    const alliance = state.alliances.find((a) => a.de === actor.id);
+                    const to = alliance ? state.actors[alliance.vers] : undefined;
+                    return to
+                      ? `S’est rallié(e) à ${candidateName(to.candidate)} (semaine ${alliance!.semaine}).`
+                      : 'S’est retiré(e).';
+                  })()}
+                </p>
+              )}
+              {actor.objectif && (
+                <p className="text-sm">
+                  Objectif : {OBJECTIVE_LABELS[actor.objectif]}
+                  {actor.strategie && (
+                    <>
+                      {' '}
+                      · priorité de la semaine {actor.strategie.semaine} :{' '}
+                      <strong>{PRIORITY_LABELS[actor.strategie.priorite]}</strong> —{' '}
+                      {actor.strategie.motif}
+                    </>
+                  )}
+                </p>
+              )}
+              <p className="text-sm">
+                Programme : {actor.programme.propositions.length} proposition(s)
+                {actor.programme.revirements > 0 &&
+                  ` · ${actor.programme.revirements} revirement(s)`}
+                {state.medias?.indice[actor.id] !== undefined &&
+                  ` · indice médiatique ${state.medias.indice[actor.id]! > 0 ? '+' : ''}${state.medias.indice[actor.id]!.toFixed(2).replace('.', ',')}`}
+              </p>
               <dl className="grid grid-cols-2 gap-2 text-sm">
                 <div>
                   <dt className="text-xs text-slate-500 dark:text-slate-400">Notoriété</dt>
@@ -146,6 +202,16 @@ export function Candidates() {
           );
         })}
       </ul>
+
+      {ruleset.data && (
+        <Relations
+          state={state}
+          ruleset={ruleset.data}
+          proposed={plan.proposer}
+          onPropose={plan.togglePropose}
+        />
+      )}
+      {ruleset.data && <Media state={state} ruleset={ruleset.data} />}
     </section>
   );
 }

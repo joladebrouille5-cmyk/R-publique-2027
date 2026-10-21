@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { expect, test, type Page } from '@playwright/test';
-import { advanceViaApi, createGame, openScreen } from './helpers';
+import { advanceViaApi, createGame, openScreen, resolveWeek } from './helpers';
 
 async function readStateHash(page: Page): Promise<string> {
   await page.getByText('Paramètres techniques').click();
@@ -11,19 +11,6 @@ async function readStateHash(page: Page): Promise<string> {
 }
 
 /** Répond aux éventuelles décisions en attente (premier choix), puis résout la semaine. */
-async function resolveWeek(page: Page, week: number) {
-  const decisions = page.getByRole('region', { name: 'Décisions à prendre' });
-  if (await decisions.isVisible()) {
-    for (const group of await decisions.getByRole('group').all()) {
-      await group.getByRole('radio').first().check();
-    }
-  }
-  await page.getByRole('button', { name: `Résoudre la semaine ${week}` }).click();
-  await expect(
-    page.getByRole('heading', { name: `Bilan de la semaine ${week}`, exact: false }),
-  ).toBeVisible();
-  await expect(page.getByRole('button', { name: `Résoudre la semaine ${week + 1}` })).toBeVisible();
-}
 
 test('boucle complète : actions, progression, bilan, sauvegarde, restauration, journal', async ({
   page,
@@ -31,17 +18,20 @@ test('boucle complète : actions, progression, bilan, sauvegarde, restauration, 
 }) => {
   await createGame(page, 'Campagne Playwright');
   const budget = page.getByTestId('ressource-budgetCentimes');
-  await expect(budget).toHaveText(/800\s000\s€/);
+  await expect(budget).toHaveText(/3\s000\s000\s€/);
 
   await page.getByRole('button', { name: 'Ajouter Meeting public' }).click();
   await page.getByRole('button', { name: 'Ajouter Rencontre avec des élus locaux' }).click();
   await expect(
     page.getByRole('list', { name: 'Actions programmées' }).getByRole('listitem'),
   ).toHaveCount(2);
+  // Une rencontre d'élus vise un département : la semaine ne se résout pas sans lui.
+  await expect(page.getByRole('button', { name: 'Résoudre la semaine 0' })).toBeDisabled();
+  await page.getByLabel(/Cible de l’action n° 2/).selectOption('01');
   await resolveWeek(page, 0);
 
   // Effet visible : coût débité exactement, détaillé par facteurs dans le bilan.
-  await expect(budget).toHaveText(/767\s000\s€/);
+  await expect(budget).toHaveText(/2\s870\s000\s€/);
   const report = page.getByRole('region', { name: /Bilan de la semaine 0/ });
   const budgetChange = report.locator('details', {
     has: page.getByText('Budget', { exact: true }),
@@ -115,8 +105,8 @@ test('export puis import dans une nouvelle partie identique', async ({ page }) =
 
 test('les écrans non implémentés sont annoncés comme tels', async ({ page }) => {
   await createGame(page, 'Écrans', 'e2e-ecrans');
-  await openScreen(page, 'Programme');
-  await expect(page.getByText('Non disponible — prévu en phase 5')).toBeVisible();
+  await openScreen(page, 'Gouvernement');
+  await expect(page.getByText('Non disponible — prévu en phase 6')).toBeVisible();
 });
 
 test('présidentielle complète : candidat, sondages, deux tours et résultats', async ({ page }) => {

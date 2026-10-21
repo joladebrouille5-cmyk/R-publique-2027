@@ -1,4 +1,12 @@
-import type { Effect, Factor, FactorSource, GameState, ScheduledEffect } from '@r2027/shared';
+import type {
+  Effect,
+  Factor,
+  FactorSource,
+  GameState,
+  ResourceKey,
+  ScheduledEffect,
+} from '@r2027/shared';
+import type { FinanceBook } from '../campaign/finances';
 import type { Ledger } from './ledger';
 
 const SATURABLE = new Set(['notoriete', 'popularite']);
@@ -38,9 +46,25 @@ export function effectFactors(
   return factors;
 }
 
+/**
+ * Applique des facteurs à une ressource. La trésorerie passe par le compte de campagne, qui
+ * classe la variation en recette ou en dépense (trésorerie = recettes − dépenses).
+ */
+export function applyFactors(
+  ledger: Ledger,
+  book: FinanceBook,
+  actorId: string,
+  ressource: ResourceKey,
+  factors: Factor[],
+): void {
+  if (ressource === 'budgetCentimes') book.applyEffect(actorId, factors);
+  else ledger.apply(actorId, ressource, factors);
+}
+
 export type EffectContext = {
   state: GameState;
   ledger: Ledger;
+  book: FinanceBook;
   actorId: string;
   week: number;
   step: number;
@@ -65,7 +89,9 @@ export function applyOrSchedule(
   };
   if (effect.delaiSemaines === 0) {
     const current = context.ledger.current(context.actorId, effect.ressource);
-    context.ledger.apply(
+    applyFactors(
+      context.ledger,
+      context.book,
       context.actorId,
       effect.ressource,
       effectFactors(drawn, current, context.label, context.source, context.step),

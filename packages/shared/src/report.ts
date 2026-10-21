@@ -1,4 +1,10 @@
 import { z } from 'zod';
+import {
+  AllianceSchema,
+  RECEIPT_KINDS,
+  RefusedDonationSchema,
+  StrategyPrioritySchema,
+} from './campaign';
 import { GamePhaseSchema, IsoDateSchema, PollSchema, RoundResultSchema } from './game';
 import { ResourceKeySchema } from './resources';
 import { DataStatusSchema } from './ruleset';
@@ -50,6 +56,8 @@ export const ActionOutcomeSchema = z
     label: z.string(),
     status: z.enum(['validee', 'rejetee']),
     reason: z.string().nullable(),
+    /** Cible choisie (département, organe de presse), avec son libellé. Phase 5. */
+    cible: z.string().nullable().default(null),
     cost: z.object({ budgetCentimes: z.number().int(), tempsHeures: z.number().int() }).strict(),
   })
   .strict();
@@ -104,6 +112,54 @@ export const StepSummarySchema = z
   .strict();
 export type StepSummary = z.infer<typeof StepSummarySchema>;
 
+/** Changements de programme d'un candidat dans la semaine. */
+export const ProgrammeReportSchema = z
+  .object({
+    actorId: z.string(),
+    ajoutees: z.array(z.string()),
+    retirees: z.array(z.string()),
+    refusees: z.array(z.object({ id: z.string(), motif: z.string() }).strict()),
+  })
+  .strict();
+export type ProgrammeReport = z.infer<typeof ProgrammeReportSchema>;
+
+/** Variation des parrainages d'un candidat, avec ses facteurs (effectifs entiers). */
+export const ParrainageChangeSchema = z
+  .object({
+    actorId: z.string(),
+    promesses: z.number().int(),
+    intentions: z.number().int(),
+    recues: z.number().int(),
+    validees: z.number().int(),
+    invalides: z.number().int(),
+    facteurs: z.array(z.object({ label: z.string(), value: z.number().int() }).strict()),
+  })
+  .strict();
+export type ParrainageChange = z.infer<typeof ParrainageChangeSchema>;
+
+/** Mouvements du compte de campagne d'un candidat dans la semaine. */
+export const FinanceChangeSchema = z
+  .object({
+    actorId: z.string(),
+    depenses: z.number().int().min(0),
+    recettes: z.partialRecord(z.enum(RECEIPT_KINDS), z.number().int()),
+    donateurs: z.number().int().min(0),
+    refus: z.array(RefusedDonationSchema),
+    notes: z.array(z.string()),
+  })
+  .strict();
+export type FinanceChange = z.infer<typeof FinanceChangeSchema>;
+
+export const RelationNoteSchema = z
+  .object({ a: z.string(), b: z.string(), libelle: z.string() })
+  .strict();
+export type RelationNote = z.infer<typeof RelationNoteSchema>;
+
+export const StrategyNoteSchema = z
+  .object({ actorId: z.string(), priorite: StrategyPrioritySchema, motif: z.string() })
+  .strict();
+export type StrategyNote = z.infer<typeof StrategyNoteSchema>;
+
 export const WeeklyReportSchema = z
   .object({
     /** Semaine résolue et son lundi. */
@@ -135,6 +191,13 @@ export const WeeklyReportSchema = z
       .strict()
       .nullable()
       .default(null),
+    // Ajouts de la phase 5 (valeurs par défaut pour relire les bilans antérieurs).
+    programme: z.array(ProgrammeReportSchema).default([]),
+    parrainages: z.array(ParrainageChangeSchema).default([]),
+    finances: z.array(FinanceChangeSchema).default([]),
+    relations: z.array(RelationNoteSchema).default([]),
+    alliances: z.array(AllianceSchema).default([]),
+    strategies: z.array(StrategyNoteSchema).default([]),
   })
   .strict();
 export type WeeklyReport = z.infer<typeof WeeklyReportSchema>;
