@@ -230,6 +230,48 @@ Jeu de règles `presidentielle-2027@3.0.0` :
 
 Les valeurs `officiel` et `deduit` sont vérifiées par les tests du jeu de règles ; aucune n'a été inventée pour combler les sources inaccessibles (Légifrance, CNCCFP et INSEE refusés par le proxy de l'environnement cloud le 21/10/2026 : les valeurs reprises sont celles relevées en phases 0 et 4).
 
+## 8 quater. Personnalités politiques réelles (phase 5 bis)
+
+Décision de l'utilisateur du 21/10/2026 (question Q2) : personnalités jouables et adversaires ; candidatures **déclarées** seulement ; photos sous **licence libre** créditées ; position d'après l'**enquête d'experts Chapel Hill** (CHES) ; candidatures dont aucun parti n'est noté par CHES non intégrées, sauf Nathalie Arthaud, François Asselineau, David Lisnard et François Ruffin (position « hypothèse »). Import : `pnpm data:personnalites` ; fiches dans [`packages/rulesets/src/personnalites-2027.json`](../packages/rulesets/src/personnalites-2027.json), photos dans `apps/web/public/personnalites/`.
+
+| Source | Usage | Version, licence |
+|---|---|---|
+| Wikipédia, « Candidatures à l'élection présidentielle française de 2027 » | liste des candidatures déclarées, parti, fonctions en cours, date de la déclaration et référence de presse qui la suit (le titre de l'article de presse n'est pas affiché) | révision 240556510, consultée le 21/10/2026 ; texte CC BY-SA 4.0 : seuls des faits datés sont repris, reformulés ; empreinte SHA-256 dans les fiches |
+| Wikidata (requête SPARQL) | identifiant de chaque personne ; partis successifs (P102) pour les rattachements « ancien parti » | CC0 1.0 ; requête du 21/10/2026, empreinte dans les fiches |
+| Wikimedia Commons | photos ; licence et auteur lus dans les champs lisibles par machine de la page du fichier | licences acceptées : CC0, domaine public, CC BY, CC BY-SA ; photos réduites (240 px, WebP), métadonnées retirées |
+| Chapel Hill Expert Survey 2024 (`CHES_2024_final_v2.csv`) et fichier de tendance 1999-2024 | positions des partis : `lrecon` (économie) et `galtan` (valeurs), converties par (x − 5) × 20 ; familles de partis | Rovny et al., « The 2024 Chapel Hill Expert Survey on political party positioning in Europe: Twenty-five years of party positional data », 2025 ; licence non précisée, usage avec citation demandé |
+| COG 2026 (INSEE) | vérification des communes et départements des mandats, régions d'ancrage | Licence Ouverte 2.0 (§2.1) |
+| Assemblée nationale, députés en exercice (§7, fichier du 19/10/2026) | taille des groupes pour le niveau d'organisation | Licence Ouverte |
+
+Fiches retenues (économie / société sur −100 … +100) :
+
+| Personnalité | Parti (source) | Candidature — source | Position | Statut et méthode | Photo |
+|---|---|---|---|---|---|
+| Nathalie Arthaud | Lutte ouvrière | 2025-12-08 (déclaration) — RTL.fr | -78 / -46 | `hypothese` (famille : PCF, FI 2024) | CC BY-SA 4.0 — Kokluts |
+| François Asselineau | Union populaire républicaine | 2023-08-31 (déclaration) — Wikipédia | 43 / 75 | `hypothese` (famille : RN, REC 2024) | CC BY-SA 4.0 — Union Populaire Républicaine |
+| Gabriel Attal | Renaissance | 2026-05-22 (déclaration) — RTL.fr | 24 / -18 | `estimation` (parti : RE 2024) | CC BY 4.0 — Ismail Aissoub |
+| Olivier Becht | Renaissance / Agir | 2026-09-24 (déclaration) — Paris Match | 24 / -18 | `estimation` (parti : RE 2024) | CC BY 2.0 — Palácio do Planalto from Brasilia, Brasil |
+| Xavier Bertrand | Nous France / Les Républicains | 2024-02-03 (déclaration) — Ouest-France | 56 / 44 | `estimation` (parti : LR 2024) | CC BY 4.0 — Claudio Centonze / European Union, 2025 / EC - Audiovisual Service |
+| Karim Bouamrane | Parti socialiste | 2026-06-09 (déclaration) — Le Monde | -33 / -45 | `estimation` (parti : PS 2024) | CC BY 4.0 — Oumma |
+| Nicolas Dupont-Aignan | Debout la France | 2026-09-19 (déclaration) — Le Journal du dimanche | 40 / 66 | `estimation` (parti : DLF 2019) | CC BY-SA 4.0 — Debout la France |
+| Raphaël Glucksmann | Place publique | 2026-10-11 (désignation) — Libération | -33 / -45 | `estimation` (parti_soutien : PS 2024) | aucune (licence non reconnue comme libre (European Parliament)) |
+| Marine Le Pen | Rassemblement national | 2026-07-07 (déclaration) — Euronews | 20 / 67 | `estimation` (parti : RN 2024) | CC0 — Vox España |
+| David Lisnard | Nouvelle Énergie | 2026-03-31 (déclaration) — Franceinfo.fr | 56 / 44 | `hypothese` (ancien_parti : LR 2024) | CC BY-SA 4.0 — Grégor Sauvagère |
+| Jean-Luc Mélenchon | La France insoumise | 2026-05-03 (déclaration) — Le Monde | -82 / -64 | `estimation` (parti : FI 2024) | CC BY 4.0 — jlm2017.fr |
+| Édouard Philippe | Horizons | 2024-09-03 (déclaration) — Le Point | 36 / 6 | `estimation` (parti : Horizons 2024) | CC0 — Wasasaq8 |
+| Bruno Retailleau | Les Républicains | 2026-04-19 (désignation) — Le Monde | 56 / 44 | `estimation` (parti : LR 2024) | CC BY 4.0 — Anthonymontardyfr |
+| Fabien Roussel | Parti communiste français | 2026-09-06 (désignation) — Le Figaro | -75 / -29 | `estimation` (parti : PCF 2024) | CC BY-SA 4.0 — Zouhair NAKARA |
+| François Ruffin | Debout ! | 2025-04-01 (déclaration) — Le HuffPost | -75 / -29 | `hypothese` (ancien_parti : PCF 2024) | CC BY-SA 4.0 — Thinkerview |
+| Marine Tondelier | Les Écologistes | 2026-09-21 (désignation) — Le Monde | -54 / -66 | `estimation` (parti : LE/EELV 2024) | CC BY-SA 4.0 — Greenbox |
+| Éric Zemmour | Reconquête | 2026-09-17 (déclaration) — BFM TV | 67 / 82 | `estimation` (parti : REC 2024) | CC0 — Anh De France |
+
+Remarques :
+- **Statut** : `estimation` = position d'experts du parti de la personnalité (ou du parti qui soutient officiellement sa candidature : Parti socialiste pour Raphaël Glucksmann) ; `hypothese` = rattachement indirect, détaillé dans la fiche.
+- **Source de la candidature de François Asselineau** : les références de la phrase portent sur une procédure judiciaire ou sur une autre personnalité ; l'article lui-même sert de source. L'importeur refuse toute référence de candidature portant sur une procédure judiciaire (relecture humaine imposée).
+- **Photo de Raphaël Glucksmann** : licence « European Parliament » non reconnue comme libre par la règle retenue : initiales affichées.
+- **Candidatures non intégrées** (aucun parti noté par CHES) : Delphine Batho, Bernard Cazeneuve, Sylvain Durif, Anasse Kazib, Selma Labib, Francis Lalanne, Mira Markovic, Benoît Mathieu, Antoine Mikolajczak, Manolo Mlekuz, Florian Philippot, Gilles Platret, Natacha Polony (liste affichée dans le jeu).
+- **Moyens de départ** : niveaux de notoriété et d'organisation établis par des règles écrites à partir des faits ci-dessus ; leur conversion en ressources est une hypothèse du jeu de règles 4.0.0. Aucun sondage réel n'est utilisé.
+
 ## 9. Points restant non vérifiés
 
 1. Texte exact, sur Légifrance, de la loi n° 62-1292 (parrainages, financement) et de l'article L. 52-11.

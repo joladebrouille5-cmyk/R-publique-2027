@@ -28,7 +28,11 @@ describe('createGame', () => {
       engineVersion: ENGINE_VERSION,
       saveSchemaVersion: SAVE_SCHEMA_VERSION,
     });
-    expect(state.player).toEqual({ mode: 'candidat_personnalise', actorId: PLAYER_ACTOR_ID });
+    expect(state.player).toEqual({
+      mode: 'candidat_personnalise',
+      actorId: PLAYER_ACTOR_ID,
+      adversaires: 'fictifs',
+    });
     expect(state.actors[PLAYER_ACTOR_ID]).toMatchObject({
       kind: 'joueur',
       status: 'candidat',
@@ -94,13 +98,18 @@ describe('createGame', () => {
     expect(() => createGame({ ...base, startDate }, ruleset)).toThrow(GameCreationError);
   });
 
-  it('refuse le mode candidat réel tant que les profils sourcés ne sont pas validés', () => {
-    expect(() => createGame({ ...base, mode: 'candidat_reel' }, ruleset)).toThrow(/Q2/);
+  it('exige une personnalité connue dans le mode candidat réel', () => {
+    expect(() => createGame({ ...base, mode: 'candidat_reel' }, ruleset)).toThrow(
+      expect.objectContaining({ code: 'personnalite_requise' }),
+    );
+    expect(() =>
+      createGame({ ...base, mode: 'candidat_reel', personnaliteId: 'reel-inconnu' }, ruleset),
+    ).toThrow(expect.objectContaining({ code: 'personnalite_inconnue' }));
   });
 
   it('crée une partie sans candidat du joueur en mode observateur', () => {
     const state = createGame({ seed: 'obs', mode: 'observateur', difficulty: 'standard' }, ruleset);
-    expect(state.player).toEqual({ mode: 'observateur', actorId: null });
+    expect(state.player).toEqual({ mode: 'observateur', actorId: null, adversaires: 'fictifs' });
     expect(Object.values(state.actors).every((a) => a.kind === 'adversaire')).toBe(true);
   });
 });

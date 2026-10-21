@@ -1,6 +1,6 @@
 {
   "id": "presidentielle-2027",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "libelle": "Présidentielle 2027 — règles de campagne, parrainages, financement (phase 5)",
   "verifieLe": "2026-10-21",
   "sources": {
@@ -2882,5 +2882,43 @@
       "actionsParSemaine": 4,
       "temperature": 0.3
     }
+  },
+  "personnalitesReelles": {
+    "statut": "hypothese",
+    "sourceId": "conception-du-jeu",
+    "note": "Moyens de départ des personnalités réelles selon leurs niveaux de notoriété (1 à 3) et d’organisation (grande, moyenne, petite, aucune), établis par des règles documentées à partir de faits sourcés (personnalites-2027.json). Valeurs de jeu, sans prétention de mesure : popularité de départ identique pour toutes ; aucun programme attribué par le jeu ; comportement simulé, style et goût du risque identiques pour toutes.",
+    "fichier": "personnalites-2027.json",
+    "empreinte": "086e1b62774e9f8a4f3ea3177bfe59dc808fa9e4189c02a0a9d4934f5ac67a73",
+    "notoriete": [2500, 4500, 7000],
+    "popularite": 3000,
+    "organisation": {
+      "grande": {
+        "budgetCentimes": 700000000,
+        "militants": 2000,
+        "equipe": 0.75,
+        "promessesInitiales": 1200
+      },
+      "moyenne": {
+        "budgetCentimes": 450000000,
+        "militants": 1300,
+        "equipe": 0.65,
+        "promessesInitiales": 800
+      },
+      "petite": {
+        "budgetCentimes": 250000000,
+        "militants": 800,
+        "equipe": 0.55,
+        "promessesInitiales": 450
+      },
+      "aucune": {
+        "budgetCentimes": 80000000,
+        "militants": 400,
+        "equipe": 0.4,
+        "promessesInitiales": 200
+      }
+    },
+    "style": "equilibre",
+    "toleranceRisque": 0.5,
+    "objectif": "victoire"
   }
 }

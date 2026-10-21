@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { IsoDateSchema } from './game';
 import { AiObjectiveSchema } from './campaign';
+import { RealPersonalitiesSchema } from './personalities';
 import { CampaignStyleSchema, PositionSchema } from './politics';
 import { ResourceKeySchema, ResourcesSchema } from './resources';
 
@@ -20,6 +21,17 @@ export type DataStatus = z.infer<typeof DataStatusSchema>;
 const Id = z.string().regex(/^[a-z0-9]+(?:[-_][a-z0-9]+)*$/, 'identifiant en minuscules');
 const Probability = z.number().min(0).max(1);
 const Fraction = z.number().min(0).max(1);
+/** Notoriété ou popularité, en centièmes de point (0 à 10 000). */
+const Points = z.number().int().min(0).max(10_000);
+
+const OrganisationMeans = z
+  .object({
+    budgetCentimes: z.number().int().min(0),
+    militants: z.number().int().min(0),
+    equipe: Fraction,
+    promessesInitiales: z.number().int().min(0),
+  })
+  .strict();
 
 export const SourceSchema = z
   .object({
@@ -556,6 +568,38 @@ export const RulesetSchema = z
         expert: AiLevel,
       })
       .strict(),
+    /**
+     * Personnalités réelles (phase 5 bis) : paramètres de jeu (hypothèses) qui convertissent
+     * les niveaux de notoriété et d'organisation des fiches en moyens de départ. Les fiches
+     * elles-mêmes (`personnalites`) viennent de `pnpm data:personnalites` ; leur empreinte
+     * est vérifiée : une nouvelle importation impose une nouvelle version du jeu de règles.
+     */
+    personnalitesReelles: z
+      .object({
+        statut: z.literal('hypothese'),
+        sourceId: Id,
+        note: z.string().min(1),
+        fichier: z.string().regex(/^[a-z0-9-]+\.json$/),
+        /** SHA-256 de la sérialisation JSON des fiches (`JSON.stringify`). */
+        empreinte: z.string().regex(/^[0-9a-f]{64}$/),
+        /** Notoriété de départ (centièmes de point) par niveau 1, 2, 3. */
+        notoriete: z.tuple([Points, Points, Points]),
+        popularite: Points,
+        /** Moyens de départ par niveau d'organisation. */
+        organisation: z
+          .object({
+            grande: OrganisationMeans,
+            moyenne: OrganisationMeans,
+            petite: OrganisationMeans,
+            aucune: OrganisationMeans,
+          })
+          .strict(),
+        style: CampaignStyleSchema,
+        toleranceRisque: Fraction,
+        objectif: AiObjectiveSchema,
+      })
+      .strict(),
+    personnalites: RealPersonalitiesSchema,
   })
   .strict()
   .superRefine((ruleset, ctx) => {
@@ -566,6 +610,7 @@ export const RulesetSchema = z
       ...ruleset.calendrier.echeances.map((e) => e.sourceId),
       ruleset.jeu.sourceId,
       ruleset.electorat.inscrits.sourceId,
+      ruleset.personnalitesReelles.sourceId,
     ];
     for (const id of referenced) if (!sourceIds.has(id)) issue(`Source inconnue : ${id}`);
 
@@ -601,6 +646,20 @@ export const RulesetSchema = z
       'Candidat fictif',
       ruleset.candidatsFictifs.map((c) => c.id),
     );
+    unique(
+      'Personnalité réelle',
+      ruleset.personnalites.personnalites.map((p) => p.id),
+    );
+    for (const p of ruleset.personnalites.personnalites) {
+      for (const region of p.implantation.regions) {
+        if (
+          !Object.values(ruleset.parrainages.reservoir.departements).some(
+            (d) => d.region === region,
+          )
+        )
+          issue(`${p.id} : région inconnue ${region}`);
+      }
+    }
     unique(
       'Profil de départ',
       ruleset.profilsDeDepart.map((p) => p.id),

@@ -14,13 +14,16 @@ import {
   GameStateV2Schema,
   GameStateV3Schema,
   GameStateV4Schema,
+  GameStateV5Schema,
   type Actor,
   type ActorV4,
+  type ActorV5,
   type GameState,
   type GameStateV1,
   type GameStateV2,
   type GameStateV3,
   type GameStateV4,
+  type GameStateV5,
 } from '@r2027/shared';
 import { z } from 'zod';
 import { hashState, sha256, canonicalStringify } from './canonical';
@@ -53,7 +56,8 @@ const SCHEMAS: Record<number, z.ZodType> = {
   2: GameStateV2Schema,
   3: GameStateV3Schema,
   4: GameStateV4Schema,
-  5: GameStateSchema,
+  5: GameStateV5Schema,
+  6: GameStateSchema,
 };
 
 /** Jeux de règles des parties aux formats 2 (phase 2) et 3 (phase 3). */
@@ -115,7 +119,15 @@ function toV4Actor(actor: Actor): ActorV4 {
     id,
     kind,
     label,
-    candidate,
+    candidate: {
+      prenom: candidate.prenom,
+      nom: candidate.nom,
+      parti: candidate.parti,
+      positionnement: candidate.positionnement,
+      parcours: candidate.parcours,
+      nature: candidate.nature === 'fictif' ? 'fictif' : 'personnalise',
+      profilId: candidate.profilId,
+    },
     style,
     toleranceRisque,
     resources,
@@ -194,9 +206,9 @@ function migrateV3ToV4(v3: GameStateV3): GameStateV4 {
  * vides ; les parrainages ne sont pas modélisés pour une partie déjà commencée (personne n'est
  * écarté). Relations initiales selon les positionnements ; jeu de règles courant.
  */
-function migrateV4ToV5(v4: GameStateV4): GameState {
+function migrateV4ToV5(v4: GameStateV4): GameStateV5 {
   const ruleset = getRuleset(CURRENT_RULESET_KEY);
-  const actors: Record<string, Actor> = {};
+  const actors: Record<string, ActorV5> = {};
   for (const [id, actor] of Object.entries(v4.actors)) {
     const fictional = ruleset.candidatsFictifs.find((c) => c.id === id);
     actors[id] = {
@@ -228,11 +240,35 @@ function migrateV4ToV5(v4: GameStateV4): GameState {
   };
 }
 
+/**
+ * Format 5 → 6 (phase 5 bis) : les candidats existants ne sont pas des personnalités réelles
+ * (`personnaliteId` nul) et les adversaires restent fictifs ; jeu de règles courant (4.0.0 n'ajoute
+ * que les personnalités réelles et leurs paramètres : la partie se poursuit à l'identique).
+ */
+function migrateV5ToV6(v5: GameStateV5): GameState {
+  const actors: Record<string, Actor> = {};
+  for (const [id, actor] of Object.entries(v5.actors)) {
+    actors[id] = { ...actor, candidate: { ...actor.candidate, personnaliteId: null } };
+  }
+  return {
+    ...v5,
+    meta: {
+      ...v5.meta,
+      engineVersion: ENGINE_VERSION,
+      rulesetVersion: CURRENT_RULESET_KEY,
+      saveSchemaVersion: 6,
+    },
+    player: { ...v5.player, adversaires: 'fictifs' },
+    actors,
+  };
+}
+
 const MIGRATIONS: Record<number, (state: never) => unknown> = {
   1: migrateV1ToV2,
   2: migrateV2ToV3,
   3: migrateV3ToV4,
   4: migrateV4ToV5,
+  5: migrateV5ToV6,
 };
 
 export type LoadedState = { state: GameState; stateHash: string; migratedFrom: number | null };

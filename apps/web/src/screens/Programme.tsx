@@ -242,7 +242,9 @@ export function Programme() {
                 {candidateName(o.candidate)} ({o.candidate.parti})
               </p>
               <p className="text-slate-600 dark:text-slate-400">
-                {o.programme.propositions.map(label).join(' · ') || 'Aucune proposition'}
+                {o.candidate.nature === 'reel'
+                  ? 'Personnalité réelle : le jeu ne lui prête aucune proposition.'
+                  : o.programme.propositions.map(label).join(' · ') || 'Aucune proposition'}
               </p>
             </li>
           ))}

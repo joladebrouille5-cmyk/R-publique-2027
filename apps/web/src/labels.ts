@@ -6,7 +6,9 @@ import type {
   FactorSource,
   GameMode,
   GamePhase,
+  OpponentSet,
   Poll,
+  PositionMethod,
   ReceiptKind,
   RefusalOrigin,
   ResourceKey,
@@ -17,6 +19,19 @@ export const MODE_LABELS: Record<GameMode, string> = {
   candidat_reel: 'Candidat réel',
   candidat_personnalise: 'Candidat personnalisé',
   observateur: 'Observateur',
+};
+
+export const OPPONENT_SET_LABELS: Record<OpponentSet, string> = {
+  fictifs: 'Adversaires fictifs',
+  reels: 'Personnalités réelles',
+};
+
+/** Méthode de placement d'une personnalité réelle sur les axes (enquête d'experts CHES). */
+export const POSITION_METHOD_LABELS: Record<PositionMethod, string> = {
+  parti: 'position de son parti selon l’enquête d’experts Chapel Hill',
+  parti_soutien: 'position du parti qui soutient sa candidature (enquête Chapel Hill)',
+  ancien_parti: 'hypothèse : position d’un ancien parti (Wikidata, enquête Chapel Hill)',
+  famille: 'hypothèse : moyenne de sa famille politique (enquête Chapel Hill)',
 };
 
 export const DIFFICULTY_LABELS: Record<Difficulty, string> = {

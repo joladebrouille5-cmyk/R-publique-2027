@@ -43,6 +43,8 @@ export async function createNewGame(
         difficulty: body.difficulty,
         startDate: body.startDate,
         candidate: body.candidate,
+        personnaliteId: body.personnaliteId,
+        adversaires: body.adversaires,
       },
       getRuleset(CURRENT_RULESET_KEY),
     );
@@ -73,6 +75,7 @@ export async function createNewGame(
           mode: body.mode,
           difficulty: body.difficulty,
           seed,
+          adversaires: state.player.adversaires,
           startDate: state.meta.date,
           candidat: state.player.actorId ? state.actors[state.player.actorId]!.candidate : null,
         },

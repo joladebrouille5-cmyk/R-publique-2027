@@ -1,7 +1,18 @@
-import { addDays, isoWeekday, parseIsoDate, RulesetSchema } from '@r2027/shared';
+import { createHash } from 'node:crypto';
+import { existsSync, readdirSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { addDays, FREE_LICENSES, isoWeekday, parseIsoDate, RulesetSchema } from '@r2027/shared';
 import { describe, expect, it } from 'vitest';
 import { CURRENT_RULESET_KEY, getRuleset, listRulesetKeys, UnknownRulesetError } from './index';
+import personnalites from './personnalites-2027.json';
 import raw from './presidentielle-2027.json';
+
+/** Jeu de règles complet (base + fiches importées), copié pour les tests de rejet. */
+const full = () =>
+  JSON.parse(JSON.stringify({ ...raw, personnalites })) as typeof raw & {
+    personnalites: typeof personnalites;
+  };
 
 const ruleset = getRuleset(CURRENT_RULESET_KEY);
 const date = (id: string) =>
@@ -79,26 +90,27 @@ describe('jeu de règles presidentielle-2027', () => {
   });
 
   it('refuse un programme incohérent et une incompatibilité non réciproque', () => {
-    const missingDependency = JSON.parse(JSON.stringify(raw)) as typeof raw;
+    expect(RulesetSchema.safeParse(full()).success).toBe(true);
+    const missingDependency = full();
     missingDependency.candidatsFictifs[0]!.programme = ['emploi-garantie-emploi'];
     expect(RulesetSchema.safeParse(missingDependency).success).toBe(false);
 
-    const oneWay = JSON.parse(JSON.stringify(raw)) as typeof raw;
+    const oneWay = full();
     oneWay.programme.propositions.find((p) => p.id === 'ret-age-60')!.incompatibilites = [];
     expect(RulesetSchema.safeParse(oneWay).success).toBe(false);
   });
 
   it('refuse les références croisées incohérentes', () => {
-    const broken = JSON.parse(JSON.stringify(raw)) as typeof raw;
+    const broken = full();
     broken.calendrier.scrutins[0]!.sourceId = 'source-absente';
     expect(RulesetSchema.safeParse(broken).success).toBe(false);
 
-    const badChoice = JSON.parse(JSON.stringify(raw)) as typeof raw;
+    const badChoice = full();
     const event = badChoice.evenements.find((e) => e.choix.length > 0)!;
     event.choixParDefaut = 'choix-absent';
     expect(RulesetSchema.safeParse(badChoice).success).toBe(false);
 
-    const duplicate = JSON.parse(JSON.stringify(raw)) as typeof raw;
+    const duplicate = full();
     duplicate.actions.push(duplicate.actions[0]!);
     expect(RulesetSchema.safeParse(duplicate).success).toBe(false);
   });
@@ -124,5 +136,81 @@ describe('jeu de règles presidentielle-2027', () => {
     });
     expect(ruleset.electorat.statutGroupes).toBe('hypothese');
     expect(ruleset.modele.statut).toBe('hypothese');
+  });
+});
+
+describe('personnalités réelles (phase 5 bis)', () => {
+  const list = ruleset.personnalites.personnalites;
+  const PUBLIC = join(dirname(fileURLToPath(import.meta.url)), '../../../apps/web/public');
+
+  it('a l’empreinte déclarée par le jeu de règles : une réimportation impose une nouvelle version', () => {
+    const hash = createHash('sha256').update(JSON.stringify(personnalites)).digest('hex');
+    expect(ruleset.personnalitesReelles.empreinte).toBe(hash);
+    expect(ruleset.personnalitesReelles.statut).toBe('hypothese');
+  });
+
+  it('retient les candidatures décidées le 21/10/2026, et liste les autres avec leur motif', () => {
+    expect(list.map((p) => p.id)).toEqual([
+      'reel-arthaud',
+      'reel-asselineau',
+      'reel-attal',
+      'reel-becht',
+      'reel-bertrand',
+      'reel-bouamrane',
+      'reel-dupont-aignan',
+      'reel-glucksmann',
+      'reel-le-pen',
+      'reel-lisnard',
+      'reel-melenchon',
+      'reel-philippe',
+      'reel-retailleau',
+      'reel-roussel',
+      'reel-ruffin',
+      'reel-tondelier',
+      'reel-zemmour',
+    ]);
+    expect(ruleset.personnalites.nonIntegrees.length).toBeGreaterThan(0);
+    for (const n of ruleset.personnalites.nonIntegrees) expect(n.motif).toMatch(/CHES/);
+  });
+
+  it('source chaque fiche : candidature datée, position étiquetée, sources importées avec empreinte', () => {
+    for (const p of list) {
+      expect(p.candidature.source.url).toMatch(/^https:\/\//);
+      expect(p.candidature.date <= ruleset.personnalites.verifieLe).toBe(true);
+      expect(p.position.statut).toBe(
+        p.position.methode === 'parti' || p.position.methode === 'parti_soutien'
+          ? 'estimation'
+          : 'hypothese',
+      );
+      expect(p.position.detail.length).toBeGreaterThan(10);
+    }
+    const ids = ruleset.personnalites.sources.map((s) => s.id);
+    expect(ids).toEqual(
+      expect.arrayContaining(['wikipedia-candidatures-2027', 'ches-2024', 'wikidata-partis']),
+    );
+  });
+
+  it('ne reprend que des photos sous licence libre, créditées, présentes et sans fichier orphelin', () => {
+    const files = new Set<string>();
+    for (const p of list) {
+      if (p.photo) {
+        expect(p.photo.licence).toMatch(FREE_LICENSES);
+        expect(p.photo.auteur.length).toBeGreaterThan(0);
+        expect(existsSync(join(PUBLIC, p.photo.fichier))).toBe(true);
+        files.add(p.photo.fichier.split('/')[1]!);
+      } else {
+        expect(p.photoAbsente).toMatch(/\S/);
+      }
+    }
+    expect(new Set(readdirSync(join(PUBLIC, 'personnalites')))).toEqual(files);
+  });
+
+  it('refuse une fiche sans source de candidature ou avec une licence non libre', () => {
+    const noSource = full();
+    (noSource.personnalites.personnalites[0]!.candidature as { source: unknown }).source = null;
+    expect(RulesetSchema.safeParse(noSource).success).toBe(false);
+    const nonFree = full();
+    nonFree.personnalites.personnalites.find((p) => p.photo)!.photo!.licence = 'CC BY-NC 4.0';
+    expect(RulesetSchema.safeParse(nonFree).success).toBe(false);
   });
 });

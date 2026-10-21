@@ -1,4 +1,10 @@
-import { advanceWeek, createGame, ENGINE_VERSION, PLAYER_ACTOR_ID } from '@r2027/engine';
+import {
+  advanceWeek,
+  createGame,
+  ENGINE_VERSION,
+  PLAYER_ACTOR_ID,
+  SAVE_SCHEMA_VERSION,
+} from '@r2027/engine';
 import { CURRENT_RULESET_KEY, getRuleset } from '@r2027/rulesets';
 import { GameStateSchema } from '@r2027/shared';
 import { describe, expect, it } from 'vitest';
@@ -7,6 +13,7 @@ import { buildExport, readExport } from './exchange';
 import V2 from './fixtures/v2-phase-2.json' with { type: 'json' };
 import V3 from './fixtures/v3-phase-3.json' with { type: 'json' };
 import V4 from './fixtures/v4-phase-4.json' with { type: 'json' };
+import V5 from './fixtures/v5-phase-5.json' with { type: 'json' };
 import { loadStoredState, MIGRATED_CANDIDATE, SaveFormatError, upgradeState } from './versions';
 
 const ruleset = getRuleset(CURRENT_RULESET_KEY);
@@ -51,7 +58,7 @@ describe('migrations de sauvegarde', () => {
       seed: 'phase-1',
       week: 0,
       difficulty: 'expert',
-      saveSchemaVersion: 5,
+      saveSchemaVersion: SAVE_SCHEMA_VERSION,
       engineVersion: ENGINE_VERSION,
       rulesetVersion: CURRENT_RULESET_KEY,
     });
@@ -78,7 +85,7 @@ describe('migrations de sauvegarde', () => {
       seed: 'phase-2',
       week: 20,
       date: '2027-02-15',
-      saveSchemaVersion: 5,
+      saveSchemaVersion: SAVE_SCHEMA_VERSION,
     });
     const player = state.actors[PLAYER_ACTOR_ID]!;
     expect(player.resources).toEqual(v2.actors.joueur.resources);
@@ -135,7 +142,7 @@ describe('migrations de sauvegarde', () => {
     expect(state.meta).toMatchObject({
       week: 29,
       phase: 'entre_deux_tours',
-      saveSchemaVersion: 5,
+      saveSchemaVersion: SAVE_SCHEMA_VERSION,
       rulesetVersion: CURRENT_RULESET_KEY,
     });
     // Le premier tour déjà dépouillé n'a pas de détail territorial ; ses chiffres sont conservés.
@@ -160,7 +167,7 @@ describe('migrations de sauvegarde', () => {
     expect(state.meta).toMatchObject({
       week: 29,
       phase: 'entre_deux_tours',
-      saveSchemaVersion: 5,
+      saveSchemaVersion: SAVE_SCHEMA_VERSION,
       rulesetVersion: CURRENT_RULESET_KEY,
     });
     // Le premier tour et ses statuts sont conservés ; les parrainages ne sont pas modélisés
@@ -192,6 +199,42 @@ describe('migrations de sauvegarde', () => {
     expect(current.elections.debateDetail).not.toBeNull();
   });
 
+  it('migre une partie réelle de la phase 5 entre les deux tours, puis la mène au second tour', () => {
+    const { state, migratedFrom } = loadStoredState(V5.state, V5.stateHash, 5);
+    expect(migratedFrom).toBe(5);
+    expect(state.meta).toMatchObject({
+      week: 29,
+      phase: 'entre_deux_tours',
+      saveSchemaVersion: SAVE_SCHEMA_VERSION,
+      engineVersion: ENGINE_VERSION,
+      rulesetVersion: CURRENT_RULESET_KEY,
+    });
+    // Adversaires fictifs, aucun candidat réel ; tout le reste est conservé tel quel.
+    expect(state.player).toEqual({ ...V5.state.player, adversaires: 'fictifs' });
+    for (const [id, actor] of Object.entries(state.actors)) {
+      const before = V5.state.actors[id as keyof typeof V5.state.actors];
+      expect(actor).toEqual({
+        ...before,
+        candidate: { ...before.candidate, personnaliteId: null },
+      });
+    }
+    const { meta: _meta, player: _player, actors: _actors, ...rest } = state;
+    const { meta: _m, player: _p, actors: _a, ...restBefore } = V5.state;
+    expect(rest).toEqual(restBefore);
+    expect(state.alliances).toHaveLength(1);
+
+    let current = state;
+    while (!current.calendar.blockedBy) {
+      const decisions = current.pendingDecisions.map((d) => ({
+        decisionId: d.id,
+        optionId: d.defaultOptionId,
+      }));
+      current = advanceWeek(current, { actions: [], decisions }, { ruleset }).state;
+    }
+    expect(current.elections.t2!.winner).not.toBeNull();
+    expect(current.elections.debateDetail).not.toBeNull();
+  });
+
   it('vérifie l’empreinte avant toute migration', () => {
     const altered = { ...V1_STATE, meta: { ...V1_STATE.meta, week: 3 } };
     expect(errorCode(() => loadStoredState(altered, V1_HASH, 1))).toBe('empreinte_incoherente');
@@ -207,12 +250,13 @@ describe('migrations de sauvegarde', () => {
     expect(errorCode(() => upgradeState(V1_STATE, 2))).toBe('etat_invalide');
     expect(errorCode(() => upgradeState(V2.state, 4))).toBe('etat_invalide');
     expect(errorCode(() => upgradeState(V4.state, 5))).toBe('etat_invalide');
+    expect(errorCode(() => upgradeState(V5.state, 6))).toBe('etat_invalide');
   });
 
   it('refuse un jeu de règles inconnu', () => {
     const state = createGame({ seed: 'x', mode: 'observateur', difficulty: 'standard' }, ruleset);
     const unknown = { ...state, meta: { ...state.meta, rulesetVersion: 'inexistant@9.9.9' } };
-    expect(errorCode(() => upgradeState(unknown, 5))).toBe('regles_inconnues');
+    expect(errorCode(() => upgradeState(unknown, SAVE_SCHEMA_VERSION))).toBe('regles_inconnues');
   });
 
   it('laisse un état au format courant inchangé', () => {
@@ -220,7 +264,7 @@ describe('migrations de sauvegarde', () => {
       { seed: 'courant', mode: 'candidat_personnalise', difficulty: 'standard', candidate },
       ruleset,
     );
-    const loaded = loadStoredState(state, hashState(state), 5);
+    const loaded = loadStoredState(state, hashState(state), SAVE_SCHEMA_VERSION);
     expect(loaded).toEqual({ state, stateHash: hashState(state), migratedFrom: null });
   });
 });
@@ -276,6 +320,6 @@ describe('export et import', () => {
     };
     const read = readExport(v1Doc);
     expect(read.migratedFrom).toBe(1);
-    expect(read.state.meta.saveSchemaVersion).toBe(5);
+    expect(read.state.meta.saveSchemaVersion).toBe(SAVE_SCHEMA_VERSION);
   });
 });

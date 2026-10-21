@@ -1,13 +1,25 @@
-import { candidateName, type Actor, type GameState, type UtilityFactor } from '@r2027/shared';
+import {
+  candidateName,
+  type Actor,
+  type GameState,
+  type Ruleset,
+  type UtilityFactor,
+} from '@r2027/shared';
 import { useRuleset } from '../api/hooks';
 import { presentationSummary } from '../campaign';
 import { Badge } from '../components/Badge';
 import { PositionMap } from '../components/PositionMap';
+import {
+  PersonalityFacts,
+  PersonalityPhoto,
+  SIMULATION_NOTICE,
+} from '../components/RealPersonality';
 import { card } from '../components/ui';
 import {
   CANDIDATE_STATUS_LABELS,
   describePosition,
   formatCount,
+  formatGameDate,
   formatResource,
   OBJECTIVE_LABELS,
   PRIORITY_LABELS,
@@ -26,6 +38,12 @@ const STATUS_TONES = {
   ecarte: 'danger',
   retire: 'neutre',
 } as const;
+
+/** Valeur signée à deux décimales, sans « −0,00 ». */
+const formatSigned = (value: number) => {
+  const rounded = Math.round(value * 100) / 100 || 0;
+  return `${rounded > 0 ? '+' : rounded < 0 ? '−' : ''}${Math.abs(rounded).toFixed(2).replace('.', ',')}`;
+};
 
 /** Candidats triés : le joueur d'abord, puis par statut et par nom. */
 export function sortedActors(state: GameState): Actor[] {
@@ -57,6 +75,59 @@ function Breakdown({ factors }: { factors: UtilityFactor[] }) {
   );
 }
 
+/** Sources et méthode des fiches de personnalités réelles (phase 5 bis). */
+function RealSources({ ruleset }: { ruleset: Ruleset }) {
+  const { personnalites, personnalitesReelles } = ruleset;
+  return (
+    <section aria-labelledby="titre-sources-reelles" className={`${card} space-y-3 text-sm`}>
+      <h2 id="titre-sources-reelles" className="text-lg font-semibold">
+        Personnalités réelles : sources et méthode
+      </h2>
+      <p>{SIMULATION_NOTICE}</p>
+      <p>
+        Fiches relevées le {formatGameDate(personnalites.verifieLe)}. {personnalites.decision}
+      </p>
+      <dl className="space-y-2">
+        <dt className="font-medium">Position sur les axes</dt>
+        <dd className="text-slate-700 dark:text-slate-300">{personnalites.methode.position}</dd>
+        <dt className="font-medium">Notoriété de départ</dt>
+        <dd className="text-slate-700 dark:text-slate-300">{personnalites.methode.notoriete}</dd>
+        <dt className="font-medium">Organisation de campagne</dt>
+        <dd className="text-slate-700 dark:text-slate-300">{personnalites.methode.organisation}</dd>
+        <dt className="font-medium">Ancrage local</dt>
+        <dd className="text-slate-700 dark:text-slate-300">{personnalites.methode.implantation}</dd>
+      </dl>
+      <p className="text-slate-600 dark:text-slate-400">
+        <Badge tone="alerte">Hypothèses de jeu</Badge> {personnalitesReelles.note}
+      </p>
+      <h3 className="font-semibold">Sources</h3>
+      <ul className="list-inside list-disc space-y-1">
+        {personnalites.sources.map((source) => (
+          <li key={source.id}>
+            <a href={source.url} className="underline" target="_blank" rel="noreferrer">
+              {source.titre}
+            </a>{' '}
+            — {source.version}, consulté le {formatGameDate(source.consulteLe)} ; licence :{' '}
+            {source.licence}.
+          </li>
+        ))}
+      </ul>
+      {personnalites.nonIntegrees.length > 0 && (
+        <>
+          <h3 className="font-semibold">Candidatures déclarées non intégrées</h3>
+          <ul className="list-inside list-disc space-y-1">
+            {personnalites.nonIntegrees.map((n) => (
+              <li key={`${n.prenom} ${n.nom}`}>
+                {n.prenom} {n.nom} ({n.parti}) — {n.motif}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </section>
+  );
+}
+
 export function Candidates() {
   const game = useCurrentGame();
   const ruleset = useRuleset(game.rulesetVersion);
@@ -64,16 +135,30 @@ export function Candidates() {
   const { state } = game;
   const actors = sortedActors(state);
   const families = new Map(ruleset.data?.candidatsFictifs.map((c) => [c.id, c.famille]) ?? []);
+  const fiches = new Map(ruleset.data?.personnalites.personnalites.map((p) => [p.id, p]) ?? []);
+  const hasReal = actors.some((a) => a.candidate.nature === 'reel');
+  const hasFictional = actors.some((a) => a.candidate.nature === 'fictif');
 
   return (
     <section aria-labelledby="titre-candidats" className="space-y-6">
       <h1 id="titre-candidats" className="text-2xl font-bold">
         Candidats
       </h1>
+      {hasReal && (
+        <p
+          role="note"
+          className="rounded-lg bg-teal-50 p-3 text-sm text-teal-900 dark:bg-teal-950 dark:text-teal-100"
+        >
+          {SIMULATION_NOTICE} Fiches, sources et méthode en bas de page.
+        </p>
+      )}
       <p className="text-sm text-slate-600 dark:text-slate-400">
-        Les adversaires sont des <strong>personnages fictifs</strong> : toute ressemblance avec des
-        personnalités réelles serait fortuite. Les personnalités réelles nécessitent des profils
-        sourcés et une validation juridique (question Q2 du plan).{' '}
+        {hasFictional && (
+          <>
+            Les adversaires fictifs sont des <strong>personnages inventés</strong> : toute
+            ressemblance avec des personnalités réelles serait fortuite.{' '}
+          </>
+        )}
         {state.campagne.parrainages === 'modelise'
           ? 'Seuls les candidats ayant réuni assez de présentations valides à la clôture figurent au premier tour ; les présentations validées sont publiques, les promesses ne le sont pas.'
           : 'Partie créée avant la phase 5 : les parrainages ne sont pas modélisés et tous les candidats figurent au premier tour.'}
@@ -84,6 +169,7 @@ export function Candidates() {
         <PositionMap
           candidates={actors.map((actor) => ({
             id: actor.id,
+            name: candidateName(actor.candidate),
             label:
               actor.id === state.player.actorId
                 ? `${actor.candidate.parti} (vous)`
@@ -105,22 +191,28 @@ export function Candidates() {
         {actors.map((actor) => {
           const player = actor.id === state.player.actorId;
           const breakdown = state.opinion?.breakdown[actor.id];
+          const fiche = actor.candidate.personnaliteId
+            ? fiches.get(actor.candidate.personnaliteId)
+            : undefined;
           return (
             <li
               key={actor.id}
               className={`${card} space-y-3`}
               aria-label={candidateName(actor.candidate)}
             >
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-lg font-semibold">{candidateName(actor.candidate)}</h2>
-                {player ? (
-                  <Badge tone="simule">Votre candidat</Badge>
-                ) : (
-                  <Badge tone="fictif">Fictif</Badge>
-                )}
-                <Badge tone={STATUS_TONES[actor.status]}>
-                  {CANDIDATE_STATUS_LABELS[actor.status]}
-                </Badge>
+              <div className="flex gap-3">
+                {fiche && <PersonalityPhoto personality={fiche} />}
+                <div className="flex flex-wrap items-center gap-2 self-start">
+                  <h2 className="text-lg font-semibold">{candidateName(actor.candidate)}</h2>
+                  {player && <Badge tone="simule">Votre candidat</Badge>}
+                  {actor.candidate.nature === 'reel' && (
+                    <Badge tone="reel">Personnalité réelle — simulée</Badge>
+                  )}
+                  {actor.candidate.nature === 'fictif' && <Badge tone="fictif">Fictif</Badge>}
+                  <Badge tone={STATUS_TONES[actor.status]}>
+                    {CANDIDATE_STATUS_LABELS[actor.status]}
+                  </Badge>
+                </div>
               </div>
               <p className="text-sm">
                 <span className="font-medium">{actor.candidate.parti}</span>
@@ -164,12 +256,27 @@ export function Candidates() {
                   )}
                 </p>
               )}
+              {fiche && ruleset.data && (
+                <details>
+                  <summary className="cursor-pointer text-sm font-medium">
+                    Fiche sourcée et crédit photo
+                  </summary>
+                  <div className="mt-2">
+                    <PersonalityFacts
+                      personality={fiche}
+                      verifieLe={ruleset.data.personnalites.verifieLe}
+                    />
+                  </div>
+                </details>
+              )}
               <p className="text-sm">
-                Programme : {actor.programme.propositions.length} proposition(s)
+                {actor.candidate.nature === 'reel' && !player
+                  ? 'Programme : aucune proposition prêtée par le jeu à une personnalité réelle (facteurs « Programme » et « Crédibilité » neutres)'
+                  : `Programme : ${actor.programme.propositions.length} proposition(s)`}
                 {actor.programme.revirements > 0 &&
                   ` · ${actor.programme.revirements} revirement(s)`}
                 {state.medias?.indice[actor.id] !== undefined &&
-                  ` · indice médiatique ${state.medias.indice[actor.id]! > 0 ? '+' : ''}${state.medias.indice[actor.id]!.toFixed(2).replace('.', ',')}`}
+                  ` · indice médiatique ${formatSigned(state.medias.indice[actor.id]!)}`}
               </p>
               <dl className="grid grid-cols-2 gap-2 text-sm">
                 <div>
@@ -212,6 +319,7 @@ export function Candidates() {
         />
       )}
       {ruleset.data && <Media state={state} ruleset={ruleset.data} />}
+      {ruleset.data && hasReal && <RealSources ruleset={ruleset.data} />}
     </section>
   );
 }

@@ -77,11 +77,44 @@ describe('navigation de partie', () => {
 });
 
 describe('création de partie', () => {
-  it('désactive le mode candidat réel tant qu’il n’est pas implémenté', async () => {
-    mockApi({ 'GET /api/health': healthHandler });
+  it('propose d’incarner une personnalité réelle sourcée, face aux adversaires réels', async () => {
+    const calls = mockApi({
+      ...gameHandlers,
+      'POST /api/games': () => ({ status: 201, body: gameFixture() }),
+    });
     renderRoute('/nouvelle-partie');
-    expect(await screen.findByRole('radio', { name: /Candidat réel/ })).toBeDisabled();
-    expect(screen.getByRole('radio', { name: /Candidat personnalisé/ })).toBeChecked();
+    const user = userEvent.setup();
+    expect(await screen.findByRole('radio', { name: /Candidat personnalisé/ })).toBeChecked();
+    await user.type(screen.getByLabelText('Nom de la partie'), 'Réel');
+    await user.click(screen.getByRole('radio', { name: /Candidat réel/ }));
+    const group = await screen.findByRole('group', { name: 'Personnalité incarnée' });
+    expect(within(group).getByText(/sont simulés par le jeu/)).toBeInTheDocument();
+    // Sans choix, la création est refusée côté interface.
+    await user.click(screen.getByRole('button', { name: 'Créer la partie' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('personnalité que vous incarnez');
+
+    await user.click(within(group).getByRole('radio', { name: /Marine Tondelier/ }));
+    expect(within(group).getByText(/Désignée candidate par Les Écologistes/)).toBeInTheDocument();
+    expect(
+      within(group).getAllByText(
+        (_, el) =>
+          el?.tagName === 'P' && /^Photo : Greenbox, CC BY-SA 4\.0/.test(el.textContent ?? ''),
+      ).length,
+    ).toBeGreaterThan(0);
+    expect(
+      within(group).getByRole('img', { name: 'Portrait de Marine Tondelier' }),
+    ).toHaveAttribute('src', '/personnalites/reel-tondelier.webp');
+    await user.click(screen.getByRole('radio', { name: /Personnalités réelles/ }));
+    await user.click(screen.getByRole('button', { name: 'Créer la partie' }));
+    await waitFor(() => expect(calls.some((c) => c.method === 'POST')).toBe(true));
+    expect(calls.find((c) => c.method === 'POST')!.body).toEqual({
+      name: 'Réel',
+      mode: 'candidat_reel',
+      difficulty: 'standard',
+      startDate: '2026-09-28',
+      personnaliteId: 'reel-tondelier',
+      adversaires: 'reels',
+    });
   });
 
   it('envoie la requête puis ouvre le tableau de bord', async () => {
@@ -117,6 +150,7 @@ describe('création de partie', () => {
         profilId: 'societe-civile',
         positionnement: { economie: 0, societe: 0 },
       },
+      adversaires: 'fictifs',
     });
   });
 

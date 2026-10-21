@@ -68,14 +68,21 @@ function campaignFactors(
 ): UtilityFactor[] {
   const model = ruleset.modele;
   const actor = state.actors[contender.id]!;
+  // Le jeu ne prête aucune proposition à une personnalité réelle adverse : ses facteurs
+  // « Programme » et « Crédibilité » restent neutres (phase 5 bis).
+  const simulatedProgramme = !(actor.candidate.nature === 'reel' && actor.kind === 'adversaire');
   const factors: UtilityFactor[] = [
     {
       label: 'Programme',
-      value: model.programme * programmeAppeal(actor.programme, group, ruleset),
+      value: simulatedProgramme
+        ? model.programme * programmeAppeal(actor.programme, group, ruleset)
+        : 0,
     },
     {
       label: 'Crédibilité',
-      value: model.credibilite * credibility(actor.programme, ruleset).value,
+      value: simulatedProgramme
+        ? model.credibilite * credibility(actor.programme, ruleset).value
+        : 0,
     },
     { label: 'Médias', value: model.medias * (state.medias?.indice[contender.id] ?? 0) },
   ];

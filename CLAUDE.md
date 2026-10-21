@@ -20,3 +20,4 @@
 - Environnement cloud sans Docker : `scripts/pg-local.sh start`, puis `.env` créé depuis `.env.example` avec des URL sans mot de passe (`postgresql://postgres@localhost:5432/...`).
 - Après une modification de `apps/api/prisma/schema.prisma` : `pnpm db:migrate` (crée une migration versionnée, à commiter).
 - Données réelles : `pnpm data:geo` puis `pnpm data:resultats` (réseau requis, sorties dans `data/`, jamais commitées) ; sans elles, l'API sert le jeu de démonstration de `packages/data-import/demo`.
+- Personnalités réelles : `pnpm data:personnalites` (réseau requis) réécrit `packages/rulesets/src/personnalites-2027.json` et `apps/web/public/personnalites/` (commités) ; toute réimportation impose une nouvelle version du jeu de règles. Jamais de propos ni de citation attribués à une personne réelle.

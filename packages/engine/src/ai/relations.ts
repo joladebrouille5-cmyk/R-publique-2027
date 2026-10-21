@@ -24,14 +24,17 @@ const HISTORY = 10;
 const RIVALRY_ALERT = 60;
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
+/** Ce qu'il faut d'un candidat pour situer sa relation aux autres. */
+type Positioned = Pick<Actor, 'id'> & { candidate: Pick<Actor['candidate'], 'positionnement'> };
+
 /** Proximité idéologique (0 à 100) entre deux candidats. */
-export function proximity(a: Actor, b: Actor): number {
+export function proximity(a: Positioned, b: Positioned): number {
   const d = distance(a.candidate.positionnement, b.candidate.positionnement);
   return Math.round(100 * clamp(1 - d / 2, 0, 1));
 }
 
 /** Relations initiales : la confiance de départ suit la proximité (hypothèse de jeu). */
-export function initialRelations(actors: Record<string, Actor>): Record<string, Relation> {
+export function initialRelations(actors: Record<string, Positioned>): Record<string, Relation> {
   const ids = Object.keys(actors).sort(compareStrings);
   const relations: Record<string, Relation> = {};
   for (let i = 0; i < ids.length; i++) {

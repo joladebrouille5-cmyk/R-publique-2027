@@ -7,11 +7,12 @@ import {
   GamePhaseSchema,
   GameStateSchema,
   IsoDateSchema,
+  OpponentSetSchema,
   PlannedActionSchema,
   ProgrammeChangeSchema,
   SeedSchema,
 } from './game';
-import { PositionSchema } from './politics';
+import { PersonalityIdSchema, PositionSchema } from './politics';
 import { WeeklyReportSchema } from './report';
 
 // Contrats de l'API REST, partagés entre `apps/api` et `apps/web`.
@@ -39,6 +40,10 @@ export const CreateGameRequestSchema = z
     seed: SeedSchema.optional(),
     startDate: IsoDateSchema.optional(),
     candidate: CandidateInputSchema.optional(),
+    /** Personnalité réelle incarnée (mode « candidat réel », phase 5 bis). */
+    personnaliteId: PersonalityIdSchema.optional(),
+    /** Adversaires fictifs (par défaut) ou personnalités réelles. */
+    adversaires: OpponentSetSchema.default('fictifs'),
   })
   .strict()
   .superRefine((body, ctx) => {
@@ -49,11 +54,18 @@ export const CreateGameRequestSchema = z
         message: 'Candidat requis dans ce mode',
       });
     }
-    if (body.mode === 'observateur' && body.candidate) {
+    if (body.mode !== 'candidat_personnalise' && body.candidate) {
       ctx.addIssue({
         code: 'custom',
         path: ['candidate'],
-        message: 'Pas de candidat en mode observateur',
+        message: 'Candidat personnalisé seulement dans ce mode',
+      });
+    }
+    if ((body.mode === 'candidat_reel') !== (body.personnaliteId !== undefined)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['personnaliteId'],
+        message: 'Personnalité requise dans le mode « candidat réel », et seulement dans ce mode',
       });
     }
   });

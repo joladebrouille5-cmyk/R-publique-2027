@@ -41,6 +41,14 @@ export function GameLayout() {
           Semaine {game.data.week} · {formatGameDate(game.data.date)}
         </p>
         <p className="text-lg font-semibold">{game.data.name}</p>
+        {Object.values(game.data.state.actors).some((a) => a.candidate.nature === 'reel') && (
+          <p className="mt-1 text-xs text-teal-800 dark:text-teal-200">
+            Partie avec des personnalités réelles : tout ce qu’elles font ici est simulé.{' '}
+            <Link to="candidats" className="underline">
+              Fiches et sources
+            </Link>
+          </p>
+        )}
       </div>
       <div className="md:grid md:grid-cols-[14rem_1fr] md:gap-8">
         <nav aria-label="Écrans de la partie" className="-mx-4 mb-6 md:mx-0 md:mb-0">

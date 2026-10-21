@@ -26,7 +26,12 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
  * à côté (`.meta.json`) l'URL, la date, la taille et l'empreinte SHA-256. Un fichier déjà
  * présent avec ses métadonnées n'est pas retéléchargé ; son empreinte est revérifiée.
  */
-export async function download(url: string, path: string, attempts = 30): Promise<DownloadRecord> {
+export async function download(
+  url: string,
+  path: string,
+  attempts = 30,
+  headers: Record<string, string> = {},
+): Promise<DownloadRecord> {
   const metaPath = `${path}.meta.json`;
   if (existsSync(path) && existsSync(metaPath)) {
     const record = JSON.parse(readFileSync(metaPath, 'utf8')) as DownloadRecord;
@@ -40,7 +45,9 @@ export async function download(url: string, path: string, attempts = 30): Promis
     const start = existsSync(path) ? statSync(path).size : 0;
     if (total !== null && start >= total) break;
     try {
-      const response = await fetch(url, { headers: start > 0 ? { range: `bytes=${start}-` } : {} });
+      const response = await fetch(url, {
+        headers: start > 0 ? { ...headers, range: `bytes=${start}-` } : headers,
+      });
       // 416 : le fichier local est déjà complet (reprise d'un téléchargement terminé).
       if (response.status === 416 && start > 0) break;
       if (!(response.ok || response.status === 206) || !response.body) {

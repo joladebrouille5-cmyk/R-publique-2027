@@ -12,6 +12,8 @@ import {
   type Difficulty,
   type GameMode,
   type GameState,
+  type OpponentSet,
+  type RealPersonality,
   type Resources,
   type Ruleset,
 } from '@r2027/shared';
@@ -30,12 +32,20 @@ export type CreateGameInput = {
   difficulty: Difficulty;
   startDate?: string | undefined;
   candidate?: CandidateInput | undefined;
+  /** Personnalité réelle incarnée (mode « candidat réel »). */
+  personnaliteId?: string | undefined;
+  /** Adversaires : fictifs (par défaut) ou personnalités réelles. */
+  adversaires?: OpponentSet | undefined;
 };
 
 export class GameCreationError extends Error {
   constructor(
     readonly code:
-      'mode_non_disponible' | 'date_de_depart_invalide' | 'candidat_requis' | 'profil_inconnu',
+      | 'date_de_depart_invalide'
+      | 'candidat_requis'
+      | 'profil_inconnu'
+      | 'personnalite_requise'
+      | 'personnalite_inconnue',
     message: string,
   ) {
     super(message);
@@ -87,6 +97,7 @@ export function createPlayerActor(
     parcours: (candidate.parcours ?? '').trim(),
     nature: 'personnalise' as const,
     profilId: candidate.profilId ?? null,
+    personnaliteId: null,
   };
   return {
     id: PLAYER_ACTOR_ID,
@@ -131,6 +142,7 @@ export function createOpponents(difficulty: Difficulty, ruleset: Ruleset): Recor
         parcours: c.parcours,
         nature: 'fictif',
         profilId: null,
+        personnaliteId: null,
       },
       style: c.style,
       toleranceRisque: c.toleranceRisque,
@@ -150,6 +162,103 @@ export function createOpponents(difficulty: Difficulty, ruleset: Ruleset): Recor
   return opponents;
 }
 
+/** Fiche d'une personnalité réelle du jeu de règles ; erreur si elle n'existe pas. */
+export function findPersonality(ruleset: Ruleset, id: string): RealPersonality {
+  const personality = ruleset.personnalites.personnalites.find((p) => p.id === id);
+  if (!personality) {
+    throw new GameCreationError('personnalite_inconnue', `Personnalité inconnue : ${id}`);
+  }
+  return personality;
+}
+
+/**
+ * Pression de gestion du joueur selon la difficulté (§1.3) : rapport entre les moyens de
+ * départ du niveau choisi et ceux du niveau standard (appliqué aux moyens d'une personnalité).
+ */
+function playerScale(ruleset: Ruleset, difficulty: Difficulty) {
+  const r = ruleset.jeu.ressourcesInitiales;
+  const p = ruleset.jeu.promessesInitialesJoueur;
+  return {
+    budget: r[difficulty].budgetCentimes / r.standard.budgetCentimes,
+    militants: r[difficulty].militants / r.standard.militants,
+    promesses: p[difficulty] / p.standard,
+  };
+}
+
+/**
+ * Campagne d'une personnalité réelle (phase 5 bis), jouée par le joueur ou par l'IA : moyens de
+ * départ selon les niveaux de sa fiche (hypothèses du jeu de règles), position estimée d'après
+ * l'enquête CHES, aucun programme prêté par le jeu. Son comportement est simulé.
+ */
+export function createRealActor(
+  personality: RealPersonality,
+  difficulty: Difficulty,
+  ruleset: Ruleset,
+  asPlayer: boolean,
+): Actor {
+  const params = ruleset.personnalitesReelles;
+  const means = params.organisation[personality.moyens.organisation];
+  const scale = asPlayer
+    ? playerScale(ruleset, difficulty)
+    : { budget: ruleset.ia[difficulty].multiplicateurBudget, militants: 1, promesses: 1 };
+  const resources = bounded({
+    budgetCentimes: Math.round(means.budgetCentimes * scale.budget),
+    militants: Math.round(means.militants * scale.militants),
+    notoriete: params.notoriete[personality.moyens.notoriete - 1]!,
+    popularite: asPlayer
+      ? ruleset.jeu.ressourcesInitiales[difficulty].popularite
+      : params.popularite,
+    tempsHeures: ruleset.jeu.tempsHebdomadaireHeures,
+  });
+  const identity = {
+    prenom: personality.prenom,
+    nom: personality.nom,
+    parti: personality.parti,
+    positionnement: {
+      economie: personality.position.economie,
+      societe: personality.position.societe,
+    },
+    parcours: '',
+    nature: 'reel' as const,
+    profilId: null,
+    personnaliteId: personality.id,
+  };
+  return {
+    id: asPlayer ? PLAYER_ACTOR_ID : personality.id,
+    kind: asPlayer ? 'joueur' : 'adversaire',
+    label: `Campagne de ${candidateName(identity)}`,
+    candidate: identity,
+    style: asPlayer ? null : params.style,
+    toleranceRisque: asPlayer ? null : params.toleranceRisque,
+    resources,
+    status: 'candidat',
+    history: { popularite: [resources.popularite] },
+    equipe: means.equipe,
+    implantation: [...personality.implantation.regions],
+    objectif: asPlayer ? null : params.objectif,
+    programme: { propositions: [], revirements: 0 },
+    parrainages: emptyParrainages(),
+    finances: openingAccount(resources.budgetCentimes, ruleset),
+    preparationDebat: 0,
+    strategie: null,
+  };
+}
+
+/** Promesses de parrainage de départ d'un candidat (jeu de règles, difficulté pour le joueur). */
+function initialPromiseCount(state: GameState, ruleset: Ruleset, actor: Actor): number {
+  const personalityId = actor.candidate.personnaliteId;
+  if (personalityId) {
+    const personality = findPersonality(ruleset, personalityId);
+    const base = ruleset.personnalitesReelles.organisation[personality.moyens.organisation];
+    const scale =
+      actor.kind === 'joueur' ? playerScale(ruleset, state.meta.difficulty).promesses : 1;
+    return Math.round(base.promessesInitiales * scale);
+  }
+  return actor.kind === 'joueur'
+    ? ruleset.jeu.promessesInitialesJoueur[state.meta.difficulty]
+    : (ruleset.candidatsFictifs.find((c) => c.id === actor.id)?.promessesInitiales ?? 0);
+}
+
 /**
  * Promesses de parrainage de départ : celles des partis (jeu de règles) et, pour le joueur,
  * selon la difficulté. Attribuées dans l'ordre des identifiants, dans la limite des élus libres.
@@ -157,24 +266,24 @@ export function createOpponents(difficulty: Difficulty, ruleset: Ruleset): Recor
 export function distributeInitialPromises(state: GameState, ruleset: Ruleset): void {
   for (const id of Object.keys(state.actors).sort(compareStrings)) {
     const actor = state.actors[id]!;
-    const total =
-      actor.kind === 'joueur'
-        ? ruleset.jeu.promessesInitialesJoueur[state.meta.difficulty]
-        : (ruleset.candidatsFictifs.find((c) => c.id === id)?.promessesInitiales ?? 0);
+    const total = initialPromiseCount(state, ruleset, actor);
     actor.parrainages.promesses = initialPromises(state, ruleset, total, actor.implantation);
   }
 }
 
 export function createGame(input: CreateGameInput, ruleset: Ruleset): GameState {
-  if (input.mode === 'candidat_reel') {
-    throw new GameCreationError(
-      'mode_non_disponible',
-      'Le mode « candidat réel » nécessite des profils de personnalités sourcés, non encore validés (question Q2 du plan).',
-    );
-  }
   if (input.mode === 'candidat_personnalise' && !input.candidate) {
     throw new GameCreationError('candidat_requis', 'Créez votre candidat pour jouer dans ce mode.');
   }
+  if (input.mode === 'candidat_reel' && !input.personnaliteId) {
+    throw new GameCreationError(
+      'personnalite_requise',
+      'Choisissez la personnalité que vous incarnez dans ce mode.',
+    );
+  }
+  const personality =
+    input.mode === 'candidat_reel' ? findPersonality(ruleset, input.personnaliteId!) : null;
+  const adversaires: OpponentSet = input.adversaires ?? 'fictifs';
 
   const startDate = input.startDate ?? DEFAULT_START_DATE;
   const civil = parseIsoDate(startDate);
@@ -194,9 +303,19 @@ export function createGame(input: CreateGameInput, ruleset: Ruleset): GameState 
     );
   }
 
-  const actors = createOpponents(input.difficulty, ruleset);
+  // Adversaires : fictifs, ou toutes les personnalités réelles sauf celle que le joueur incarne.
+  const actors =
+    adversaires === 'reels'
+      ? Object.fromEntries(
+          ruleset.personnalites.personnalites
+            .filter((p) => p.id !== personality?.id)
+            .map((p) => [p.id, createRealActor(p, input.difficulty, ruleset, false)]),
+        )
+      : createOpponents(input.difficulty, ruleset);
   if (input.mode === 'candidat_personnalise') {
     actors[PLAYER_ACTOR_ID] = createPlayerActor(input.difficulty, ruleset, input.candidate!);
+  } else if (personality) {
+    actors[PLAYER_ACTOR_ID] = createRealActor(personality, input.difficulty, ruleset, true);
   }
   const state: GameState = {
     meta: {
@@ -213,6 +332,7 @@ export function createGame(input: CreateGameInput, ruleset: Ruleset): GameState 
     player: {
       mode: input.mode,
       actorId: input.mode === 'observateur' ? null : PLAYER_ACTOR_ID,
+      adversaires,
     },
     actors,
     scheduled: [],

@@ -1,0 +1,1094 @@
+{
+  "verifieLe": "2026-10-21",
+  "decision": "Décision de l’utilisateur du 21/10/2026 : personnalités réelles jouables et adversaires ; candidatures déclarées seulement ; photos sous licence libre créditées ; position d’après l’enquête d’experts Chapel Hill (CHES) ; candidatures dont aucun parti n’est noté par CHES non intégrées, sauf Nathalie Arthaud, François Asselineau, David Lisnard et François Ruffin (position « hypothèse »).",
+  "sources": [
+    {
+      "id": "wikipedia-candidatures-2027",
+      "titre": "Wikipédia — « Candidatures à l'élection présidentielle française de 2027 »",
+      "url": "https://fr.wikipedia.org/w/index.php?title=Candidatures_%C3%A0_l'%C3%A9lection_pr%C3%A9sidentielle_fran%C3%A7aise_de_2027&oldid=240556510",
+      "licence": "CC BY-SA 4.0 (texte de l’article) ; seuls des faits datés en sont repris, reformulés",
+      "version": "révision 240556510",
+      "consulteLe": "2026-10-21",
+      "sha256": "60b2aae30a2e8f17c26de57e50cf5ca07d6b8a3df349afacc021581bf64da8ec"
+    },
+    {
+      "id": "ches-2024",
+      "titre": "Chapel Hill Expert Survey 2024 — positions moyennes des partis",
+      "url": "https://github.com/chesdata/chesdata.github.io/releases/download/ches-europe/CHES_2024_final_v2.csv",
+      "licence": "non précisée ; usage avec citation demandé (Rovny et al., « The 2024 Chapel Hill Expert Survey on political party positioning in Europe », 2025)",
+      "version": "vague 2024 (fichier final v2)",
+      "consulteLe": "2026-10-21",
+      "sha256": "1c1ec0532afa2a0a13317122cbbe40eb9ff35425191892d1fff24fbef6acc6a8"
+    },
+    {
+      "id": "ches-1999-2024",
+      "titre": "Chapel Hill Expert Survey — fichier de tendance 1999-2024",
+      "url": "https://github.com/chesdata/chesdata.github.io/releases/download/ches-trend/1999-2024_CHES_dataset_meansV2.csv",
+      "licence": "non précisée ; usage avec citation demandé (Rovny et al., « The 2024 Chapel Hill Expert Survey on political party positioning in Europe », 2025)",
+      "version": "1999-2024 (moyennes V2)",
+      "consulteLe": "2026-10-21",
+      "sha256": "254384ab9f542bbaa62ec7e0dc36f2d0cc0471629c2c9587d0ecaed34914a033"
+    },
+    {
+      "id": "wikidata-partis",
+      "titre": "Wikidata — identifiants et partis des personnalités (propriété P102)",
+      "url": "https://query.wikidata.org/",
+      "licence": "CC0 1.0",
+      "version": "requête du 2026-10-21",
+      "consulteLe": "2026-10-21",
+      "sha256": "25589713a2f7c7da54fc37062bc8ed6d7c0f3c13387c8d4b574af51b499c1fe1"
+    },
+    {
+      "id": "insee-cog-communes",
+      "titre": "Code officiel géographique — communes",
+      "url": "https://www.insee.fr/fr/statistiques/fichier/8740222/v_commune_2026.csv",
+      "licence": "Licence Ouverte 2.0",
+      "version": "COG 2026 (au 1er janvier 2026)",
+      "consulteLe": "2026-10-20",
+      "sha256": "7be1153de3a63df48fa0ca77f8490c8a0c5c9c4eb12f5cec1ca7f70b0237b1d3"
+    },
+    {
+      "id": "insee-cog-departements",
+      "titre": "Code officiel géographique — départements",
+      "url": "https://www.insee.fr/fr/statistiques/fichier/8740222/v_departement_2026.csv",
+      "licence": "Licence Ouverte 2.0",
+      "version": "COG 2026 (au 1er janvier 2026)",
+      "consulteLe": "2026-10-20",
+      "sha256": "513900ca23edc682ef9b912d7bfc317129eac3a7d71ff19bc22b40ea4838e6eb"
+    },
+    {
+      "id": "insee-cog-regions",
+      "titre": "Code officiel géographique — régions",
+      "url": "https://www.insee.fr/fr/statistiques/fichier/8740222/v_region_2026.csv",
+      "licence": "Licence Ouverte 2.0",
+      "version": "COG 2026 (au 1er janvier 2026)",
+      "consulteLe": "2026-10-20",
+      "sha256": "d903566d9c0d263389d279baea6761917b7460749a07bec8ba37dd8f2ff7d98a"
+    }
+  ],
+  "methode": {
+    "position": "Position du parti dans l’enquête d’experts Chapel Hill (vague 2024, sinon la plus récente), convertie par (x − 5) × 20 sur chaque axe : économie = lrecon, société = galtan. Parti soutien : parti qui soutient officiellement la candidature (source). Ancien parti : dernier parti noté par CHES dont la personne a été membre selon Wikidata (P102) — hypothèse. Famille : moyenne des partis français de la même famille CHES (vague 2024) que le parti de référence — hypothèse.",
+    "notoriete": "Niveau 3 : ancien Premier ministre ou au moins 5 % des exprimés à un premier tour présidentiel. Niveau 2 : ancien ministre, ancien candidat à la présidentielle, candidat désigné par un parti, dirigeant national d’un parti représenté à l’Assemblée nationale, présidence d’une région ou d’une association nationale d’élus. Niveau 1 : autres. Faits cités de la source ; niveaux convertis en moyens par le jeu de règles (hypothèse de jeu).",
+    "organisation": "Taille du groupe à l’Assemblée nationale du parti sous l’étiquette duquel la personnalité est candidate (relevé du 19/10/2026) : grande (60 députés ou plus), moyenne (30 à 59), petite (moins de 30) ; si plusieurs candidatures déclarées partagent un parti, seule celle que le parti a désignée ou que dirige un de ses responsables nationaux en bénéficie ; au moins « petite » pour la présidence d’une région ou d’une association nationale d’élus ; sinon « aucune » (hypothèse de jeu).",
+    "implantation": "Départements des mandats en cours cités par la source (député, sénateur, maire, conseil départemental ; les départements de la région pour une présidence de région), et leurs régions selon le COG 2026."
+  },
+  "personnalites": [
+    {
+      "id": "reel-arthaud",
+      "prenom": "Nathalie",
+      "nom": "Arthaud",
+      "parti": "Lutte ouvrière",
+      "fonctions": ["Porte-parole de Lutte ouvrière (depuis 2008)"],
+      "wikidata": "Q439490",
+      "article": "https://fr.wikipedia.org/wiki/Nathalie_Arthaud",
+      "candidature": {
+        "statut": "declaree",
+        "date": "2025-12-08",
+        "libelle": "Candidature annoncée le 8 décembre 2025.",
+        "source": {
+          "titre": "Présidentielle 2027 : qui est vraiment Nathalie Arthaud, la porte-parole de Lutte ouvrière ?",
+          "url": "https://www.rtl.fr/actu/politique/presidentielle-2027-qui-est-vraiment-nathalie-arthaud-la-porte-parole-de-lutte-ouvriere-7900575536",
+          "site": "RTL.fr",
+          "date": "2025-12-09"
+        }
+      },
+      "position": {
+        "economie": -78,
+        "societe": -46,
+        "statut": "hypothese",
+        "methode": "famille",
+        "partisReference": ["PCF", "FI"],
+        "vague": 2024,
+        "ches": {
+          "lrecon": 1.09,
+          "galtan": 2.68
+        },
+        "detail": "Parti actuel absent de l’enquête CHES 2024 ; parti noté LO-LCR dans la vague CHES 1999, famille « gauche radicale » : moyenne des partis français de cette famille en 2024 (PCF, FI)."
+      },
+      "photo": {
+        "fichier": "personnalites/reel-arthaud.webp",
+        "auteur": "Kokluts",
+        "licence": "CC BY-SA 4.0",
+        "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+        "source": "https://commons.wikimedia.org/wiki/File:Nathalie_Arthaud_(LO)_19-05-2024.jpg",
+        "modification": "Redimensionnée (240 pixels de large) et convertie en WebP ; métadonnées retirées."
+      },
+      "photoAbsente": null,
+      "implantation": {
+        "departements": [],
+        "regions": [],
+        "faits": []
+      },
+      "moyens": {
+        "notoriete": 2,
+        "motifNotoriete": "ancienne candidate à la présidentielle",
+        "organisation": "aucune",
+        "motifOrganisation": "parti sans groupe à l’Assemblée nationale"
+      }
+    },
+    {
+      "id": "reel-asselineau",
+      "prenom": "François",
+      "nom": "Asselineau",
+      "parti": "Union populaire républicaine",
+      "fonctions": ["Président de l'Union populaire républicaine (depuis 2007)"],
+      "wikidata": "Q12972",
+      "article": "https://fr.wikipedia.org/wiki/Fran%C3%A7ois_Asselineau",
+      "candidature": {
+        "statut": "declaree",
+        "date": "2023-08-31",
+        "libelle": "Intention de se présenter en 2027 annoncée le 31 août 2023.",
+        "source": {
+          "titre": "Candidatures à l'élection présidentielle française de 2027 (liste des candidatures déclarées)",
+          "url": "https://fr.wikipedia.org/w/index.php?title=Candidatures_%C3%A0_l'%C3%A9lection_pr%C3%A9sidentielle_fran%C3%A7aise_de_2027&oldid=240556510",
+          "site": "Wikipédia",
+          "date": null
+        }
+      },
+      "position": {
+        "economie": 43,
+        "societe": 75,
+        "statut": "hypothese",
+        "methode": "famille",
+        "partisReference": ["RN", "REC"],
+        "vague": 2024,
+        "ches": {
+          "lrecon": 7.17,
+          "galtan": 8.73
+        },
+        "detail": "Parti actuel absent de l’enquête CHES 2024 ; ancien parti « Rassemblement pour la France » (Wikidata), noté RPF en 1999, famille « droite radicale » : moyenne des partis français de cette famille en 2024 (RN, REC)."
+      },
+      "photo": {
+        "fichier": "personnalites/reel-asselineau.webp",
+        "auteur": "Union Populaire Républicaine",
+        "licence": "CC BY-SA 4.0",
+        "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+        "source": "https://commons.wikimedia.org/wiki/File:Fran%C3%A7ois_ASSELINEAU.jpg",
+        "modification": "Redimensionnée (240 pixels de large) et convertie en WebP ; métadonnées retirées."
+      },
+      "photoAbsente": null,
+      "implantation": {
+        "departements": [],
+        "regions": [],
+        "faits": []
+      },
+      "moyens": {
+        "notoriete": 2,
+        "motifNotoriete": "ancien candidat à la présidentielle",
+        "organisation": "aucune",
+        "motifOrganisation": "parti sans groupe à l’Assemblée nationale"
+      }
+    },
+    {
+      "id": "reel-attal",
+      "prenom": "Gabriel",
+      "nom": "Attal",
+      "parti": "Renaissance",
+      "fonctions": [
+        "Secrétaire général de Renaissance (depuis 2024)",
+        "Président du groupe EPR à l'Assemblée nationale (depuis 2024)",
+        "Député de la 10e circonscription (Hauts-de-Seine) (depuis 2017)",
+        "Conseiller municipal de Vanves (depuis 2014)"
+      ],
+      "wikidata": "Q30339350",
+      "article": "https://fr.wikipedia.org/wiki/Gabriel_Attal",
+      "candidature": {
+        "statut": "declaree",
+        "date": "2026-05-22",
+        "libelle": "Candidature annoncée le 22 mai 2026.",
+        "source": {
+          "titre": "Présidentielle 2027 : Gabriel Attal officialise sa candidature à l'élection",
+          "url": "https://www.rtl.fr/actu/politique/presidentielle-2027-gabriel-attal-officialise-sa-candidature-a-l-election-presidentielle-7900637844",
+          "site": "RTL.fr",
+          "date": "2026-05-22"
+        }
+      },
+      "position": {
+        "economie": 24,
+        "societe": -18,
+        "statut": "estimation",
+        "methode": "parti",
+        "partisReference": ["RE"],
+        "vague": 2024,
+        "ches": {
+          "lrecon": 6.18,
+          "galtan": 4.09
+        },
+        "detail": "Position du parti RE dans l’enquête CHES 2024."
+      },
+      "photo": {
+        "fichier": "personnalites/reel-attal.webp",
+        "auteur": "Ismail Aissoub",
+        "licence": "CC BY 4.0",
+        "licenceUrl": "https://creativecommons.org/licenses/by/4.0",
+        "source": "https://commons.wikimedia.org/wiki/File:Gabriel_Attal_2025_(close_crop).jpg",
+        "modification": "Redimensionnée (240 pixels de large) et convertie en WebP ; métadonnées retirées."
+      },
+      "photoAbsente": null,
+      "implantation": {
+        "departements": ["92"],
+        "regions": ["11"],
+        "faits": ["Député de la 10e circonscription (Hauts-de-Seine)"]
+      },
+      "moyens": {
+        "notoriete": 3,
+        "motifNotoriete": "ancien Premier ministre",
+        "organisation": "grande",
+        "motifOrganisation": "secrétaire général de Renaissance (groupe EPR : 90 députés)"
+      }
+    },
+    {
+      "id": "reel-becht",
+      "prenom": "Olivier",
+      "nom": "Becht",
+      "parti": "Renaissance / Agir",
+      "fonctions": [
+        "Député de la 5e circonscription du Haut-Rhin apparenté Renaissance (depuis 2024)"
+      ],
+      "wikidata": "Q30348845",
+      "article": "https://fr.wikipedia.org/wiki/Olivier_Becht",
+      "candidature": {
+        "statut": "declaree",
+        "date": "2026-09-24",
+        "libelle": "Candidature annoncée le 24 septembre 2026.",
+        "source": {
+          "titre": "EXCLUSIF - « Je suis candidat à la présidentielle » : un ancien ministre d’Élisabeth Borne sort du bois",
+          "url": "https://www.parismatch.com/actu/politique/exclusif-je-suis-candidat-a-la-presidentielle-un-ancien-ministre-delisabeth-borne-sort-du-bois-276281",
+          "site": "Paris Match",
+          "date": null
+        }
+      },
+      "position": {
+        "economie": 24,
+        "societe": -18,
+        "statut": "estimation",
+        "methode": "parti",
+        "partisReference": ["RE"],
+        "vague": 2024,
+        "ches": {
+          "lrecon": 6.18,
+          "galtan": 4.09
+        },
+        "detail": "Position du parti RE dans l’enquête CHES 2024."
+      },
+      "photo": {
+        "fichier": "personnalites/reel-becht.webp",
+        "auteur": "Palácio do Planalto from Brasilia, Brasil",
+        "licence": "CC BY 2.0",
+        "licenceUrl": "https://creativecommons.org/licenses/by/2.0",
+        "source": "https://commons.wikimedia.org/wiki/File:Olivier_Becht_2023_(cropped).jpg",
+        "modification": "Redimensionnée (240 pixels de large) et convertie en WebP ; métadonnées retirées."
+      },
+      "photoAbsente": null,
+      "implantation": {
+        "departements": ["68"],
+        "regions": ["44"],
+        "faits": ["Député de la 5e circonscription du Haut-Rhin"]
+      },
+      "moyens": {
+        "notoriete": 2,
+        "motifNotoriete": "ancien ministre",
+        "organisation": "aucune",
+        "motifOrganisation": "Renaissance compte une autre candidature déclarée, portée par son secrétaire général"
+      }
+    },
+    {
+      "id": "reel-bertrand",
+      "prenom": "Xavier",
+      "nom": "Bertrand",
+      "parti": "Nous France / Les Républicains",
+      "fonctions": ["Président du conseil régional des Hauts-de-France (depuis 2016)"],
+      "wikidata": "Q203793",
+      "article": "https://fr.wikipedia.org/wiki/Xavier_Bertrand",
+      "candidature": {
+        "statut": "declaree",
+        "date": "2024-02-03",
+        "libelle": "Candidature annoncée le 3 février 2024.",
+        "source": {
+          "titre": "ENTRETIEN. Xavier Bertrand sur la présidentielle : « J’ai bien l’intention d’être candidat en 2027 »",
+          "url": "https://www.ouest-france.fr/elections/presidentielle/entretien-xavier-bertrand-a-ouest-france-jai-bien-lintention-detre-candidat-en-2027-d8f5b8a0-c29d-11ee-af40-0572f37cda9b",
+          "site": "Ouest-France",
+          "date": "2024-02-03"
+        }
+      },
+      "position": {
+        "economie": 56,
+        "societe": 44,
+        "statut": "estimation",
+        "methode": "parti",
+        "partisReference": ["LR"],
+        "vague": 2024,
+        "ches": {
+          "lrecon": 7.82,
+          "galtan": 7.18
+        },
+        "detail": "Position du parti LR dans l’enquête CHES 2024."
+      },
+      "photo": {
+        "fichier": "personnalites/reel-bertrand.webp",
+        "auteur": "Claudio Centonze / European Union, 2025 / EC - Audiovisual Service",
+        "licence": "CC BY 4.0",
+        "licenceUrl": "https://creativecommons.org/licenses/by/4.0",
+        "source": "https://commons.wikimedia.org/wiki/File:Xavier_Bertrand_-_2025_(cropped).jpg",
+        "modification": "Redimensionnée (240 pixels de large) et convertie en WebP ; métadonnées retirées."
+      },
+      "photoAbsente": null,
+      "implantation": {
+        "departements": ["02", "59", "60", "62", "80"],
+        "regions": ["32"],
+        "faits": ["Président du conseil régional des Hauts-de-France"]
+      },
+      "moyens": {
+        "notoriete": 2,
+        "motifNotoriete": "ancien ministre",
+        "organisation": "petite",
+        "motifOrganisation": "président de région (Les Républicains ont désigné une autre candidature)"
+      }
+    },
+    {
+      "id": "reel-bouamrane",
+      "prenom": "Karim",
+      "nom": "Bouamrane",
+      "parti": "Parti socialiste",
+      "fonctions": [
+        "Vice-président du Conseil départemental de la Seine-Saint-Denis (depuis 2021)",
+        "Conseiller départemental de la Seine-Saint-Denis (depuis 2021)",
+        "Maire de Saint-Ouen-sur-Seine (depuis 2020)"
+      ],
+      "wikidata": "Q98251165",
+      "article": "https://fr.wikipedia.org/wiki/Karim_Bouamrane",
+      "candidature": {
+        "statut": "declaree",
+        "date": "2026-06-09",
+        "libelle": "Candidature annoncée le 9 juin 2026.",
+        "source": {
+          "titre": "Karim Bouamrane, maire socialiste de Saint-Ouen, se déclare candidat à l’élection présidentielle",
+          "url": "https://www.lemonde.fr/politique/article/2026/06/09/karim-bouamrane-maire-socialiste-de-saint-ouen-se-declare-candidat-a-l-election-presidentielle_6700113_823448.html",
+          "site": "Le Monde",
+          "date": null
+        }
+      },
+      "position": {
+        "economie": -33,
+        "societe": -45,
+        "statut": "estimation",
+        "methode": "parti",
+        "partisReference": ["PS"],
+        "vague": 2024,
+        "ches": {
+          "lrecon": 3.36,
+          "galtan": 2.73
+        },
+        "detail": "Position du parti PS dans l’enquête CHES 2024."
+      },
+      "photo": {
+        "fichier": "personnalites/reel-bouamrane.webp",
+        "auteur": "Oumma",
+        "licence": "CC BY 4.0",
+        "licenceUrl": "https://creativecommons.org/licenses/by/4.0",
+        "source": "https://commons.wikimedia.org/wiki/File:Karim_Bouamrane_en_2026_(cropped).jpg",
+        "modification": "Redimensionnée (240 pixels de large) et convertie en WebP ; métadonnées retirées."
+      },
+      "photoAbsente": null,
+      "implantation": {
+        "departements": ["93"],
+        "regions": ["11"],
+        "faits": ["Maire de Saint-Ouen-sur-Seine"]
+      },
+      "moyens": {
+        "notoriete": 1,
+        "motifNotoriete": "aucun critère des niveaux 2 et 3",
+        "organisation": "aucune",
+        "motifOrganisation": "le Parti socialiste soutient une autre candidature (vainqueur de la primaire socialiste)"
+      }
+    },
+    {
+      "id": "reel-dupont-aignan",
+      "prenom": "Nicolas",
+      "nom": "Dupont-Aignan",
+      "parti": "Debout la France",
+      "fonctions": [
+        "Président de Debout la France (depuis 2008)",
+        "Conseiller municipal d'Yerres (depuis 1995)",
+        "Maire d'Yerres (depuis mars 2026)"
+      ],
+      "wikidata": "Q12961",
+      "article": "https://fr.wikipedia.org/wiki/Nicolas_Dupont-Aignan",
+      "candidature": {
+        "statut": "declaree",
+        "date": "2026-09-19",
+        "libelle": "Candidature officialisée le 19 septembre 2026.",
+        "source": {
+          "titre": "Présidentielle : Nicolas Dupont-Aignan officialise sa candidature et fait le pari du Frexit",
+          "url": "https://www.lejdd.fr/politique/presidentielle-nicolas-dupont-aignan-officialise-sa-candidature-et-fait-le-pari-du-frexit-183876",
+          "site": "Le Journal du dimanche",
+          "date": "2026-09-19"
+        }
+      },
+      "position": {
+        "economie": 40,
+        "societe": 66,
+        "statut": "estimation",
+        "methode": "parti",
+        "partisReference": ["DLF"],
+        "vague": 2019,
+        "ches": {
+          "lrecon": 7,
+          "galtan": 8.29
+        },
+        "detail": "Position du parti DLF dans l’enquête CHES 2019."
+      },
+      "photo": {
+        "fichier": "personnalites/reel-dupont-aignan.webp",
+        "auteur": "Debout la France",
+        "licence": "CC BY-SA 4.0",
+        "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+        "source": "https://commons.wikimedia.org/wiki/File:Nicolas_Dupont-Aignan%2C_homme_politique_fran%C3%A7ais.jpg",
+        "modification": "Redimensionnée (240 pixels de large) et convertie en WebP ; métadonnées retirées."
+      },
+      "photoAbsente": null,
+      "implantation": {
+        "departements": ["91"],
+        "regions": ["11"],
+        "faits": ["Maire d'Yerres (depuis mars 2026)"]
+      },
+      "moyens": {
+        "notoriete": 2,
+        "motifNotoriete": "ancien candidat à la présidentielle",
+        "organisation": "aucune",
+        "motifOrganisation": "parti sans groupe à l’Assemblée nationale"
+      }
+    },
+    {
+      "id": "reel-glucksmann",
+      "prenom": "Raphaël",
+      "nom": "Glucksmann",
+      "parti": "Place publique",
+      "fonctions": [
+        "Co-président de Place publique (depuis 2022)",
+        "Député européen (depuis 2019)"
+      ],
+      "wikidata": "Q556149",
+      "article": "https://fr.wikipedia.org/wiki/Rapha%C3%ABl_Glucksmann",
+      "candidature": {
+        "statut": "designee",
+        "date": "2026-10-11",
+        "libelle": "Vainqueur de la primaire socialiste le 11 octobre 2026.",
+        "source": {
+          "titre": "Résultats de la primaire socialiste : Raphaël Glucksmann élu dès le premier tour et propulsé vers la présidentielle",
+          "url": "https://www.liberation.fr/politique/elections/resultats-de-la-primaire-socialiste-raphael-glucksmann-elu-des-le-premier-tour-et-propulse-vers-la-presidentielle-20261011_HSXHVD45NJFOHG7JCKCGCYDVDY/",
+          "site": "Libération",
+          "date": "2026-10-11"
+        }
+      },
+      "position": {
+        "economie": -33,
+        "societe": -45,
+        "statut": "estimation",
+        "methode": "parti_soutien",
+        "partisReference": ["PS"],
+        "vague": 2024,
+        "ches": {
+          "lrecon": 3.36,
+          "galtan": 2.73
+        },
+        "detail": "Position du PS, qui soutient officiellement la candidature, dans l’enquête CHES 2024."
+      },
+      "photo": null,
+      "photoAbsente": "Photo non reprise : licence non reconnue comme libre (European Parliament).",
+      "implantation": {
+        "departements": [],
+        "regions": [],
+        "faits": []
+      },
+      "moyens": {
+        "notoriete": 2,
+        "motifNotoriete": "candidat désigné par une primaire de parti",
+        "organisation": "grande",
+        "motifOrganisation": "candidature soutenue par le Parti socialiste (groupe SOC : 68 députés), vainqueur de sa primaire"
+      }
+    },
+    {
+      "id": "reel-le-pen",
+      "prenom": "Marine",
+      "nom": "Le Pen",
+      "parti": "Rassemblement national",
+      "fonctions": [
+        "Présidente du groupe RN à l'Assemblée nationale (depuis 2022)",
+        "Députée de la 11e circonscription (Pas-de-Calais) (depuis 2017)"
+      ],
+      "wikidata": "Q12927",
+      "article": "https://fr.wikipedia.org/wiki/Marine_Le_Pen",
+      "candidature": {
+        "statut": "declaree",
+        "date": "2026-07-07",
+        "libelle": "Candidature confirmée le 7 juillet 2026.",
+        "source": {
+          "titre": "« Je suis candidate à l’élection présidentielle », annonce Marine Le Pen sur TF1",
+          "url": "https://fr.euronews.com/my-europe/2026/07/07/je-suis-candidate-a-lelection-presidentielle-annonce-marine-le-pen-sur-tf1",
+          "site": "Euronews",
+          "date": "2026-07-07"
+        }
+      },
+      "position": {
+        "economie": 20,
+        "societe": 67,
+        "statut": "estimation",
+        "methode": "parti",
+        "partisReference": ["RN"],
+        "vague": 2024,
+        "ches": {
+          "lrecon": 6,
+          "galtan": 8.36
+        },
+        "detail": "Position du parti RN dans l’enquête CHES 2024."
+      },
+      "photo": {
+        "fichier": "personnalites/reel-le-pen.webp",
+        "auteur": "Vox España",
+        "licence": "CC0",
+        "licenceUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+        "source": "https://commons.wikimedia.org/wiki/File:Marine_Le_Pen_2025_(cropped).jpg",
+        "modification": "Redimensionnée (240 pixels de large) et convertie en WebP ; métadonnées retirées."
+      },
+      "photoAbsente": null,
+      "implantation": {
+        "departements": ["62"],
+        "regions": ["32"],
+        "faits": ["Députée de la 11e circonscription (Pas-de-Calais)"]
+      },
+      "moyens": {
+        "notoriete": 3,
+        "motifNotoriete": "plus de 5 % au premier tour de la présidentielle de 2022",
+        "organisation": "grande",
+        "motifOrganisation": "présidente du groupe RN (121 députés)"
+      }
+    },
+    {
+      "id": "reel-lisnard",
+      "prenom": "David",
+      "nom": "Lisnard",
+      "parti": "Nouvelle Énergie",
+      "fonctions": [
+        "Président de l'Association des maires de France (depuis novembre 2021)",
+        "Président de la communauté d'agglomération Cannes Pays de Lérins (depuis 2017)",
+        "Maire de Cannes (depuis 2014)",
+        "Conseiller départemental des Alpes-Maritimes (depuis 2008)"
+      ],
+      "wikidata": "Q3018298",
+      "article": "https://fr.wikipedia.org/wiki/David_Lisnard",
+      "candidature": {
+        "statut": "declaree",
+        "date": "2026-03-31",
+        "libelle": "Candidature annoncée le 31 mars 2026, en faveur d’une primaire de la droite.",
+        "source": {
+          "titre": "Le maire de Cannes, David Lisnard, annonce sa candidature à l'élection présidentielle et officialise son départ des Républicains",
+          "url": "https://www.franceinfo.fr/elections/presidentielle/le-maire-de-cannes-david-lisnard-annonce-sa-candidature-a-l-election-presidentielle-et-officialise-son-depart-des-republicains_7907063.html",
+          "site": "Franceinfo.fr",
+          "date": null
+        }
+      },
+      "position": {
+        "economie": 56,
+        "societe": 44,
+        "statut": "hypothese",
+        "methode": "ancien_parti",
+        "partisReference": ["LR"],
+        "vague": 2024,
+        "ches": {
+          "lrecon": 7.82,
+          "galtan": 7.18
+        },
+        "detail": "Parti actuel absent de l’enquête CHES : position de « Les Républicains » (2015-05-30 → 2026-03-31), parti dont Wikidata indique l’appartenance, dans l’enquête CHES 2024."
+      },
+      "photo": {
+        "fichier": "personnalites/reel-lisnard.webp",
+        "auteur": "Grégor Sauvagère",
+        "licence": "CC BY-SA 4.0",
+        "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+        "source": "https://commons.wikimedia.org/wiki/File:David_Lisnard_en_2026.jpg",
+        "modification": "Redimensionnée (240 pixels de large) et convertie en WebP ; métadonnées retirées."
+      },
+      "photoAbsente": null,
+      "implantation": {
+        "departements": ["06"],
+        "regions": ["93"],
+        "faits": ["Maire de Cannes"]
+      },
+      "moyens": {
+        "notoriete": 2,
+        "motifNotoriete": "président d’une association nationale d’élus",
+        "organisation": "petite",
+        "motifOrganisation": "président d’une association nationale d’élus ; parti sans groupe à l’Assemblée nationale"
+      }
+    },
+    {
+      "id": "reel-melenchon",
+      "prenom": "Jean-Luc",
+      "nom": "Mélenchon",
+      "parti": "La France insoumise",
+      "fonctions": [],
+      "wikidata": "Q5829",
+      "article": "https://fr.wikipedia.org/wiki/Jean-Luc_M%C3%A9lenchon",
+      "candidature": {
+        "statut": "declaree",
+        "date": "2026-05-03",
+        "libelle": "Candidature annoncée le 3 mai 2026.",
+        "source": {
+          "titre": "Jean-Luc Mélenchon annonce être candidat à l’élection présidentielle pour la quatrième fois, sur une ligne toujours plus « antisystème »",
+          "url": "https://www.lemonde.fr/politique/article/2026/05/03/jean-luc-melenchon-annonce-etre-candidat-a-l-election-presidentielle-pour-la-quatrieme-fois-sur-une-ligne-toujours-plus-antisysteme_6685247_823448.html",
+          "site": "Le Monde",
+          "date": null
+        }
+      },
+      "position": {
+        "economie": -82,
+        "societe": -64,
+        "statut": "estimation",
+        "methode": "parti",
+        "partisReference": ["FI"],
+        "vague": 2024,
+        "ches": {
+          "lrecon": 0.91,
+          "galtan": 1.82
+        },
+        "detail": "Position du parti FI dans l’enquête CHES 2024."
+      },
+      "photo": {
+        "fichier": "personnalites/reel-melenchon.webp",
+        "auteur": "jlm2017.fr",
+        "licence": "CC BY 4.0",
+        "licenceUrl": "https://creativecommons.org/licenses/by/4.0",
+        "source": "https://commons.wikimedia.org/wiki/File:Jean_Luc_M%C3%A9lenchon_en_mai_2026-_55261894422_(cropped).jpg",
+        "modification": "Redimensionnée (240 pixels de large) et convertie en WebP ; métadonnées retirées."
+      },
+      "photoAbsente": null,
+      "implantation": {
+        "departements": [],
+        "regions": [],
+        "faits": []
+      },
+      "moyens": {
+        "notoriete": 3,
+        "motifNotoriete": "plus de 5 % au premier tour de la présidentielle de 2022",
+        "organisation": "grande",
+        "motifOrganisation": "seule candidature déclarée de La France insoumise (groupe LFI-NFP : 70 députés)"
+      }
+    },
+    {
+      "id": "reel-philippe",
+      "prenom": "Édouard",
+      "nom": "Philippe",
+      "parti": "Horizons",
+      "fonctions": [
+        "Président d'Horizons (depuis octobre 2021)",
+        "Maire du Havre (depuis juillet 2020)",
+        "Président de Le Havre Seine Métropole (depuis 2020)"
+      ],
+      "wikidata": "Q3579995",
+      "article": "https://fr.wikipedia.org/wiki/%C3%89douard_Philippe",
+      "candidature": {
+        "statut": "declaree",
+        "date": "2024-09-03",
+        "libelle": "Candidature annoncée le 3 septembre 2024.",
+        "source": {
+          "titre": "EXCLUSIF. Édouard Philippe : « Je serai candidat à la prochaine élection présidentielle »",
+          "url": "https://www.lepoint.fr/politique/exclusif-edouard-philippe-je-serai-candidat-a-la-prochaine-election-presidentielle-03-09-2024-2569359_20.php",
+          "site": "Le Point",
+          "date": "2024-09-03"
+        }
+      },
+      "position": {
+        "economie": 36,
+        "societe": 6,
+        "statut": "estimation",
+        "methode": "parti",
+        "partisReference": ["Horizons"],
+        "vague": 2024,
+        "ches": {
+          "lrecon": 6.8,
+          "galtan": 5.3
+        },
+        "detail": "Position du parti Horizons dans l’enquête CHES 2024."
+      },
+      "photo": {
+        "fichier": "personnalites/reel-philippe.webp",
+        "auteur": "Wasasaq8",
+        "licence": "CC0",
+        "licenceUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+        "source": "https://commons.wikimedia.org/wiki/File:Edouard_Philippe_3x4_crop.jpg",
+        "modification": "Redimensionnée (240 pixels de large) et convertie en WebP ; métadonnées retirées."
+      },
+      "photoAbsente": null,
+      "implantation": {
+        "departements": ["76"],
+        "regions": ["28"],
+        "faits": ["Maire du Havre"]
+      },
+      "moyens": {
+        "notoriete": 3,
+        "motifNotoriete": "ancien Premier ministre",
+        "organisation": "moyenne",
+        "motifOrganisation": "président d’Horizons (groupe HOR : 35 députés)"
+      }
+    },
+    {
+      "id": "reel-retailleau",
+      "prenom": "Bruno",
+      "nom": "Retailleau",
+      "parti": "Les Républicains",
+      "fonctions": [
+        "Président des Républicains (depuis 2025)",
+        "Sénateur de la Vendée (depuis 2025)",
+        "Conseiller régional des Pays de la Loire (depuis 2015)"
+      ],
+      "wikidata": "Q2926942",
+      "article": "https://fr.wikipedia.org/wiki/Bruno_Retailleau",
+      "candidature": {
+        "statut": "designee",
+        "date": "2026-04-19",
+        "libelle": "Désigné candidat par Les Républicains le 19 avril 2026.",
+        "source": {
+          "titre": "Bruno Retailleau désigné candidat de LR pour l’élection présidentielle 2027 par les adhérents du parti au cours d’une consultation",
+          "url": "https://www.lemonde.fr/politique/article/2026/04/19/presidentielle-2027-bruno-retailleau-designe-candidat-des-republicains-par-les-adherents-du-parti-au-cours-d-une-consultation_6681477_823448.html",
+          "site": "Le Monde",
+          "date": "2026-02-12"
+        }
+      },
+      "position": {
+        "economie": 56,
+        "societe": 44,
+        "statut": "estimation",
+        "methode": "parti",
+        "partisReference": ["LR"],
+        "vague": 2024,
+        "ches": {
+          "lrecon": 7.82,
+          "galtan": 7.18
+        },
+        "detail": "Position du parti LR dans l’enquête CHES 2024."
+      },
+      "photo": {
+        "fichier": "personnalites/reel-retailleau.webp",
+        "auteur": "Anthonymontardyfr",
+        "licence": "CC BY 4.0",
+        "licenceUrl": "https://creativecommons.org/licenses/by/4.0",
+        "source": "https://commons.wikimedia.org/wiki/File:Bruno_Retailleau_-_Ministre_de_l'Int%C3%A9rieur_fran%C3%A7ais_(cropped).jpg",
+        "modification": "Redimensionnée (240 pixels de large) et convertie en WebP ; métadonnées retirées."
+      },
+      "photoAbsente": null,
+      "implantation": {
+        "departements": ["85"],
+        "regions": ["52"],
+        "faits": ["Sénateur de la Vendée (depuis 2025)"]
+      },
+      "moyens": {
+        "notoriete": 2,
+        "motifNotoriete": "ancien ministre",
+        "organisation": "moyenne",
+        "motifOrganisation": "président des Républicains, désigné par son parti (groupe DR : 47 députés)"
+      }
+    },
+    {
+      "id": "reel-roussel",
+      "prenom": "Fabien",
+      "nom": "Roussel",
+      "parti": "Parti communiste français",
+      "fonctions": [
+        "Maire de Saint-Amand-les-Eaux (depuis 2025)",
+        "Secrétaire national du Parti communiste français (depuis 2018)"
+      ],
+      "wikidata": "Q30388733",
+      "article": "https://fr.wikipedia.org/wiki/Fabien_Roussel",
+      "candidature": {
+        "statut": "designee",
+        "date": "2026-09-06",
+        "libelle": "Désigné candidat par le Parti communiste français le 6 septembre 2026.",
+        "source": {
+          "titre": "Présidentielle 2027 : adoubé par ses militants, le communiste Fabien Roussel officialise sa candidature en solitaire",
+          "url": "https://www.lefigaro.fr/elections/presidentielles/candidats/presidentielle-2027-adoube-par-ses-militants-le-communiste-fabien-roussel-officialise-sa-candidature-en-solitaire-20260906",
+          "site": "Le Figaro",
+          "date": "2026-09-06"
+        }
+      },
+      "position": {
+        "economie": -75,
+        "societe": -29,
+        "statut": "estimation",
+        "methode": "parti",
+        "partisReference": ["PCF"],
+        "vague": 2024,
+        "ches": {
+          "lrecon": 1.27,
+          "galtan": 3.55
+        },
+        "detail": "Position du parti PCF dans l’enquête CHES 2024."
+      },
+      "photo": {
+        "fichier": "personnalites/reel-roussel.webp",
+        "auteur": "Zouhair NAKARA",
+        "licence": "CC BY-SA 4.0",
+        "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+        "source": "https://commons.wikimedia.org/wiki/File:Roussel_Fabien_1.jpg",
+        "modification": "Redimensionnée (240 pixels de large) et convertie en WebP ; métadonnées retirées."
+      },
+      "photoAbsente": null,
+      "implantation": {
+        "departements": ["59"],
+        "regions": ["32"],
+        "faits": ["Maire de Saint-Amand-les-Eaux"]
+      },
+      "moyens": {
+        "notoriete": 2,
+        "motifNotoriete": "ancien candidat à la présidentielle, dirigeant national de son parti",
+        "organisation": "petite",
+        "motifOrganisation": "secrétaire national du PCF (groupe GDR : 17 députés)"
+      }
+    },
+    {
+      "id": "reel-ruffin",
+      "prenom": "François",
+      "nom": "Ruffin",
+      "parti": "Debout !",
+      "fonctions": [
+        "Président de Debout ! (depuis 2025)",
+        "Député de la 1re circonscription (Somme) (depuis 2017)"
+      ],
+      "wikidata": "Q3085763",
+      "article": "https://fr.wikipedia.org/wiki/Fran%C3%A7ois_Ruffin",
+      "candidature": {
+        "statut": "declaree",
+        "date": "2025-04-01",
+        "libelle": "Candidature annoncée le 1er avril 2025.",
+        "source": {
+          "titre": "Ruffin s’élance vers 2027 avec un meeting contre « les trop mous et les trop fous »",
+          "url": "https://www.huffingtonpost.fr/politique/article/presidentielle-2027-francois-ruffin-lance-sa-campagne-avec-un-meeting-contre-les-trop-mous-et-les-trop-fous_248275.html",
+          "site": "Le HuffPost",
+          "date": "2025-04-02"
+        }
+      },
+      "position": {
+        "economie": -75,
+        "societe": -29,
+        "statut": "hypothese",
+        "methode": "ancien_parti",
+        "partisReference": ["PCF"],
+        "vague": 2024,
+        "ches": {
+          "lrecon": 1.27,
+          "galtan": 3.55
+        },
+        "detail": "Parti actuel absent de l’enquête CHES : position de « Parti communiste français » (dates non renseignées), parti dont Wikidata indique l’appartenance, dans l’enquête CHES 2024."
+      },
+      "photo": {
+        "fichier": "personnalites/reel-ruffin.webp",
+        "auteur": "Thinkerview",
+        "licence": "CC BY-SA 4.0",
+        "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+        "source": "https://commons.wikimedia.org/wiki/File:Fran%C3%A7ois_Ruffin_(cropped).jpg",
+        "modification": "Redimensionnée (240 pixels de large) et convertie en WebP ; métadonnées retirées."
+      },
+      "photoAbsente": null,
+      "implantation": {
+        "departements": ["80"],
+        "regions": ["32"],
+        "faits": ["Député de la 1re circonscription (Somme)"]
+      },
+      "moyens": {
+        "notoriete": 2,
+        "motifNotoriete": "dirigeant national d’un parti représenté à l’Assemblée nationale",
+        "organisation": "aucune",
+        "motifOrganisation": "parti sans groupe à l’Assemblée nationale"
+      }
+    },
+    {
+      "id": "reel-tondelier",
+      "prenom": "Marine",
+      "nom": "Tondelier",
+      "parti": "Les Écologistes",
+      "fonctions": [
+        "Secrétaire nationale des Écologistes (depuis 2022)",
+        "Conseillère régionale des Hauts-de-France (depuis 2021)"
+      ],
+      "wikidata": "Q29917987",
+      "article": "https://fr.wikipedia.org/wiki/Marine_Tondelier",
+      "candidature": {
+        "statut": "designee",
+        "date": "2026-09-21",
+        "libelle": "Désignée candidate par Les Écologistes le 21 septembre 2026.",
+        "source": {
+          "titre": "Marine Tondelier, candidate des Ecologistes à l’élection présidentielle, annonce avoir donné naissance à son deuxième enfant",
+          "url": "https://www.lemonde.fr/politique/article/2026/09/23/marine-tondelier-candidate-des-ecologistes-a-l-election-presidentielle-annonce-avoir-donne-naissance-a-son-deuxieme-enfant_6780790_823448.html",
+          "site": "Le Monde",
+          "date": "2026-09-23"
+        }
+      },
+      "position": {
+        "economie": -54,
+        "societe": -66,
+        "statut": "estimation",
+        "methode": "parti",
+        "partisReference": ["LE/EELV"],
+        "vague": 2024,
+        "ches": {
+          "lrecon": 2.3,
+          "galtan": 1.7
+        },
+        "detail": "Position du parti LE/EELV dans l’enquête CHES 2024."
+      },
+      "photo": {
+        "fichier": "personnalites/reel-tondelier.webp",
+        "auteur": "Greenbox",
+        "licence": "CC BY-SA 4.0",
+        "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+        "source": "https://commons.wikimedia.org/wiki/File:20210819_tondelier.m-cr3.jpg",
+        "modification": "Redimensionnée (240 pixels de large) et convertie en WebP ; métadonnées retirées."
+      },
+      "photoAbsente": null,
+      "implantation": {
+        "departements": [],
+        "regions": [],
+        "faits": []
+      },
+      "moyens": {
+        "notoriete": 2,
+        "motifNotoriete": "dirigeante nationale de son parti",
+        "organisation": "moyenne",
+        "motifOrganisation": "secrétaire nationale des Écologistes (groupe EcoS : 38 députés)"
+      }
+    },
+    {
+      "id": "reel-zemmour",
+      "prenom": "Éric",
+      "nom": "Zemmour",
+      "parti": "Reconquête",
+      "fonctions": ["Président de Reconquête (depuis 2021)"],
+      "wikidata": "Q288477",
+      "article": "https://fr.wikipedia.org/wiki/%C3%89ric_Zemmour",
+      "candidature": {
+        "statut": "declaree",
+        "date": "2026-09-17",
+        "libelle": "Candidature confirmée le 17 septembre 2026.",
+        "source": {
+          "titre": "\"Je serai candidat\": Éric Zemmour annonce sur BFMTV qu'il se présentera à l'élection présidentielle",
+          "url": "https://www.bfmtv.com/politique/elections/presidentielle/je-serai-candidat-eric-zemmour-annonce-sur-bfmtv-qu-il-se-presentera-a-l-election-presidentielle_AV-202609170947.html",
+          "site": "BFM TV",
+          "date": "2026-09-17"
+        }
+      },
+      "position": {
+        "economie": 67,
+        "societe": 82,
+        "statut": "estimation",
+        "methode": "parti",
+        "partisReference": ["REC"],
+        "vague": 2024,
+        "ches": {
+          "lrecon": 8.33,
+          "galtan": 9.1
+        },
+        "detail": "Position du parti REC dans l’enquête CHES 2024."
+      },
+      "photo": {
+        "fichier": "personnalites/reel-zemmour.webp",
+        "auteur": "Anh De France",
+        "licence": "CC0",
+        "licenceUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+        "source": "https://commons.wikimedia.org/wiki/File:Portrait_%C3%89ric_Zemmour%2C_avril_2022_cropped.jpg",
+        "modification": "Redimensionnée (240 pixels de large) et convertie en WebP ; métadonnées retirées."
+      },
+      "photoAbsente": null,
+      "implantation": {
+        "departements": [],
+        "regions": [],
+        "faits": []
+      },
+      "moyens": {
+        "notoriete": 3,
+        "motifNotoriete": "plus de 5 % au premier tour de la présidentielle de 2022",
+        "organisation": "aucune",
+        "motifOrganisation": "parti sans groupe à l’Assemblée nationale"
+      }
+    }
+  ],
+  "nonIntegrees": [
+    {
+      "prenom": "Delphine",
+      "nom": "Batho",
+      "parti": "Génération écologie",
+      "motif": "Aucun parti noté par l’enquête d’experts CHES (décision du 21/10/2026)."
+    },
+    {
+      "prenom": "Bernard",
+      "nom": "Cazeneuve",
+      "parti": "La Convention",
+      "motif": "Aucun parti noté par l’enquête d’experts CHES (décision du 21/10/2026)."
+    },
+    {
+      "prenom": "Sylvain",
+      "nom": "Durif",
+      "parti": "Sans étiquette",
+      "motif": "Aucun parti noté par l’enquête d’experts CHES (décision du 21/10/2026)."
+    },
+    {
+      "prenom": "Anasse",
+      "nom": "Kazib",
+      "parti": "Révolution permanente",
+      "motif": "Aucun parti noté par l’enquête d’experts CHES (décision du 21/10/2026)."
+    },
+    {
+      "prenom": "Selma",
+      "nom": "Labib",
+      "parti": "NPA – Révolutionnaires",
+      "motif": "Aucun parti noté par l’enquête d’experts CHES (décision du 21/10/2026)."
+    },
+    {
+      "prenom": "Francis",
+      "nom": "Lalanne",
+      "parti": "France Libre",
+      "motif": "Aucun parti noté par l’enquête d’experts CHES (décision du 21/10/2026)."
+    },
+    {
+      "prenom": "Mira",
+      "nom": "Markovic",
+      "parti": "Parti animaliste",
+      "motif": "Aucun parti noté par l’enquête d’experts CHES (décision du 21/10/2026)."
+    },
+    {
+      "prenom": "Benoît",
+      "nom": "Mathieu",
+      "parti": "Sans étiquette",
+      "motif": "Aucun parti noté par l’enquête d’experts CHES (décision du 21/10/2026)."
+    },
+    {
+      "prenom": "Antoine",
+      "nom": "Mikolajczak",
+      "parti": "Équinoxe",
+      "motif": "Aucun parti noté par l’enquête d’experts CHES (décision du 21/10/2026)."
+    },
+    {
+      "prenom": "Manolo",
+      "nom": "Mlekuz",
+      "parti": "Trajectoire",
+      "motif": "Aucun parti noté par l’enquête d’experts CHES (décision du 21/10/2026)."
+    },
+    {
+      "prenom": "Florian",
+      "nom": "Philippot",
+      "parti": "Les Patriotes",
+      "motif": "Aucun parti noté par l’enquête d’experts CHES (décision du 21/10/2026)."
+    },
+    {
+      "prenom": "Gilles",
+      "nom": "Platret",
+      "parti": "Divers droite",
+      "motif": "Aucun parti noté par l’enquête d’experts CHES (décision du 21/10/2026)."
+    },
+    {
+      "prenom": "Natacha",
+      "nom": "Polony",
+      "parti": "Sans étiquette",
+      "motif": "Aucun parti noté par l’enquête d’experts CHES (décision du 21/10/2026)."
+    }
+  ]
+}

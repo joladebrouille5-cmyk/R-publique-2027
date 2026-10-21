@@ -4,31 +4,39 @@ import {
   START_DATE_MIN,
   type Difficulty,
   type GameMode,
+  type OpponentSet,
 } from '@r2027/shared';
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router';
 import { useCreateGame } from '../api/hooks';
 import { ErrorMessage } from '../components/ErrorMessage';
 import { buttonPrimary, card, input, label } from '../components/ui';
-import { DIFFICULTY_LABELS, MODE_LABELS } from '../labels';
+import { DIFFICULTY_LABELS, MODE_LABELS, OPPONENT_SET_LABELS } from '../labels';
 import { CandidateForm, EMPTY_CANDIDATE, type CandidateDraft } from './new-game/CandidateForm';
+import { PersonalityPicker } from './new-game/PersonalityPicker';
 
-const MODES: { value: GameMode; description: string; available: boolean }[] = [
+const MODES: { value: GameMode; description: string }[] = [
   {
     value: 'candidat_personnalise',
-    description: 'Créez votre candidat et votre parti, face à des adversaires fictifs.',
-    available: true,
-  },
-  {
-    value: 'observateur',
-    description: 'Suivez la campagne des candidats fictifs sans la contrôler.',
-    available: true,
+    description: 'Créez votre candidat et votre parti.',
   },
   {
     value: 'candidat_reel',
     description:
-      'Incarnez une personnalité réelle : en attente de profils sourcés et d’une validation juridique (question Q2 du plan).',
-    available: false,
+      'Incarnez une personnalité ayant déclaré sa candidature (fiche sourcée) ; tout ce qui se passe dans la partie est simulé.',
+  },
+  {
+    value: 'observateur',
+    description: 'Suivez la campagne des candidats sans la contrôler.',
+  },
+];
+
+const OPPONENTS: { value: OpponentSet; description: string }[] = [
+  { value: 'fictifs', description: 'Sept candidats inventés par le jeu.' },
+  {
+    value: 'reels',
+    description:
+      'Les personnalités ayant déclaré leur candidature et retenues pour le jeu (fiches sourcées) ; leur comportement est simulé.',
   },
 ];
 
@@ -47,16 +55,23 @@ export function NewGame() {
   const [startDate, setStartDate] = useState(DEFAULT_START_DATE);
   const [seed, setSeed] = useState('');
   const [candidate, setCandidate] = useState<CandidateDraft>(EMPTY_CANDIDATE);
-  const [missing, setMissing] = useState(false);
+  const [personality, setPersonality] = useState<string | null>(null);
+  const [opponents, setOpponents] = useState<OpponentSet>('fictifs');
+  const [missing, setMissing] = useState<string | null>(null);
   const withCandidate = mode === 'candidat_personnalise';
+  const withPersonality = mode === 'candidat_reel';
 
   const onSubmit = (event: FormEvent) => {
     event.preventDefault();
     if (withCandidate && (!candidate.nom.trim() || !candidate.parti.trim())) {
-      setMissing(true);
+      setMissing('Indiquez au moins le nom du candidat et son parti.');
       return;
     }
-    setMissing(false);
+    if (withPersonality && !personality) {
+      setMissing('Choisissez la personnalité que vous incarnez.');
+      return;
+    }
+    setMissing(null);
     const { economie, societe, ...identity } = candidate;
     createGame.mutate(
       {
@@ -68,6 +83,8 @@ export function NewGame() {
         ...(withCandidate
           ? { candidate: { ...identity, positionnement: { economie, societe } } }
           : {}),
+        ...(withPersonality && personality ? { personnaliteId: personality } : {}),
+        adversaires: opponents,
       },
       { onSuccess: (game) => void navigate(`/parties/${game.id}/tableau-de-bord`) },
     );
@@ -96,24 +113,18 @@ export function NewGame() {
           {MODES.map((option) => (
             <label
               key={option.value}
-              className={`flex gap-3 rounded-lg border border-slate-200 p-3 dark:border-slate-800 ${option.available ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}
+              className="flex cursor-pointer gap-3 rounded-lg border border-slate-200 p-3 dark:border-slate-800"
             >
               <input
                 type="radio"
                 name="mode"
                 value={option.value}
                 checked={mode === option.value}
-                disabled={!option.available}
                 onChange={() => setMode(option.value)}
                 className="mt-1"
               />
               <span>
                 <span className="font-medium">{MODE_LABELS[option.value]}</span>
-                {!option.available && (
-                  <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900 dark:bg-amber-900/40 dark:text-amber-100">
-                    Non disponible
-                  </span>
-                )}
                 <span className="block text-sm text-slate-600 dark:text-slate-400">
                   {option.description}
                 </span>
@@ -123,6 +134,34 @@ export function NewGame() {
         </fieldset>
 
         {withCandidate && <CandidateForm value={candidate} onChange={setCandidate} />}
+        {withPersonality && <PersonalityPicker value={personality} onChange={setPersonality} />}
+
+        <fieldset className="space-y-2">
+          <legend className={label}>Adversaires</legend>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {OPPONENTS.map((option) => (
+              <label
+                key={option.value}
+                className="flex cursor-pointer gap-3 rounded-lg border border-slate-200 p-3 dark:border-slate-800"
+              >
+                <input
+                  type="radio"
+                  name="adversaires"
+                  value={option.value}
+                  checked={opponents === option.value}
+                  onChange={() => setOpponents(option.value)}
+                  className="mt-1"
+                />
+                <span>
+                  <span className="font-medium">{OPPONENT_SET_LABELS[option.value]}</span>
+                  <span className="block text-xs text-slate-600 dark:text-slate-400">
+                    {option.description}
+                  </span>
+                </span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
 
         <fieldset className="space-y-2">
           <legend className={label}>Difficulté</legend>
@@ -194,7 +233,7 @@ export function NewGame() {
 
         {missing && (
           <p role="alert" className="text-sm text-red-700 dark:text-red-400">
-            Indiquez au moins le nom du candidat et son parti.
+            {missing}
           </p>
         )}
         {createGame.isError && <ErrorMessage error={createGame.error} />}

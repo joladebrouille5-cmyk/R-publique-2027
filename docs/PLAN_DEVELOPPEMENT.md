@@ -342,7 +342,7 @@ Réalisé :
 - Une partie migrée depuis le format 4 garde des parrainages « non modélisés » (personne n'y est écarté) et un compte « partiel » (budget courant repris comme apport).
 - Sources non relues pendant la phase (Légifrance refusé, CNCCFP et Conseil constitutionnel injoignables depuis l'environnement le 21/10/2026) : les valeurs reprises sont celles vérifiées en phases 0 et 4, sans ajout.
 
-### Phase 5 bis — Personnalités politiques réelles
+### Phase 5 bis — Personnalités politiques réelles ✅
 
 Décision Q2 du 21/10/2026 (ci-dessous, [§5](#5-questions-ouvertes)) : les personnalités réelles sont **jouables** (mode « candidat réel ») **et adversaires** (scénario « adversaires réels », le scénario fictif restant disponible) ; ne sont proposées que les personnes ayant **déclaré publiquement leur candidature** à la présidentielle de 2027, avec la date et la source de la déclaration ; **photos sous licence libre** (Wikimedia Commons) avec auteur, licence et lien affichés ; position sur les deux axes du jeu = position du **parti** dans le Chapel Hill Expert Survey (vague la plus récente), convertie selon une méthode documentée et étiquetée `estimation`.
 
@@ -357,7 +357,36 @@ Décision Q2 du 21/10/2026 (ci-dessous, [§5](#5-questions-ouvertes)) : les pers
 
 **Règles** : aucun propos ni aucune citation attribués à une personne réelle ; aucune information personnelle hors faits publics liés au mandat et à la candidature ; tout comportement d'une personnalité dans la partie est une **simulation**, présentée comme telle ; une modification de la liste (nouvelle déclaration, retrait) donne une nouvelle version du jeu de règles. Relecture juridique recommandée avant toute mise en ligne publique ([R-06](./RISQUES.md)).
 
-**Prérequis bloquant** : accès réseau aux sources, injoignables depuis l'environnement cloud le 21/10/2026 : `www.wikidata.org` et `query.wikidata.org` (faits structurés, CC0), `fr.wikipedia.org` (liste des candidatures déclarées et leurs références), `commons.wikimedia.org` et `upload.wikimedia.org` (photos et licences), `www.chesdata.eu` (positions des partis).
+**Prérequis** : accès réseau aux sources, ouvert par l'utilisateur le 21/10/2026 (`www.wikidata.org`, `query.wikidata.org`, `fr.wikipedia.org`, `commons.wikimedia.org`, `upload.wikimedia.org`, `www.chesdata.eu` ; fichiers CHES servis par GitHub). L'API MediaWiki (`/w/api.php`) répond « trop de requêtes » depuis l'environnement : l'importeur lit le wikicode (`action=raw`) et les pages HTML des fichiers ; les vignettes de `thumb.wikimedia.org` (non autorisé) sont remplacées par les originaux réduits localement.
+
+Décision complémentaire de l'utilisateur (21/10/2026) : candidatures dont aucun parti n'est noté par CHES non intégrées, **sauf Nathalie Arthaud, François Asselineau, David Lisnard et François Ruffin** (position « hypothèse » à rattachement documenté).
+
+**Bilan (21/10/2026)** — les six tâches sont réalisées.
+
+| Vérification | Résultat |
+|---|---|
+| `pnpm lint`, `pnpm format:check`, `pnpm typecheck` | sans erreur |
+| `pnpm test` | 256 tests réussis : moteur 125, import de données 39 (12 nouveaux), interface 52, sauvegardes 20, jeu de règles 16 (5 nouveaux), contrats 4 |
+| `pnpm test:integration` (API + PostgreSQL 16 réel) | 76 tests réussis (création en mode candidat réel, adversaires réels, observateur, fiches servies avec le jeu de règles, requêtes invalides refusées) |
+| `pnpm test:e2e` (Playwright, bureau + mobile) | 32 tests réussis, dont le nouveau scénario « incarner une personnalité réelle face aux adversaires réels » (photos décodées, rappels de simulation, audit axe-core de la création et de l'écran Candidats) |
+| `pnpm data:personnalites` (révision 240556510 de l'article) | 30 candidatures déclarées lues ; 17 fiches retenues (16 photos sous licence libre : CC0, CC BY, CC BY-SA ; 1 refusée : licence « European Parliament ») ; 13 candidatures listées comme non intégrées ; chaque fait cité vérifié mot pour mot dans la source |
+| Contrôle visuel (bureau, mobile, thème sombre) | choix de la personnalité, fiches, crédits, sources et méthode lisibles ; carte des positions lisible avec 17 candidats (étiquette du joueur seule, tableau des positions) ; aucun défilement horizontal |
+
+Réalisé :
+- **P5b-01** : importeur `pnpm data:personnalites` (`packages/data-import/src/personnalites`) : lecture du tableau des candidatures déclarées (révision figée, références nommées résolues), dates françaises sous toutes leurs formes, faits cités vérifiés, Wikidata (identifiants, partis P102 avec dates), licences et auteurs lus sur Commons, photos réduites à 240 pixels en WebP **sans métadonnées** (une photo d'origine contenait des coordonnées GPS), positions CHES (vague 2024 et fichier de tendance), communes et régions vérifiées dans le COG 2026, manifeste des sources avec empreintes. Garde-fous : l'import échoue si une personne n'est plus dans le tableau, si un fait cité est introuvable, si une référence de candidature porte sur une procédure judiciaire, ou si une nouvelle candidature d'un parti noté par CHES n'est pas prévue par la sélection.
+- **P5b-02** : jeu de règles `presidentielle-2027@4.0.0` : fiches jointes (`personnalites-2027.json`, empreinte vérifiée par les tests : une réimportation impose une nouvelle version), paramètres de jeu des moyens de départ (hypothèses : notoriété par niveau, organisation par niveau, popularité identique, style et goût du risque identiques, aucun programme prêté).
+- **P5b-03** : format de sauvegarde 6 (`nature: 'reel'`, `personnaliteId`, `player.adversaires`) et migration 5 → 6, testée sur un état réel produit par le moteur de la phase 5 (semaine 29, entre les deux tours, un ralliement), puis menée au second tour.
+- **P5b-04** : création de partie en mode « candidat réel » et choix des adversaires (fictifs ou réels, y compris pour un candidat personnalisé ou un observateur) ; API validée par Zod ; personnalité inconnue refusée (422) ; adversaires réels = toutes les fiches retenues sauf la personnalité incarnée, aucun adversaire inventé. Moteur : facteurs « Programme » et « Crédibilité » neutres pour une personnalité réelle adverse.
+- **P5b-05** : interface : choix illustré de la personnalité (fiche, candidature datée et sa source, position et sa méthode, crédits des photos, candidatures non intégrées) ; écran Candidats (badge « Personnalité réelle — simulée », photo, fiche sourcée, section « sources et méthode ») ; programme des personnalités réelles adverses non simulé ; rappel de simulation sur tous les écrans d'une partie concernée.
+- **P5b-06** : documentation (SOURCES §8 quater, RISQUES, README, ARCHITECTURE, MODELE_DONNEES).
+
+Écarts et limites :
+- **Positions par parti, non individuelles** : deux candidats d'un même parti (Gabriel Attal et Olivier Becht ; Xavier Bertrand, Bruno Retailleau et David Lisnard) ont la même position ; quatre positions sont des **hypothèses** (Nathalie Arthaud et François Asselineau : moyenne de la famille CHES de leur parti de référence ; François Ruffin : PCF, seul parti noté que Wikidata lui associe, sans dates ; David Lisnard : LR, quitté le 31/03/2026).
+- **Moyens de départ** : niveaux tirés de faits sourcés, mais leur conversion en budget, militants et notoriété reste une hypothèse de jeu ; popularité de départ identique pour tous (aucun sondage réel utilisé).
+- **Liste figée** à la révision importée : une nouvelle déclaration ou un retrait exige une réimportation et une nouvelle version du jeu de règles ; les candidatures officielles ne seront connues qu'à la publication de la liste par le Conseil constitutionnel (mars 2027).
+- **Source de candidature de François Asselineau** : les références de la phrase portent sur une procédure judiciaire ou sur une autre personnalité ; l'article lui-même sert de source (motif consigné dans la sélection).
+- **Licence de l'enquête CHES non précisée** (usage avec citation demandé) : seules quelques positions converties sont reprises, avec la citation ; à confirmer avant une mise en ligne publique.
+- **Calibration** : avec les adversaires réels, l'issue dépend surtout des positions et des moyens de départ hypothétiques ; aucune comparaison aux sondages réels n'est faite (volontairement). Relecture juridique recommandée avant toute mise en ligne publique ([R-06](./RISQUES.md)).
 
 ### Phase 6 — Quinquennat jouable
 
@@ -380,7 +409,7 @@ Durcissement sécurité (§14), mesure de performance et fixation des seuils (§
 | # | Question | Recommandation par défaut | Bloque |
 |---|---|---|---|
 | Q1 | Dates officielles des tours de 2027 | **Fait en phase 2** : 18 avril et 2 mai 2027 dans le jeu de règles avec le statut `annonce` ; à passer en `officiel` (nouvelle version du jeu de règles) à la publication du décret ([SOURCES §4](./SOURCES.md#4-calendrier-de-la-présidentielle-2027)). | — |
-| Q2 | Personnalités réelles proposées et politique d'affichage (photos, statut) | **Décidé par l'utilisateur le 21/10/2026** : personnalités réelles jouables et adversaires ; seules les candidatures **déclarées** publiquement (date et source de la déclaration) ; photos sous **licence libre** avec auteur et licence affichés ; positionnement d'après la position du parti dans le **Chapel Hill Expert Survey**, étiqueté `estimation`. Mise en œuvre : phase 5 bis. | accès réseau aux sources (phase 5 bis) |
+| Q2 | Personnalités réelles proposées et politique d'affichage (photos, statut) | **Décidé par l'utilisateur le 21/10/2026** : personnalités réelles jouables et adversaires ; seules les candidatures **déclarées** publiquement (date et source de la déclaration) ; photos sous **licence libre** avec auteur et licence affichés ; positionnement d'après la position du parti dans le **Chapel Hill Expert Survey**, étiqueté `estimation`. **Fait en phase 5 bis** (17 personnalités, dont 4 ajoutées à la demande de l'utilisateur avec une position « hypothèse »). | — |
 | Q3 | Millésime géographique et source des contours | **Fait en phase 4** : COG 2026 (34 875 communes) et IGN ADMIN EXPRESS COG CARTO 2026, Licence Ouverte 2.0 (décision D8 appliquée). | — |
 | Q4 | Périmètre du scrutin | Périmètre officiel complet ; COM et Français de l'étranger dans une liste « Hors carte ». **Fait en phase 4** : périmètre officiel complet ; COM (dont Saint-Pierre-et-Miquelon) et Français de l'étranger dans la liste « Hors carte », comptés dans le total national. | — |
 | Q5 | Comptes utilisateurs | Session anonyme par cookie en phase 1 ; comptes plus tard si mise en ligne publique. | phase 1 (non bloquant) |
@@ -390,4 +419,4 @@ Durcissement sécurité (§14), mesure de performance et fixation des seuils (§
 
 ## 6. Prochaine étape
 
-**Phase 5 bis — personnalités politiques réelles** (décision Q2 du 21/10/2026), dès que l'accès réseau aux sources est ouvert (prérequis ci-dessus) ; puis **phase 6 — quinquennat jouable** (gouvernement et Premier ministre, législatives sur 577 circonscriptions, Assemblée nationale, économie, crises, bilan de fin de mandat et nouvelle présidentielle). La phase 6 exigera aussi des données sourcées : composition de l'Assemblée (`data.assemblee-nationale.fr`, injoignable au 21/10/2026), résultats des législatives 2024 et contours des circonscriptions (`www.data.gouv.fr` et `www.insee.fr`, joignables), indicateurs économiques initiaux (INSEE, Banque de France — `www.banque-france.fr` injoignable). La question Q8 (licence des résultats 2022) reste ouverte.
+**Phase 6 — quinquennat jouable** (gouvernement et Premier ministre, législatives sur 577 circonscriptions, Assemblée nationale, économie, crises, bilan de fin de mandat et nouvelle présidentielle), après validation de la phase 5 bis. Elle exigera des données sourcées : composition de l'Assemblée (`data.assemblee-nationale.fr`, injoignable au 21/10/2026), résultats des législatives 2024 et contours des circonscriptions (`www.data.gouv.fr` et `www.insee.fr`, joignables), indicateurs économiques initiaux (INSEE, Banque de France — `www.banque-france.fr` injoignable). La question Q8 (licence des résultats 2022) reste ouverte.

@@ -1,4 +1,4 @@
-import { advanceWeek, createGame } from '@r2027/engine';
+import { advanceWeek, createGame, SAVE_SCHEMA_VERSION } from '@r2027/engine';
 import { CURRENT_RULESET_KEY, getRuleset } from '@r2027/rulesets';
 import { canonicalStringify, hashState, sha256 } from '@r2027/save-engine';
 import {
@@ -461,7 +461,10 @@ describe('migration des parties des phases 1 et 2', () => {
     });
 
     const migrated = GameDetailSchema.parse((await client.get(`/api/games/${game.id}`)).json());
-    expect(migrated).toMatchObject({ saveSchemaVersion: 5, rulesetVersion: CURRENT_RULESET_KEY });
+    expect(migrated).toMatchObject({
+      saveSchemaVersion: SAVE_SCHEMA_VERSION,
+      rulesetVersion: CURRENT_RULESET_KEY,
+    });
     expect(migrated.state.actors.joueur).toBeDefined();
     await client.get(`/api/games/${game.id}`);
     const events = await db.gameEvent.findMany({
@@ -489,7 +492,7 @@ describe('migration des parties des phases 1 et 2', () => {
     });
     const restored = await client.post(`/api/games/${game.id}/saves/${save.id}/restore`, {});
     expect(restored.statusCode).toBe(200);
-    expect(GameDetailSchema.parse(restored.json()).saveSchemaVersion).toBe(5);
+    expect(GameDetailSchema.parse(restored.json()).saveSchemaVersion).toBe(SAVE_SCHEMA_VERSION);
   });
 
   it('migre une partie réelle de la phase 2 et la rend jouable', async () => {
@@ -509,7 +512,7 @@ describe('migration des parties des phases 1 et 2', () => {
     const migrated = GameDetailSchema.parse((await client.get(`/api/games/${game.id}`)).json());
     expect(migrated).toMatchObject({
       week: 20,
-      saveSchemaVersion: 5,
+      saveSchemaVersion: SAVE_SCHEMA_VERSION,
       rulesetVersion: CURRENT_RULESET_KEY,
     });
     expect(migrated.state.actors.joueur!.resources).toEqual(V2.state.actors.joueur.resources);

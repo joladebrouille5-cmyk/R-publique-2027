@@ -15,23 +15,40 @@ export const CAMPAIGN_STYLES = ['prudent', 'equilibre', 'offensif'] as const;
 export const CampaignStyleSchema = z.enum(CAMPAIGN_STYLES);
 export type CampaignStyle = z.infer<typeof CampaignStyleSchema>;
 
-/**
- * personnalise : candidat inventé par le joueur ; fictif : adversaire inventé par le jeu.
- * Les personnalités réelles (« reel ») nécessitent des profils sourcés (décision Q2 du plan).
- */
-export const CandidateNatureSchema = z.enum(['personnalise', 'fictif']);
-
-export const CandidateIdentitySchema = z
+/** Identité d'un candidat aux formats 3 à 5 (figée pour les migrations). */
+export const CandidateIdentityV5Schema = z
   .object({
     prenom: z.string().trim().max(40),
     nom: z.string().trim().min(1).max(60),
     parti: z.string().trim().min(1).max(80),
     positionnement: PositionSchema,
     parcours: z.string().trim().max(500),
-    nature: CandidateNatureSchema,
+    nature: z.enum(['personnalise', 'fictif']),
     profilId: z.string().nullable(),
   })
   .strict();
+
+/**
+ * personnalise : candidat inventé par le joueur ; fictif : adversaire inventé par le jeu ;
+ * reel : personnalité politique réelle (phase 5 bis), décrite par sa fiche sourcée du jeu de
+ * règles (`personnaliteId`). Son comportement dans la partie est toujours simulé.
+ */
+export const CandidateNatureSchema = z.enum(['personnalise', 'fictif', 'reel']);
+export type CandidateNature = z.infer<typeof CandidateNatureSchema>;
+
+export const PersonalityIdSchema = z.string().regex(/^reel-[a-z0-9-]+$/);
+
+/** Identité d'un candidat (format 6). */
+export const CandidateIdentitySchema = CandidateIdentityV5Schema.extend({
+  nature: CandidateNatureSchema,
+  /** Fiche de la personnalité réelle dans le jeu de règles ; null sinon. */
+  personnaliteId: PersonalityIdSchema.nullable(),
+})
+  .strict()
+  .refine((c) => (c.nature === 'reel') === (c.personnaliteId !== null), {
+    message: 'Une personnalité réelle, et elle seule, renvoie à sa fiche',
+    path: ['personnaliteId'],
+  });
 export type CandidateIdentity = z.infer<typeof CandidateIdentitySchema>;
 
 export function candidateName(candidate: Pick<CandidateIdentity, 'prenom' | 'nom'>): string {

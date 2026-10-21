@@ -20,6 +20,7 @@
     "db:deploy": "pnpm --filter @r2027/api run db:deploy",
     "data:geo": "pnpm --filter @r2027/data-import run geo",
     "data:resultats": "pnpm --filter @r2027/data-import run resultats",
+    "data:personnalites": "pnpm --filter @r2027/data-import run personnalites",
     "mesure:carte": "node scripts/spike-carte/spike.mjs",
     "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test"
   },
