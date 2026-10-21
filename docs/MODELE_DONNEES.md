@@ -1,6 +1,6 @@
 # Modèle de données — RÉPUBLIQUE 2027
 
-> Statut : **phases 1 à 3 réalisées** pour les tables techniques (`User`, `Game`, `GameSave`, `GameAdvance`, `GameAction`, `GameEvent`, `SimulationLog`) — schéma réel : [`apps/api/prisma/schema.prisma`](../apps/api/prisma/schema.prisma) ; état de partie réel (format 3) : [`packages/shared/src/game.ts`](../packages/shared/src/game.ts). Le reste du schéma ci-dessous reste indicatif et sera complété phase par phase.
+> Statut : **phases 1 à 4 réalisées** pour les tables techniques (`User`, `Game`, `GameSave`, `GameAdvance`, `GameAction`, `GameEvent`, `SimulationLog`) — schéma réel : [`apps/api/prisma/schema.prisma`](../apps/api/prisma/schema.prisma) ; état de partie réel (format 4) : [`packages/shared/src/game.ts`](../packages/shared/src/game.ts). Depuis la phase 4, le référentiel territorial et les résultats historiques sont des **fichiers versionnés** produits par `packages/data-import` (décision D9), et non des tables. Le reste du schéma ci-dessous reste indicatif et sera complété phase par phase.
 > Voir aussi [ARCHITECTURE.md §7](./ARCHITECTURE.md#7-persistance-et-sauvegardes-12).
 
 ## 1. Principe : trois familles de données
@@ -27,12 +27,12 @@
 | Endorsement (parrainages, soutiens) | état | `GameState.campaign[acteur].endorsements` |
 | CampaignAccount | état | `GameState.campaign[acteur].account` (centimes entiers) |
 | PolicyProposal | état | `GameState.campaign[acteur].program` |
-| Territory | référence | table `Territory` + `TerritoryCodeMapping` |
-| ElectoralBaseline | référence | table `ElectoralBaseline` |
+| Territory | référence | **phase 4** : fichiers du référentiel (`manifest.json`, `index.json`, TopoJSON), schémas `GeoManifestSchema` et `CommuneIndexSchema` ; correspondance des codes Intérieur ⇄ INSEE dans l'importeur |
+| ElectoralBaseline | référence | **phase 4** : résultats 2022 ramenés au COG 2026 (`HistoricalRoundSchema`), puis base territoriale calculée en mémoire par le moteur (`TerritorialBaseline`, identifiée par une empreinte) |
 | Poll | projection | table `Poll` |
 | Election | projection | table `Election` |
 | ElectionRound | projection | table `ElectionRound` |
-| ElectoralResult | projection | tables `ElectoralResult` (agrégats) et `ElectoralResultBlock` (communes) |
+| ElectoralResult | projection | **phase 4** : agrégats départementaux, régionaux et hors carte dans `elections.t1/t2.territoire` ; communes recalculées à la demande (décision D10) |
 | MediaOutlet | référence + état | table `MediaOutlet` ; audience/priorités courantes dans `GameState.media` |
 | Alliance | état | `GameState.relations.alliances` |
 | PoliticalRelationship | état | `GameState.relations.relationships` (graphe, §7) |
@@ -69,6 +69,8 @@ Stocker des valeurs par commune dans chaque instantané hebdomadaire serait proh
 > - `calendar.blockedMessage` : message affiché quand la partie est bloquée (fin de la présidentielle).
 >
 > Migration 2 → 3 : identité par défaut pour le candidat d'une partie existante (« Candidat du joueur », sans étiquette, au centre), adversaires ajoutés avec leurs moyens de départ, ressources et historique d'événements conservés, blocage du premier tour levé (le scrutin est désormais simulé), jeu de règles `presidentielle-2027@2.0.0`. Testé sur un état réel produit par le moteur de la phase 2 (`packages/save-engine/src/fixtures/v2-phase-2.json`).
+>
+> **Phase 4 — format 4** (implémenté) : chaque résultat de tour porte `territoire` (nullable) : `baselineId` (empreinte de la base électorale), `nature` (`reel`, `fictif`, `national`), ordre des `candidats`, `comportement` de chaque groupe (participation, blancs, nuls, probabilités), agrégats exacts `departements`, `regions`, `horsCarte`. Migration 3 → 4 : `territoire: null` pour les tours déjà dépouillés (testé sur un état réel de la phase 3, entre les deux tours) ; jeu de règles `presidentielle-2027@2.1.0`.
 >
 > L'esquisse ci-dessous décrit la cible des phases suivantes.
 
@@ -415,6 +417,7 @@ model EconomicIndicator {
 ## 6. Invariants vérifiés par tests
 
 - `Σ voix = exprimes`, `votants = blancs + nuls + exprimes`, `inscrits ≥ votants`, valeurs ≥ 0 (phase 3 : vérifié sur chaque groupe et sur le national ; `abstentions = inscrits − votants`).
+- Phase 4 : national = Σ régions + hors carte ; région = Σ départements ; département = Σ communes (recalculées à l'identique) ; somme des lignes 2022 importées = totaux proclamés à l'unité ; fusions de communes sommées exactement, scissions ventilées sans perte (propriété) ; import refusé si une commune n'a pas exactement une géométrie.
 - Phase 3 : résultat national = somme exacte des groupes d'électeurs ; répartition au plus fort reste exacte (propriété) ; une consigne de vote ne transfère qu'une partie des électeurs de l'éliminé ; le décompte ne dépend pas de la difficulté ; un aller-retour JSON de l'état ne change rien (aucun `−0`).
 - Agrégat d'un niveau = somme exacte des enfants inclus dans le périmètre.
 - Chaque `Territory` de type `commune` avec `mapped = true` a une et une seule géométrie (contrôlé à l'import).

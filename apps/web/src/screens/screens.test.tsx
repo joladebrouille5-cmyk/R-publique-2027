@@ -64,9 +64,9 @@ describe('navigation de partie', () => {
 
   it('annonce un écran non implémenté sans données factices', async () => {
     mockApi(gameHandlers);
-    renderRoute(`/parties/${GAME_ID}/carte`);
-    expect(await screen.findByText('Non disponible — prévu en phase 4')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Carte électorale' })).toBeInTheDocument();
+    renderRoute(`/parties/${GAME_ID}/programme`);
+    expect(await screen.findByText('Non disponible — prévu en phase 5')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Programme' })).toBeInTheDocument();
   });
 
   it('signale une partie introuvable', async () => {

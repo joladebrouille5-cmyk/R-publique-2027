@@ -1,49 +1,6 @@
-import { randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { expect, test, type Page } from '@playwright/test';
-import { AdvanceResponseSchema, GameDetailSchema, type GameDetail } from '@r2027/shared';
-
-async function createGame(page: Page, name: string, seed = 'e2e-boucle') {
-  await page.goto('/');
-  await expect(page.getByText(/Serveur connecté/)).toBeVisible();
-  await page.getByRole('link', { name: 'Nouvelle partie' }).click();
-  await page.getByLabel('Nom de la partie').fill(name);
-  await page.getByLabel('Prénom').fill('Camille');
-  await page.getByLabel(/^Nom \*/).fill('Durand');
-  await page.getByLabel(/^Parti ou mouvement/).fill('Mouvement Playwright');
-  await page.getByLabel('Graine (facultative)').fill(seed);
-  await page.getByRole('button', { name: 'Créer la partie' }).click();
-  await expect(page.getByRole('heading', { name: 'Tableau de bord' })).toBeVisible();
-}
-
-/** Identifiant de la partie affichée, d'après l'URL. */
-const gameIdOf = (page: Page) => /\/parties\/([0-9a-f-]{36})\//.exec(page.url())![1]!;
-
-/**
- * Fait avancer la partie par l'API (même session que le navigateur) jusqu'à la fin de la
- * présidentielle, en répondant aux décisions par l'option par défaut.
- */
-async function playToEndViaApi(page: Page): Promise<GameDetail> {
-  const id = gameIdOf(page);
-  let game = GameDetailSchema.parse(await (await page.request.get(`/api/games/${id}`)).json());
-  for (let i = 0; i < 60 && !game.state.calendar.blockedBy; i++) {
-    const response = await page.request.post(`/api/games/${id}/advance`, {
-      headers: { 'idempotency-key': randomUUID().replaceAll('-', '') },
-      data: {
-        expectedWeek: game.week,
-        actions: [],
-        decisions: game.state.pendingDecisions.map((d) => ({
-          decisionId: d.id,
-          optionId: d.defaultOptionId,
-        })),
-      },
-    });
-    expect(response.status()).toBe(200);
-    game = AdvanceResponseSchema.parse(await response.json()).game;
-  }
-  expect(game.state.calendar.blockedBy).toBe('fin-de-la-presidentielle');
-  return game;
-}
+import { advanceViaApi, createGame, openScreen } from './helpers';
 
 async function readStateHash(page: Page): Promise<string> {
   await page.getByText('Paramètres techniques').click();
@@ -51,13 +8,6 @@ async function readStateHash(page: Page): Promise<string> {
   expect(hash).toMatch(/^[0-9a-f]{64}$/);
   await page.getByText('Paramètres techniques').click();
   return hash;
-}
-
-async function openScreen(page: Page, label: string) {
-  await page
-    .getByRole('navigation', { name: 'Écrans de la partie' })
-    .getByRole('link', { name: label })
-    .click();
 }
 
 /** Répond aux éventuelles décisions en attente (premier choix), puis résout la semaine. */
@@ -165,8 +115,6 @@ test('export puis import dans une nouvelle partie identique', async ({ page }) =
 
 test('les écrans non implémentés sont annoncés comme tels', async ({ page }) => {
   await createGame(page, 'Écrans', 'e2e-ecrans');
-  await openScreen(page, 'Carte électorale');
-  await expect(page.getByText('Non disponible — prévu en phase 4')).toBeVisible();
   await openScreen(page, 'Programme');
   await expect(page.getByText('Non disponible — prévu en phase 5')).toBeVisible();
 });
@@ -185,7 +133,8 @@ test('présidentielle complète : candidat, sondages, deux tours et résultats',
   await expect(latest.getByText(/1\s000 personnes/)).toBeVisible();
   await expect(latest.getByText('Camille Durand (vous)')).toBeVisible();
 
-  const final = await playToEndViaApi(page);
+  const final = await advanceViaApi(page, (g) => g.state.calendar.blockedBy !== null);
+  expect(final.state.calendar.blockedBy).toBe('fin-de-la-presidentielle');
   await page.reload();
   await openScreen(page, 'Résultats');
   const t2 = page.getByRole('region', { name: 'Second tour' });
@@ -213,7 +162,15 @@ test('une date de départ invalide est refusée par le serveur', async ({ page }
 test('aucun défilement horizontal de la page', async ({ page }) => {
   await createGame(page, 'Largeur', 'e2e-largeur');
   await resolveWeek(page, 0);
-  for (const screen of [null, 'Candidats', 'Sondages', 'Résultats', 'Journal', 'Sauvegardes']) {
+  for (const screen of [
+    null,
+    'Carte électorale',
+    'Candidats',
+    'Sondages',
+    'Résultats',
+    'Journal',
+    'Sauvegardes',
+  ]) {
     if (screen) await openScreen(page, screen);
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth - document.documentElement.clientWidth,

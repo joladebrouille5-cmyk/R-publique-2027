@@ -1,4 +1,4 @@
-import type { ComponentType } from 'react';
+import { lazy, Suspense, type ComponentType } from 'react';
 import { Navigate, type RouteObject } from 'react-router';
 import { AppLayout } from './components/AppLayout';
 import { Unavailable } from './components/Unavailable';
@@ -14,8 +14,21 @@ import { GAME_SCREENS } from './screens/registry';
 import { Results } from './screens/Results';
 import { Saves } from './screens/Saves';
 
+// La carte (MapLibre, ~1 Mo) n'est chargée qu'à l'ouverture de son écran.
+const LazyMapScreen = lazy(() =>
+  import('./screens/MapScreen').then((m) => ({ default: m.MapScreen })),
+);
+function MapScreen() {
+  return (
+    <Suspense fallback={<p>Chargement de la carte…</p>}>
+      <LazyMapScreen />
+    </Suspense>
+  );
+}
+
 const IMPLEMENTED: Record<string, ComponentType> = {
   'tableau-de-bord': Dashboard,
+  carte: MapScreen,
   candidats: Candidates,
   sondages: Polls,
   resultats: Results,

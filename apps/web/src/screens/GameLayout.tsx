@@ -57,14 +57,18 @@ export function GameLayout() {
                     }`
                   }
                 >
-                  <span>{screen.label}</span>
-                  {!screen.available && (
-                    <span
-                      className="text-xs opacity-70"
-                      aria-label={`prévu en phase ${screen.phase}`}
-                    >
-                      P{screen.phase}
-                    </span>
+                  {({ isActive }) => (
+                    <>
+                      <span>{screen.label}</span>
+                      {!screen.available && (
+                        <span
+                          className={`text-xs ${isActive ? 'text-white' : 'text-slate-600 dark:text-slate-400'}`}
+                          aria-label={`prévu en phase ${screen.phase}`}
+                        >
+                          P{screen.phase}
+                        </span>
+                      )}
+                    </>
                   )}
                 </NavLink>
               </li>

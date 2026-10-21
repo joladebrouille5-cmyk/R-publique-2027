@@ -199,12 +199,21 @@ Le jeu de règles [`packages/rulesets/src/presidentielle-2027.json`](../packages
 
 Les dates déduites sont recalculées par un test à partir de leur règle. Tous les autres paramètres du jeu de règles (ressources de départ, coûts, effets, probabilités ; en phase 3 : les 9 groupes d'électeurs et leurs positions, les coefficients du vote, les 7 adversaires et les 2 instituts de sondage) sont des **hypothèses de jeu** (source « conception du jeu », sans URL), affichées comme telles dans l'interface. Les adversaires et les instituts sont **fictifs** (« Personnage fictif », « (fictif) », vérifié par test) : aucune personnalité ni aucun institut réel n'est représenté (question Q2).
 
+## 8 bis. Utilisation dans le jeu (phase 4)
+
+| Donnée | Usage | Statut |
+|---|---|---|
+| COG 2026 (communes, départements, régions, collectivités d'outre-mer, mouvements) | référentiel de la carte ; passage 2022 → 2026 | importé ; empreintes SHA-256 dans le manifeste |
+| IGN ADMIN EXPRESS COG CARTO 4-0, édition 2026-01-01 (archive de 125 711 568 octets, SHA-256 `40269cb7…de28`) | contours, population légale affichée dans la fiche | importé ; correspondance exacte avec le COG (Saint-Pierre-et-Miquelon écartée, hors carte) |
+| Présidentielle 2022, fichiers communaux des deux tours (17 688 915 et 6 092 257 octets) | géographie électorale du jeu ; couche « résultats officiels 2022 » de la carte | importés localement ; **somme des lignes = totaux proclamés à l'unité** (vérifié par l'import) ; non commités (licence non précisée, Q8) |
+| Répartition des électeurs de chaque candidat de 2022 entre les groupes du jeu | situer les groupes commune par commune | `hypothese` (jeu de règles 2.1.0, `electorat.baseHistorique`) |
+
 ## 9. Points restant non vérifiés
 
 1. Texte exact, sur Légifrance, de la loi n° 62-1292 (parrainages, financement) et de l'article L. 52-11.
 2. Publication du décret de convocation des électeurs pour 2027.
 3. Conditions de réutilisation des résultats présidentiels 2022 (licence `notspecified`).
-4. Structure du fichier communal du 1er tour 2022 pour Paris, Lyon, Marseille, et nombre exact de lignes `ZZ`.
+4. ~~Structure du fichier communal du 1er tour 2022 pour Paris, Lyon, Marseille, et nombre exact de lignes `ZZ`.~~ Vérifié en phase 4 : une ligne par ville au 1er tour aussi (75056, 69123, 13055) ; 210 lignes `ZZ` à chaque tour.
 5. Licence du fichier INSEE des contours de circonscriptions ; texte de référence du découpage.
 6. Zéros initiaux des codes métropolitains dans les fichiers des législatives 2024.
 7. Sources des indicateurs économiques initiaux (Banque de France, INSEE) : à identifier en phase 6.
@@ -216,3 +225,5 @@ Chaque import enregistre dans `DataImport` : source, URL exacte, date de récup�
 ## 11. Données de démonstration
 
 Un jeu réduit, commité dans `data/demo/`, permet de jouer hors ligne (§10). S'il est dérivé de données réelles, il en conserve la source et la licence (sous réserve du point 3 de la section 9) ; s'il est synthétique, il est étiqueté `fictif`.
+
+Réalisé en phase 4 : `packages/data-import/demo/cog-2026/` contient des géométries réelles (IGN, INSEE, Licence Ouverte 2.0, sources et empreintes dans son manifeste) pour l'aperçu national et les communes de l'Ain, de la Corse et des DROM. Aucun résultat 2022 n'y figure : la base électorale de démonstration est synthétique et affichée « Démonstration fictive ».

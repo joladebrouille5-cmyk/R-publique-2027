@@ -21,7 +21,7 @@ export const GAME_SCREENS: readonly GameScreen[] = [
     path: 'carte',
     label: 'Carte électorale',
     phase: 4,
-    available: false,
+    available: true,
     description:
       'Carte interactive des communes de métropole et des DROM (Guadeloupe, Martinique, Guyane, La Réunion, Mayotte), résultats par tour et par candidat.',
   },

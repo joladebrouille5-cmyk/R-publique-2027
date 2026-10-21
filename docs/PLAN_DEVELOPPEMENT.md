@@ -44,6 +44,8 @@ Conséquence : les imports de résultats électoraux (data.gouv.fr) ne peuvent p
 
 Nouveau contrôle en fin de phase 3 : `geo.api.gouv.fr` et `www.conseil-constitutionnel.fr` répondent désormais (200) ; `www.insee.fr` reste accessible ; `www.data.gouv.fr`, `static.data.gouv.fr` et `etalab-datasets.geo.data.gouv.fr` coupent toujours la connexion ; `object.files.data.gouv.fr` répond 403.
 
+Phase 4 : après l'ajout de `www.data.gouv.fr` et `static.data.gouv.fr` aux domaines autorisés de l'environnement cloud (réglage du porteur du projet sur claude.ai), les fichiers communaux de la présidentielle 2022 ont été téléchargés et importés le 20/10/2026 (Q7). Contrôle du 21/10/2026, après redémarrage du conteneur : `www.data.gouv.fr` répond (200) mais `static.data.gouv.fr` coupe de nouveau la connexion, et `www.legifrance.gouv.fr` comme `www.cnccfp.fr` sont refusés par le proxy (403). Les fichiers déjà téléchargés (`data/raw/`, empreintes vérifiées) suffisent pour rejouer les imports.
+
 ---
 
 ## 2. Méthode de travail (§18 et guide, étape 5)
@@ -228,7 +230,7 @@ Réalisé :
 - Équilibrage non calibré ([R-12](./RISQUES.md), [R-24](./RISQUES.md)) : sans action du joueur, la candidate fictive du centre gagne la plupart des parties testées.
 - La migration 2 → 3 donne une identité par défaut (« Candidat du joueur », au centre) aux parties existantes ; l'édition du candidat n'est pas proposée.
 
-### Phase 4 — Carte interactive complète (métropole + DROM)
+### Phase 4 — Carte interactive complète (métropole + DROM) ✅
 
 | ID | Tâche | Test d'acceptation |
 |---|---|---|
@@ -244,6 +246,43 @@ Réalisé :
 | P4-10 | Mobile : gestes tactiles, légende compacte, fiche dépliable. | Playwright viewport mobile. |
 
 **Livrable** : carte interactive complète. **Critères visés** : 7, 8, 9, 15, 16, et la liste de contrôle de l'étape 6 du guide.
+
+**Bilan (21/10/2026)** — les dix tâches sont réalisées, avec les adaptations signalées ci-dessous.
+
+| Vérification | Résultat |
+|---|---|
+| `pnpm lint`, `pnpm format:check`, `pnpm typecheck` | sans erreur |
+| `pnpm test` | 189 tests réussis : moteur 90, import de données 27 (nouveau paquet), sauvegardes 18, jeu de règles 8, contrats 4, interface 42 |
+| `pnpm test:integration` (API + PostgreSQL 16 réel) | 65 tests réussis (18 nouveaux : API géographique, résultats communaux, résultats 2022) |
+| `pnpm test:e2e` (Playwright, bureau + mobile) | 22 tests réussis, dont 5 scénarios de carte par appareil et un audit axe-core |
+| `pnpm data:geo` (référentiel complet) | 34 875 communes du COG 2026, chacune avec exactement une géométrie ; 101 départements, 18 régions, 7 territoires hors carte ; import reproductible à l'octet près |
+| `pnpm data:resultats` (présidentielle 2022) | 35 245 lignes par tour ; **somme = totaux proclamés par le Conseil constitutionnel à l'unité**, aux deux tours |
+| `pnpm mesure:carte` (spike P4-01) | TopoJSON par département : premier rendu 1,6 s, 0,43 Mo, 11,5 Mo de mémoire sur téléphone émulé ([MESURES_CARTE.md](./MESURES_CARTE.md)) |
+| Contrôle visuel avec le référentiel et les résultats réels (bureau, mobile, thèmes clair et sombre, motifs) | carte, encarts, fiche, légende et tableau lisibles ; Marseille, Ajaccio, Mamoudzou retrouvées par la recherche |
+| CI GitHub Actions | à compléter après le push |
+
+Réalisé :
+- **P4-01** : mesure sur Pixel 7 émulé (processeur ralenti 4×, 4G) de deux formats ; **décision D7** : aperçu national des départements et régions, puis TopoJSON des communes par département, chargé à la demande (13 fois plus rapide, 19 fois moins de données que le fichier national).
+- **P4-02** : nouveau paquet `packages/data-import` : téléchargements reprenables avec métadonnées et empreinte SHA-256, COG 2026 (INSEE), contours IGN ADMIN EXPRESS COG CARTO 2026 lus dans le GeoPackage (lecteur WKB du dépôt), contrôle « une géométrie par commune et inversement » (l'import échoue sinon, testé), simplification mapshaper, départements et régions fusionnés à partir des communes, manifeste des sources.
+- **P4-03** : lecture des fichiers de l'Intérieur (Windows-1252, blocs de candidats répétés, contrôles ligne à ligne), correspondance Intérieur ⇄ INSEE pour les DROM et les territoires hors carte, passage COG 2022 → 2026 par le fichier des mouvements (65 fusions sommées exactement, 10 communes ventilées au prorata de la population et étiquetées « estimation », 6 communes sans électeurs). Le moteur dépouille désormais **commune par commune** à partir de cette géographie électorale (affinité locale des 9 groupes, participation locale), en nombres entiers ; département, région et national sont des sommes exactes (propriétés testées).
+- **P4-04** : jeu de démonstration commité (744 Ko) : aperçu national complet, communes de l'Ain, de la Corse et des cinq DROM ; sans import, une base électorale **fictive** étiquetée comme telle ; tous les tests de bout en bout tournent avec ce jeu, sans réseau.
+- **P4-05** : écran Carte électorale (MapLibre GL 6, chargé à la demande, sans fond de carte externe) : zoom, déplacement, sélection, niveaux région / département / commune.
+- **P4-06** : cinq encarts DROM indépendants ; bandeau sur PC, vignettes ouvrant l'encart en plein écran sur téléphone ; sélection d'une commune dans chaque encart testée.
+- **P4-07** : recherche par nom (sans accents) ou code ; centrage, et ouverture de l'encart pour une commune d'outre-mer (« Mamoudzou », « 97411 », « Ajaccio », « 2A004 » testés).
+- **P4-08** : fiche territoriale (population légale, inscrits, votants, blancs, nuls, exprimés, voix), choix des résultats (tour 1 ou 2 de la partie, présidentielle 2022 officielle si importée, géographie seule), couleurs « candidat en tête », « participation », « score d'un candidat », « écart entre deux candidats », badge de nature des données (officiel, simulé, fictif, estimation), liste « Hors carte ».
+- **P4-09** : tableau équivalent filtrable, parcours au clavier, légende textuelle, **motifs** en option (hachures et croisillons doublant les couleurs), repli explicite sans WebGL ; audit axe-core WCAG 2.1 AA sans violation, bureau et mobile.
+- **P4-10** : gestes tactiles (rotation désactivée), légende compacte, fiche sous la carte, encarts en plein écran ; aucun défilement horizontal.
+- Format de sauvegarde 4 (résultats territoriaux) et migration 3 → 4 testée sur un état réel de la phase 3 ; jeu de règles 2.1.0 (répartition « candidat 2022 → groupes », hypothèse) ; API : `/api/geo/*`, résultats communaux recalculés à la demande (décision D10), résultats 2022.
+
+Écarts et limites :
+- **PMTiles non mesurées** : `tippecanoe` ne s'installe pas dans l'environnement (ni compilateur ni Docker) ; option à réévaluer en phase 8 si le niveau communal national doit s'afficher d'un seul tenant.
+- Les métadonnées d'import (source, URL, date, licence, empreinte, version de l'importeur) sont dans le manifeste versionné et non dans une table `DataImport` (décision D9).
+- **Résultats 2022 non commités** (licence non précisée, Q8) : sans `pnpm data:resultats`, la partie utilise la base fictive de démonstration (détaillée pour l'Ain, la Corse et les DROM seulement ; les autres départements forment chacun un bloc uniforme, et les territoires hors carte n'ont pas de détail).
+- **Variation locale encore faible** avec la base réelle : le modèle reste national par groupe d'électeurs ; au second tour simulé, le même candidat arrive souvent en tête partout. Calibrage à reprendre ([R-12](./RISQUES.md), [R-24](./RISQUES.md)).
+- La comparaison porte sur deux candidats d'un même jeu de résultats, pas encore sur deux tours ou deux scénarios côte à côte.
+- Une partie créée avec la base de démonstration puis consultée après un import complet refuse explicitement le détail communal de ses anciens tours (`409 base_differente`) : agrégats départementaux et régionaux toujours affichés.
+- Saint-Pierre-et-Miquelon (collectivité d'outre-mer) est volontairement hors carte, comme les autres COM et les Français de l'étranger.
+- L'écran de carte pèse 289 Ko compressés (MapLibre compris), chargés seulement à son ouverture ; budget de performance à fixer en phase 8.
 
 ### Phase 5 — Campagne approfondie
 
@@ -273,13 +312,13 @@ Durcissement sécurité (§14), mesure de performance et fixation des seuils (§
 |---|---|---|---|
 | Q1 | Dates officielles des tours de 2027 | **Fait en phase 2** : 18 avril et 2 mai 2027 dans le jeu de règles avec le statut `annonce` ; à passer en `officiel` (nouvelle version du jeu de règles) à la publication du décret ([SOURCES §4](./SOURCES.md#4-calendrier-de-la-présidentielle-2027)). | — |
 | Q2 | Personnalités réelles proposées et politique d'affichage (photos, statut) | Commencer par le mode personnalisé ; profils réels ajoutés un par un, sourcés, sans photo. **Phase 3 : défaut appliqué** (candidat personnalisé + adversaires fictifs) ; le mode « candidat réel » reste refusé tant que la liste et la politique ne sont pas validées. | mode « candidat réel » |
-| Q3 | Millésime géographique et source des contours | COG 2026 (34 875 communes) et IGN ADMIN EXPRESS COG CARTO 2026, Licence Ouverte 2.0 (décision D8). | phase 4 |
-| Q4 | Périmètre du scrutin | Périmètre officiel complet ; COM et Français de l'étranger dans une liste « Hors carte ». **Phase 3 : périmètre officiel complet** (inscrits proclamés en 2022) ; la liste « Hors carte » arrive avec la carte. | phase 4 |
+| Q3 | Millésime géographique et source des contours | **Fait en phase 4** : COG 2026 (34 875 communes) et IGN ADMIN EXPRESS COG CARTO 2026, Licence Ouverte 2.0 (décision D8 appliquée). | — |
+| Q4 | Périmètre du scrutin | Périmètre officiel complet ; COM et Français de l'étranger dans une liste « Hors carte ». **Fait en phase 4** : périmètre officiel complet ; COM (dont Saint-Pierre-et-Miquelon) et Français de l'étranger dans la liste « Hors carte », comptés dans le total national. | — |
 | Q5 | Comptes utilisateurs | Session anonyme par cookie en phase 1 ; comptes plus tard si mise en ligne publique. | phase 1 (non bloquant) |
 | Q6 | Hébergeur | Choix avant la phase 8. | phase 8 |
-| Q7 | Accès réseau aux domaines publics dans l'environnement cloud | Autoriser `www.data.gouv.fr`, `static.data.gouv.fr`, `object.files.data.gouv.fr`, `geo.api.gouv.fr` (au minimum) ; sinon exécuter les imports en local. | phase 4 |
-| Q8 | Réutilisation des résultats 2022 (licence non précisée sur data.gouv.fr) | Clarifier avant de commiter des données dérivées ; à défaut, démo synthétique `fictif`. | phase 4 |
+| Q7 | Accès réseau aux domaines publics dans l'environnement cloud | **Phase 4** : `www.data.gouv.fr` et `static.data.gouv.fr` autorisés le temps de l'import (fichiers conservés dans `data/raw/`) ; `static.data.gouv.fr` à nouveau coupé le 21/10 ; les imports peuvent aussi s'exécuter en local. | réimport depuis le cloud |
+| Q8 | Réutilisation des résultats 2022 (licence non précisée sur data.gouv.fr) | Clarifier avant de commiter des données dérivées ; à défaut, démo synthétique `fictif`. **Phase 4 : défaut appliqué** (import local, jamais commité ; démonstration fictive). | mise en ligne de données dérivées |
 
 ## 6. Prochaine étape
 
-**Phase 4 — carte interactive complète** (métropole + DROM), après validation de la phase 3. Elle exige l'accès réseau aux sources officielles (Q7, [R-02](./RISQUES.md)) : `www.data.gouv.fr`, `static.data.gouv.fr`, `object.files.data.gouv.fr` et `etalab-datasets.geo.data.gouv.fr` sont encore bloqués ; `geo.api.gouv.fr`, `www.insee.fr`, `data.geopf.fr` (IGN) et `www.conseil-constitutionnel.fr` répondent.
+**Phase 5 — campagne approfondie** (programme, parrainages, financement, médias et débats, IA adverse avec alliances, difficulté et mode observateur), après validation de la phase 4. Elle exigera de sourcer les règles de parrainage et de financement (Légifrance et CNCCFP, refusés par le proxy de l'environnement cloud au 21/10/2026 : [SOURCES §9](./SOURCES.md#9-points-restant-non-vérifiés), point 1) ; les questions Q2 (personnalités réelles) et Q8 (licence des résultats 2022) restent ouvertes.

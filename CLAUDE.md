@@ -19,3 +19,4 @@
 - Avec base : `pnpm test:integration`, `pnpm test:e2e` (exigent `DATABASE_URL_TEST`).
 - Environnement cloud sans Docker : `scripts/pg-local.sh start`, puis `.env` créé depuis `.env.example` avec des URL sans mot de passe (`postgresql://postgres@localhost:5432/...`).
 - Après une modification de `apps/api/prisma/schema.prisma` : `pnpm db:migrate` (crée une migration versionnée, à commiter).
+- Données réelles : `pnpm data:geo` puis `pnpm data:resultats` (réseau requis, sorties dans `data/`, jamais commitées) ; sans elles, l'API sert le jeu de démonstration de `packages/data-import/demo`.

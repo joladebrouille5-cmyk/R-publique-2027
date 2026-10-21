@@ -47,7 +47,7 @@ async function main() {
   const records = new Map<string, { path: string; record: DownloadRecord }>();
   for (const source of GEO_SOURCES) {
     const path = join(RAW, source.fichier);
-    console.log(`Téléchargement : ${source.url}`);
+    console.log(`Source : ${source.url} (copie locale réutilisée si son empreinte est intacte)`);
     records.set(source.id, { path, record: await download(source.url, path) });
   }
 

@@ -1,6 +1,6 @@
 # RÉPUBLIQUE 2027
 
-Simulation politique française : présidentielle, campagne et quinquennat. Jeu de stratégie dans le navigateur (PC et mobile) où l'on incarne une personnalité réelle ou un candidat personnalisé, semaine par semaine, jusqu'aux deux tours, puis pendant le quinquennat. La carte électorale interactive couvrira les communes de métropole et des DROM.
+Simulation politique française : présidentielle, campagne et quinquennat. Jeu de stratégie dans le navigateur (PC et mobile) où l'on incarne une personnalité réelle ou un candidat personnalisé, semaine par semaine, jusqu'aux deux tours, puis pendant le quinquennat. La carte électorale interactive couvre les communes de métropole et des cinq DROM.
 
 > Nom de projet provisoire.
 
@@ -12,19 +12,22 @@ Simulation politique française : présidentielle, campagne et quinquennat. Jeu 
 | 1 | Squelette web, API, base, navigation, sauvegardes | ✅ terminée |
 | 2 | Calendrier hebdomadaire, actions, ressources, événements, journal | ✅ terminée |
 | 3 | Candidats, adversaires autonomes, sondages, participation, deux tours | ✅ terminée |
-| 4–8 | Carte, campagne, quinquennat, contenu, mise en ligne | à faire |
+| 4 | Carte interactive (communes de métropole et des DROM), résultats territoriaux | ✅ terminée |
+| 5–8 | Campagne approfondie, quinquennat, contenu, mise en ligne | à faire |
 
 **Ce qui fonctionne aujourd'hui** :
 - créer une partie avec son candidat (prénom, nom, parti, positionnement économique et sociétal, parcours, profil de départ) ou en observateur, avec difficulté, date de départ et graine ;
 - affronter 7 adversaires **fictifs** qui mènent leur campagne seuls, avec le même catalogue d'actions et les mêmes coûts ;
 - suivre les sondages simulés de deux instituts fictifs (fiche technique complète, marge d'erreur, cote de popularité distincte, hypothèses de second tour) ;
-- jouer la présidentielle jusqu'au bout : premier tour (18 avril 2027), consignes de vote, débat, second tour (2 mai 2027), avec des résultats simulés en voix entières (inscrits, votants, blancs, nuls, exprimés) et le détail par groupe d'électeurs ;
+- jouer la présidentielle jusqu'au bout : premier tour (18 avril 2027), consignes de vote, débat, second tour (2 mai 2027), avec des résultats simulés en voix entières (inscrits, votants, blancs, nuls, exprimés), dépouillés **commune par commune** puis additionnés exactement (départements, régions, national), et le détail par groupe d'électeurs ;
+- explorer la **carte électorale** : métropole et cinq encarts DROM, niveaux région / département / commune, recherche par nom ou code INSEE, fiche de chaque territoire, couleurs « candidat en tête », participation, score d'un candidat ou écart entre deux candidats, motifs en option (daltonisme, impression), tableau équivalent accessible au clavier et liste des territoires « hors carte » (collectivités d'outre-mer, Français de l'étranger) ;
+- afficher sur la carte les **résultats officiels de la présidentielle 2022** commune par commune, après un import local (`pnpm data:resultats`), qui sert aussi de géographie électorale à la partie ;
 - la jouer semaine par semaine : programmer des actions (meeting, tournée, interview, campagne numérique, recrutement, collecte, porte-à-porte, rencontre d'élus) avec leur coût, leur effet attendu, leur incertitude et leur risque ; trancher les décisions nées d'événements fictifs ; résoudre la semaine ;
 - lire le bilan de chaque semaine, où chaque variation de ressource est décomposée en facteurs, et le journal complet de la partie ;
 - suivre le calendrier électoral officiel (dates annoncées ou déduites, avec leur source) ;
 - sauvegarder (5 emplacements manuels, sauvegarde automatique chaque semaine et avant un événement majeur), restaurer, exporter en JSON et importer dans une nouvelle partie, sans perte (empreinte SHA-256 identique).
 
-**Ce qui ne fonctionne pas encore** : la suite après le second tour (gouvernement, législatives, quinquennat : phase 6) — la partie s'arrête explicitement une fois le président élu ; carte et résultats territoriaux (phase 4) ; programme, parrainages, finances réglementées, médias, alliances (phase 5) ; mode « candidat réel » (en attente de la décision Q2 : profils sourcés et validation juridique).
+**Ce qui ne fonctionne pas encore** : la suite après le second tour (gouvernement, législatives, quinquennat : phase 6) — la partie s'arrête explicitement une fois le président élu ; programme, parrainages, finances réglementées, médias, alliances (phase 5) ; mode « candidat réel » (en attente de la décision Q2 : profils sourcés et validation juridique). Sans import local, la carte n'a que le jeu de démonstration (communes de l'Ain, de la Corse et des DROM ; base électorale **fictive**, affichée comme telle).
 
 ## Prérequis
 
@@ -82,13 +85,26 @@ pnpm dev
 
 Le pied de page de l'interface indique « Serveur connecté » quand l'API et la base répondent. Pour tester sur un téléphone du même réseau, voir la section Dépannage.
 
+## Données géographiques et électorales (facultatif)
+
+Le dépôt contient un **jeu de démonstration** (`packages/data-import/demo/`) : la carte et la partie fonctionnent sans réseau, avec les communes de l'Ain, de la Corse et des DROM. Pour la France entière :
+
+| Commande | Effet | Réseau requis |
+|---|---|---|
+| `pnpm data:geo` | Télécharge le COG 2026 (INSEE) et les contours IGN ADMIN EXPRESS COG CARTO 2026 (125 Mo), vérifie qu'à chaque commune correspond exactement une géométrie, simplifie et écrit `data/processed/geo/cog-2026/` (34 875 communes). Plusieurs minutes, 8 Go de mémoire au plus. | `www.insee.fr`, `data.geopf.fr` |
+| `pnpm data:resultats` | Après `pnpm data:geo` : importe les résultats communaux de la présidentielle 2022 (deux tours), les ramène au COG 2026 et vérifie qu'ils somment **à l'unité** aux totaux proclamés. Écrit `data/processed/resultats/presidentielle-2022/`. | `www.data.gouv.fr`, `static.data.gouv.fr`, `www.insee.fr` |
+| `pnpm data:geo --demo` | Régénère le jeu de démonstration commité. | comme `data:geo` |
+| `pnpm mesure:carte` | Après `pnpm data:geo` : rejoue la mesure des formats de carte sur téléphone émulé ([docs/MESURES_CARTE.md](docs/MESURES_CARTE.md)). | aucun |
+
+Les fichiers téléchargés sont gardés dans `data/raw/` (avec leur empreinte SHA-256, revérifiée à chaque import) et les imports se rejouent ensuite hors ligne. `data/raw/` et `data/processed/` ne sont jamais commités : la licence des résultats 2022 n'est pas précisée ([docs/SOURCES.md](docs/SOURCES.md)). L'API utilise automatiquement l'import complet s'il existe (sinon la démonstration) ; voir `GEO_DATA_DIR` et `RESULTS_DATA_DIR` dans `.env.example`. Une partie déjà jouée avec la démonstration garde ses résultats départementaux, mais le détail communal de ses tours passés n'est plus recalculable avec une autre base (l'interface l'indique).
+
 ## Tests
 
 | Commande | Contenu | Prérequis |
 |---|---|---|
-| `pnpm test` | tests unitaires, de propriétés et de composants (moteur, jeu de règles, sauvegardes, interface) | aucun |
-| `pnpm test:integration` | API réelle contre PostgreSQL : parties, progression idempotente, sauvegardes, journal, export/import, migrations, isolation, sécurité | `DATABASE_URL_TEST` |
-| `pnpm test:e2e` | Playwright, navigateur bureau + mobile : création du candidat, actions, progression, bilan, sauvegarde, restauration, journal, export/import, reprise, présidentielle complète jusqu'aux résultats | `DATABASE_URL_TEST` ; navigateur : `pnpm exec playwright install chromium` |
+| `pnpm test` | tests unitaires, de propriétés et de composants (moteur, jeu de règles, sauvegardes, import de données, interface) | aucun |
+| `pnpm test:integration` | API réelle contre PostgreSQL : parties, progression idempotente, sauvegardes, journal, export/import, migrations, isolation, sécurité, référentiel cartographique, résultats communaux | `DATABASE_URL_TEST` |
+| `pnpm test:e2e` | Playwright, navigateur bureau + mobile : création du candidat, actions, progression, bilan, sauvegarde, restauration, journal, export/import, reprise, présidentielle complète jusqu'aux résultats, carte (encarts DROM, recherche, sélection, résultats, motifs, audit d'accessibilité axe-core) | `DATABASE_URL_TEST` ; navigateur : `pnpm exec playwright install chromium` |
 | `pnpm lint` · `pnpm typecheck` · `pnpm format:check` | qualité du code | aucun |
 | `pnpm check` | lint + format + typecheck + tests unitaires | aucun |
 
@@ -97,15 +113,17 @@ La base `DATABASE_URL_TEST` est **vidée** par les tests d'intégration : ne jam
 ## Structure
 
 ```
-apps/api            API Fastify + Prisma (sessions, parties, sauvegardes)
-apps/web            Interface React (Vite, React Router, TanStack Query, Zustand, Tailwind)
+apps/api            API Fastify + Prisma (sessions, parties, sauvegardes, carte)
+apps/web            Interface React (Vite, React Router, TanStack Query, Zustand, Tailwind, MapLibre GL)
 apps/web/e2e        Tests Playwright
 packages/engine     Moteur de simulation pur et déterministe (aucune E/S)
 packages/rulesets   Jeux de règles versionnés et sourcés (calendrier, actions, événements, électorat, adversaires)
 packages/save-engine  Sérialisation canonique, empreintes, migrations et export/import des sauvegardes
+packages/data-import  Imports sourcés (COG, contours IGN, résultats 2022) et jeu de démonstration commité
 packages/shared     Schémas Zod et contrats d'API partagés
 docs/               Cahier des charges, plan, architecture, sources, risques
-scripts/            Outils de développement
+scripts/            Outils de développement (base locale, mesure des formats de carte)
+data/raw, data/processed  Téléchargements et imports locaux (ignorés par Git)
 ```
 
 ## Documentation
@@ -116,6 +134,7 @@ scripts/            Outils de développement
 - [Modèle de données](docs/MODELE_DONNEES.md) — entités, schéma de base
 - [Sources](docs/SOURCES.md) — sources officielles, licences, état de vérification
 - [Risques](docs/RISQUES.md) — registre des risques et informations manquantes
+- [Mesure des formats de carte](docs/MESURES_CARTE.md) — spike de la phase 4
 
 ## Principes
 

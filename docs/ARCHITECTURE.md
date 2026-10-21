@@ -180,6 +180,8 @@ Les poids `w` et la température sont des paramètres du *ruleset* (difficulté 
 - Sondages : deux instituts fictifs à périodicité fixe ; échantillon multinomial de taille *n* tiré des intentions attendues décalées d'un biais d'institut constant ; marge à 95 % calculée comme pour un échantillon aléatoire ; hypothèse de second tour entre les deux premiers ; cote de popularité distincte.
 - Les intentions « vraies » du modèle restent internes (décomposition des facteurs visible) ; le joueur voit les sondages, puis les résultats.
 
+**Phase 4 — géographie électorale** (`packages/engine/src/territory`) : l'unité de vote devient la **commune** (et chaque territoire hors carte). La base territoriale, fournie au moteur par l'API, donne pour chaque unité ses inscrits (2022, second tour), l'affinité de chacun des 9 groupes (part locale ÷ part nationale, d'après le premier tour 2022 et la répartition « candidat 2022 → groupes » du jeu de règles, lissée pour les petites communes) et un facteur de participation locale (borné). Le comportement de chaque groupe (participation, blancs, nuls, probabilités) est calculé une fois par tour puis appliqué à chaque commune en nombres entiers ; départements, régions et national sont des sommes exactes. Sans import, une base de démonstration **fictive** (Ain, Corse, DROM détaillés ; autres départements en bloc) est utilisée et affichée comme telle.
+
 ### 4.5 IA des adversaires (§7)
 
 Boucle par adversaire : *analyser → générer les actions candidates → estimer coût/bénéfice → sélectionner → exécuter → mettre à jour la stratégie*. Implémentation par **fonction d'utilité** pondérée par le profil (idéologie, style, tolérance au risque) avec tirage softmax pour éviter les comportements robotiques. Aucun LLM dans la décision ; un module de narration optionnel (désactivé par défaut) ne peut produire que du texte et n'a pas d'accès en écriture à l'état.
@@ -238,6 +240,19 @@ La jointure géométrie ⇄ résultats se fait **côté client par `feature-stat
 2. Valider contre le Code officiel géographique (COG) INSEE du même millésime : **chaque commune du COG a exactement une géométrie** et inversement ; sinon l'import échoue (aucune attribution silencieuse, §3.1).
 3. Simplifier à plusieurs niveaux (ex. `mapshaper`, disponible sur npm) ; dériver départements et régions par fusion des communes pour garantir l'emboîtement exact.
 4. Générer les tuiles (PMTiles via `tippecanoe`, à installer ou exécuter via Docker en CI) **ou** des fichiers GeoJSON/TopoJSON par département chargés à la demande. Choix arrêté au spike de phase 4 après mesure (taille transférée, temps de rendu sur mobile).
+
+**Réalisé en phase 4** (`pnpm data:geo`, `pnpm data:geo --demo`, `pnpm data:resultats`) :
+
+| Étape | Réalisation |
+|---|---|
+| Téléchargement | Reprenable (en-tête Range), métadonnées à côté de chaque fichier (`.meta.json` : URL, date, taille, SHA-256) ; empreinte revérifiée à chaque import. |
+| COG 2026 | `v_commune_2026.csv` (communes, `TYPECOM = COM`), départements, régions, collectivités d'outre-mer ; codes gardés en chaînes. |
+| Contours | GeoPackage ADMIN EXPRESS COG CARTO 2026 lu avec `node:sqlite` (en-tête GeoPackage et WKB décodés par le dépôt), extraction de l'archive par `7zip-bin`. |
+| Contrôle | Une géométrie par commune du COG et inversement ; les deux communes de Saint-Pierre-et-Miquelon (collectivité hors carte) sont écartées explicitement ; toute autre différence fait échouer l'import. |
+| Simplification | mapshaper : communes à 100 m (formes conservées) ; aperçu national à 1 000 m ; départements et régions **fusionnés à partir des communes**. |
+| Sorties | `data/processed/geo/cog-2026/` : `manifest.json` (sources, effectifs, emprises, population, liste hors carte), `france.topo.json` (régions et départements, 112 Ko), `communes/<département>.topo.json` (101 fichiers), `index.json` (recherche). Import reproductible à l'octet près. |
+| Démonstration | `packages/data-import/demo/cog-2026/` (744 Ko, commité) : aperçu national complet et communes de l'Ain, de la Corse et des cinq DROM. |
+| Résultats 2022 | Fichiers communaux de l'Intérieur (Windows-1252, blocs répétés), contrôles ligne à ligne, **somme égale à l'unité aux totaux proclamés** (deux tours), passage COG 2022 → 2026 par le fichier des mouvements (65 fusions exactes, 10 communes ventilées au prorata de la population et étiquetées « estimation », 6 communes sans électeurs), territoires hors carte isolés. Sortie `data/processed/resultats/presidentielle-2022/` (non commitée, Q8). |
 5. Raccorder les résultats historiques au COG courant via les tables de passage INSEE (fusions de communes, changements de code) ; une scission est ventilée au prorata de la population et marquée `estimation`.
 
 ### 5.5 Contraintes connues
@@ -265,9 +280,12 @@ Toutes les entrées et sorties sont validées par des schémas Zod partagés (`p
 | `POST` | `/api/games/import` | Import dans une **nouvelle** partie ; empreinte vérifiée avant migration, schéma, cohérence ; jamais d'écrasement. *Phase 2.* |
 | `GET` | `/api/rulesets/:clé` | Jeu de règles d'une partie (calendrier sourcé, catalogue d'actions et d'événements, électorat, adversaires, instituts). *Phase 2.* |
 | `GET` | `/api/rulesets/courant` | Jeu de règles des nouvelles parties (profils de départ du formulaire de création). *Phase 3.* |
-| `GET` | `/api/games/:id/elections/:electionId/rounds/:n/results?level=commune` | Résultats compacts pour la carte. |
+| `GET` | `/api/geo/manifeste` | Référentiel cartographique (sources, effectifs, départements, régions, hors carte). *Phase 4.* |
+| `GET` | `/api/geo/fichiers/*` | Fichiers TopoJSON et index du manifeste (liste blanche), compressés si le client l'accepte. *Phase 4.* |
+| `GET` | `/api/geo/recherche?q=` | Recherche d'une commune, d'un département ou d'une région par nom (sans accents) ou code. *Phase 4.* |
+| `GET` | `/api/games/:id/resultats/:tour/communes?departement=` | Résultats simulés des communes d'un département, recalculés à l'identique ; `409 base_differente` si la base électorale a changé. *Phase 4.* |
+| `GET` | `/api/geo/historique`, `/api/geo/historique/:tour/apercu`, `/api/geo/historique/:tour/communes?departement=` | Résultats officiels 2022 s'ils ont été importés localement ; sinon statut « indisponible » avec la raison. *Phase 4.* |
 | `GET` | `/api/games/:id/polls` | Sondages simulés. *Phase 3 : les sondages et résultats font partie de l'état de la partie (`GET /api/games/:id`) et sont aussi journalisés (`sondage_publie`, `resultat_scrutin`) ; une route dédiée viendra avec les volumes communaux de la phase 4.* |
-| `GET` | `/api/territories/search?q=` | Recherche nom / code. |
 | `GET` | `/api/data-sources` | Provenance des données affichées. |
 | `GET` | `/api/health` | Santé (base joignable, versions). |
 
@@ -295,6 +313,7 @@ Toutes les entrées et sorties sont validées par des schémas Zod partagés (`p
 - **TanStack Query** pour les données serveur (cache, invalidation après `advance`) ; **Zustand** limité à l'état d'interface (filtres de carte, sélection, thème).
 - Thème clair/sombre, mise en page responsive (mobile d'abord), tableaux filtrables, notifications, infobulles, navigation clavier.
 - Chaque variation affichée (« +2 pts ») propose un détail des facteurs issu du `SimulationLog`.
+- Phase 4 : écran **Carte électorale** (MapLibre GL 6, chargé à la demande) : métropole et cinq encarts DROM (instances indépendantes ; sur téléphone, vignettes qui ouvrent l'encart en plein écran), niveaux région / département / commune (communes des départements visibles chargées à la demande), sources « partie, tour 1 ou 2 (simulé) », « présidentielle 2022 (officiel) » si importée, ou « géographie seule », couleurs « candidat en tête » (3 couleurs au plus + « autre »), « participation », « score d'un candidat » (dégradé) ou « écart entre deux candidats » (palette divergente), option « motifs » (hachures à 45° et 135°, croisillons : l'identité ne repose pas sur la teinte seule), recherche, fiche, tableau équivalent filtrable, liste hors carte ; audit axe-core sans violation WCAG 2.1 AA.
 - Phase 3 : création du candidat (positionnement sur deux axes, électorats les plus proches, profil de départ) ; écrans **Candidats** (carte des positionnements, statuts, facteurs du vote), **Sondages** (dernier sondage avec marge, évolution, fiche technique complète) et **Résultats** (deux tours, participation, blancs, nuls, détail par groupe d'électeurs). Les graphiques sont des barres et un nuage de points en SVG/CSS, sans bibliothèque : votre candidat dans la couleur d'accent, les autres en gris ; la valeur est toujours écrite dans un tableau voisin. Badges « Fictif », « Sondage simulé », « Résultat simulé ».
 
 ---
@@ -360,5 +379,7 @@ Prévues pour les phases suivantes (non installées) : maplibre-gl 6.15.0, pmtil
 | D4 | Voix entières par plus fort reste, agrégats = sommes | arrondis indépendants par niveau | Garantit l'égalité exacte des totaux (§3.3). |
 | D5 | Encarts DROM = instances MapLibre indépendantes | DROM déplacés sur la carte principale | Exigence « mini-cartes interactives indépendantes » (§3.2). |
 | D6 | Pas de fond de carte externe | fond de carte d'un service tiers | Pas de clé API (critère 14), hors ligne. |
-| D7 | Tuiles PMTiles **ou** GeoJSON par département | GeoJSON national unique | Le GeoJSON communal national pèse 32,5 Mo (8,2 Mo compressé) en simplification 100 m : trop lourd pour un téléphone ; arbitrage au spike phase 4. |
-| D8 | Contours IGN ADMIN EXPRESS COG CARTO 2026 (Licence Ouverte 2.0), simplifiés par nos soins | contours Etalab (ODbL) | Pas d'obligation de partage à l'identique ; mêmes géométries IGN pour la métropole et les DROM. Etalab reste utilisable pour le spike. |
+| D7 | **Décidé (phase 4)** : TopoJSON par département chargé à la demande, aperçu national des départements et régions | GeoJSON national unique ; PMTiles (non mesurées : `tippecanoe` indisponible ici) | Mesure sur téléphone émulé : premier rendu 1,6 s, 0,43 Mo, 11,5 Mo de mémoire, contre 21 s, 8 Mo et 268 Mo pour le fichier national ([MESURES_CARTE.md](./MESURES_CARTE.md)). |
+| D8 | **Appliqué (phase 4)** : contours IGN ADMIN EXPRESS COG CARTO 2026 (Licence Ouverte 2.0), simplifiés par nos soins | contours Etalab (ODbL) | Pas d'obligation de partage à l'identique ; mêmes géométries IGN pour la métropole et les DROM. |
+| D9 | Référentiel territorial en **fichiers versionnés par millésime** (manifeste, TopoJSON, index) chargés en mémoire par l'API | tables `Territory` en base | Données statiques, reproductibles, servies telles quelles à la carte ; aucune importation en base à maintenir par environnement. |
+| D10 | Résultats communaux d'une partie **recalculés à la demande** (comportement des groupes enregistré dans l'état, base électorale identifiée par une empreinte) ; agrégats départementaux et régionaux dans l'état | blocs de résultats communaux en base | ~500 000 nombres par tour évités dans chaque sauvegarde ; export/import inchangés ; résultat identique garanti par test, refus explicite si la base électorale a changé. |

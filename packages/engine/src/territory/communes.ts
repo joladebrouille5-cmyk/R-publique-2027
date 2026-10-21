@@ -21,11 +21,11 @@ export function communeResults(
   const territoire = result.territoire;
   if (!territoire)
     throw new BaselineMismatchError(
-      'Ce tour a été dépouillé sans géographie (ancienne sauvegarde).',
+      'Détail communal indisponible : ce tour a été dépouillé sans géographie (ancienne sauvegarde).',
     );
   if (territoire.baselineId !== baseline.id) {
     throw new BaselineMismatchError(
-      `Base électorale différente de celle du dépouillement (${territoire.baselineId} ≠ ${baseline.id}).`,
+      `Détail communal indisponible : la géographie électorale a changé depuis ce dépouillement (base ${territoire.baselineId}, base actuelle ${baseline.id}). Les résultats des départements et des régions restent ceux de la partie.`,
     );
   }
   const results = new Map<string, VoteCounts>();

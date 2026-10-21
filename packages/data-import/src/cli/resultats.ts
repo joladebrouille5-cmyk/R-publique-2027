@@ -67,7 +67,7 @@ async function main() {
   rmSync(OUT, { recursive: true, force: true });
   mkdirSync(OUT, { recursive: true });
   for (const source of RESULT_SOURCES) {
-    console.log(`Téléchargement : ${source.url}`);
+    console.log(`Source : ${source.url} (copie locale réutilisée si son empreinte est intacte)`);
     const path = join(RAW, source.fichier);
     const record = await download(source.url, path);
     const text = new TextDecoder('windows-1252').decode(readFileSync(path));
