@@ -57,7 +57,10 @@ describe('configuration wrangler.jsonc', () => {
     });
     // Le dossier compilé est celui de Vite par défaut (aucun outDir personnalisé).
     expect(readFileSync(join(ROOT, 'apps/web/vite.config.ts'), 'utf8')).not.toMatch(/outDir/);
-    expect(config.build.command).toBe('pnpm --filter @r2027/web run build');
+    // Les dépendances sont installées par la commande elle-même (Workers Builds ne le fait pas).
+    expect(config.build.command).toBe(
+      'corepack pnpm install --frozen-lockfile --filter @r2027/web... && corepack pnpm --filter @r2027/web run build',
+    );
     expect(config.compatibility_date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 

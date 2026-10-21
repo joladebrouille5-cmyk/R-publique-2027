@@ -99,7 +99,7 @@ Le pied de page de l'interface indique « Serveur connecté » quand l'API et la
 
 Le dépôt est relié à Cloudflare Workers Builds (Worker `republique-2027`). La configuration est dans `wrangler.jsonc` :
 
-- `wrangler deploy` compile l'interface (`pnpm --filter @r2027/web run build`) puis publie `apps/web/dist` en fichiers statiques, avec repli sur `index.html` pour les routes de l'application ;
+- `wrangler deploy` installe les dépendances de l'interface et la compile (`corepack pnpm install --frozen-lockfile --filter @r2027/web...` puis `corepack pnpm --filter @r2027/web run build` : Workers Builds n'installe pas lui-même les dépendances du projet), puis publie `apps/web/dist` en fichiers statiques, avec repli sur `index.html` pour les routes de l'application ;
 - **l'API du jeu (Fastify + PostgreSQL) ne s'exécute pas sur Workers** : `cloudflare/worker.js` répond à toute requête `/api/*` par une erreur 503 explicite (`api_non_deployee`), et l'interface affiche « Serveur ou base de données indisponible ». Aucune partie ne peut donc être jouée depuis ce déploiement tant que le serveur n'est pas hébergé ailleurs (hébergeur à choisir, question Q6 du [plan](docs/PLAN_DEVELOPPEMENT.md#5-questions-ouvertes)) ;
 - la version de Node.js est fixée par `.node-version` (22.22.0) : `.npmrc` impose `engine-strict=true`, et une version plus ancienne fait échouer `pnpm install`.
 

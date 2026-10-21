@@ -7,8 +7,11 @@
   "name": "republique-2027",
   "main": "cloudflare/worker.js",
   "compatibility_date": "2026-10-01",
+  // Workers Builds n'installe pas les dépendances du projet : la commande les installe (interface
+  // et paquets dont elle dépend, version de pnpm fixée par packageManager via Corepack) puis
+  // compile l'interface.
   "build": {
-    "command": "pnpm --filter @r2027/web run build",
+    "command": "corepack pnpm install --frozen-lockfile --filter @r2027/web... && corepack pnpm --filter @r2027/web run build",
   },
   "assets": {
     "directory": "./apps/web/dist",
