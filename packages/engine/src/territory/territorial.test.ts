@@ -140,14 +140,14 @@ describe('dépouillement territorial', () => {
 
   it('une présidentielle complète se joue sur la base territoriale', () => {
     let s = newGame({}, QUIET);
-    for (let i = 0; i < 40 && !s.calendar.blockedBy; i++) {
+    for (let i = 0; i < 40 && !s.quinquennat; i++) {
       const decisions = s.pendingDecisions.map((d) => ({
         decisionId: d.id,
         optionId: d.defaultOptionId,
       }));
       s = advanceWeek(s, { actions: [], decisions }, { ruleset: QUIET, territory: BASE }).state;
     }
-    expect(s.calendar.blockedBy).toBe('fin-de-la-presidentielle');
+    expect(s.quinquennat?.mandat.presidentId).toBe(s.elections.t2!.winner);
     expect(s.elections.t1!.territoire!.baselineId).toBe('test-base');
     expect(s.elections.t2!.inscrits).toBe(s.elections.t1!.inscrits);
     expect(Object.keys(s.elections.t2!.territoire!.departements).sort()).toEqual([

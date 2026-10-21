@@ -126,13 +126,13 @@ export function playUntil(
   return { state, reports };
 }
 
-/** Joue jusqu'à la fin de la présidentielle (calendrier bloqué). */
+/** Joue jusqu'à la fin de la présidentielle (élection du président, quinquennat ouvert). */
 export function playToEnd(
   start: GameState,
   ruleset: Ruleset = RULESET,
   plan: (state: GameState) => string[] = () => [],
 ): { state: GameState; reports: WeeklyReport[] } {
-  const result = playUntil(start, () => false, ruleset, plan);
-  if (!result.state.calendar.blockedBy) throw new Error('La présidentielle aurait dû se terminer');
+  const result = playUntil(start, (s) => s.quinquennat !== null, ruleset, plan);
+  if (!result.state.quinquennat) throw new Error('La présidentielle aurait dû se terminer');
   return result;
 }

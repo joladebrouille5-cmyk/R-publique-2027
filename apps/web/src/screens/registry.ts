@@ -72,8 +72,8 @@ export const GAME_SCREENS: readonly GameScreen[] = [
     path: 'gouvernement',
     label: 'Gouvernement',
     phase: 6,
-    available: false,
-    description: 'Premier ministre, ministres et feuille de route après une victoire.',
+    available: true,
+    description: 'Président, mandat, Premier ministre, ministres et feuille de route.',
   },
   {
     path: 'parlement',

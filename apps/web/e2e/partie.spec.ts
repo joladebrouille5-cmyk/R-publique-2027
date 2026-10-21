@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises';
+import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { advanceViaApi, createGame, openScreen, resolveWeek } from './helpers';
 
@@ -105,11 +106,13 @@ test('export puis import dans une nouvelle partie identique', async ({ page }) =
 
 test('les écrans non implémentés sont annoncés comme tels', async ({ page }) => {
   await createGame(page, 'Écrans', 'e2e-ecrans');
-  await openScreen(page, 'Gouvernement');
+  await openScreen(page, 'Parlement');
   await expect(page.getByText('Non disponible — prévu en phase 6')).toBeVisible();
 });
 
-test('présidentielle complète : candidat, sondages, deux tours et résultats', async ({ page }) => {
+test('présidentielle complète puis quinquennat : deux tours, résultats, gouvernement, avance rapide', async ({
+  page,
+}) => {
   await createGame(page, 'Présidentielle', 'e2e-presidentielle');
   await openScreen(page, 'Candidats');
   const mine = page.getByRole('listitem', { name: 'Camille Durand' });
@@ -123,8 +126,10 @@ test('présidentielle complète : candidat, sondages, deux tours et résultats',
   await expect(latest.getByText(/1\s000 personnes/)).toBeVisible();
   await expect(latest.getByText('Camille Durand (vous)')).toBeVisible();
 
-  const final = await advanceViaApi(page, (g) => g.state.calendar.blockedBy !== null);
-  expect(final.state.calendar.blockedBy).toBe('fin-de-la-presidentielle');
+  // Critère 10 : la fin de la présidentielle ouvre la présidence (ici celle de l'IA).
+  const final = await advanceViaApi(page, (g) => g.state.quinquennat !== null);
+  expect(final.state.meta.phase).toBe('presidence');
+  expect(final.state.calendar.blockedBy).toBeNull();
   await page.reload();
   await openScreen(page, 'Résultats');
   const t2 = page.getByRole('region', { name: 'Second tour' });
@@ -135,12 +140,27 @@ test('présidentielle complète : candidat, sondages, deux tours et résultats',
   await expect(page.getByRole('region', { name: 'Premier tour' })).toBeVisible();
 
   await openScreen(page, 'Tableau de bord');
-  // Alerte du tableau de bord (le bilan de la dernière semaine, chargé ensuite, en a une autre).
-  const blocked = page
-    .getByRole('alert')
-    .filter({ has: page.getByRole('link', { name: 'Voir les résultats' }) });
-  await expect(blocked).toContainText(/élu\(e\)/);
-  await expect(page.getByRole('button', { name: /Résoudre la semaine/ })).toBeDisabled();
+  const quinquennat = page.getByRole('region', { name: /Quinquennat 2027–2032/ });
+  await expect(quinquennat).toContainText(
+    `${winner.prenom} ${winner.nom} est président(e) de la République`,
+  );
+  await expect(quinquennat).toContainText('Vous n’êtes pas président(e)');
+  await page.getByLabel('Avance rapide').selectOption('13');
+  await page.getByRole('button', { name: 'Avancer' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Avance rapide' })).toHaveText(
+    'Avance rapide : 13 semaine(s) résolue(s) sur 13.',
+  );
+  await expect(
+    page.getByRole('button', { name: `Résoudre la semaine ${final.week + 13}` }),
+  ).toBeVisible();
+
+  await openScreen(page, 'Gouvernement');
+  await expect(page.getByRole('heading', { name: 'Gouvernement n° 1' })).toBeVisible();
+  await expect(page.getByText('Premier ministre')).toBeVisible();
+  const audit = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze();
+  expect(audit.violations.map((v) => `${v.id} : ${v.help} (${v.nodes.length})`)).toEqual([]);
 });
 
 test('une date de départ invalide est refusée par le serveur', async ({ page }) => {
@@ -162,6 +182,7 @@ test('aucun défilement horizontal de la page', async ({ page }) => {
     'Candidats',
     'Sondages',
     'Résultats',
+    'Gouvernement',
     'Journal',
     'Sauvegardes',
   ]) {

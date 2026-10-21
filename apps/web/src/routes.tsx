@@ -6,6 +6,7 @@ import { Candidates } from './screens/Candidates';
 import { Dashboard } from './screens/Dashboard';
 import { Finances } from './screens/Finances';
 import { GameLayout } from './screens/GameLayout';
+import { Government } from './screens/Government';
 import { Home } from './screens/Home';
 import { Journal } from './screens/Journal';
 import { Medias } from './screens/Medias';
@@ -36,6 +37,7 @@ const IMPLEMENTED: Record<string, ComponentType> = {
   medias: Medias,
   programme: Programme,
   finances: Finances,
+  gouvernement: Government,
   sondages: Polls,
   resultats: Results,
   journal: Journal,

@@ -1,7 +1,7 @@
 {
   "id": "presidentielle-2027",
-  "version": "5.0.0",
-  "libelle": "Présidentielle 2027 — règles de campagne, parrainages, financement, médias réels (phase 5 ter)",
+  "version": "6.0.0",
+  "libelle": "Présidentielle 2027 et quinquennat — campagne, parrainages, financement, médias réels, présidence et gouvernement (phase 6)",
   "verifieLe": "2026-10-21",
   "sources": {
     "elysee-cm-2026-07-01": {
@@ -33,6 +33,16 @@
       "titre": "Conseil constitutionnel — Présidentielle 2022, parrainages validés (règles de présentation)",
       "url": "https://presidentielle2022.conseil-constitutionnel.fr/les-parrainages/tous-les-parrainages-valides.html",
       "consulteLe": "2026-10-20"
+    },
+    "constitution-art-6": {
+      "titre": "Constitution du 4 octobre 1958, article 6 (durée du mandat, deux mandats consécutifs au plus) — texte cité par l'article Wikipédia « Article 6 de la Constitution de la Cinquième République française » (révision 239702659 du 21/09/2026) ; texte de Légifrance non relu (accès refusé)",
+      "url": "https://fr.wikipedia.org/w/index.php?title=Article_6_de_la_Constitution_de_la_Cinqui%C3%A8me_R%C3%A9publique_fran%C3%A7aise&oldid=239702659",
+      "consulteLe": "2026-10-21"
+    },
+    "constitution-art-7": {
+      "titre": "Constitution du 4 octobre 1958, article 7 (élection « vingt jours au moins et trente-cinq jours au plus avant l'expiration des pouvoirs du président en exercice ») — texte cité par l'article Wikipédia « Article 7 de la Constitution de la Cinquième République française » (révision 240299785 du 12/10/2026) ; texte de Légifrance non relu (accès refusé)",
+      "url": "https://fr.wikipedia.org/w/index.php?title=Article_7_de_la_Constitution_de_la_Cinqui%C3%A8me_R%C3%A9publique_fran%C3%A7aise&oldid=240299785",
+      "consulteLe": "2026-10-21"
     }
   },
   "calendrier": {
@@ -2846,6 +2856,436 @@
     },
     "partCodiffusion": 0.5,
     "notorieteParExposition": 0.02
+  },
+  "quinquennat": {
+    "note": "Règles de la présidence : durée du mandat et limite de deux mandats consécutifs (Constitution, art. 6), dates du mandat déduites de la proclamation de 2022, fenêtre de l'élection suivante (art. 7). Postes, profils fictifs, acceptation d'un poste, usure du pouvoir et actions du président : paramètres de jeu (hypothèses). Le comportement d'une personnalité réelle nommée à un poste est simulé ; aucun propos ne lui est attribué.",
+    "mandat": {
+      "dureeAnnees": 5,
+      "mandatsConsecutifsMax": 2,
+      "statut": "officiel",
+      "sourceId": "constitution-art-6",
+      "regle": "Le Président de la République est élu pour cinq ans ; nul ne peut exercer plus de deux mandats consécutifs (art. 6)."
+    },
+    "investiture": {
+      "date": "2027-05-14",
+      "statut": "deduit",
+      "sourceId": "cc-2022-197-pdr",
+      "regle": "Le mandat proclamé en 2022 court « à compter du 14 mai 2022 à 0 heure » pour cinq ans : les pouvoirs du président en exercice expirent le 13 mai 2027 à minuit, le mandat suivant commence le 14 mai 2027."
+    },
+    "finMandat": {
+      "date": "2032-05-13",
+      "statut": "deduit",
+      "sourceId": "constitution-art-6",
+      "regle": "Cinq ans après le début du mandat (art. 6) : fin le 13 mai 2032 à minuit ; les mandats suivants se décalent de cinq ans."
+    },
+    "cycles": [
+      {
+        "annee": 2032,
+        "decalageSemaines": 261,
+        "statut": "hypothese",
+        "regle": "Calendrier de 2027 décalé de 261 semaines (jours de la semaine conservés) : premier tour le dimanche 18 avril 2032, second tour le 2 mai 2032 ; le premier tour tombe dans la fenêtre de l'article 7 (du 9 au 24 avril 2032). Dates réelles fixées par décret le moment venu."
+      },
+      {
+        "annee": 2037,
+        "decalageSemaines": 522,
+        "statut": "hypothese",
+        "regle": "Calendrier de 2027 décalé de 522 semaines : premier tour le dimanche 19 avril 2037, second tour le 3 mai 2037 ; le premier tour tombe dans la fenêtre de l'article 7 (du 9 au 24 avril 2037)."
+      }
+    ],
+    "postes": [
+      {
+        "id": "economie",
+        "libelle": "Économie et Finances"
+      },
+      {
+        "id": "interieur",
+        "libelle": "Intérieur"
+      },
+      {
+        "id": "affaires-etrangeres",
+        "libelle": "Europe et Affaires étrangères"
+      },
+      {
+        "id": "armees",
+        "libelle": "Armées"
+      },
+      {
+        "id": "justice",
+        "libelle": "Justice"
+      },
+      {
+        "id": "education",
+        "libelle": "Éducation nationale"
+      },
+      {
+        "id": "sante",
+        "libelle": "Santé et Solidarités"
+      },
+      {
+        "id": "travail",
+        "libelle": "Travail et Emploi"
+      },
+      {
+        "id": "transition-ecologique",
+        "libelle": "Transition écologique et Énergie"
+      },
+      {
+        "id": "agriculture",
+        "libelle": "Agriculture"
+      }
+    ],
+    "profils": [
+      {
+        "id": "profil-lucie-abadie",
+        "prenom": "Lucie",
+        "nom": "Abadie",
+        "famille": "gauche radicale",
+        "positionnement": {
+          "economie": -80,
+          "societe": -50
+        },
+        "competence": 0.5,
+        "parcours": "Personnage fictif. Économiste, enseignante-chercheuse, ancienne conseillère d'un groupe parlementaire.",
+        "nature": "fictif"
+      },
+      {
+        "id": "profil-helene-marchal",
+        "prenom": "Hélène",
+        "nom": "Marchal",
+        "famille": "gauche",
+        "positionnement": {
+          "economie": -55,
+          "societe": -45
+        },
+        "competence": 0.7,
+        "parcours": "Personnage fictif. Ancienne présidente de conseil régional, spécialiste des politiques sociales.",
+        "nature": "fictif"
+      },
+      {
+        "id": "profil-thomas-quillet",
+        "prenom": "Thomas",
+        "nom": "Quillet",
+        "famille": "gauche",
+        "positionnement": {
+          "economie": -30,
+          "societe": -25
+        },
+        "competence": 0.7,
+        "parcours": "Personnage fictif. Inspecteur du travail, ancien responsable syndical.",
+        "nature": "fictif"
+      },
+      {
+        "id": "profil-yanis-berthier",
+        "prenom": "Yanis",
+        "nom": "Berthier",
+        "famille": "écologiste",
+        "positionnement": {
+          "economie": -45,
+          "societe": -60
+        },
+        "competence": 0.6,
+        "parcours": "Personnage fictif. Ingénieur agronome, ancien maire d'une ville moyenne.",
+        "nature": "fictif"
+      },
+      {
+        "id": "profil-agathe-vernier",
+        "prenom": "Agathe",
+        "nom": "Vernier",
+        "famille": "écologiste",
+        "positionnement": {
+          "economie": -35,
+          "societe": -40
+        },
+        "competence": 0.55,
+        "parcours": "Personnage fictif. Urbaniste, ancienne adjointe chargée des transports d'une métropole.",
+        "nature": "fictif"
+      },
+      {
+        "id": "profil-odile-fresnel",
+        "prenom": "Odile",
+        "nom": "Fresnel",
+        "famille": "société civile",
+        "positionnement": {
+          "economie": -10,
+          "societe": -15
+        },
+        "competence": 0.8,
+        "parcours": "Personnage fictif. Haute fonctionnaire, ancienne directrice d'administration centrale.",
+        "nature": "fictif"
+      },
+      {
+        "id": "profil-ines-carrel",
+        "prenom": "Inès",
+        "nom": "Carrel",
+        "famille": "société civile",
+        "positionnement": {
+          "economie": 0,
+          "societe": 0
+        },
+        "competence": 0.85,
+        "parcours": "Personnage fictif. Médecin hospitalière, ancienne directrice d'agence régionale de santé.",
+        "nature": "fictif"
+      },
+      {
+        "id": "profil-nadia-keller",
+        "prenom": "Nadia",
+        "nom": "Keller",
+        "famille": "centre",
+        "positionnement": {
+          "economie": 5,
+          "societe": -20
+        },
+        "competence": 0.65,
+        "parcours": "Personnage fictif. Avocate, ancienne députée européenne.",
+        "nature": "fictif"
+      },
+      {
+        "id": "profil-mathieu-lestrade",
+        "prenom": "Mathieu",
+        "nom": "Lestrade",
+        "famille": "centre",
+        "positionnement": {
+          "economie": 15,
+          "societe": -5
+        },
+        "competence": 0.75,
+        "parcours": "Personnage fictif. Économiste, ancien rapporteur général du budget.",
+        "nature": "fictif"
+      },
+      {
+        "id": "profil-paul-ancelin",
+        "prenom": "Paul",
+        "nom": "Ancelin",
+        "famille": "libéral",
+        "positionnement": {
+          "economie": 75,
+          "societe": -10
+        },
+        "competence": 0.7,
+        "parcours": "Personnage fictif. Ancien dirigeant d'une entreprise industrielle.",
+        "nature": "fictif"
+      },
+      {
+        "id": "profil-gaspard-delorme",
+        "prenom": "Gaspard",
+        "nom": "Delorme",
+        "famille": "droite",
+        "positionnement": {
+          "economie": 45,
+          "societe": 30
+        },
+        "competence": 0.7,
+        "parcours": "Personnage fictif. Préfet honoraire.",
+        "nature": "fictif"
+      },
+      {
+        "id": "profil-sylvie-amblard",
+        "prenom": "Sylvie",
+        "nom": "Amblard",
+        "famille": "droite",
+        "positionnement": {
+          "economie": 55,
+          "societe": 20
+        },
+        "competence": 0.6,
+        "parcours": "Personnage fictif. Cheffe d'entreprise, ancienne présidente de chambre de commerce.",
+        "nature": "fictif"
+      },
+      {
+        "id": "profil-louis-ferrand",
+        "prenom": "Louis",
+        "nom": "Ferrand",
+        "famille": "souverainiste",
+        "positionnement": {
+          "economie": 10,
+          "societe": 60
+        },
+        "competence": 0.5,
+        "parcours": "Personnage fictif. Officier général en deuxième section.",
+        "nature": "fictif"
+      },
+      {
+        "id": "profil-bruno-castaing",
+        "prenom": "Bruno",
+        "nom": "Castaing",
+        "famille": "droite nationale",
+        "positionnement": {
+          "economie": 35,
+          "societe": 70
+        },
+        "competence": 0.55,
+        "parcours": "Personnage fictif. Ancien commissaire de police, élu municipal.",
+        "nature": "fictif"
+      }
+    ],
+    "acceptation": {
+      "statut": "hypothese",
+      "proximiteMin": 60,
+      "probabiliteSousSeuil": 0.25,
+      "ministresActeursMax": 3,
+      "delaiApresRefus": 26
+    },
+    "opinion": {
+      "statut": "hypothese",
+      "usureHebdomadaire": 8
+    },
+    "actions": [
+      {
+        "id": "allocution",
+        "libelle": "Allocution télévisée",
+        "description": "Le président s'adresse aux Français depuis l'Élysée.",
+        "portee": "nationale",
+        "cible": null,
+        "cout": {
+          "budgetCentimes": 0,
+          "tempsHeures": 6
+        },
+        "prerequis": {
+          "militantsMin": 0
+        },
+        "effets": [
+          {
+            "ressource": "notoriete",
+            "base": 30,
+            "ecart": 15,
+            "delaiSemaines": 0,
+            "saturation": true
+          },
+          {
+            "ressource": "popularite",
+            "base": 40,
+            "ecart": 60,
+            "delaiSemaines": 0,
+            "saturation": false
+          }
+        ],
+        "campagne": null,
+        "risque": {
+          "probabilite": 0.15,
+          "libelle": "Allocution mal reçue",
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -100,
+              "ecart": 50,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        },
+        "note": "Effets : hypothèses de jeu."
+      },
+      {
+        "id": "deplacement-presidentiel",
+        "libelle": "Déplacement en région",
+        "description": "Visite de terrain : élus locaux, entreprises, services publics.",
+        "portee": "regionale",
+        "cible": "departement",
+        "cout": {
+          "budgetCentimes": 0,
+          "tempsHeures": 12
+        },
+        "prerequis": {
+          "militantsMin": 0
+        },
+        "effets": [
+          {
+            "ressource": "popularite",
+            "base": 30,
+            "ecart": 20,
+            "delaiSemaines": 0,
+            "saturation": true
+          }
+        ],
+        "campagne": null,
+        "risque": {
+          "probabilite": 0.08,
+          "libelle": "Accueil hostile",
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -50,
+              "ecart": 25,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        },
+        "note": "Effets : hypothèses de jeu."
+      },
+      {
+        "id": "sommet-international",
+        "libelle": "Sommet international",
+        "description": "Participation à un sommet européen ou international.",
+        "portee": "nationale",
+        "cible": null,
+        "cout": {
+          "budgetCentimes": 0,
+          "tempsHeures": 16
+        },
+        "prerequis": {
+          "militantsMin": 0
+        },
+        "effets": [
+          {
+            "ressource": "notoriete",
+            "base": 20,
+            "ecart": 10,
+            "delaiSemaines": 0,
+            "saturation": true
+          },
+          {
+            "ressource": "popularite",
+            "base": 15,
+            "ecart": 30,
+            "delaiSemaines": 0,
+            "saturation": false
+          }
+        ],
+        "campagne": null,
+        "risque": null,
+        "note": "Effets : hypothèses de jeu."
+      },
+      {
+        "id": "remaniement",
+        "libelle": "Remaniement du gouvernement",
+        "description": "Mettre fin aux fonctions du gouvernement et nommer un nouveau Premier ministre, qui compose son équipe.",
+        "portee": "nationale",
+        "cible": null,
+        "cout": {
+          "budgetCentimes": 0,
+          "tempsHeures": 8
+        },
+        "prerequis": {
+          "militantsMin": 0
+        },
+        "effets": [
+          {
+            "ressource": "popularite",
+            "base": 60,
+            "ecart": 40,
+            "delaiSemaines": 0,
+            "saturation": false
+          }
+        ],
+        "campagne": null,
+        "risque": {
+          "probabilite": 0.2,
+          "libelle": "Remaniement jugé sans cap",
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -60,
+              "ecart": 30,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        },
+        "note": "Effets : hypothèses de jeu.",
+        "institution": "remaniement"
+      }
+    ]
   },
   "debats": {
     "statut": "hypothese",

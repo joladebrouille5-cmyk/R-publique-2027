@@ -12,12 +12,8 @@ import { credibility } from '../campaign/programme';
 import { scrutinInWeek } from '../core/calendar';
 import { compareStrings } from '../core/ledger';
 import { stream } from '../core/random';
+import { openQuinquennat } from '../presidency/government';
 import { distance } from './model';
-
-const nameOf = (state: GameState, id: string) => {
-  const actor = state.actors[id];
-  return actor ? candidateName(actor.candidate) : id;
-};
 
 /** Scrutin (et numéro de tour) qui a lieu pendant la semaine en cours de résolution. */
 export function scrutinOfWeek(state: GameState, ruleset: Ruleset) {
@@ -28,21 +24,9 @@ export function scrutinOfWeek(state: GameState, ruleset: Ruleset) {
   return { scrutin, round: round as 1 | 2 };
 }
 
-function finalMessage(state: GameState, winnerId: string): string {
-  const player = state.player.actorId;
-  const winner = nameOf(state, winnerId);
-  if (player === winnerId) {
-    return `Vous êtes élu(e) à la présidence de la République. La formation du gouvernement, les législatives et le quinquennat arrivent en phase 6 : la partie ne peut pas encore continuer.`;
-  }
-  if (player) {
-    return `${winner} est élu(e). Votre bilan de campagne et la poursuite de la partie (élections suivantes) arrivent en phases 6 et 7.`;
-  }
-  return `${winner} est élu(e). La suite de la partie (gouvernement, quinquennat) arrive en phase 6.`;
-}
-
 /**
  * Conséquences d'un tour : statuts des candidats, phase de jeu, consignes de vote des
- * éliminés (§5.3 : un soutien ne transfère pas toutes les voix), fin de la phase 3.
+ * éliminés (§5.3 : un soutien ne transfère pas toutes les voix), ouverture du quinquennat.
  */
 export function concludeRound(
   state: GameState,
@@ -62,12 +46,9 @@ export function concludeRound(
         actor.status = actor.id === result.winner ? 'elu' : 'battu';
       }
     }
-    state.meta.phase = state.player.actorId === result.winner ? 'presidence' : 'bilan';
     state.pendingDecisions = state.pendingDecisions.filter((d) => d.kind !== 'consigne');
-    state.calendar = {
-      blockedBy: 'fin-de-la-presidentielle',
-      blockedMessage: finalMessage(state, result.winner),
-    };
+    // Phase 6 : le vainqueur (joueur ou IA) entre en fonctions à l'investiture.
+    openQuinquennat(state, ruleset, result.winner);
     return { phaseChange: { from, to: state.meta.phase }, events };
   }
 

@@ -10,3 +10,4 @@ export * from './territory';
 export * from './electoral';
 export * from './personalities';
 export * from './medias';
+export * from './quinquennat';

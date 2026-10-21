@@ -20,6 +20,7 @@ import {
 import { initialRelations } from '../ai/relations';
 import { openingAccount } from '../campaign/finances';
 import { emptyParrainages, initialPromises } from '../campaign/parrainages';
+import { FIRST_CYCLE } from '../presidency/dates';
 import { compareStrings } from './ledger';
 import { ENGINE_VERSION, SAVE_SCHEMA_VERSION } from './versions';
 
@@ -346,6 +347,9 @@ export function createGame(input: CreateGameInput, ruleset: Ruleset): GameState 
     medias: null,
     relations: initialRelations(actors),
     alliances: [],
+    cycle: { ...FIRST_CYCLE },
+    quinquennat: null,
+    historique: { presidentielles: [], quinquennats: [] },
   };
   distributeInitialPromises(state, ruleset);
   return state;

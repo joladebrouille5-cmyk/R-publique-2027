@@ -18,6 +18,7 @@ import {
   CandidateIdentitySchema,
   CandidateIdentityV5Schema,
 } from './politics';
+import { CycleSchema, QuinquennatSchema, QuinquennatSummarySchema } from './quinquennat';
 import { ResourceKeySchema, ResourcesSchema } from './resources';
 
 export const GAME_MODES = ['candidat_reel', 'candidat_personnalise', 'observateur'] as const;
@@ -242,9 +243,17 @@ export type ActorV5 = z.infer<typeof ActorV5Schema>;
 export const ActorSchema = ActorV5Schema.extend({ candidate: CandidateIdentitySchema }).strict();
 export type Actor = z.infer<typeof ActorSchema>;
 
-/** Décision obligatoire : réponse à un événement, ou consigne de vote entre les deux tours. */
-export const PendingDecisionSchema = PendingDecisionV2Schema.extend({
+/** Décision obligatoire aux formats 3 à 7 (événement ou consigne de vote), figée. */
+export const PendingDecisionV7Schema = PendingDecisionV2Schema.extend({
   kind: z.enum(['evenement', 'consigne']),
+}).strict();
+
+/**
+ * Décision obligatoire : réponse à un événement, consigne de vote entre les deux tours, ou
+ * choix du gouvernement (phase 6 : nomination du Premier ministre).
+ */
+export const PendingDecisionSchema = PendingDecisionV2Schema.extend({
+  kind: z.enum(['evenement', 'consigne', 'gouvernement']),
 }).strict();
 export type PendingDecision = z.infer<typeof PendingDecisionSchema>;
 
@@ -376,7 +385,7 @@ export const GameStateV3Schema = z
     player: PlayerV1Schema,
     actors: z.record(Id, ActorV4Schema),
     scheduled: z.array(ScheduledEffectSchema),
-    pendingDecisions: z.array(PendingDecisionSchema),
+    pendingDecisions: z.array(PendingDecisionV7Schema),
     eventHistory: EventHistorySchema,
     opinion: OpinionSchema.nullable(),
     polls: z.array(PollSchema),
@@ -417,7 +426,7 @@ export const GameStateV4Schema = z
     player: PlayerV1Schema,
     actors: z.record(Id, ActorV4Schema),
     scheduled: z.array(ScheduledEffectSchema),
-    pendingDecisions: z.array(PendingDecisionSchema),
+    pendingDecisions: z.array(PendingDecisionV7Schema),
     eventHistory: EventHistorySchema,
     opinion: OpinionSchema.nullable(),
     polls: z.array(PollSchema),
@@ -434,7 +443,7 @@ export const GameStateV5Schema = z
     player: PlayerV1Schema,
     actors: z.record(Id, ActorV5Schema),
     scheduled: z.array(ScheduledEffectSchema),
-    pendingDecisions: z.array(PendingDecisionSchema),
+    pendingDecisions: z.array(PendingDecisionV7Schema),
     eventHistory: EventHistorySchema,
     opinion: OpinionSchema.nullable(),
     polls: z.array(PollSchema),
@@ -460,16 +469,43 @@ export const GameStateV6Schema = GameStateV5Schema.extend({
 }).strict();
 export type GameStateV6 = z.infer<typeof GameStateV6Schema>;
 
+/** État au format 7 (phase 5 ter), figé pour les migrations. */
+export const GameStateV7Schema = GameStateV6Schema.extend({
+  meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(7) }).strict(),
+  medias: MediaStateSchema.nullable(),
+}).strict();
+export type GameStateV7 = z.infer<typeof GameStateV7Schema>;
+
+/** Présidentielle achevée d'un cycle précédent (archivée au début du cycle suivant). */
+export const PresidentialArchiveSchema = z
+  .object({
+    annee: z.number().int().min(2027),
+    t1: RoundResultSchema,
+    t2: RoundResultSchema.nullable(),
+    eluId: Id,
+  })
+  .strict();
+export type PresidentialArchive = z.infer<typeof PresidentialArchiveSchema>;
+
 /**
- * État complet d'une partie, format de sauvegarde n° 7 (phase 5 ter) : couverture par les
- * médias réels et interviews simulées dans les émissions politiques. Toute évolution
+ * État complet d'une partie, format de sauvegarde n° 8 (phase 6) : cycle électoral, présidence
+ * et gouvernement, archives des présidentielles et des quinquennats précédents. Toute évolution
  * s'accompagne d'un nouveau numéro de format et d'une migration (packages/save-engine).
  * L'aléa ne figure pas dans l'état : chaque tirage est dérivé de la graine, de la semaine et
  * de son contexte (module, action, événement, groupe d'électeurs…).
  */
-export const GameStateSchema = GameStateV6Schema.extend({
-  meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(7) }).strict(),
-  medias: MediaStateSchema.nullable(),
+export const GameStateSchema = GameStateV7Schema.extend({
+  meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(8) }).strict(),
+  pendingDecisions: z.array(PendingDecisionSchema),
+  cycle: CycleSchema,
+  /** Présidence en cours ; null pendant une campagne présidentielle. */
+  quinquennat: QuinquennatSchema.nullable(),
+  historique: z
+    .object({
+      presidentielles: z.array(PresidentialArchiveSchema),
+      quinquennats: z.array(QuinquennatSummarySchema),
+    })
+    .strict(),
 }).strict();
 export type GameState = z.infer<typeof GameStateSchema>;
 

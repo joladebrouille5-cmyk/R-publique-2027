@@ -1,11 +1,11 @@
-import { candidateName } from '@r2027/shared';
+import { addDays, candidateName, MAX_FAST_FORWARD_WEEKS } from '@r2027/shared';
 import { useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { ApiRequestError, newIdempotencyKey } from '../api/client';
 import { spendingCapOf } from '../campaign';
 import { useAdvance, useJournal, useRuleset } from '../api/hooks';
 import { ErrorMessage } from '../components/ErrorMessage';
-import { buttonPrimary, card } from '../components/ui';
+import { buttonPrimary, buttonSecondary, card, input } from '../components/ui';
 import { WeeklyReportView } from '../components/WeeklyReportView';
 import {
   CANDIDATE_STATUS_LABELS,
@@ -16,12 +16,21 @@ import {
   PHASE_LABELS,
 } from '../labels';
 import { useWeeklyPlan } from '../stores/plan';
+import { memberInfo } from './Government';
 import { ActionPlanner } from './dashboard/ActionPlanner';
 import { CampaignPanel } from './dashboard/CampaignPanel';
 import { CalendarPanel } from './dashboard/CalendarPanel';
 import { DecisionsPanel } from './dashboard/DecisionsPanel';
 import { ResourcesPanel } from './dashboard/ResourcesPanel';
 import { useCurrentGame } from './GameLayout';
+
+const FAST_FORWARD_STOP_LABELS = {
+  decision: 'une décision vous attend',
+  scrutin: 'un scrutin a eu lieu',
+  changement_de_phase: 'la partie change de phase',
+  evenement_majeur: 'un événement majeur est survenu',
+  blocage: 'la partie ne peut pas aller plus loin pour l’instant',
+} as const;
 
 export function Dashboard() {
   const game = useCurrentGame();
@@ -30,6 +39,7 @@ export function Dashboard() {
   const advance = useAdvance(game.id);
   const plan = useWeeklyPlan(game.id, game.week);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [fastWeeks, setFastWeeks] = useState(13);
   // Une clé par tentative ; conservée si le réseau coupe, pour qu'un renvoi ne rejoue rien.
   const attemptKey = useRef<string | null>(null);
 
@@ -39,6 +49,10 @@ export function Dashboard() {
   const observer = state.player.mode === 'observateur';
   const campaigning =
     actor !== undefined && (actor.status === 'candidat' || actor.status === 'qualifie');
+  // Phase 6 : quinquennat (président joueur ou IA).
+  const quinquennat = state.meta.phase === 'presidence' ? state.quinquennat : null;
+  const presiding = quinquennat !== null && quinquennat.mandat.presidentId === actor?.id;
+  const mandateStarted = quinquennat !== null && addDays(game.date, 6) >= quinquennat.mandat.debut;
   const round = state.meta.phase === 'entre_deux_tours' ? 'intentions_t2' : 'intentions_t1';
   const latestPoll = [...state.polls]
     .reverse()
@@ -71,7 +85,10 @@ export function Dashboard() {
   const missingTargets = ruleset.data
     ? plan.actions.filter(
         (a) =>
-          a.cible === undefined && ruleset.data.actions.find((d) => d.id === a.actionId)?.cible,
+          a.cible === undefined &&
+          [...ruleset.data.actions, ...ruleset.data.quinquennat.actions].find(
+            (d) => d.id === a.actionId,
+          )?.cible,
       ).length
     : 0;
   const nameOf = (id: string) =>
@@ -83,7 +100,7 @@ export function Dashboard() {
     setAnswers((current) => ({ ...current, [decisionId]: optionId }));
   };
 
-  const submit = () => {
+  const submit = (semaines?: number) => {
     attemptKey.current ??= newIdempotencyKey();
     advance.mutate(
       {
@@ -96,6 +113,7 @@ export function Dashboard() {
           decisions: Object.entries(answers)
             .filter(([decisionId]) => state.pendingDecisions.some((d) => d.id === decisionId))
             .map(([decisionId, optionId]) => ({ decisionId, optionId })),
+          ...(semaines === undefined ? {} : { semaines }),
         },
       },
       {
@@ -159,7 +177,54 @@ export function Dashboard() {
         </div>
       )}
 
-      {(latestPoll || state.elections.t1) && (
+      {quinquennat && ruleset.data && (
+        <section aria-labelledby="titre-quinquennat" className={`${card} space-y-2 text-sm`}>
+          <h2 id="titre-quinquennat" className="text-lg font-semibold">
+            Quinquennat {quinquennat.mandat.debut.slice(0, 4)}–{quinquennat.mandat.fin.slice(0, 4)}
+          </h2>
+          <p>
+            {presiding
+              ? 'Vous êtes président(e) de la République'
+              : `${nameOf(quinquennat.mandat.presidentId)} est président(e) de la République`}{' '}
+            : mandat du {formatGameDate(quinquennat.mandat.debut)} au{' '}
+            {formatGameDate(quinquennat.mandat.fin)}.
+          </p>
+          <p>
+            {quinquennat.gouvernement
+              ? `Premier ministre : ${memberInfo(state, ruleset.data, quinquennat.gouvernement.premierMinistre).name} (gouvernement n° ${quinquennat.gouvernement.numero}).`
+              : mandateStarted
+                ? 'Matignon est vacant : un Premier ministre doit être nommé.'
+                : `Le Premier ministre sera nommé la semaine de l’investiture.`}
+          </p>
+          {!presiding && actor && (
+            <p>
+              Vous n’êtes pas président(e) : le quinquennat se déroule sans vous, sous la conduite
+              de l’IA (mêmes règles que pour le joueur). Utilisez l’avance rapide ; vous pourrez
+              vous présenter à la présidentielle suivante.
+            </p>
+          )}
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Parlement, économie, crises et législatives : étapes suivantes de la phase 6, pas encore
+            jouables.
+          </p>
+          <p className="flex flex-wrap gap-x-4">
+            <Link
+              to="../gouvernement"
+              className="text-republique-600 underline dark:text-republique-100"
+            >
+              Le gouvernement
+            </Link>
+            <Link
+              to="../resultats"
+              className="text-republique-600 underline dark:text-republique-100"
+            >
+              Résultats de la présidentielle
+            </Link>
+          </p>
+        </section>
+      )}
+
+      {!quinquennat && (latestPoll || state.elections.t1) && (
         <section aria-labelledby="titre-course" className={`${card} space-y-2 text-sm`}>
           <h2 id="titre-course" className="text-lg font-semibold">
             La course présidentielle
@@ -210,7 +275,7 @@ export function Dashboard() {
         </section>
       )}
 
-      {actor && !campaigning && !blocked && (
+      {actor && !campaigning && !blocked && !quinquennat && (
         <p className="rounded-lg border border-slate-300 p-4 text-sm dark:border-slate-700">
           Vous n’êtes plus candidat : vous ne programmez plus d’actions de campagne, mais vous
           pouvez suivre la suite de l’élection semaine après semaine.
@@ -225,7 +290,7 @@ export function Dashboard() {
       {ruleset.data && actor && (
         <ResourcesPanel resources={actor.resources} ruleset={ruleset.data} />
       )}
-      {ruleset.data && actor && (
+      {ruleset.data && actor && !quinquennat && (
         <CampaignPanel state={state} actor={actor} ruleset={ruleset.data} />
       )}
       {observer && (
@@ -289,15 +354,81 @@ export function Dashboard() {
         </>
       )}
 
+      {ruleset.data && actor && presiding && !blocked && (
+        <ActionPlanner
+          ruleset={ruleset.data}
+          actor={actor}
+          plan={plan.actions}
+          mode="presidence"
+          restriction={(action) =>
+            !mandateStarted
+              ? `Le mandat commence le ${formatGameDate(quinquennat.mandat.debut)}.`
+              : action.institution === 'remaniement' && !quinquennat.gouvernement
+                ? 'Aucun gouvernement en place à remanier.'
+                : null
+          }
+          reservedHours={0}
+          cap={0}
+          onAdd={changePlan(plan.addAction)}
+          onRemove={changePlan(plan.removeAction)}
+          onTarget={changePlan(plan.setTarget)}
+        />
+      )}
+
       <div className={`${card} space-y-3`}>
-        <button
-          type="button"
-          className={buttonPrimary}
-          disabled={blocked || advance.isPending || unanswered.length > 0 || missingTargets > 0}
-          onClick={submit}
-        >
-          {advance.isPending ? 'Résolution de la semaine…' : `Résoudre la semaine ${game.week}`}
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            className={buttonPrimary}
+            disabled={blocked || advance.isPending || unanswered.length > 0 || missingTargets > 0}
+            onClick={() => submit()}
+          >
+            {advance.isPending ? 'Résolution de la semaine…' : `Résoudre la semaine ${game.week}`}
+          </button>
+          {quinquennat && (
+            <span className="flex flex-wrap items-center gap-2">
+              <label htmlFor="avance-rapide" className="text-sm">
+                Avance rapide
+              </label>
+              <select
+                id="avance-rapide"
+                className={`${input} w-auto py-1.5`}
+                value={fastWeeks}
+                onChange={(event) => setFastWeeks(Number(event.target.value))}
+              >
+                {[4, 13, 26, MAX_FAST_FORWARD_WEEKS].map((n) => (
+                  <option key={n} value={n}>
+                    {n} semaines au plus
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                className={buttonSecondary}
+                disabled={
+                  blocked || advance.isPending || unanswered.length > 0 || plan.actions.length > 0
+                }
+                onClick={() => submit(fastWeeks)}
+              >
+                Avancer
+              </button>
+            </span>
+          )}
+        </div>
+        {quinquennat && plan.actions.length > 0 && (
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            L’avance rapide résout des semaines sans action : videz l’agenda pour l’utiliser.
+          </p>
+        )}
+        {advance.data?.avanceRapide && (
+          <p role="status" className="text-sm">
+            Avance rapide : {advance.data.avanceRapide.resolues} semaine(s) résolue(s) sur{' '}
+            {advance.data.avanceRapide.demandees}
+            {advance.data.avanceRapide.arret
+              ? ` — arrêt : ${FAST_FORWARD_STOP_LABELS[advance.data.avanceRapide.arret]}.`
+              : '.'}
+          </p>
+        )}
         {unanswered.length > 0 && (
           <p className="text-sm text-amber-800 dark:text-amber-300">
             Répondez d’abord aux décisions en attente.

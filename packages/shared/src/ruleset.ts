@@ -3,6 +3,7 @@ import { IsoDateSchema } from './game';
 import { AiObjectiveSchema } from './campaign';
 import { RealMediaSchema } from './medias';
 import { RealPersonalitiesSchema } from './personalities';
+import { MinisterProfileSchema } from './quinquennat';
 import { CampaignStyleSchema, PositionSchema } from './politics';
 import { ResourceKeySchema, ResourcesSchema } from './resources';
 
@@ -149,9 +150,85 @@ export const ActionDefinitionSchema = z
       .strict()
       .nullable(),
     note: z.string().nullable(),
+    /** Acte institutionnel du président (phase 6) : remaniement du gouvernement. */
+    institution: z.enum(['remaniement']).optional(),
   })
   .strict();
 export type ActionDefinition = z.infer<typeof ActionDefinitionSchema>;
+
+/** Règle datée : date, statut, source et règle de calcul. */
+const DatedRuleSchema = z
+  .object({
+    date: IsoDateSchema,
+    statut: DataStatusSchema,
+    sourceId: Id,
+    regle: z.string().min(1),
+  })
+  .strict();
+
+/**
+ * Présidence et quinquennat (phase 6) : dates du mandat (déduites de la Constitution et de la
+ * proclamation de 2022), cycles électoraux suivants, postes du gouvernement, profils fictifs,
+ * acceptation d'un poste et actions du président. Paramètres de jeu étiquetés `hypothese`.
+ */
+export const QuinquennatRulesSchema = z
+  .object({
+    note: z.string().min(1),
+    mandat: z
+      .object({
+        dureeAnnees: z.literal(5),
+        /** Constitution, art. 6 : nul ne peut exercer plus de deux mandats consécutifs. */
+        mandatsConsecutifsMax: z.literal(2),
+        statut: DataStatusSchema,
+        sourceId: Id,
+        regle: z.string().min(1),
+      })
+      .strict(),
+    /** Début du mandat issu de la présidentielle de 2027 (décalé pour les cycles suivants). */
+    investiture: DatedRuleSchema,
+    /** Fin de ce mandat (décalée pour les cycles suivants). */
+    finMandat: DatedRuleSchema,
+    /** Présidentielles suivantes : calendrier de 2027 décalé de semaines entières. */
+    cycles: z
+      .array(
+        z
+          .object({
+            annee: z.number().int().min(2028),
+            decalageSemaines: z.number().int().min(1),
+            statut: DataStatusSchema,
+            regle: z.string().min(1),
+          })
+          .strict(),
+      )
+      .min(1),
+    postes: z.array(z.object({ id: Id, libelle: z.string().min(1) }).strict()).min(5),
+    profils: z.array(MinisterProfileSchema).min(4),
+    /** Composition du gouvernement et acceptation d'un poste par un acteur (simulée). */
+    acceptation: z
+      .object({
+        statut: z.literal('hypothese'),
+        /** Proximité minimale (0 à 100) avec le président pour accepter un poste sans hésiter. */
+        proximiteMin: z.number().int().min(0).max(100),
+        /** Probabilité d'accepter Matignon en deçà de ce seuil. */
+        probabiliteSousSeuil: Probability,
+        /** Nombre maximal d'acteurs de la partie parmi les ministres (le reste : profils fictifs). */
+        ministresActeursMax: z.number().int().min(0),
+        /** Semaines pendant lesquelles un acteur qui a refusé n'est plus sollicité. */
+        delaiApresRefus: z.number().int().min(1),
+      })
+      .strict(),
+    /** Usure du pouvoir : perte de popularité hebdomadaire du président (centièmes de point). */
+    opinion: z
+      .object({
+        statut: z.literal('hypothese'),
+        usureHebdomadaire: z.number().int().min(0).max(1_000),
+      })
+      .strict(),
+    /** Actions du président pendant le quinquennat (mêmes règles pour le joueur et l'IA). */
+    actions: z.array(ActionDefinitionSchema).min(1),
+  })
+  .strict();
+export type QuinquennatRules = z.infer<typeof QuinquennatRulesSchema>;
 
 export const EventConditionSchema = z
   .object({
@@ -548,6 +625,7 @@ export const RulesetSchema = z
       })
       .strict(),
     mediasReels: RealMediaSchema,
+    quinquennat: QuinquennatRulesSchema,
     debats: z
       .object({
         statut: z.literal('hypothese'),
@@ -627,6 +705,9 @@ export const RulesetSchema = z
       ruleset.electorat.inscrits.sourceId,
       ruleset.personnalitesReelles.sourceId,
       ruleset.medias.sourceId,
+      ruleset.quinquennat.mandat.sourceId,
+      ruleset.quinquennat.investiture.sourceId,
+      ruleset.quinquennat.finMandat.sourceId,
     ];
     for (const id of referenced) if (!sourceIds.has(id)) issue(`Source inconnue : ${id}`);
 
@@ -647,8 +728,33 @@ export const RulesetSchema = z
     );
     unique(
       'Action',
-      ruleset.actions.map((a) => a.id),
+      [...ruleset.actions, ...ruleset.quinquennat.actions].map((a) => a.id),
     );
+    unique(
+      'Poste du gouvernement',
+      ruleset.quinquennat.postes.map((p) => p.id),
+    );
+    unique(
+      'Profil fictif',
+      ruleset.quinquennat.profils.map((p) => p.id),
+    );
+    const years = ruleset.quinquennat.cycles.map((c) => c.annee);
+    if (years.some((y, i) => i > 0 && y <= years[i - 1]!))
+      issue('Cycles électoraux : années non croissantes');
+    // Un profil de plus que de postes : Matignon peut toujours être pourvu par un profil fictif.
+    if (ruleset.quinquennat.profils.length <= ruleset.quinquennat.postes.length)
+      issue('Quinquennat : il faut plus de profils fictifs que de postes à pourvoir');
+    for (const action of ruleset.quinquennat.actions) {
+      if (action.cout.budgetCentimes !== 0 || action.campagne !== null)
+        issue(`${action.id} : une action du président n'a ni coût budgétaire ni effet de campagne`);
+      if (action.cible !== null && action.cible !== 'departement')
+        issue(`${action.id} : seule une cible départementale est possible pour le président`);
+      if (action.effets.length === 0 && !action.institution) issue(`${action.id} : aucun effet`);
+    }
+    if (ruleset.quinquennat.actions.filter((a) => a.institution === 'remaniement').length !== 1)
+      issue('Quinquennat : une et une seule action de remaniement');
+    for (const action of ruleset.actions)
+      if (action.institution) issue(`${action.id} : acte institutionnel hors du quinquennat`);
     unique(
       'Événement',
       ruleset.evenements.map((e) => e.id),

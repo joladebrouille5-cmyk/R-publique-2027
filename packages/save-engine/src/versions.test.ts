@@ -15,6 +15,7 @@ import V3 from './fixtures/v3-phase-3.json' with { type: 'json' };
 import V4 from './fixtures/v4-phase-4.json' with { type: 'json' };
 import V5 from './fixtures/v5-phase-5.json' with { type: 'json' };
 import V6 from './fixtures/v6-phase-5-bis.json' with { type: 'json' };
+import V7 from './fixtures/v7-phase-5-ter.json' with { type: 'json' };
 import { loadStoredState, MIGRATED_CANDIDATE, SaveFormatError, upgradeState } from './versions';
 
 const ruleset = getRuleset(CURRENT_RULESET_KEY);
@@ -151,7 +152,7 @@ describe('migrations de sauvegarde', () => {
     expect(state.pendingDecisions.map((d) => d.kind)).toEqual(['consigne']);
 
     let current = state;
-    while (!current.calendar.blockedBy) {
+    while (!current.quinquennat) {
       const decisions = current.pendingDecisions.map((d) => ({
         decisionId: d.id,
         optionId: d.defaultOptionId,
@@ -189,7 +190,7 @@ describe('migrations de sauvegarde', () => {
     expect(Object.keys(state.relations)).toHaveLength(28);
 
     let current = state;
-    while (!current.calendar.blockedBy) {
+    while (!current.quinquennat) {
       const decisions = current.pendingDecisions.map((d) => ({
         decisionId: d.id,
         optionId: d.defaultOptionId,
@@ -222,13 +223,22 @@ describe('migrations de sauvegarde', () => {
     // La couverture par les organes fictifs est effacée (format 7, médias réels).
     expect(V5.state.medias).not.toBeNull();
     expect(state.medias).toBeNull();
-    const { meta: _meta, player: _player, actors: _actors, medias: _medias, ...rest } = state;
+    const {
+      meta: _meta,
+      player: _player,
+      actors: _actors,
+      medias: _medias,
+      cycle: _cycle,
+      quinquennat: _quinquennat,
+      historique: _historique,
+      ...rest
+    } = state;
     const { meta: _m, player: _p, actors: _a, medias: _md, ...restBefore } = V5.state;
     expect(rest).toEqual(restBefore);
     expect(state.alliances).toHaveLength(1);
 
     let current = state;
-    while (!current.calendar.blockedBy) {
+    while (!current.quinquennat) {
       const decisions = current.pendingDecisions.map((d) => ({
         decisionId: d.id,
         optionId: d.defaultOptionId,
@@ -251,7 +261,14 @@ describe('migrations de sauvegarde', () => {
     // Seule la couverture par les organes fictifs disparaît ; tout le reste est conservé.
     expect(Object.keys(V6.state.medias.couverture)).toContain('onde-publique');
     expect(state.medias).toBeNull();
-    const { meta: _meta, medias: _medias, ...rest } = state;
+    const {
+      meta: _meta,
+      medias: _medias,
+      cycle: _cycle,
+      quinquennat: _quinquennat,
+      historique: _historique,
+      ...rest
+    } = state;
     const { meta: _m, medias: _md, ...restBefore } = V6.state;
     expect(rest).toEqual(restBefore);
     expect(state.player).toMatchObject({ mode: 'candidat_reel', adversaires: 'reels' });
@@ -278,6 +295,63 @@ describe('migrations de sauvegarde', () => {
     });
   });
 
+  it('reprend une partie réelle de la phase 5 ter, gagnée au second tour, au début du quinquennat', () => {
+    // Avant la phase 6, la partie s'arrêtait à l'élection (le joueur, Gabriel Attal, est élu).
+    expect(V7.state.calendar.blockedBy).toBe('fin-de-la-presidentielle');
+    expect(V7.state.elections.t2.winner).toBe(PLAYER_ACTOR_ID);
+    const { state, migratedFrom } = loadStoredState(V7.state, V7.stateHash, 7);
+    expect(migratedFrom).toBe(7);
+    expect(state.meta).toMatchObject({
+      week: 31,
+      date: '2027-05-03',
+      phase: 'presidence',
+      saveSchemaVersion: SAVE_SCHEMA_VERSION,
+      engineVersion: ENGINE_VERSION,
+      rulesetVersion: CURRENT_RULESET_KEY,
+    });
+    expect(state.calendar).toEqual({ blockedBy: null, blockedMessage: null });
+    expect(state.cycle).toEqual({ annee: 2027, decalageSemaines: 0 });
+    expect(state.historique).toEqual({ presidentielles: [], quinquennats: [] });
+    expect(state.quinquennat).toEqual({
+      mandat: { presidentId: PLAYER_ACTOR_ID, debut: '2027-05-14', fin: '2032-05-13', numero: 1 },
+      gouvernement: null,
+      anciensGouvernements: [],
+      feuilleDeRoute: V7.state.actors[PLAYER_ACTOR_ID].programme.propositions,
+      refus: [],
+    });
+    // Rien d'autre ne change : candidats, résultats, médias, relations.
+    const {
+      meta: _meta,
+      calendar: _calendar,
+      cycle: _cycle,
+      quinquennat: _quinquennat,
+      historique: _historique,
+      ...rest
+    } = state;
+    const { meta: _m, calendar: _c, ...restBefore } = V7.state;
+    expect(rest).toEqual(restBefore);
+
+    // Critère 10 : la victoire ouvre la phase gouvernementale ; reprise et rejeu déterministes.
+    const play = () => {
+      let current = state;
+      while (!current.quinquennat!.gouvernement) {
+        const decisions = current.pendingDecisions.map((d) => ({
+          decisionId: d.id,
+          optionId: d.defaultOptionId,
+        }));
+        current = advanceWeek(current, { actions: [], decisions }, { ruleset }).state;
+      }
+      return current;
+    };
+    const governed = play();
+    expect(governed.meta.date).toBe('2027-05-17');
+    expect(governed.quinquennat!.gouvernement).toMatchObject({ numero: 1, nommeLe: '2027-05-10' });
+    expect(governed.quinquennat!.gouvernement!.ministres).toHaveLength(
+      ruleset.quinquennat.postes.length,
+    );
+    expect(play()).toEqual(governed);
+  });
+
   it('vérifie l’empreinte avant toute migration', () => {
     const altered = { ...V1_STATE, meta: { ...V1_STATE.meta, week: 3 } };
     expect(errorCode(() => loadStoredState(altered, V1_HASH, 1))).toBe('empreinte_incoherente');
@@ -295,6 +369,7 @@ describe('migrations de sauvegarde', () => {
     expect(errorCode(() => upgradeState(V4.state, 5))).toBe('etat_invalide');
     expect(errorCode(() => upgradeState(V5.state, 6))).toBe('etat_invalide');
     expect(errorCode(() => upgradeState(V6.state, 7))).toBe('etat_invalide');
+    expect(errorCode(() => upgradeState(V7.state, 8))).toBe('etat_invalide');
   });
 
   it('refuse un jeu de règles inconnu', () => {

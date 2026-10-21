@@ -2,7 +2,14 @@ import { createHash } from 'node:crypto';
 import { existsSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { addDays, FREE_LICENSES, isoWeekday, parseIsoDate, RulesetSchema } from '@r2027/shared';
+import {
+  addDays,
+  daysFromCivil,
+  FREE_LICENSES,
+  isoWeekday,
+  parseIsoDate,
+  RulesetSchema,
+} from '@r2027/shared';
 import { describe, expect, it } from 'vitest';
 import { CURRENT_RULESET_KEY, getRuleset, listRulesetKeys, UnknownRulesetError } from './index';
 import mediasReels from './medias-2027.json';
@@ -325,5 +332,85 @@ describe('médias réels (phase 5 ter)', () => {
     const press = pressMeasured.mediasReels.organes.find((o) => o.type === 'presse')!;
     (press as { tempsDeParole: unknown }).tempsDeParole = tv.tempsDeParole;
     expect(RulesetSchema.safeParse(pressMeasured).success).toBe(false);
+  });
+});
+
+describe('quinquennat (phase 6)', () => {
+  const q = ruleset.quinquennat;
+  const days = (a: string, b: string) =>
+    daysFromCivil(parseIsoDate(b)!) - daysFromCivil(parseIsoDate(a)!);
+
+  it('déduit les dates du mandat de la proclamation de 2022 et de l’article 6', () => {
+    expect(q.mandat).toMatchObject({
+      dureeAnnees: 5,
+      mandatsConsecutifsMax: 2,
+      statut: 'officiel',
+      sourceId: 'constitution-art-6',
+    });
+    // Mandat proclamé « à compter du 14 mai 2022 à 0 heure » (décision n° 2022-197 PDR).
+    expect(q.investiture).toMatchObject({
+      date: '2027-05-14',
+      statut: 'deduit',
+      sourceId: 'cc-2022-197-pdr',
+    });
+    expect(q.finMandat).toMatchObject({ date: '2032-05-13', statut: 'deduit' });
+    expect(addDays(q.finMandat.date, 1)).toBe(`2032${q.investiture.date.slice(4)}`);
+    for (const id of ['constitution-art-6', 'constitution-art-7']) {
+      expect(ruleset.sources[id]!.url).toMatch(
+        /^https:\/\/fr\.wikipedia\.org\/w\/index\.php\?title=Article_\d_.+&oldid=\d+$/,
+      );
+      expect(ruleset.sources[id]!.titre).toMatch(/Légifrance non relu/);
+    }
+  });
+
+  it('place chaque premier tour un dimanche, dans la fenêtre de l’article 7', () => {
+    const t1 = date('presidentielle-2027-t1');
+    const t2 = date('presidentielle-2027-t2');
+    expect(q.cycles.map((c) => [c.annee, c.statut])).toEqual([
+      [2032, 'hypothese'],
+      [2037, 'hypothese'],
+    ]);
+    for (const cycle of [{ annee: 2027, decalageSemaines: 0 }, ...q.cycles]) {
+      const first = addDays(t1, 7 * cycle.decalageSemaines);
+      expect(first.slice(0, 4)).toBe(String(cycle.annee));
+      expect(weekday(first)).toBe(7);
+      expect(addDays(t2, 7 * cycle.decalageSemaines)).toBe(addDays(first, 14));
+      // « Vingt jours au moins et trente-cinq jours au plus avant l'expiration des pouvoirs du
+      // président en exercice », qui expirent à la veille du 14 mai à minuit.
+      const expiry = `${cycle.annee}${q.investiture.date.slice(4)}`;
+      expect(days(first, expiry)).toBeGreaterThanOrEqual(20);
+      expect(days(first, expiry)).toBeLessThanOrEqual(35);
+    }
+  });
+
+  it('ne propose que des profils fictifs déclarés, plus nombreux que les postes', () => {
+    expect(q.profils.length).toBeGreaterThan(q.postes.length);
+    for (const p of q.profils) {
+      expect(p.nature).toBe('fictif');
+      expect(p.parcours).toMatch(/^Personnage fictif\./);
+    }
+    const names = new Set(
+      ruleset.personnalites.personnalites.map((p) => `${p.prenom} ${p.nom}`.toLowerCase()),
+    );
+    for (const p of q.profils) expect(names.has(`${p.prenom} ${p.nom}`.toLowerCase())).toBe(false);
+    expect(q.acceptation.statut).toBe('hypothese');
+    expect(q.opinion.statut).toBe('hypothese');
+  });
+
+  it('refuse une action du président coûteuse, mal ciblée, ou un remaniement absent', () => {
+    const costly = full();
+    costly.quinquennat.actions[0]!.cout.budgetCentimes = 100;
+    expect(RulesetSchema.safeParse(costly).success).toBe(false);
+    const media = full();
+    (media.quinquennat.actions[0] as { cible: string | null }).cible = 'media';
+    expect(RulesetSchema.safeParse(media).success).toBe(false);
+    const noReshuffle = full();
+    noReshuffle.quinquennat.actions = noReshuffle.quinquennat.actions.filter(
+      (a) => !('institution' in a),
+    );
+    expect(RulesetSchema.safeParse(noReshuffle).success).toBe(false);
+    const clash = full();
+    clash.quinquennat.actions[0]!.id = clash.actions[0]!.id;
+    expect(RulesetSchema.safeParse(clash).success).toBe(false);
   });
 });

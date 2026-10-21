@@ -172,6 +172,9 @@ export const ExportDocumentSchema = z
   .strict();
 export type ExportDocument = z.infer<typeof ExportDocumentSchema>;
 
+/** Semaines résolues au plus par une avance rapide. */
+export const MAX_FAST_FORWARD_WEEKS = 52;
+
 /** En-tête obligatoire de `POST /advance` : un même envoi répété n'avance qu'une fois. */
 export const IDEMPOTENCY_HEADER = 'idempotency-key';
 export const IdempotencyKeySchema = z.string().regex(/^[A-Za-z0-9_-]{8,100}$/, {
@@ -186,13 +189,47 @@ export const AdvanceRequestSchema = z
     decisions: z.array(DecisionAnswerSchema).max(20).default([]),
     programme: ProgrammeChangeSchema.default({ ajouter: [], retirer: [] }),
     alliances: AlliancePlanSchema.default({ proposer: [] }),
+    /**
+     * Avance rapide (phase 6) : nombre maximal de semaines à résoudre d'affilée, sans action ;
+     * le serveur s'arrête avant toute décision obligatoire, scrutin, changement de phase ou
+     * événement majeur. Absent : une semaine.
+     */
+    semaines: z.number().int().min(1).max(MAX_FAST_FORWARD_WEEKS).optional(),
   })
-  .strict();
+  .strict()
+  .refine(
+    (body) =>
+      (body.semaines ?? 1) === 1 ||
+      (body.actions.length === 0 &&
+        body.programme.ajouter.length + body.programme.retirer.length === 0 &&
+        body.alliances.proposer.length === 0),
+    { message: 'L’avance rapide ne permet pas de programmer d’actions.', path: ['semaines'] },
+  );
 export type AdvanceRequest = z.input<typeof AdvanceRequestSchema>;
+
+/** Motifs d'arrêt de l'avance rapide. */
+export const FAST_FORWARD_STOPS = [
+  'decision',
+  'scrutin',
+  'changement_de_phase',
+  'evenement_majeur',
+  'blocage',
+] as const;
 
 export const AdvanceResponseSchema = z.object({
   game: GameDetailSchema,
+  /** Bilan de la dernière semaine résolue. */
   report: WeeklyReportSchema,
+  /** Avance rapide : semaines demandées et résolues, motif d'arrêt anticipé (null sinon). */
+  avanceRapide: z
+    .object({
+      demandees: z.number().int().min(1),
+      resolues: z.number().int().min(1),
+      arret: z.enum(FAST_FORWARD_STOPS).nullable(),
+    })
+    .strict()
+    .nullable()
+    .default(null),
 });
 export type AdvanceResponse = z.infer<typeof AdvanceResponseSchema>;
 

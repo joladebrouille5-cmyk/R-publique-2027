@@ -65,3 +65,21 @@ export {
 } from './territory/baseline';
 export { BaselineMismatchError, communeResults } from './territory/communes';
 export { tallyBaseline, tallyUnit } from './territory/tally';
+export { governmentAgeWeeks, validatePresidencyActions } from './presidency/actions';
+export {
+  addYears,
+  FIRST_CYCLE,
+  mandateDates,
+  nextCampaignStart,
+  nextCycle,
+  shiftToCycle,
+} from './presidency/dates';
+export {
+  acceptsPost,
+  aiPrimeMinister,
+  composeMinisters,
+  GOVERNMENT_DECISION_EVENT,
+  memberLabel,
+  openQuinquennat,
+  presidentOf,
+} from './presidency/government';

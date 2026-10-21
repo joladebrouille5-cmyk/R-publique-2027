@@ -1,5 +1,5 @@
 /** Version du moteur, enregistrée dans chaque partie et chaque sauvegarde (§11). */
-export const ENGINE_VERSION = '0.6.0';
+export const ENGINE_VERSION = '0.7.0';
 
 /**
  * Version du format de `GameState` ; toute évolution s'accompagne d'une migration
@@ -7,6 +7,7 @@ export const ENGINE_VERSION = '0.6.0';
  * 3 : phase 3 (candidats, opinion, sondages, élections) ; 4 : phase 4 (résultats territoriaux) ;
  * 5 : phase 5 (programme, parrainages, compte de campagne, médias, relations et alliances) ;
  * 6 : phase 5 bis (personnalités réelles, jeu d'adversaires) ; 7 : phase 5 ter (médias réels,
- * interviews dans les émissions politiques).
+ * interviews dans les émissions politiques) ; 8 : phase 6 (cycle électoral, présidence et
+ * gouvernement, archives des cycles précédents).
  */
-export const SAVE_SCHEMA_VERSION = 7;
+export const SAVE_SCHEMA_VERSION = 8;

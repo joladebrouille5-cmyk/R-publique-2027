@@ -2,8 +2,10 @@ import {
   createOpponents,
   emptyParrainages,
   ENGINE_VERSION,
+  FIRST_CYCLE,
   initialRelations,
   openingAccount,
+  openQuinquennat,
   PLAYER_ACTOR_ID,
   SAVE_SCHEMA_VERSION,
 } from '@r2027/engine';
@@ -16,6 +18,7 @@ import {
   GameStateV4Schema,
   GameStateV5Schema,
   GameStateV6Schema,
+  GameStateV7Schema,
   type Actor,
   type ActorV4,
   type ActorV5,
@@ -26,6 +29,7 @@ import {
   type GameStateV4,
   type GameStateV5,
   type GameStateV6,
+  type GameStateV7,
 } from '@r2027/shared';
 import { z } from 'zod';
 import { hashState, sha256, canonicalStringify } from './canonical';
@@ -60,7 +64,8 @@ const SCHEMAS: Record<number, z.ZodType> = {
   4: GameStateV4Schema,
   5: GameStateV5Schema,
   6: GameStateV6Schema,
-  7: GameStateSchema,
+  7: GameStateV7Schema,
+  8: GameStateSchema,
 };
 
 /** Jeux de règles des parties aux formats 2 (phase 2) et 3 (phase 3). */
@@ -272,7 +277,7 @@ function migrateV5ToV6(v5: GameStateV5): GameStateV6 {
  * sera recalculée par les médias réels dès la semaine suivante (indice médiatique neutre d'ici
  * là). La partie passe au jeu de règles courant.
  */
-function migrateV6ToV7(v6: GameStateV6): GameState {
+function migrateV6ToV7(v6: GameStateV6): GameStateV7 {
   return {
     ...v6,
     meta: {
@@ -285,6 +290,35 @@ function migrateV6ToV7(v6: GameStateV6): GameState {
   };
 }
 
+/**
+ * Format 7 → 8 (phase 6) : la partie appartient au cycle de la présidentielle de 2027, sans
+ * quinquennat ni archive antérieurs. Une partie terminée au second tour (bloquée sur
+ * `fin-de-la-presidentielle`) reprend au début du quinquennat : le vainqueur, joueur ou IA,
+ * entre en fonctions à l'investiture, exactement comme une partie jouée avec le moteur
+ * courant. Les décisions en attente gardent leur forme (événements, consignes).
+ */
+function migrateV7ToV8(v7: GameStateV7): GameState {
+  const state: GameState = {
+    ...v7,
+    meta: {
+      ...v7.meta,
+      engineVersion: ENGINE_VERSION,
+      rulesetVersion: CURRENT_RULESET_KEY,
+      saveSchemaVersion: 8,
+    },
+    cycle: { ...FIRST_CYCLE },
+    quinquennat: null,
+    historique: { presidentielles: [], quinquennats: [] },
+  };
+  if (v7.calendar.blockedBy === 'fin-de-la-presidentielle') {
+    const winner = v7.elections.t2?.winner ?? v7.elections.t1?.winner;
+    if (!winner)
+      throw new SaveFormatError('incoherence', 'Présidentielle terminée sans vainqueur.');
+    openQuinquennat(state, getRuleset(CURRENT_RULESET_KEY), winner);
+  }
+  return state;
+}
+
 const MIGRATIONS: Record<number, (state: never) => unknown> = {
   1: migrateV1ToV2,
   2: migrateV2ToV3,
@@ -292,6 +326,7 @@ const MIGRATIONS: Record<number, (state: never) => unknown> = {
   4: migrateV4ToV5,
   5: migrateV5ToV6,
   6: migrateV6ToV7,
+  7: migrateV7ToV8,
 };
 
 export type LoadedState = { state: GameState; stateHash: string; migratedFrom: number | null };

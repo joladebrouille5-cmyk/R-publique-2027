@@ -24,6 +24,13 @@ type Props = {
   ruleset: Ruleset;
   actor: Actor;
   plan: readonly PlannedAction[];
+  /**
+   * Campagne (actions du jeu de règles, budget et plafond légal) ou présidence (actions du
+   * président, qui ne coûtent que du temps). Par défaut : campagne.
+   */
+  mode?: 'campagne' | 'presidence';
+  /** Motif commun d'indisponibilité (par exemple : mandat pas encore commencé). */
+  restriction?: (action: ActionDefinition) => string | null;
   /** Heures déjà réservées cette semaine (préparation des propositions du programme). */
   reservedHours: number;
   /** Plafond légal des dépenses applicable à la campagne. */
@@ -80,7 +87,7 @@ export function describeCampaign(campagne: CampaignEffect | null): string[] {
 /** Ce qui reste après les actions déjà programmées (coûts fixes, sans simulation). */
 function remainingAfter(
   plan: readonly PlannedAction[],
-  ruleset: Ruleset,
+  catalog: readonly ActionDefinition[],
   actor: Actor,
   reservedHours: number,
 ) {
@@ -88,7 +95,7 @@ function remainingAfter(
   let time = actor.resources.tempsHeures - reservedHours;
   let spent = actor.finances.depenses;
   for (const { actionId } of plan) {
-    const action = ruleset.actions.find((a) => a.id === actionId);
+    const action = catalog.find((a) => a.id === actionId);
     if (!action) continue;
     budget -= action.cout.budgetCentimes;
     time -= action.cout.tempsHeures;
@@ -103,8 +110,12 @@ function unavailableReason(
   actor: Actor,
   cap: number,
   full: boolean,
+  presidency: boolean,
 ): string | null {
   if (full) return 'Nombre maximal d’actions atteint pour cette semaine.';
+  // Le président ne dépense que du temps : ni militants, ni budget, ni plafond de campagne.
+  if (presidency)
+    return action.cout.tempsHeures > remaining.time ? 'Temps restant insuffisant.' : null;
   if (actor.resources.militants < action.prerequis.militantsMin) {
     return `Nécessite ${action.prerequis.militantsMin} militants.`;
   }
@@ -123,6 +134,7 @@ function TargetSelect({
   value,
   index,
   onChange,
+  showSupport,
 }: {
   ruleset: Ruleset;
   actor: Actor;
@@ -130,6 +142,8 @@ function TargetSelect({
   value: string | undefined;
   index: number;
   onChange: (cible: string) => void;
+  /** Soutiens de parrainage par département (campagne seulement). */
+  showSupport: boolean;
 }) {
   const id = useId();
   const departements = Object.entries(ruleset.parrainages.reservoir.departements).sort(
@@ -153,8 +167,9 @@ function TargetSelect({
         <option value="">{TARGET_PROMPTS[action.cible ?? 'media']}</option>
         {action.cible === 'departement' &&
           departements.map(([code, dep]) => {
-            const held =
-              (p.promesses[code] ?? 0) + (p.intentions[code] ?? 0) + (p.validees[code] ?? 0);
+            const held = showSupport
+              ? (p.promesses[code] ?? 0) + (p.intentions[code] ?? 0) + (p.validees[code] ?? 0)
+              : 0;
             return (
               <option key={code} value={code}>
                 {dep.nom} ({code}){held ? ` — ${held} soutiens` : ''}
@@ -189,23 +204,28 @@ export function ActionPlanner({
   ruleset,
   actor,
   plan,
+  mode = 'campagne',
+  restriction,
   reservedHours,
   cap,
   onAdd,
   onRemove,
   onTarget,
 }: Props) {
-  const remaining = remainingAfter(plan, ruleset, actor, reservedHours);
+  const presidency = mode === 'presidence';
+  const catalog = presidency ? ruleset.quinquennat.actions : ruleset.actions;
+  const remaining = remainingAfter(plan, catalog, actor, reservedHours);
   const full = plan.length >= ruleset.jeu.actionsMaxParSemaine;
 
   return (
     <section aria-labelledby="titre-plan" className="space-y-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 id="titre-plan" className="text-lg font-semibold">
-          Plan d’actions de la semaine
+          {presidency ? 'Agenda du président cette semaine' : 'Plan d’actions de la semaine'}
         </h2>
         <p className="text-sm text-slate-600 dark:text-slate-400" aria-live="polite">
-          Reste après le plan : {formatResource('budgetCentimes', remaining.budget)} ·{' '}
+          Reste après le plan :{' '}
+          {presidency ? '' : `${formatResource('budgetCentimes', remaining.budget)} · `}
           {formatResource('tempsHeures', remaining.time)} · {plan.length}/
           {ruleset.jeu.actionsMaxParSemaine} actions
         </p>
@@ -214,7 +234,7 @@ export function ActionPlanner({
       {plan.length > 0 ? (
         <ol className="space-y-2" aria-label="Actions programmées">
           {plan.map((planned, index) => {
-            const action = ruleset.actions.find((a) => a.id === planned.actionId);
+            const action = catalog.find((a) => a.id === planned.actionId);
             return (
               <li
                 key={`${planned.actionId}-${index}`}
@@ -232,6 +252,7 @@ export function ActionPlanner({
                       value={planned.cible}
                       index={index}
                       onChange={(cible) => onTarget(index, cible)}
+                      showSupport={!presidency}
                     />
                   )}
                   <button
@@ -254,8 +275,10 @@ export function ActionPlanner({
       )}
 
       <ul className="grid gap-3 md:grid-cols-2" aria-label="Catalogue des actions">
-        {ruleset.actions.map((action) => {
-          const reason = unavailableReason(action, remaining, actor, cap, full);
+        {catalog.map((action) => {
+          const reason =
+            restriction?.(action) ??
+            unavailableReason(action, remaining, actor, cap, full, presidency);
           const effects = [
             ...action.effets.map(describeEffect),
             ...describeCampaign(action.campagne),
@@ -284,13 +307,22 @@ export function ActionPlanner({
               <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
                 <dt className="text-slate-500 dark:text-slate-400">Coût</dt>
                 <dd>
-                  {formatResource('budgetCentimes', action.cout.budgetCentimes)} ·{' '}
+                  {presidency
+                    ? ''
+                    : `${formatResource('budgetCentimes', action.cout.budgetCentimes)} · `}
                   {formatResource('tempsHeures', action.cout.tempsHeures)}
                   {action.prerequis.militantsMin > 0 &&
                     ` · ${action.prerequis.militantsMin} militants requis`}
                 </dd>
                 <dt className="text-slate-500 dark:text-slate-400">Effet attendu</dt>
-                <dd>{effects.join(' ; ')}</dd>
+                <dd>
+                  {[
+                    ...(action.institution === 'remaniement'
+                      ? ['Fin du gouvernement en place ; vous nommez un nouveau Premier ministre']
+                      : []),
+                    ...effects,
+                  ].join(' ; ')}
+                </dd>
                 <dt className="text-slate-500 dark:text-slate-400">Risque</dt>
                 <dd>
                   {action.risque
@@ -320,9 +352,9 @@ export function ActionPlanner({
         })}
       </ul>
       <p className="text-xs text-slate-500 dark:text-slate-400">
-        Coûts, effets et probabilités sont des paramètres de jeu (hypothèses), pas des données
-        officielles ; le plafond des dépenses et les règles des dons sont, eux, ceux du guide de la
-        CNCCFP. Le serveur revalide chaque action.
+        {presidency
+          ? 'Coûts, effets et probabilités sont des paramètres de jeu (hypothèses), pas des données officielles. Le serveur revalide chaque action.'
+          : 'Coûts, effets et probabilités sont des paramètres de jeu (hypothèses), pas des données officielles ; le plafond des dépenses et les règles des dons sont, eux, ceux du guide de la CNCCFP. Le serveur revalide chaque action.'}
       </p>
     </section>
   );

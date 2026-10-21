@@ -136,6 +136,17 @@ Ces totaux servent de **test d'acceptation de l'import** : Σ des lignes du fich
 | Fenêtre constitutionnelle | élection « vingt jours au moins et trente-cinq jours au plus avant l'expiration des pouvoirs du Président en exercice » (art. 7 de la Constitution) ; mandat commencé le 14 mai 2022 à 0 h | vérifié (texte cité par une source secondaire ; date de début vérifiée) | — |
 | Fin du mandat en cours | 13 mai 2027 à minuit | déduit | — |
 
+### 4.1 Mandat et cycles suivants (phase 6)
+
+| Fait | Valeur | Statut | Source |
+|---|---|---|---|
+| Durée du mandat, limite des mandats | « Le Président de la République est élu pour cinq ans au suffrage universel direct. Nul ne peut exercer plus de deux mandats consécutifs. » (art. 6 de la Constitution) | vérifié par une source secondaire ; **texte Légifrance non relu** (accès refusé, 403, le 21/10/2026) | article Wikipédia « Article 6 de la Constitution de la Cinquième République française », révision 239702659 du 21/09/2026 : https://fr.wikipedia.org/w/index.php?title=Article_6_de_la_Constitution_de_la_Cinqui%C3%A8me_R%C3%A9publique_fran%C3%A7aise&oldid=239702659 (consulté le 21/10/2026) |
+| Fenêtre de l'élection | « L'élection du nouveau président a lieu vingt jours au moins et trente-cinq jours au plus avant l'expiration des pouvoirs du président en exercice. » (art. 7) ; appliquée au premier tour, comme en 2012, 2017 et 2022 | vérifié par une source secondaire ; texte Légifrance non relu | révision 240299785 du 12/10/2026 de l'article Wikipédia « Article 7 de la Constitution… » : https://fr.wikipedia.org/w/index.php?title=Article_7_de_la_Constitution_de_la_Cinqui%C3%A8me_R%C3%A9publique_fran%C3%A7aise&oldid=240299785 |
+| Début du mandat issu de l'élection de 2027 | vendredi 14 mai 2027 | déduit (mandat de 2022 « à compter du 14 mai 2022 à 0 heure », cinq ans) | décision n° 2022-197 PDR (§3.2) ; art. 6 |
+| Fin de ce mandat | jeudi 13 mai 2032 à minuit ; les mandats suivants se décalent de cinq ans jour pour jour | déduit | art. 6 |
+| Présidentielle 2032 (jeu) | calendrier de 2027 décalé de 261 semaines : 1er tour dimanche 18 avril 2032 (fenêtre de l'art. 7 : du 9 au 24 avril 2032), 2nd tour 2 mai 2032 | **hypothèse** (dates réelles fixées par décret le moment venu) | règle du jeu de règles `presidentielle-2027@6.0.0` |
+| Présidentielle 2037 (jeu) | décalage de 522 semaines : 1er tour dimanche 19 avril 2037 (fenêtre : du 9 au 24 avril 2037), 2nd tour 3 mai 2037 | **hypothèse** | idem |
+
 Remarque : la page de l'Élysée mentionne une consultation des partis « le 29 juillet 2026 » dans un compte rendu du 1er juillet, et un décret qui « interviendra en début d'année 2026 » : incohérences apparentes de la page officielle, signalées telles quelles.
 
 **Dans le jeu** : ces dates entrent dans le *ruleset* `presidentielle-2027` avec le statut `annoncé` (et non `officiel`) jusqu'à la publication du décret. La date de scrutin est portée **par territoire** (vote du samedi).
@@ -345,6 +356,7 @@ Règles et remarques :
 5. Licence du fichier INSEE des contours de circonscriptions ; texte de référence du découpage.
 6. Zéros initiaux des codes métropolitains dans les fichiers des législatives 2024.
 7. Sources des indicateurs économiques initiaux (Banque de France, INSEE) : à identifier en phase 6.
+9. Texte des articles 6 et 7 de la Constitution sur Légifrance (cités d'après Wikipédia, Légifrance refusant l'accès le 21/10/2026).
 8. Conditions de réutilisation des relevés de temps de parole de l'Arcom (page sans licence), des mesures de Médiamétrie et des classements de l'ACPM : seuls quelques chiffres agrégés sont repris avec citation ; à confirmer avant une mise en ligne publique.
 
 ## 10. Métadonnées obligatoires de chaque import (§10)

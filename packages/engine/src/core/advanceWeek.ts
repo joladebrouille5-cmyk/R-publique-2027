@@ -30,10 +30,15 @@ import { weeklyDrift } from '../election/opinion';
 import { publishPolls } from '../election/polls';
 import { resolveRound } from '../election/rounds';
 import { applyDecisions, drawEvents, validateDecisionAnswers } from '../event/events';
+import { requestGovernment } from '../presidency/government';
+import { advancePresidencyWeek } from '../presidency/week';
 import { nationalBaseline, type TerritorialBaseline } from '../territory/baseline';
 import { enterNextWeek } from './calendar';
 import { EngineInputError } from './errors';
+import { WEEKLY_STEPS } from './steps';
 import { compareStrings, Ledger } from './ledger';
+
+export { WEEKLY_STEPS };
 
 export type AdvanceInput = {
   actions: readonly PlannedAction[];
@@ -56,22 +61,6 @@ export type AdvanceResult = {
   /** Vrai si un événement majeur ou un scrutin a eu lieu : l'API sauvegarde l'état d'avant (§12). */
   majorEvent: boolean;
 };
-
-/** Libellés des 12 étapes du cycle hebdomadaire (§2), dans l'ordre stable et documenté. */
-export const WEEKLY_STEPS = [
-  { step: 1, module: 'campagne', label: 'Valider les actions' },
-  { step: 2, module: 'campagne', label: 'Consommer les ressources' },
-  { step: 3, module: 'ia', label: 'Calculer les décisions adverses' },
-  { step: 4, module: 'ia', label: 'Mettre à jour alliances et relations' },
-  { step: 5, module: 'evenements', label: 'Résoudre les événements et les effets des actions' },
-  { step: 6, module: 'opinion', label: 'Mettre à jour médias et opinion' },
-  { step: 7, module: 'economie', label: 'Calculer indicateurs économiques et sociaux' },
-  { step: 8, module: 'election', label: 'Mettre à jour intentions de vote' },
-  { step: 9, module: 'calendrier', label: 'Vérifier échéances' },
-  { step: 10, module: 'journal', label: 'Générer le journal' },
-  { step: 11, module: 'sauvegarde', label: 'Sauvegarder' },
-  { step: 12, module: 'bilan', label: 'Afficher le bilan hebdomadaire' },
-] as const;
 
 const HISTORY_LENGTH = 8;
 const plural = (n: number, word: string) => `${n} ${word}${n > 1 ? 's' : ''}`;
@@ -108,6 +97,16 @@ export function advanceWeek(
     throw new EngineInputError(
       'progression_bloquee',
       input.calendar.blockedMessage ?? 'La partie ne peut pas avancer davantage pour l’instant.',
+    );
+  }
+  if (input.meta.phase === 'presidence') {
+    const campaignRequests =
+      (plan.programme?.ajouter.length ?? 0) + (plan.programme?.retirer.length ?? 0) > 0 ||
+      (plan.alliances?.proposer.length ?? 0) > 0;
+    return advancePresidencyWeek(
+      input,
+      { actions: plan.actions, decisions: plan.decisions, campaignRequests },
+      ruleset,
     );
   }
   const state = JSON.parse(JSON.stringify(input)) as GameState;
@@ -298,6 +297,8 @@ export function advanceWeek(
     electionEvents.push(...concluded.events);
   }
   const { notices, appliedScheduled } = enterNextWeek(state, ruleset, ledger, finances, 9);
+  // Victoire : nomination du Premier ministre dès la semaine de l'investiture.
+  if (state.quinquennat) requestGovernment(state, ruleset);
   set(
     9,
     true,
