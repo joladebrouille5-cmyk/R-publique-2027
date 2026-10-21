@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mesure des formats de carte</title>
+    <link rel="stylesheet" href="/lib/maplibre-gl.css" />
+    <style>
+      html,
+      body,
+      #carte {
+        margin: 0;
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="carte"></div>
+    <script src="/lib/topojson-client.min.js"></script>
+    <script type="module">
+      // Page de mesure (P4-01) : charge une variante de géométries, attend le rendu complet
+      // (événement « idle ») et publie les durées dans window.mesures.
+      import { Map, setWorkerUrl } from '/lib/maplibre-gl.mjs';
+      setWorkerUrl('/lib/maplibre-gl-worker.mjs');
+      const params = new URLSearchParams(location.search);
+      const variante = params.get('variante');
+      const t0 = performance.now();
+      const map = new Map({
+        container: 'carte',
+        style: {
+          version: 8,
+          sources: {},
+          layers: [{ id: 'fond', type: 'background', paint: { 'background-color': '#f8fafc' } }],
+        },
+        bounds: [
+          [-5.2, 41.3],
+          [9.6, 51.1],
+        ],
+      });
+      const idle = () => new Promise((resolve) => map.once('idle', resolve));
+      const show = (id, data) => {
+        map.addSource(id, { type: 'geojson', data, promoteId: 'code' });
+        map.addLayer({
+          id: `${id}-f`,
+          type: 'fill',
+          source: id,
+          paint: { 'fill-color': '#3987e5' },
+        });
+        map.addLayer({
+          id: `${id}-l`,
+          type: 'line',
+          source: id,
+          paint: { 'line-color': '#fff', 'line-width': 0.4 },
+        });
+      };
+      const topo = async (url) => {
+        const t = await (await fetch(url)).json();
+        return topojson.feature(t, Object.values(t.objects)[0]);
+      };
+      map.on('load', async () => {
+        const mesures = {};
+        if (variante === 'departements') {
+          // Variante retenue : aperçu national (départements), puis communes d'un département.
+          const t = await (await fetch('/geo/france.topo.json')).json();
+          show('departements', topojson.feature(t, t.objects.departements));
+          await idle();
+          mesures.premierRendu = performance.now() - t0;
+          const t1 = performance.now();
+          map.fitBounds(
+            [
+              [1.38, 50.02],
+              [2.96, 51.0],
+            ],
+            { duration: 0 },
+          );
+          show('communes', await topo('/geo/communes/62.topo.json'));
+          await idle();
+          mesures.departementCommunes = performance.now() - t1;
+        } else {
+          // Variante écartée : toutes les communes en un seul GeoJSON national.
+          show('communes', await (await fetch('/geo/communes-france.geojson')).json());
+          await idle();
+          mesures.premierRendu = performance.now() - t0;
+        }
+        window.mesures = mesures;
+      });
+    </script>
+  </body>
+</html>

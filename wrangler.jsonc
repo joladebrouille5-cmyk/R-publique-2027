@@ -1,0 +1,22 @@
+// Cloudflare Workers (Workers Builds, Worker « republique-2027 ») : l'interface web compilée
+// (apps/web/dist) est servie en fichiers statiques, avec repli sur index.html pour les routes de
+// l'application. L'API du jeu (Fastify + PostgreSQL) ne s'exécute pas sur Workers :
+// cloudflare/worker.js répond aux requêtes /api/* par une erreur explicite, que l'interface
+// affiche. Voir README, « Déploiement sur Cloudflare Workers ».
+{
+  "name": "republique-2027",
+  "main": "cloudflare/worker.js",
+  "compatibility_date": "2026-10-01",
+  // Workers Builds n'installe pas les dépendances du projet : la commande les installe (interface
+  // et paquets dont elle dépend, version de pnpm fixée par packageManager via Corepack) puis
+  // compile l'interface.
+  "build": {
+    "command": "corepack pnpm install --frozen-lockfile --filter @r2027/web... && corepack pnpm --filter @r2027/web run build",
+  },
+  "assets": {
+    "directory": "./apps/web/dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"],
+  },
+}

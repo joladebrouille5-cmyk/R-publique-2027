@@ -1,0 +1,2923 @@
+{
+  "id": "presidentielle-2027",
+  "version": "5.0.0",
+  "libelle": "Présidentielle 2027 — règles de campagne, parrainages, financement, médias réels (phase 5 ter)",
+  "verifieLe": "2026-10-21",
+  "sources": {
+    "elysee-cm-2026-07-01": {
+      "titre": "Compte rendu du Conseil des ministres du mercredi 1er juillet 2026 — communication relative au calendrier électoral 2027",
+      "url": "https://www.elysee.fr/emmanuel-macron/2026/07/01/compte-rendu-du-conseil-des-ministres-du-mercredi-1er-juillet-2026",
+      "consulteLe": "2026-10-20"
+    },
+    "cnccfp-guide-2027": {
+      "titre": "CNCCFP — Guide à l'usage des candidats à l'élection du Président de la République 2027",
+      "url": "https://cnccfp.fr/wp-content/uploads/2026/04/Guide-a-lusage-des-candidats-a-lelection-du-President-de-la-Republique-2027.pdf",
+      "consulteLe": "2026-10-20"
+    },
+    "conception-du-jeu": {
+      "titre": "Paramètres de conception du jeu RÉPUBLIQUE 2027 (hypothèses, sans valeur officielle)",
+      "url": null,
+      "consulteLe": null
+    },
+    "cc-2022-197-pdr": {
+      "titre": "Conseil constitutionnel — Décision n° 2022-197 PDR du 27 avril 2022 (proclamation des résultats du second tour)",
+      "url": "https://www.conseil-constitutionnel.fr/decision/2022/2022197PDR.htm",
+      "consulteLe": "2026-10-20"
+    },
+    "insee-cog-2026": {
+      "titre": "INSEE — Code officiel géographique 2026, liste des communes (v_commune_2026.csv)",
+      "url": "https://www.insee.fr/fr/statistiques/fichier/8740222/v_commune_2026.csv",
+      "consulteLe": "2026-10-20"
+    },
+    "cc-parrainages-2022": {
+      "titre": "Conseil constitutionnel — Présidentielle 2022, parrainages validés (règles de présentation)",
+      "url": "https://presidentielle2022.conseil-constitutionnel.fr/les-parrainages/tous-les-parrainages-valides.html",
+      "consulteLe": "2026-10-20"
+    }
+  },
+  "calendrier": {
+    "scrutins": [
+      {
+        "id": "presidentielle-2027-t1",
+        "libelle": "Premier tour de l'élection présidentielle",
+        "date": "2027-04-18",
+        "statut": "annonce",
+        "sourceId": "elysee-cm-2026-07-01",
+        "votentLaVeille": ["971", "972", "973", "975", "977", "978", "987"]
+      },
+      {
+        "id": "presidentielle-2027-t2",
+        "libelle": "Second tour de l'élection présidentielle",
+        "date": "2027-05-02",
+        "statut": "annonce",
+        "sourceId": "elysee-cm-2026-07-01",
+        "votentLaVeille": ["971", "972", "973", "975", "977", "978", "987"]
+      }
+    ],
+    "echeances": [
+      {
+        "id": "ouverture-presentations",
+        "libelle": "Ouverture de l’envoi des présentations (parrainages) au Conseil constitutionnel",
+        "date": "2027-02-22",
+        "heure": null,
+        "statut": "hypothese",
+        "regle": "Lendemain de la publication du décret de convocation des électeurs, non encore publié : date supposée trois semaines avant la clôture",
+        "sourceId": "conception-du-jeu"
+      },
+      {
+        "id": "presentation-candidatures",
+        "libelle": "Date limite de présentation des candidatures (parrainages) au Conseil constitutionnel",
+        "date": "2027-03-12",
+        "heure": "18:00",
+        "statut": "deduit",
+        "regle": "Sixième vendredi précédant le premier tour, à dix-huit heures (I de l'article 3 de la loi du 6 novembre 1962)",
+        "sourceId": "cnccfp-guide-2027"
+      },
+      {
+        "id": "depot-comptes-campagne",
+        "libelle": "Date limite de dépôt des comptes de campagne à la CNCCFP",
+        "date": "2027-07-02",
+        "heure": "18:00",
+        "statut": "deduit",
+        "regle": "Onzième vendredi suivant le premier tour, à dix-huit heures",
+        "sourceId": "cnccfp-guide-2027"
+      }
+    ]
+  },
+  "jeu": {
+    "statut": "hypothese",
+    "sourceId": "conception-du-jeu",
+    "tempsHebdomadaireHeures": 70,
+    "actionsMaxParSemaine": 8,
+    "evenementsMaxParSemaine": 2,
+    "ressourcesInitiales": {
+      "accessible": {
+        "budgetCentimes": 600000000,
+        "militants": 800,
+        "notoriete": 1200,
+        "popularite": 3500
+      },
+      "standard": {
+        "budgetCentimes": 300000000,
+        "militants": 400,
+        "notoriete": 600,
+        "popularite": 3000
+      },
+      "expert": {
+        "budgetCentimes": 150000000,
+        "militants": 150,
+        "notoriete": 300,
+        "popularite": 2500
+      }
+    },
+    "opinion": {
+      "erosionNotoriete": 0.01,
+      "popularite": {
+        "reference": 3000,
+        "rappel": 0.05
+      },
+      "attritionMilitants": 0.01
+    },
+    "equipeJoueur": 0.5,
+    "promessesInitialesJoueur": {
+      "accessible": 320,
+      "standard": 160,
+      "expert": 60
+    }
+  },
+  "actions": [
+    {
+      "id": "meeting",
+      "libelle": "Meeting public",
+      "description": "Grand rassemblement avec discours du candidat.",
+      "portee": "regionale",
+      "cout": {
+        "budgetCentimes": 12000000,
+        "tempsHeures": 8
+      },
+      "prerequis": {
+        "militantsMin": 50
+      },
+      "effets": [
+        {
+          "ressource": "notoriete",
+          "base": 60,
+          "ecart": 30,
+          "delaiSemaines": 0,
+          "saturation": true
+        },
+        {
+          "ressource": "militants",
+          "base": 15,
+          "ecart": 10,
+          "delaiSemaines": 0,
+          "saturation": false
+        }
+      ],
+      "risque": {
+        "probabilite": 0.05,
+        "libelle": "Incident lors du meeting",
+        "effets": [
+          {
+            "ressource": "popularite",
+            "base": -80,
+            "ecart": 40,
+            "delaiSemaines": 0,
+            "saturation": false
+          }
+        ]
+      },
+      "note": null,
+      "cible": null,
+      "campagne": {
+        "exposition": 300
+      }
+    },
+    {
+      "id": "grand-meeting",
+      "libelle": "Grand meeting national",
+      "description": "Rassemblement de plusieurs milliers de personnes, retransmis : forte exposition, logistique lourde.",
+      "portee": "nationale",
+      "cible": null,
+      "cout": {
+        "budgetCentimes": 45000000,
+        "tempsHeures": 16
+      },
+      "prerequis": {
+        "militantsMin": 500
+      },
+      "effets": [
+        {
+          "ressource": "notoriete",
+          "base": 150,
+          "ecart": 60,
+          "delaiSemaines": 0,
+          "saturation": true
+        },
+        {
+          "ressource": "popularite",
+          "base": 40,
+          "ecart": 40,
+          "delaiSemaines": 0,
+          "saturation": false
+        },
+        {
+          "ressource": "militants",
+          "base": 40,
+          "ecart": 20,
+          "delaiSemaines": 0,
+          "saturation": false
+        }
+      ],
+      "campagne": {
+        "exposition": 1200
+      },
+      "risque": {
+        "probabilite": 0.08,
+        "libelle": "Salle à moitié vide",
+        "effets": [
+          {
+            "ressource": "popularite",
+            "base": -60,
+            "ecart": 30,
+            "delaiSemaines": 0,
+            "saturation": false
+          }
+        ]
+      },
+      "note": null
+    },
+    {
+      "id": "tournee",
+      "libelle": "Tournée de terrain (3 jours)",
+      "description": "Déplacements, marchés et rencontres avec les habitants.",
+      "portee": "locale",
+      "cout": {
+        "budgetCentimes": 6000000,
+        "tempsHeures": 24
+      },
+      "prerequis": {
+        "militantsMin": 0
+      },
+      "effets": [
+        {
+          "ressource": "popularite",
+          "base": 40,
+          "ecart": 30,
+          "delaiSemaines": 0,
+          "saturation": true
+        },
+        {
+          "ressource": "notoriete",
+          "base": 30,
+          "ecart": 20,
+          "delaiSemaines": 0,
+          "saturation": true
+        }
+      ],
+      "risque": {
+        "probabilite": 0.03,
+        "libelle": "Accueil hostile",
+        "effets": [
+          {
+            "ressource": "popularite",
+            "base": -50,
+            "ecart": 30,
+            "delaiSemaines": 0,
+            "saturation": false
+          }
+        ]
+      },
+      "note": null,
+      "cible": null,
+      "campagne": null
+    },
+    {
+      "id": "interview",
+      "libelle": "Interview dans un média",
+      "description": "Entretien dans un média réel choisi (télévision, radio ou presse) : exposition forte dans cet organe, effet incertain sur l’image.",
+      "portee": "nationale",
+      "cout": {
+        "budgetCentimes": 0,
+        "tempsHeures": 3
+      },
+      "prerequis": {
+        "militantsMin": 0
+      },
+      "effets": [
+        {
+          "ressource": "notoriete",
+          "base": 80,
+          "ecart": 60,
+          "delaiSemaines": 0,
+          "saturation": true
+        },
+        {
+          "ressource": "popularite",
+          "base": 0,
+          "ecart": 60,
+          "delaiSemaines": 0,
+          "saturation": true
+        }
+      ],
+      "risque": {
+        "probabilite": 0.08,
+        "libelle": "Petite phrase reprise en boucle",
+        "effets": [
+          {
+            "ressource": "popularite",
+            "base": -100,
+            "ecart": 50,
+            "delaiSemaines": 0,
+            "saturation": false
+          }
+        ]
+      },
+      "note": "Médias réels (audiences et temps de parole sourcés) ; l’entretien est simulé : aucune question ni aucun propos n’est attribué à un journaliste ou à un média.",
+      "cible": "media",
+      "campagne": {
+        "exposition": 2500
+      }
+    },
+    {
+      "id": "emission-politique",
+      "libelle": "Invité d’une émission politique",
+      "description": "Passage dans une émission politique réelle choisie : exposition forte sur sa chaîne ou sa station (et, en partie, sur ses autres diffuseurs), effet incertain sur l’image.",
+      "portee": "nationale",
+      "cout": {
+        "budgetCentimes": 0,
+        "tempsHeures": 4
+      },
+      "prerequis": {
+        "militantsMin": 0
+      },
+      "effets": [
+        {
+          "ressource": "notoriete",
+          "base": 100,
+          "ecart": 60,
+          "delaiSemaines": 0,
+          "saturation": true
+        },
+        {
+          "ressource": "popularite",
+          "base": 0,
+          "ecart": 80,
+          "delaiSemaines": 0,
+          "saturation": true
+        }
+      ],
+      "risque": {
+        "probabilite": 0.1,
+        "libelle": "Petite phrase reprise en boucle",
+        "effets": [
+          {
+            "ressource": "popularite",
+            "base": -120,
+            "ecart": 60,
+            "delaiSemaines": 0,
+            "saturation": false
+          }
+        ]
+      },
+      "note": "Émissions, chaînes et présentateurs réels (faits sourcés) ; l’interview est simulée : aucune question ni aucun propos n’est attribué aux journalistes.",
+      "cible": "emission",
+      "campagne": {
+        "exposition": 3500
+      }
+    },
+    {
+      "id": "numerique",
+      "libelle": "Campagne numérique ciblée",
+      "description": "Vidéos et publications sponsorisées ; effet visible la semaine suivante.",
+      "portee": "nationale",
+      "cout": {
+        "budgetCentimes": 10000000,
+        "tempsHeures": 2
+      },
+      "prerequis": {
+        "militantsMin": 0
+      },
+      "effets": [
+        {
+          "ressource": "notoriete",
+          "base": 50,
+          "ecart": 25,
+          "delaiSemaines": 1,
+          "saturation": true
+        }
+      ],
+      "risque": null,
+      "note": null,
+      "cible": null,
+      "campagne": null
+    },
+    {
+      "id": "recrutement",
+      "libelle": "Opération de recrutement de militants",
+      "description": "Réunions d'accueil et relances ; nouveaux militants actifs la semaine suivante.",
+      "portee": "locale",
+      "cout": {
+        "budgetCentimes": 2000000,
+        "tempsHeures": 4
+      },
+      "prerequis": {
+        "militantsMin": 0
+      },
+      "effets": [
+        {
+          "ressource": "militants",
+          "base": 60,
+          "ecart": 30,
+          "delaiSemaines": 1,
+          "saturation": false
+        }
+      ],
+      "risque": null,
+      "note": null,
+      "cible": null,
+      "campagne": null
+    },
+    {
+      "id": "collecte",
+      "libelle": "Soirée de collecte de dons",
+      "description": "Appel aux dons des sympathisants. Les dons sont plafonnés à 4 600 € par personne ; les personnes morales ne peuvent pas donner.",
+      "portee": "locale",
+      "cout": {
+        "budgetCentimes": 1500000,
+        "tempsHeures": 6
+      },
+      "prerequis": {
+        "militantsMin": 0
+      },
+      "effets": [],
+      "risque": {
+        "probabilite": 0.02,
+        "libelle": "Don irrégulier à rembourser",
+        "effets": [
+          {
+            "ressource": "budgetCentimes",
+            "base": -500000,
+            "ecart": 0,
+            "delaiSemaines": 0,
+            "saturation": false
+          }
+        ]
+      },
+      "note": "Montant agrégé de nombreux dons individuels. Les règles de financement (plafond de 4 600 € par personne, interdiction des personnes morales, compte de campagne) seront appliquées en phase 5.",
+      "cible": null,
+      "campagne": {
+        "dons": {
+          "donateurs": {
+            "base": 400,
+            "ecart": 200
+          },
+          "montantMoyenCentimes": 12000,
+          "probaPersonneMorale": 0.12,
+          "probaDepassement": 0.15,
+          "probaEspeces": 0.1
+        }
+      }
+    },
+    {
+      "id": "porte-a-porte",
+      "libelle": "Porte-à-porte",
+      "description": "Les militants vont à la rencontre des électeurs ; nécessite une équipe déjà constituée.",
+      "portee": "locale",
+      "cout": {
+        "budgetCentimes": 0,
+        "tempsHeures": 4
+      },
+      "prerequis": {
+        "militantsMin": 100
+      },
+      "effets": [
+        {
+          "ressource": "popularite",
+          "base": 25,
+          "ecart": 20,
+          "delaiSemaines": 0,
+          "saturation": true
+        },
+        {
+          "ressource": "militants",
+          "base": 5,
+          "ecart": 5,
+          "delaiSemaines": 0,
+          "saturation": false
+        }
+      ],
+      "risque": null,
+      "note": null,
+      "cible": null,
+      "campagne": null
+    },
+    {
+      "id": "elus-locaux",
+      "libelle": "Rencontre avec des élus locaux",
+      "description": "Tournée des maires d’un département : notoriété locale et promesses de parrainage.",
+      "portee": "regionale",
+      "cout": {
+        "budgetCentimes": 1000000,
+        "tempsHeures": 6
+      },
+      "prerequis": {
+        "militantsMin": 0
+      },
+      "effets": [
+        {
+          "ressource": "notoriete",
+          "base": 15,
+          "ecart": 10,
+          "delaiSemaines": 0,
+          "saturation": true
+        }
+      ],
+      "risque": null,
+      "note": "Les parrainages (promesses, intentions, présentations reçues et validées) arrivent en phase 5.",
+      "cible": "departement",
+      "campagne": {
+        "promesses": {
+          "base": 25,
+          "ecart": 10
+        }
+      }
+    },
+    {
+      "id": "emprunt-bancaire",
+      "libelle": "Demande de prêt bancaire",
+      "description": "Prêt de 1 M€ demandé à une banque : accordé si le remboursement public attendu le couvre.",
+      "portee": "nationale",
+      "cible": null,
+      "cout": {
+        "budgetCentimes": 0,
+        "tempsHeures": 4
+      },
+      "prerequis": {
+        "militantsMin": 0
+      },
+      "effets": [],
+      "campagne": {
+        "emprunt": {
+          "montantCentimes": 100000000
+        }
+      },
+      "risque": null,
+      "note": "Les banques prêtent sur la base du remboursement forfaitaire attendu (hypothèse de jeu)."
+    },
+    {
+      "id": "preparation-debat",
+      "libelle": "Préparation des débats",
+      "description": "Séances de travail avec l’équipe : dossiers, réponses, mises en situation.",
+      "portee": "nationale",
+      "cible": null,
+      "cout": {
+        "budgetCentimes": 2000000,
+        "tempsHeures": 10
+      },
+      "prerequis": {
+        "militantsMin": 0
+      },
+      "effets": [],
+      "campagne": {
+        "preparationDebat": 10
+      },
+      "risque": null,
+      "note": null
+    }
+  ],
+  "evenements": [
+    {
+      "id": "portrait-presse",
+      "libelle": "Portrait dans la presse régionale",
+      "description": "Un quotidien régional consacre une page à votre parcours.",
+      "nature": "fictif",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.08,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 4,
+      "occurrencesMax": null,
+      "effets": [
+        {
+          "ressource": "notoriete",
+          "base": 60,
+          "ecart": 30,
+          "delaiSemaines": 0,
+          "saturation": true
+        }
+      ],
+      "choix": [],
+      "choixParDefaut": null,
+      "campagne": null
+    },
+    {
+      "id": "elan-de-dons",
+      "libelle": "Élan de dons après une intervention remarquée",
+      "description": "De nombreux sympathisants font un petit don en ligne.",
+      "nature": "fictif",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.04,
+      "conditions": [
+        {
+          "ressource": "popularite",
+          "min": 2500,
+          "max": null
+        }
+      ],
+      "delaiMinEntreOccurrences": 6,
+      "occurrencesMax": null,
+      "effets": [],
+      "choix": [],
+      "choixParDefaut": null,
+      "campagne": {
+        "dons": {
+          "donateurs": {
+            "base": 800,
+            "ecart": 300
+          },
+          "montantMoyenCentimes": 8000,
+          "probaPersonneMorale": 0.3,
+          "probaDepassement": 0.2,
+          "probaEspeces": 0.1
+        }
+      }
+    },
+    {
+      "id": "depart-militants",
+      "libelle": "Départ d'un groupe de militants",
+      "description": "Un groupe local, en désaccord avec la stratégie, quitte la campagne.",
+      "nature": "fictif",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.05,
+      "conditions": [
+        {
+          "ressource": "militants",
+          "min": 150,
+          "max": null
+        }
+      ],
+      "delaiMinEntreOccurrences": 6,
+      "occurrencesMax": null,
+      "effets": [
+        {
+          "ressource": "militants",
+          "base": -30,
+          "ecart": 15,
+          "delaiSemaines": 0,
+          "saturation": false
+        }
+      ],
+      "choix": [],
+      "choixParDefaut": null,
+      "campagne": null
+    },
+    {
+      "id": "greve-transports",
+      "libelle": "Grève des transports",
+      "description": "Les déplacements de la semaine prochaine seront plus difficiles.",
+      "nature": "fictif",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.03,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 8,
+      "occurrencesMax": null,
+      "effets": [
+        {
+          "ressource": "tempsHeures",
+          "base": -10,
+          "ecart": 0,
+          "delaiSemaines": 1,
+          "saturation": false
+        }
+      ],
+      "choix": [],
+      "choixParDefaut": null,
+      "campagne": null
+    },
+    {
+      "id": "polemique-reseaux",
+      "libelle": "Polémique sur les réseaux sociaux",
+      "description": "Une ancienne publication de votre équipe est exhumée et commentée.",
+      "nature": "fictif",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.06,
+      "conditions": [
+        {
+          "ressource": "notoriete",
+          "min": 800,
+          "max": null
+        }
+      ],
+      "delaiMinEntreOccurrences": 6,
+      "occurrencesMax": null,
+      "effets": [],
+      "choix": [
+        {
+          "id": "repondre",
+          "libelle": "Répondre publiquement",
+          "description": "Assumer et contre-attaquer : plus d'exposition, image incertaine.",
+          "effets": [
+            {
+              "ressource": "notoriete",
+              "base": 40,
+              "ecart": 20,
+              "delaiSemaines": 0,
+              "saturation": true
+            },
+            {
+              "ressource": "popularite",
+              "base": -40,
+              "ecart": 60,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        },
+        {
+          "id": "ignorer",
+          "libelle": "Laisser passer",
+          "description": "Ne rien dire : la polémique s'éteint lentement.",
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -60,
+              "ecart": 30,
+              "delaiSemaines": 1,
+              "saturation": false
+            }
+          ]
+        },
+        {
+          "id": "excuses",
+          "libelle": "Présenter des excuses",
+          "description": "Calmer le jeu, au prix d'un malaise chez certains militants.",
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -20,
+              "ecart": 20,
+              "delaiSemaines": 0,
+              "saturation": false
+            },
+            {
+              "ressource": "militants",
+              "base": -10,
+              "ecart": 5,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        }
+      ],
+      "choixParDefaut": "ignorer",
+      "campagne": null
+    },
+    {
+      "id": "crise-equipe",
+      "libelle": "Crise au sein de l'équipe de campagne",
+      "description": "Deux responsables de la campagne s'opposent publiquement sur la stratégie.",
+      "nature": "fictif",
+      "majeur": true,
+      "probabiliteHebdomadaire": 0.025,
+      "conditions": [
+        {
+          "ressource": "militants",
+          "min": 200,
+          "max": null
+        }
+      ],
+      "delaiMinEntreOccurrences": 10,
+      "occurrencesMax": 2,
+      "effets": [],
+      "choix": [
+        {
+          "id": "trancher",
+          "libelle": "Trancher et écarter les responsables",
+          "description": "Fin rapide de la crise, mais des départs.",
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -30,
+              "ecart": 20,
+              "delaiSemaines": 0,
+              "saturation": false
+            },
+            {
+              "ressource": "militants",
+              "base": -40,
+              "ecart": 20,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        },
+        {
+          "id": "mediation",
+          "libelle": "Organiser une médiation",
+          "description": "Préserver l'équipe, au prix de temps pris la semaine suivante.",
+          "effets": [
+            {
+              "ressource": "tempsHeures",
+              "base": -20,
+              "ecart": 0,
+              "delaiSemaines": 1,
+              "saturation": false
+            }
+          ]
+        }
+      ],
+      "choixParDefaut": "mediation",
+      "campagne": null
+    }
+  ],
+  "electorat": {
+    "inscrits": {
+      "valeur": 48752339,
+      "statut": "estimation",
+      "sourceId": "cc-2022-197-pdr",
+      "note": "Nombre d'inscrits au second tour de 2022, utilisé faute de chiffre officiel pour 2027."
+    },
+    "statutGroupes": "hypothese",
+    "groupes": [
+      {
+        "id": "gauche-radicale",
+        "libelle": "Gauche radicale",
+        "description": "Électeurs très attachés à la redistribution et aux services publics.",
+        "part": 0.1,
+        "position": {
+          "economie": -80,
+          "societe": -50
+        },
+        "participation": 0.66
+      },
+      {
+        "id": "gauche-sociale",
+        "libelle": "Gauche sociale",
+        "description": "Électeurs de gauche réformistes, sensibles au pouvoir d'achat.",
+        "part": 0.12,
+        "position": {
+          "economie": -50,
+          "societe": -25
+        },
+        "participation": 0.72
+      },
+      {
+        "id": "ecologistes",
+        "libelle": "Écologistes",
+        "description": "Électeurs dont l'environnement est la priorité.",
+        "part": 0.08,
+        "position": {
+          "economie": -35,
+          "societe": -70
+        },
+        "participation": 0.7
+      },
+      {
+        "id": "centre-gauche",
+        "libelle": "Centre gauche",
+        "description": "Électeurs modérés, attachés aux équilibres budgétaires et sociaux.",
+        "part": 0.11,
+        "position": {
+          "economie": -15,
+          "societe": -15
+        },
+        "participation": 0.76
+      },
+      {
+        "id": "centre-liberal",
+        "libelle": "Centre libéral",
+        "description": "Électeurs favorables au marché et à l'Europe, socialement ouverts.",
+        "part": 0.14,
+        "position": {
+          "economie": 25,
+          "societe": -10
+        },
+        "participation": 0.78
+      },
+      {
+        "id": "droite-moderee",
+        "libelle": "Droite modérée",
+        "description": "Électeurs de droite de gouvernement.",
+        "part": 0.11,
+        "position": {
+          "economie": 45,
+          "societe": 25
+        },
+        "participation": 0.78
+      },
+      {
+        "id": "droite-conservatrice",
+        "libelle": "Droite conservatrice",
+        "description": "Électeurs attachés à l'ordre et aux valeurs traditionnelles.",
+        "part": 0.09,
+        "position": {
+          "economie": 60,
+          "societe": 55
+        },
+        "participation": 0.76
+      },
+      {
+        "id": "droite-nationale",
+        "libelle": "Droite nationale",
+        "description": "Électeurs prioritairement préoccupés par l'immigration et la sécurité.",
+        "part": 0.15,
+        "position": {
+          "economie": 20,
+          "societe": 80
+        },
+        "participation": 0.66
+      },
+      {
+        "id": "eloignes",
+        "libelle": "Éloignés de la politique",
+        "description": "Électeurs peu intéressés, qui votent rarement.",
+        "part": 0.1,
+        "position": {
+          "economie": 0,
+          "societe": 30
+        },
+        "participation": 0.34
+      }
+    ],
+    "baseHistorique": {
+      "statut": "hypothese",
+      "note": "Géographie électorale tirée du 1er tour de la présidentielle 2022 (fichier communal du ministère de l'Intérieur). La répartition des électeurs de chaque candidat de 2022 entre les groupes du jeu est une hypothèse de conception, à discuter : elle sert seulement à situer les groupes d'une commune à l'autre (la taille nationale des groupes reste celle de « groupes »). Les candidats de 2027 sont fictifs.",
+      "election": "presidentielle-2022",
+      "lissage": 200,
+      "participationLocale": {
+        "min": 0.7,
+        "max": 1.3
+      },
+      "candidats": {
+        "ARTHAUD": {
+          "gauche-radicale": 1
+        },
+        "POUTOU": {
+          "gauche-radicale": 1
+        },
+        "MÉLENCHON": {
+          "gauche-radicale": 0.55,
+          "gauche-sociale": 0.35,
+          "ecologistes": 0.1
+        },
+        "ROUSSEL": {
+          "gauche-sociale": 0.8,
+          "gauche-radicale": 0.2
+        },
+        "HIDALGO": {
+          "centre-gauche": 0.6,
+          "gauche-sociale": 0.3,
+          "ecologistes": 0.1
+        },
+        "JADOT": {
+          "ecologistes": 0.75,
+          "centre-gauche": 0.25
+        },
+        "MACRON": {
+          "centre-liberal": 0.65,
+          "centre-gauche": 0.2,
+          "droite-moderee": 0.15
+        },
+        "PÉCRESSE": {
+          "droite-moderee": 0.7,
+          "droite-conservatrice": 0.3
+        },
+        "LASSALLE": {
+          "eloignes": 0.5,
+          "droite-conservatrice": 0.3,
+          "gauche-sociale": 0.2
+        },
+        "DUPONT-AIGNAN": {
+          "droite-conservatrice": 0.5,
+          "droite-nationale": 0.5
+        },
+        "ZEMMOUR": {
+          "droite-nationale": 0.6,
+          "droite-conservatrice": 0.4
+        },
+        "LE PEN": {
+          "droite-nationale": 0.85,
+          "eloignes": 0.15
+        }
+      }
+    }
+  },
+  "modele": {
+    "statut": "hypothese",
+    "note": "Coefficients du score latent fixés par conception du jeu. Participation des groupes, blancs et nuls calés pour retrouver l'ordre de grandeur des résultats proclamés en 2022 (décisions n° 2022-195 et 2022-197 PDR : participation 73,69 % puis 71,99 % des inscrits ; blancs 1,51 % puis 6,37 % des votants ; nuls 0,69 % puis 2,29 %). Le jeu simule environ 74,8 % puis 72,1 %, 1,5 % puis 6,1 % de blancs, 0,7 % puis 2,3 % de nuls. À recalibrer sur les données communales en phase 4. Phase 5 : facteurs programme, crédibilité, médias et alliances ajoutés (hypothèses, non calibrées).",
+    "proximite": 3,
+    "notoriete": 1,
+    "popularite": 3,
+    "dynamique": 8,
+    "alea": 0.15,
+    "participation": {
+      "effetProximite": 0.1,
+      "min": 0.2,
+      "max": 0.95
+    },
+    "blancsNuls": {
+      "blancsT1": 0.015,
+      "nulsT1": 0.007,
+      "blancsT2Min": 0.055,
+      "blancsT2Max": 0.15,
+      "nulsT2": 0.023
+    },
+    "secondTour": {
+      "effetConsigne": 0.8,
+      "effetDebat": 0.25,
+      "abstentionDifferentielle": 0.12,
+      "seuilConsigne": 0.9
+    },
+    "programme": 1,
+    "credibilite": 0.6,
+    "medias": 0.8,
+    "alliances": 2
+  },
+  "sondages": {
+    "statut": "hypothese",
+    "instituts": [
+      {
+        "id": "opinio",
+        "libelle": "Institut Opinio (fictif)",
+        "taille": 1000,
+        "methode": "Échantillon par quotas (sexe, âge, profession, région), questionnaire en ligne",
+        "periodicite": 2,
+        "decalage": 0
+      },
+      {
+        "id": "civis",
+        "libelle": "Baromètre Civis (fictif)",
+        "taille": 1500,
+        "methode": "Échantillon par quotas, questionnaire en ligne et par téléphone",
+        "periodicite": 2,
+        "decalage": 1
+      }
+    ],
+    "biaisMaxCentiemes": 150,
+    "limites": "Sondage simulé par le jeu. Intentions mesurées parmi les personnes certaines d'aller voter et exprimant un choix. Marge d'erreur indicative, calculée comme pour un échantillon aléatoire de même taille (méthode des quotas). Un sondage décrit l'opinion à la date du terrain : ce n'est pas une prédiction du résultat."
+  },
+  "candidatsFictifs": [
+    {
+      "id": "adv-etincelle",
+      "prenom": "Bastien",
+      "nom": "Roudier",
+      "parti": "Étincelle",
+      "famille": "extrême gauche",
+      "positionnement": {
+        "economie": -90,
+        "societe": -40
+      },
+      "parcours": "Personnage fictif. Ancien syndicaliste dans l'industrie automobile.",
+      "style": "offensif",
+      "toleranceRisque": 0.7,
+      "ressources": {
+        "budgetCentimes": 80000000,
+        "militants": 600,
+        "notoriete": 1500,
+        "popularite": 2200
+      },
+      "objectif": "visibilite",
+      "equipe": 0.35,
+      "implantation": ["11", "32"],
+      "promessesInitiales": 260,
+      "programme": [
+        "eco-investissement-public",
+        "emploi-garantie-emploi",
+        "pa-hausse-smic",
+        "ret-age-60",
+        "log-encadrement-loyers",
+        "sante-recrutement-hopital",
+        "inst-referendum-initiative-citoyenne",
+        "immi-regularisation-travail"
+      ]
+    },
+    {
+      "id": "adv-aurore",
+      "prenom": "Élise",
+      "nom": "Marchetti",
+      "parti": "Aurore",
+      "famille": "gauche radicale",
+      "positionnement": {
+        "economie": -65,
+        "societe": -45
+      },
+      "parcours": "Personnage fictif. Ancienne députée, tribune remarquée sur les services publics.",
+      "style": "offensif",
+      "toleranceRisque": 0.6,
+      "ressources": {
+        "budgetCentimes": 400000000,
+        "militants": 1500,
+        "notoriete": 4500,
+        "popularite": 3000
+      },
+      "objectif": "qualification",
+      "equipe": 0.55,
+      "implantation": ["11", "93", "76"],
+      "promessesInitiales": 520,
+      "programme": [
+        "eco-investissement-public",
+        "pa-hausse-smic",
+        "ret-age-60",
+        "log-encadrement-loyers",
+        "sante-recrutement-hopital",
+        "inst-proportionnelle",
+        "env-renovation-thermique",
+        "edu-revalorisation-enseignants",
+        "immi-regularisation-travail"
+      ]
+    },
+    {
+      "id": "adv-canopee",
+      "prenom": "Nadia",
+      "nom": "Ferrand",
+      "parti": "Canopée",
+      "famille": "écologiste",
+      "positionnement": {
+        "economie": -40,
+        "societe": -65
+      },
+      "parcours": "Personnage fictif. Agronome, élue régionale.",
+      "style": "equilibre",
+      "toleranceRisque": 0.5,
+      "ressources": {
+        "budgetCentimes": 300000000,
+        "militants": 900,
+        "notoriete": 3000,
+        "popularite": 3300
+      },
+      "objectif": "visibilite",
+      "equipe": 0.5,
+      "implantation": ["84", "53", "75"],
+      "promessesInitiales": 600,
+      "programme": [
+        "env-renovation-thermique",
+        "ener-sortie-nucleaire",
+        "env-transports-collectifs",
+        "agri-transition-agroecologique",
+        "just-peines-alternatives",
+        "dip-aide-developpement",
+        "inst-proportionnelle",
+        "log-construction-sociale",
+        "dip-integration-europeenne"
+      ]
+    },
+    {
+      "id": "adv-agora",
+      "prenom": "Julien",
+      "nom": "Castaing",
+      "parti": "Agora",
+      "famille": "social-démocrate",
+      "positionnement": {
+        "economie": -25,
+        "societe": -20
+      },
+      "parcours": "Personnage fictif. Maire d'une ville moyenne.",
+      "style": "prudent",
+      "toleranceRisque": 0.3,
+      "ressources": {
+        "budgetCentimes": 400000000,
+        "militants": 1100,
+        "notoriete": 3500,
+        "popularite": 3200
+      },
+      "objectif": "qualification",
+      "equipe": 0.6,
+      "implantation": ["75", "76", "53"],
+      "promessesInitiales": 1100,
+      "programme": [
+        "ret-age-62",
+        "edu-revalorisation-enseignants",
+        "sante-deserts-medicaux",
+        "log-construction-sociale",
+        "ener-mix-equilibre",
+        "secu-police-proximite",
+        "emploi-formation-continue",
+        "coll-dotations-communes",
+        "dip-integration-europeenne"
+      ]
+    },
+    {
+      "id": "adv-boussole",
+      "prenom": "Claire",
+      "nom": "Delorme",
+      "parti": "Boussole",
+      "famille": "centre libéral",
+      "positionnement": {
+        "economie": 20,
+        "societe": -10
+      },
+      "parcours": "Personnage fictif. Ancienne cheffe d'entreprise, ministre dans un gouvernement imaginaire.",
+      "style": "equilibre",
+      "toleranceRisque": 0.4,
+      "ressources": {
+        "budgetCentimes": 800000000,
+        "militants": 1300,
+        "notoriete": 6000,
+        "popularite": 3500
+      },
+      "objectif": "victoire",
+      "equipe": 0.75,
+      "implantation": ["11", "84", "52"],
+      "promessesInitiales": 950,
+      "programme": [
+        "eco-simplification-pme",
+        "emploi-formation-continue",
+        "pa-prime-partage-valeur",
+        "ret-systeme-points",
+        "ener-mix-equilibre",
+        "dip-integration-europeenne",
+        "def-defense-europeenne",
+        "env-ecologie-incitative",
+        "immi-integration-langue",
+        "coll-decentralisation"
+      ]
+    },
+    {
+      "id": "adv-pilier",
+      "prenom": "Antoine",
+      "nom": "Rivière",
+      "parti": "Pilier",
+      "famille": "droite libérale-conservatrice",
+      "positionnement": {
+        "economie": 50,
+        "societe": 35
+      },
+      "parcours": "Personnage fictif. Président de département.",
+      "style": "prudent",
+      "toleranceRisque": 0.35,
+      "ressources": {
+        "budgetCentimes": 700000000,
+        "militants": 1400,
+        "notoriete": 5000,
+        "popularite": 3100
+      },
+      "objectif": "victoire",
+      "equipe": 0.7,
+      "implantation": ["44", "28", "24", "27"],
+      "promessesInitiales": 1300,
+      "programme": [
+        "eco-baisse-impots-production",
+        "emploi-assurance-chomage",
+        "ret-systeme-points",
+        "secu-recrutement-forces",
+        "just-places-prison",
+        "ener-nouveaux-reacteurs",
+        "log-acces-propriete",
+        "agri-simplification-normes",
+        "def-hausse-budget-armees",
+        "edu-autonomie-etablissements"
+      ]
+    },
+    {
+      "id": "adv-rempart",
+      "prenom": "Mathieu",
+      "nom": "Laborde",
+      "parti": "Rempart",
+      "famille": "droite nationale",
+      "positionnement": {
+        "economie": 25,
+        "societe": 80
+      },
+      "parcours": "Personnage fictif. Avocat devenu tribun.",
+      "style": "offensif",
+      "toleranceRisque": 0.6,
+      "ressources": {
+        "budgetCentimes": 500000000,
+        "militants": 2000,
+        "notoriete": 7000,
+        "popularite": 3400
+      },
+      "objectif": "victoire",
+      "equipe": 0.65,
+      "implantation": ["32", "93", "44"],
+      "promessesInitiales": 480,
+      "programme": [
+        "immi-referendum-quotas",
+        "dip-primaute-droit-national",
+        "ret-age-62",
+        "pa-baisse-tva-energie",
+        "secu-videoprotection",
+        "just-places-prison",
+        "edu-autorite-uniforme",
+        "def-service-national",
+        "agri-prix-planchers",
+        "coll-services-publics-ruraux",
+        "ener-nouveaux-reacteurs"
+      ]
+    }
+  ],
+  "profilsDeDepart": [
+    {
+      "id": "notable-local",
+      "libelle": "Élu local reconnu",
+      "description": "Un réseau d'élus et de militants, une notoriété surtout locale.",
+      "modificateurs": {
+        "militants": 200,
+        "notoriete": 200
+      }
+    },
+    {
+      "id": "societe-civile",
+      "libelle": "Figure de la société civile",
+      "description": "Connu du grand public, mais sans appareil militant.",
+      "modificateurs": {
+        "notoriete": 600,
+        "popularite": 200,
+        "militants": -150
+      }
+    },
+    {
+      "id": "militant",
+      "libelle": "Militant de terrain",
+      "description": "Une équipe nombreuse et motivée, peu de moyens financiers.",
+      "modificateurs": {
+        "militants": 500,
+        "budgetCentimes": -100000000,
+        "notoriete": -100
+      }
+    },
+    {
+      "id": "entrepreneur",
+      "libelle": "Entrepreneur",
+      "description": "Des moyens pour financer la campagne, une image à construire.",
+      "modificateurs": {
+        "budgetCentimes": 200000000,
+        "popularite": -300,
+        "militants": -100
+      }
+    }
+  ],
+  "programme": {
+    "statut": "hypothese",
+    "note": "Propositions, coûts (millions d’euros par an), délais, faisabilité et effets : estimations de conception du jeu, sans valeur de chiffrage officiel.",
+    "domaines": [
+      {
+        "id": "economie",
+        "libelle": "Économie"
+      },
+      {
+        "id": "emploi",
+        "libelle": "Emploi"
+      },
+      {
+        "id": "pouvoir-achat",
+        "libelle": "Pouvoir d’achat"
+      },
+      {
+        "id": "sante",
+        "libelle": "Santé"
+      },
+      {
+        "id": "education",
+        "libelle": "Éducation"
+      },
+      {
+        "id": "securite",
+        "libelle": "Sécurité"
+      },
+      {
+        "id": "justice",
+        "libelle": "Justice"
+      },
+      {
+        "id": "immigration",
+        "libelle": "Immigration"
+      },
+      {
+        "id": "environnement",
+        "libelle": "Environnement"
+      },
+      {
+        "id": "energie",
+        "libelle": "Énergie"
+      },
+      {
+        "id": "agriculture",
+        "libelle": "Agriculture"
+      },
+      {
+        "id": "logement",
+        "libelle": "Logement"
+      },
+      {
+        "id": "retraites",
+        "libelle": "Retraites"
+      },
+      {
+        "id": "institutions",
+        "libelle": "Institutions"
+      },
+      {
+        "id": "defense",
+        "libelle": "Défense"
+      },
+      {
+        "id": "diplomatie",
+        "libelle": "Diplomatie"
+      },
+      {
+        "id": "collectivites",
+        "libelle": "Collectivités"
+      }
+    ],
+    "propositions": [
+      {
+        "id": "eco-investissement-public",
+        "domaine": "economie",
+        "libelle": "Plan d’investissement public",
+        "description": "Programme pluriannuel d’investissement dans les infrastructures et l’industrie, financé en partie par l’emprunt.",
+        "coutMillionsEuros": 20000,
+        "delaiMois": 12,
+        "faisabilite": 0.6,
+        "dependances": [],
+        "incompatibilites": [],
+        "position": {
+          "economie": -60,
+          "societe": -10
+        },
+        "publics": ["gauche-sociale", "gauche-radicale"],
+        "confiance": "moyenne"
+      },
+      {
+        "id": "eco-simplification-pme",
+        "domaine": "economie",
+        "libelle": "Simplification administrative des PME",
+        "description": "Réduction des obligations déclaratives et des délais administratifs des petites entreprises.",
+        "coutMillionsEuros": 500,
+        "delaiMois": 12,
+        "faisabilite": 0.8,
+        "dependances": [],
+        "incompatibilites": [],
+        "position": {
+          "economie": 35,
+          "societe": 0
+        },
+        "publics": ["centre-liberal", "droite-moderee"],
+        "confiance": "moyenne"
+      },
+      {
+        "id": "eco-baisse-impots-production",
+        "domaine": "economie",
+        "libelle": "Baisse des impôts de production",
+        "description": "Allègement progressif des impôts pesant sur les entreprises indépendamment de leurs bénéfices.",
+        "coutMillionsEuros": 8000,
+        "delaiMois": 12,
+        "faisabilite": 0.7,
+        "dependances": [],
+        "incompatibilites": [],
+        "position": {
+          "economie": 60,
+          "societe": 10
+        },
+        "publics": ["droite-moderee", "droite-conservatrice", "centre-liberal"],
+        "confiance": "moyenne"
+      },
+      {
+        "id": "emploi-garantie-emploi",
+        "domaine": "emploi",
+        "libelle": "Garantie d’emploi pour les chômeurs de longue durée",
+        "description": "Emplois d’utilité sociale proposés aux personnes privées d’emploi depuis plus d’un an.",
+        "coutMillionsEuros": 6000,
+        "delaiMois": 24,
+        "faisabilite": 0.5,
+        "dependances": ["eco-investissement-public"],
+        "incompatibilites": [],
+        "position": {
+          "economie": -70,
+          "societe": -20
+        },
+        "publics": ["gauche-radicale", "gauche-sociale"],
+        "confiance": "faible"
+      },
+      {
+        "id": "emploi-formation-continue",
+        "domaine": "emploi",
+        "libelle": "Compte de formation renforcé",
+        "description": "Droits à la formation augmentés pour les salariés peu qualifiés et les reconversions.",
+        "coutMillionsEuros": 3000,
+        "delaiMois": 12,
+        "faisabilite": 0.75,
+        "dependances": [],
+        "incompatibilites": [],
+        "position": {
+          "economie": -10,
+          "societe": -10
+        },
+        "publics": ["centre-gauche", "centre-liberal", "eloignes"],
+        "confiance": "moyenne"
+      },
+      {
+        "id": "emploi-assurance-chomage",
+        "domaine": "emploi",
+        "libelle": "Règles d’assurance chômage plus strictes",
+        "description": "Durée d’indemnisation modulée selon la conjoncture et contrôle renforcé de la recherche d’emploi.",
+        "coutMillionsEuros": -3000,
+        "delaiMois": 6,
+        "faisabilite": 0.8,
+        "dependances": [],
+        "incompatibilites": [],
+        "position": {
+          "economie": 60,
+          "societe": 30
+        },
+        "publics": ["droite-moderee", "droite-conservatrice"],
+        "confiance": "moyenne"
+      },
+      {
+        "id": "pa-hausse-smic",
+        "domaine": "pouvoir-achat",
+        "libelle": "Hausse du salaire minimum",
+        "description": "Revalorisation du SMIC au-delà de l’indexation, avec des aides transitoires aux petites entreprises.",
+        "coutMillionsEuros": 4000,
+        "delaiMois": 3,
+        "faisabilite": 0.6,
+        "dependances": [],
+        "incompatibilites": [],
+        "position": {
+          "economie": -70,
+          "societe": -10
+        },
+        "publics": ["gauche-radicale", "gauche-sociale", "eloignes"],
+        "confiance": "faible"
+      },
+      {
+        "id": "pa-baisse-tva-energie",
+        "domaine": "pouvoir-achat",
+        "libelle": "Baisse de la TVA sur l’énergie",
+        "description": "Taux réduit de TVA sur l’électricité, le gaz et les carburants.",
+        "coutMillionsEuros": 9000,
+        "delaiMois": 3,
+        "faisabilite": 0.7,
+        "dependances": [],
+        "incompatibilites": [],
+        "position": {
+          "economie": -20,
+          "societe": 20
+        },
+        "publics": ["droite-nationale", "eloignes"],
+        "confiance": "moyenne"
+      },
+      {
+        "id": "pa-prime-partage-valeur",
+        "domaine": "pouvoir-achat",
+        "libelle": "Prime de partage de la valeur",
+        "description": "Prime versée par les entreprises volontaires, exonérée d’impôt dans la limite d’un plafond.",
+        "coutMillionsEuros": 2000,
+        "delaiMois": 3,
+        "faisabilite": 0.85,
+        "dependances": [],
+        "incompatibilites": [],
+        "position": {
+          "economie": 40,
+          "societe": 0
+        },
+        "publics": ["centre-liberal", "droite-moderee"],
+        "confiance": "elevee"
+      },
+      {
+        "id": "sante-recrutement-hopital",
+        "domaine": "sante",
+        "libelle": "Recrutement massif à l’hôpital public",
+        "description": "Création de postes de soignants et revalorisation des carrières hospitalières.",
+        "coutMillionsEuros": 7000,
+        "delaiMois": 24,
+        "faisabilite": 0.5,
+        "dependances": [],
+        "incompatibilites": [],
+        "position": {
+          "economie": -60,
+          "societe": -20
+        },
+        "publics": ["gauche-sociale", "gauche-radicale", "centre-gauche"],
+        "confiance": "faible"
+      },
+      {
+        "id": "sante-deserts-medicaux",
+        "domaine": "sante",
+        "libelle": "Lutte contre les déserts médicaux",
+        "description": "Maisons de santé, incitations à l’installation et obligation de service dans les zones sous-dotées.",
+        "coutMillionsEuros": 1500,
+        "delaiMois": 24,
+        "faisabilite": 0.6,
+        "dependances": [],
+        "incompatibilites": [],
+        "position": {
+          "economie": -10,
+          "societe": 10
+        },
+        "publics": ["eloignes", "droite-moderee", "centre-gauche"],
+        "confiance": "moyenne"
+      },
+      {
+        "id": "sante-maitrise-depenses",
+        "domaine": "sante",
+        "libelle": "Maîtrise des dépenses de santé",
+        "description": "Participation forfaitaire accrue sur certains actes et lutte contre les prescriptions inutiles.",
+        "coutMillionsEuros": -2000,
+        "delaiMois": 6,
+        "faisabilite": 0.7,
+        "dependances": [],
+        "incompatibilites": [],
+        "position": {
+          "economie": 55,
+          "societe": 10
+        },
+        "publics": ["droite-moderee", "centre-liberal"],
+        "confiance": "moyenne"
+      },
+      {
+        "id": "edu-revalorisation-enseignants",
+        "domaine": "education",
+        "libelle": "Revalorisation des enseignants",
+        "description": "Hausse des rémunérations en début et milieu de carrière.",
+        "coutMillionsEuros": 5000,
+        "delaiMois": 12,
+        "faisabilite": 0.7,
+        "dependances": [],
+        "incompatibilites": [],
+        "position": {
+          "economie": -40,
+          "societe": -20
+        },
+        "publics": ["gauche-sociale", "centre-gauche"],
+        "confiance": "moyenne"
+      },
+      {
+        "id": "edu-autonomie-etablissements",
+        "domaine": "education",
+        "libelle": "Autonomie des établissements",
+        "description": "Liberté pédagogique et de recrutement accrue pour les chefs d’établissement.",
+        "coutMillionsEuros": 300,
+        "delaiMois": 24,
+        "faisabilite": 0.6,
+        "dependances": [],
+        "incompatibilites": [],
+        "position": {
+          "economie": 45,
+          "societe": 10
+        },
+        "publics": ["centre-liberal", "droite-moderee"],
+        "confiance": "faible"
+      },
+      {
+        "id": "edu-autorite-uniforme",
+        "domaine": "education",
+        "libelle": "Autorité et tenue commune à l’école",
+        "description": "Tenue commune, règlement renforcé et sanctions graduées dans les établissements.",
+        "coutMillionsEuros": 600,
+        "delaiMois": 12,
+        "faisabilite": 0.7,
+        "dependances": [],
+        "incompatibilites": [],
+        "position": {
+          "economie": 20,
+          "societe": 70
+        },
+        "publics": ["droite-conservatrice", "droite-nationale"],
+        "confiance": "moyenne"
+      },
+      {
+        "id": "secu-police-proximite",
+        "domaine": "securite",
+        "libelle": "Police de proximité",
+        "description": "Retour de patrouilles de quartier rattachées à un territoire et à ses habitants.",
+        "coutMillionsEuros": 1500,
+        "delaiMois": 18,
+        "faisabilite": 0.65,
+        "dependances": [],
+        "incompatibilites": [],
+        "position": {
+          "economie": -30,
+          "societe": -20
+        },
+        "publics": ["centre-gauche", "gauche-sociale"],
+        "confiance": "moyenne"
+      },
+      {
+        "id": "secu-recrutement-forces",
+        "domaine": "securite",
+        "libelle": "Recrutement de policiers et gendarmes",
+        "description": "Effectifs supplémentaires et moyens matériels pour les forces de l’ordre.",
+        "coutMillionsEuros": 2500,
+        "delaiMois": 24,
+        "faisabilite": 0.7,
+        "dependances": [],
+        "incompatibilites": [],
+        "position": {
+          "economie": 20,
+          "societe": 40
+        },
+        "publics": ["droite-moderee", "centre-liberal", "droite-conservatrice"],
+        "confiance": "moyenne"
+      },
+      {
+        "id": "secu-videoprotection",
+        "domaine": "securite",
+        "libelle": "Vidéoprotection et moyens numériques",
+        "description": "Extension de la vidéoprotection dans l’espace public et outils numériques d’enquête.",
+        "coutMillionsEuros": 700,
+        "delaiMois": 12,
+        "faisabilite": 0.7,
+        "dependances": [],
+        "incompatibilites": [],
+        "position": {
+          "economie": 30,
+          "societe": 50
+        },
+        "publics": ["droite-conservatrice", "droite-nationale", "droite-moderee"],
+        "confiance": "moyenne"
+      },
+      {
+        "id": "just-moyens-justice",
+        "domaine": "justice",
+        "libelle": "Moyens de la justice",
+        "description": "Magistrats et greffiers supplémentaires pour réduire les délais de jugement.",
+        "coutMillionsEuros": 1200,
+        "delaiMois": 24,
+        "faisabilite": 0.7,
+        "dependances": [],
+        "incompatibilites": [],
+        "position": {
+          "economie": -20,
+          "societe": 0
+        },
+        "publics": ["centre-gauche", "centre-liberal"],
+        "confiance": "moyenne"
+      },
+      {
+        "id": "just-peines-alternatives",
+        "domaine": "justice",
+        "libelle": "Peines alternatives à la prison",
+        "description": "Travaux d’intérêt général, surveillance électronique et aménagements de peine développés.",
+        "coutMillionsEuros": 300,
+        "delaiMois": 12,
+        "faisabilite": 0.6,
+        "dependances": [],
+        "incompatibilites": [],
+        "position": {
+          "economie": -40,
+          "societe": -60
+        },
+        "publics": ["ecologistes", "gauche-radicale"],
+        "confiance": "moyenne"
+      },
+      {
+        "id": "just-places-prison",
+        "domaine": "justice",
+        "libelle": "Construction de places de prison",
+        "description": "Programme de construction d’établissements pénitentiaires.",
+        "coutMillionsEuros": 1500,
+        "delaiMois": 48,
+        "faisabilite": 0.5,
+        "dependances": [],
+        "incompatibilites": [],
+        "position": {
+          "economie": 40,
+          "societe": 60
+        },
+        "publics": ["droite-conservatrice", "droite-nationale", "droite-moderee"],
+        "confiance": "faible"
+      },
+      {
+        "id": "immi-regularisation-travail",
+        "domaine": "immigration",
+        "libelle": "Régularisation dans les métiers en tension",
+        "description": "Titres de séjour pour les travailleurs étrangers employés dans les secteurs en pénurie.",
+        "coutMillionsEuros": 100,
+        "delaiMois": 6,
+        "faisabilite": 0.6,
+        "dependances": [],
+        "incompatibilites": ["immi-referendum-quotas"],
+        "position": {
+          "economie": -30,
+          "societe": -60
+        },
+        "publics": ["gauche-radicale", "ecologistes", "gauche-sociale"],
+        "confiance": "moyenne"
+      },
+      {
+        "id": "immi-integration-langue",
+        "domaine": "immigration",
+        "libelle": "Parcours d’intégration renforcé",
+        "description": "Cours de langue, formation civique et accompagnement vers l’emploi des nouveaux arrivants.",
+        "coutMillionsEuros": 400,
+        "delaiMois": 12,
+        "faisabilite": 0.75,
+        "dependances": [],
+        "incompatibilites": [],
+        "position": {
+          "economie": 0,
+          "societe": 10
+        },
+        "publics": ["centre-liberal", "centre-gauche", "droite-moderee"],
+        "confiance": "moyenne"
+      },
+      {
+        "id": "immi-referendum-quotas",
+        "domaine": "immigration",
+        "libelle": "Référendum et quotas d’immigration",
+        "description": "Référendum sur la politique migratoire et plafonds annuels votés par le Parlement.",
+        "coutMillionsEuros": 200,
+        "delaiMois": 12,
+        "faisabilite": 0.35,
+        "dependances": [],
+        "incompatibilites": ["immi-regularisation-travail"],
+        "position": {
+          "economie": 10,
+          "societe": 90
+        },
+        "publics": ["droite-nationale", "droite-conservatrice"],
+        "confiance": "faible"
+      },
+      {
+        "id": "env-renovation-thermique",
+        "domaine": "environnement",
+        "libelle": "Rénovation thermique des logements",
+        "description": "Plan national de rénovation des logements mal isolés, avec reste à charge réduit.",
+        "coutMillionsEuros": 6000,
+        "delaiMois": 36,
+        "faisabilite": 0.6,
+        "dependances": [],
+        "incompatibilites": [],
+        "position": {
+          "economie": -40,
+          "societe": -50
+        },
+        "publics": ["ecologistes", "gauche-sociale", "centre-gauche"],
+        "confiance": "moyenne"
+      },
+      {
+        "id": "env-transports-collectifs",
+        "domaine": "environnement",
+        "libelle": "Transports collectifs du quotidien",
+        "description": "Trains régionaux, bus et pistes cyclables dans les zones périurbaines et rurales.",
+        "coutMillionsEuros": 3000,
+        "delaiMois": 48,
+        "faisabilite": 0.6,
+        "dependances": [],
+        "incompatibilites": [],
+        "position": {
+          "economie": -30,
+          "societe": -40
+        },
+        "publics": ["ecologistes", "centre-gauche"],
+        "confiance": "faible"
+      },
+      {
+        "id": "env-ecologie-incitative",
+        "domaine": "environnement",
+        "libelle": "Écologie incitative",
+        "description": "Aides à l’investissement vert des ménages et des entreprises, sans taxe nouvelle.",
+        "coutMillionsEuros": 1000,
+        "delaiMois": 12,
+        "faisabilite": 0.7,
+        "dependances": [],
+        "incompatibilites": [],
+        "position": {
+          "economie": 40,
+          "societe": 20
+        },
+        "publics": ["centre-liberal", "droite-moderee"],
+        "confiance": "moyenne"
+      },
+      {
+        "id": "ener-sortie-nucleaire",
+        "domaine": "energie",
+        "libelle": "Sortie progressive du nucléaire",
+        "description": "Fermeture programmée des réacteurs et développement massif des renouvelables.",
+        "coutMillionsEuros": 8000,
+        "delaiMois": 60,
+        "faisabilite": 0.3,
+        "dependances": ["env-renovation-thermique"],
+        "incompatibilites": ["ener-nouveaux-reacteurs"],
+        "position": {
+          "economie": -50,
+          "societe": -70
+        },
+        "publics": ["ecologistes", "gauche-radicale"],
+        "confiance": "faible"
+      },
+      {
+        "id": "ener-nouveaux-reacteurs",
+        "domaine": "energie",
+        "libelle": "Nouveaux réacteurs nucléaires",
+        "description": "Construction de réacteurs et prolongation des centrales existantes.",
+        "coutMillionsEuros": 5000,
+        "delaiMois": 60,
+        "faisabilite": 0.5,
+        "dependances": [],
+        "incompatibilites": ["ener-sortie-nucleaire"],
+        "position": {
+          "economie": 30,
+          "societe": 30
+        },
+        "publics": ["droite-moderee", "droite-conservatrice", "centre-liberal"],
+        "confiance": "faible"
+      },
+      {
+        "id": "ener-mix-equilibre",
+        "domaine": "energie",
+        "libelle": "Mix énergétique équilibré",
+        "description": "Renouvelables accélérés et parc nucléaire existant maintenu.",
+        "coutMillionsEuros": 3000,
+        "delaiMois": 36,
+        "faisabilite": 0.65,
+        "dependances": [],
+        "incompatibilites": [],
+        "position": {
+          "economie": 0,
+          "societe": -10
+        },
+        "publics": ["centre-gauche", "centre-liberal"],
+        "confiance": "moyenne"
+      },
+      {
+        "id": "agri-prix-planchers",
+        "domaine": "agriculture",
+        "libelle": "Prix planchers agricoles",
+        "description": "Prix minimaux garantis aux producteurs dans les négociations commerciales.",
+        "coutMillionsEuros": 1500,
+        "delaiMois": 12,
+        "faisabilite": 0.45,
+        "dependances": [],
+        "incompatibilites": [],
+        "position": {
+          "economie": -50,
+          "societe": 20
+        },
+        "publics": ["eloignes", "gauche-sociale", "droite-nationale"],
+        "confiance": "faible"
+      },
+      {
+        "id": "agri-transition-agroecologique",
+        "domaine": "agriculture",
+        "libelle": "Transition agroécologique",
+        "description": "Accompagnement financier des exploitations qui réduisent les intrants chimiques.",
+        "coutMillionsEuros": 1200,
+        "delaiMois": 36,
+        "faisabilite": 0.6,
+        "dependances": [],
+        "incompatibilites": [],
+        "position": {
+          "economie": -30,
+          "societe": -50
+        },
+        "publics": ["ecologistes"],
+        "confiance": "moyenne"
+      },
+      {
+        "id": "agri-simplification-normes",
+        "domaine": "agriculture",
+        "libelle": "Simplification des normes agricoles",
+        "description": "Allègement des contrôles et des procédures pour les exploitations.",
+        "coutMillionsEuros": 200,
+        "delaiMois": 12,
+        "faisabilite": 0.7,
+        "dependances": [],
+        "incompatibilites": [],
+        "position": {
+          "economie": 50,
+          "societe": 40
+        },
+        "publics": ["droite-conservatrice", "droite-moderee", "droite-nationale"],
+        "confiance": "moyenne"
+      },
+      {
+        "id": "log-encadrement-loyers",
+        "domaine": "logement",
+        "libelle": "Encadrement des loyers",
+        "description": "Plafonnement des loyers dans toutes les zones tendues.",
+        "coutMillionsEuros": 200,
+        "delaiMois": 12,
+        "faisabilite": 0.55,
+        "dependances": [],
+        "incompatibilites": [],
+        "position": {
+          "economie": -60,
+          "societe": -20
+        },
+        "publics": ["gauche-radicale", "gauche-sociale"],
+        "confiance": "moyenne"
+      },
+      {
+        "id": "log-construction-sociale",
+        "domaine": "logement",
+        "libelle": "Construction de logements sociaux",
+        "description": "Objectif annuel de logements sociaux et soutien aux bailleurs.",
+        "coutMillionsEuros": 4000,
+        "delaiMois": 48,
+        "faisabilite": 0.6,
+        "dependances": [],
+        "incompatibilites": [],
+        "position": {
+          "economie": -30,
+          "societe": -10
+        },
+        "publics": ["gauche-sociale", "centre-gauche", "eloignes"],
+        "confiance": "moyenne"
+      },
+      {
+        "id": "log-acces-propriete",
+        "domaine": "logement",
+        "libelle": "Accès à la propriété",
+        "description": "Prêt aidé et frais réduits pour une première acquisition.",
+        "coutMillionsEuros": 2500,
+        "delaiMois": 12,
+        "faisabilite": 0.75,
+        "dependances": [],
+        "incompatibilites": [],
+        "position": {
+          "economie": 45,
+          "societe": 30
+        },
+        "publics": ["droite-moderee", "droite-conservatrice", "centre-liberal"],
+        "confiance": "moyenne"
+      },
+      {
+        "id": "ret-age-60",
+        "domaine": "retraites",
+        "libelle": "Âge légal de départ à 60 ans",
+        "description": "Retour de l’âge légal de départ à 60 ans pour une carrière complète.",
+        "coutMillionsEuros": 20000,
+        "delaiMois": 12,
+        "faisabilite": 0.3,
+        "dependances": [],
+        "incompatibilites": ["ret-age-62", "ret-systeme-points"],
+        "position": {
+          "economie": -80,
+          "societe": -10
+        },
+        "publics": ["gauche-radicale", "gauche-sociale", "eloignes"],
+        "confiance": "faible"
+      },
+      {
+        "id": "ret-age-62",
+        "domaine": "retraites",
+        "libelle": "Âge légal de départ à 62 ans",
+        "description": "Âge légal ramené à 62 ans, avec maintien de la durée de cotisation.",
+        "coutMillionsEuros": 10000,
+        "delaiMois": 12,
+        "faisabilite": 0.45,
+        "dependances": [],
+        "incompatibilites": ["ret-age-60", "ret-systeme-points"],
+        "position": {
+          "economie": -40,
+          "societe": 0
+        },
+        "publics": ["gauche-sociale", "centre-gauche", "droite-nationale"],
+        "confiance": "faible"
+      },
+      {
+        "id": "ret-systeme-points",
+        "domaine": "retraites",
+        "libelle": "Retraite par points",
+        "description": "Système universel par points avec âge d’équilibre relevé progressivement.",
+        "coutMillionsEuros": -8000,
+        "delaiMois": 36,
+        "faisabilite": 0.4,
+        "dependances": [],
+        "incompatibilites": ["ret-age-60", "ret-age-62"],
+        "position": {
+          "economie": 55,
+          "societe": 10
+        },
+        "publics": ["centre-liberal", "droite-moderee"],
+        "confiance": "faible"
+      },
+      {
+        "id": "inst-proportionnelle",
+        "domaine": "institutions",
+        "libelle": "Proportionnelle aux législatives",
+        "description": "Élection des députés à la représentation proportionnelle.",
+        "coutMillionsEuros": 0,
+        "delaiMois": 12,
+        "faisabilite": 0.6,
+        "dependances": [],
+        "incompatibilites": [],
+        "position": {
+          "economie": -20,
+          "societe": -30
+        },
+        "publics": ["ecologistes", "gauche-radicale", "droite-nationale"],
+        "confiance": "elevee"
+      },
+      {
+        "id": "inst-referendum-initiative-citoyenne",
+        "domaine": "institutions",
+        "libelle": "Référendum d’initiative citoyenne",
+        "description": "Référendum déclenché par une pétition signée par un nombre fixé d’électeurs ; révision constitutionnelle nécessaire.",
+        "coutMillionsEuros": 50,
+        "delaiMois": 24,
+        "faisabilite": 0.3,
+        "dependances": [],
+        "incompatibilites": [],
+        "position": {
+          "economie": -30,
+          "societe": 30
+        },
+        "publics": ["eloignes", "gauche-radicale", "droite-nationale"],
+        "confiance": "faible"
+      },
+      {
+        "id": "inst-reduction-parlementaires",
+        "domaine": "institutions",
+        "libelle": "Moins de parlementaires",
+        "description": "Réduction du nombre de députés et de sénateurs.",
+        "coutMillionsEuros": -100,
+        "delaiMois": 24,
+        "faisabilite": 0.4,
+        "dependances": [],
+        "incompatibilites": [],
+        "position": {
+          "economie": 30,
+          "societe": 20
+        },
+        "publics": ["centre-liberal", "droite-moderee", "eloignes"],
+        "confiance": "moyenne"
+      },
+      {
+        "id": "def-hausse-budget-armees",
+        "domaine": "defense",
+        "libelle": "Hausse du budget des armées",
+        "description": "Effort de défense accru dans une nouvelle loi de programmation militaire.",
+        "coutMillionsEuros": 6000,
+        "delaiMois": 12,
+        "faisabilite": 0.7,
+        "dependances": [],
+        "incompatibilites": [],
+        "position": {
+          "economie": 20,
+          "societe": 40
+        },
+        "publics": ["droite-moderee", "droite-conservatrice", "droite-nationale"],
+        "confiance": "moyenne"
+      },
+      {
+        "id": "def-defense-europeenne",
+        "domaine": "defense",
+        "libelle": "Défense européenne",
+        "description": "Programmes d’armement communs et état-major européen renforcé.",
+        "coutMillionsEuros": 2000,
+        "delaiMois": 48,
+        "faisabilite": 0.4,
+        "dependances": ["dip-integration-europeenne"],
+        "incompatibilites": ["dip-primaute-droit-national"],
+        "position": {
+          "economie": 10,
+          "societe": -30
+        },
+        "publics": ["centre-liberal", "centre-gauche", "ecologistes"],
+        "confiance": "faible"
+      },
+      {
+        "id": "def-service-national",
+        "domaine": "defense",
+        "libelle": "Service national obligatoire",
+        "description": "Service national de plusieurs mois pour chaque classe d’âge.",
+        "coutMillionsEuros": 3000,
+        "delaiMois": 36,
+        "faisabilite": 0.45,
+        "dependances": [],
+        "incompatibilites": [],
+        "position": {
+          "economie": 0,
+          "societe": 50
+        },
+        "publics": ["droite-conservatrice", "droite-nationale", "centre-liberal"],
+        "confiance": "faible"
+      },
+      {
+        "id": "dip-integration-europeenne",
+        "domaine": "diplomatie",
+        "libelle": "Intégration européenne approfondie",
+        "description": "Vote à la majorité qualifiée étendu et budget européen renforcé.",
+        "coutMillionsEuros": 500,
+        "delaiMois": 36,
+        "faisabilite": 0.45,
+        "dependances": [],
+        "incompatibilites": ["dip-primaute-droit-national"],
+        "position": {
+          "economie": 20,
+          "societe": -50
+        },
+        "publics": ["centre-liberal", "centre-gauche", "ecologistes"],
+        "confiance": "faible"
+      },
+      {
+        "id": "dip-primaute-droit-national",
+        "domaine": "diplomatie",
+        "libelle": "Primauté du droit national",
+        "description": "Renégociation des traités et primauté de la Constitution sur le droit européen.",
+        "coutMillionsEuros": 0,
+        "delaiMois": 36,
+        "faisabilite": 0.25,
+        "dependances": [],
+        "incompatibilites": ["dip-integration-europeenne", "def-defense-europeenne"],
+        "position": {
+          "economie": -10,
+          "societe": 70
+        },
+        "publics": ["droite-nationale", "droite-conservatrice"],
+        "confiance": "faible"
+      },
+      {
+        "id": "dip-aide-developpement",
+        "domaine": "diplomatie",
+        "libelle": "Aide publique au développement",
+        "description": "Hausse de l’aide au développement, ciblée sur la santé et le climat.",
+        "coutMillionsEuros": 1500,
+        "delaiMois": 24,
+        "faisabilite": 0.7,
+        "dependances": [],
+        "incompatibilites": [],
+        "position": {
+          "economie": -40,
+          "societe": -50
+        },
+        "publics": ["ecologistes", "gauche-sociale"],
+        "confiance": "moyenne"
+      },
+      {
+        "id": "coll-decentralisation",
+        "domaine": "collectivites",
+        "libelle": "Nouvelle décentralisation",
+        "description": "Compétences et ressources fiscales transférées aux régions et départements.",
+        "coutMillionsEuros": 500,
+        "delaiMois": 36,
+        "faisabilite": 0.55,
+        "dependances": [],
+        "incompatibilites": [],
+        "position": {
+          "economie": 10,
+          "societe": 0
+        },
+        "publics": ["centre-liberal", "droite-moderee", "centre-gauche"],
+        "confiance": "faible"
+      },
+      {
+        "id": "coll-services-publics-ruraux",
+        "domaine": "collectivites",
+        "libelle": "Services publics en zone rurale",
+        "description": "Maintien des écoles, bureaux de poste et maisons France services dans les petites communes.",
+        "coutMillionsEuros": 1500,
+        "delaiMois": 24,
+        "faisabilite": 0.6,
+        "dependances": [],
+        "incompatibilites": [],
+        "position": {
+          "economie": -40,
+          "societe": 10
+        },
+        "publics": ["eloignes", "gauche-sociale", "droite-nationale"],
+        "confiance": "moyenne"
+      },
+      {
+        "id": "coll-dotations-communes",
+        "domaine": "collectivites",
+        "libelle": "Garantie des dotations des communes",
+        "description": "Dotations de l’État aux communes indexées sur l’inflation pendant le quinquennat.",
+        "coutMillionsEuros": 1000,
+        "delaiMois": 12,
+        "faisabilite": 0.75,
+        "dependances": [],
+        "incompatibilites": [],
+        "position": {
+          "economie": -20,
+          "societe": 10
+        },
+        "publics": ["centre-gauche", "droite-moderee", "eloignes"],
+        "confiance": "moyenne"
+      }
+    ],
+    "maxPropositions": 15,
+    "heuresParProposition": 3,
+    "coutSoutenable": 40000,
+    "penaliteRevirement": 0.1
+  },
+  "parrainages": {
+    "statut": "officiel",
+    "sourceId": "cc-parrainages-2022",
+    "seuil": 500,
+    "departementsMin": 30,
+    "partMaxParDepartement": 0.1,
+    "note": "Loi n° 62-1292, art. 3-I : 500 présentations d’élus d’au moins 30 départements ou collectivités d’outre-mer, au plus un dixième d’un même département. Lecture retenue : au plus 50 présentations comptées par département pour atteindre le seuil. Texte Légifrance non relu (SOURCES §9).",
+    "ouvertureEcheanceId": "ouverture-presentations",
+    "clotureEcheanceId": "presentation-candidatures",
+    "reservoir": {
+      "statut": "estimation",
+      "sourceId": "insee-cog-2026",
+      "note": "Un maire par commune du COG 2026 (34 875 communes de métropole et des DROM). Les autres élus habilités (parlementaires, conseillers départementaux et régionaux, élus des collectivités d’outre-mer et des Français de l’étranger) ne sont pas comptés.",
+      "departements": {
+        "10": {
+          "nom": "Aube",
+          "region": "44",
+          "elus": 431
+        },
+        "11": {
+          "nom": "Aude",
+          "region": "76",
+          "elus": 433
+        },
+        "12": {
+          "nom": "Aveyron",
+          "region": "76",
+          "elus": 285
+        },
+        "13": {
+          "nom": "Bouches-du-Rhône",
+          "region": "93",
+          "elus": 119
+        },
+        "14": {
+          "nom": "Calvados",
+          "region": "28",
+          "elus": 526
+        },
+        "15": {
+          "nom": "Cantal",
+          "region": "84",
+          "elus": 250
+        },
+        "16": {
+          "nom": "Charente",
+          "region": "75",
+          "elus": 359
+        },
+        "17": {
+          "nom": "Charente-Maritime",
+          "region": "75",
+          "elus": 462
+        },
+        "18": {
+          "nom": "Cher",
+          "region": "24",
+          "elus": 286
+        },
+        "19": {
+          "nom": "Corrèze",
+          "region": "75",
+          "elus": 277
+        },
+        "21": {
+          "nom": "Côte-d'Or",
+          "region": "27",
+          "elus": 698
+        },
+        "22": {
+          "nom": "Côtes-d'Armor",
+          "region": "53",
+          "elus": 344
+        },
+        "23": {
+          "nom": "Creuse",
+          "region": "75",
+          "elus": 255
+        },
+        "24": {
+          "nom": "Dordogne",
+          "region": "75",
+          "elus": 503
+        },
+        "25": {
+          "nom": "Doubs",
+          "region": "27",
+          "elus": 563
+        },
+        "26": {
+          "nom": "Drôme",
+          "region": "84",
+          "elus": 362
+        },
+        "27": {
+          "nom": "Eure",
+          "region": "28",
+          "elus": 585
+        },
+        "28": {
+          "nom": "Eure-et-Loir",
+          "region": "24",
+          "elus": 363
+        },
+        "29": {
+          "nom": "Finistère",
+          "region": "53",
+          "elus": 277
+        },
+        "30": {
+          "nom": "Gard",
+          "region": "76",
+          "elus": 350
+        },
+        "31": {
+          "nom": "Haute-Garonne",
+          "region": "76",
+          "elus": 586
+        },
+        "32": {
+          "nom": "Gers",
+          "region": "76",
+          "elus": 458
+        },
+        "33": {
+          "nom": "Gironde",
+          "region": "75",
+          "elus": 534
+        },
+        "34": {
+          "nom": "Hérault",
+          "region": "76",
+          "elus": 341
+        },
+        "35": {
+          "nom": "Ille-et-Vilaine",
+          "region": "53",
+          "elus": 332
+        },
+        "36": {
+          "nom": "Indre",
+          "region": "24",
+          "elus": 241
+        },
+        "37": {
+          "nom": "Indre-et-Loire",
+          "region": "24",
+          "elus": 272
+        },
+        "38": {
+          "nom": "Isère",
+          "region": "84",
+          "elus": 512
+        },
+        "39": {
+          "nom": "Jura",
+          "region": "27",
+          "elus": 492
+        },
+        "40": {
+          "nom": "Landes",
+          "region": "75",
+          "elus": 327
+        },
+        "41": {
+          "nom": "Loir-et-Cher",
+          "region": "24",
+          "elus": 267
+        },
+        "42": {
+          "nom": "Loire",
+          "region": "84",
+          "elus": 320
+        },
+        "43": {
+          "nom": "Haute-Loire",
+          "region": "84",
+          "elus": 257
+        },
+        "44": {
+          "nom": "Loire-Atlantique",
+          "region": "52",
+          "elus": 207
+        },
+        "45": {
+          "nom": "Loiret",
+          "region": "24",
+          "elus": 325
+        },
+        "46": {
+          "nom": "Lot",
+          "region": "76",
+          "elus": 312
+        },
+        "47": {
+          "nom": "Lot-et-Garonne",
+          "region": "75",
+          "elus": 319
+        },
+        "48": {
+          "nom": "Lozère",
+          "region": "76",
+          "elus": 152
+        },
+        "49": {
+          "nom": "Maine-et-Loire",
+          "region": "52",
+          "elus": 176
+        },
+        "50": {
+          "nom": "Manche",
+          "region": "28",
+          "elus": 445
+        },
+        "51": {
+          "nom": "Marne",
+          "region": "44",
+          "elus": 610
+        },
+        "52": {
+          "nom": "Haute-Marne",
+          "region": "44",
+          "elus": 426
+        },
+        "53": {
+          "nom": "Mayenne",
+          "region": "52",
+          "elus": 240
+        },
+        "54": {
+          "nom": "Meurthe-et-Moselle",
+          "region": "44",
+          "elus": 591
+        },
+        "55": {
+          "nom": "Meuse",
+          "region": "44",
+          "elus": 499
+        },
+        "56": {
+          "nom": "Morbihan",
+          "region": "53",
+          "elus": 249
+        },
+        "57": {
+          "nom": "Moselle",
+          "region": "44",
+          "elus": 725
+        },
+        "58": {
+          "nom": "Nièvre",
+          "region": "27",
+          "elus": 309
+        },
+        "59": {
+          "nom": "Nord",
+          "region": "32",
+          "elus": 647
+        },
+        "60": {
+          "nom": "Oise",
+          "region": "32",
+          "elus": 680
+        },
+        "61": {
+          "nom": "Orne",
+          "region": "28",
+          "elus": 381
+        },
+        "62": {
+          "nom": "Pas-de-Calais",
+          "region": "32",
+          "elus": 887
+        },
+        "63": {
+          "nom": "Puy-de-Dôme",
+          "region": "84",
+          "elus": 463
+        },
+        "64": {
+          "nom": "Pyrénées-Atlantiques",
+          "region": "75",
+          "elus": 545
+        },
+        "65": {
+          "nom": "Hautes-Pyrénées",
+          "region": "76",
+          "elus": 469
+        },
+        "66": {
+          "nom": "Pyrénées-Orientales",
+          "region": "76",
+          "elus": 226
+        },
+        "67": {
+          "nom": "Bas-Rhin",
+          "region": "44",
+          "elus": 514
+        },
+        "68": {
+          "nom": "Haut-Rhin",
+          "region": "44",
+          "elus": 366
+        },
+        "69": {
+          "nom": "Rhône",
+          "region": "84",
+          "elus": 266
+        },
+        "70": {
+          "nom": "Haute-Saône",
+          "region": "27",
+          "elus": 536
+        },
+        "71": {
+          "nom": "Saône-et-Loire",
+          "region": "27",
+          "elus": 563
+        },
+        "72": {
+          "nom": "Sarthe",
+          "region": "52",
+          "elus": 352
+        },
+        "73": {
+          "nom": "Savoie",
+          "region": "84",
+          "elus": 273
+        },
+        "74": {
+          "nom": "Haute-Savoie",
+          "region": "84",
+          "elus": 279
+        },
+        "75": {
+          "nom": "Paris",
+          "region": "11",
+          "elus": 1
+        },
+        "76": {
+          "nom": "Seine-Maritime",
+          "region": "28",
+          "elus": 707
+        },
+        "77": {
+          "nom": "Seine-et-Marne",
+          "region": "11",
+          "elus": 507
+        },
+        "78": {
+          "nom": "Yvelines",
+          "region": "11",
+          "elus": 259
+        },
+        "79": {
+          "nom": "Deux-Sèvres",
+          "region": "75",
+          "elus": 252
+        },
+        "80": {
+          "nom": "Somme",
+          "region": "32",
+          "elus": 771
+        },
+        "81": {
+          "nom": "Tarn",
+          "region": "76",
+          "elus": 314
+        },
+        "82": {
+          "nom": "Tarn-et-Garonne",
+          "region": "76",
+          "elus": 195
+        },
+        "83": {
+          "nom": "Var",
+          "region": "93",
+          "elus": 153
+        },
+        "84": {
+          "nom": "Vaucluse",
+          "region": "93",
+          "elus": 151
+        },
+        "85": {
+          "nom": "Vendée",
+          "region": "52",
+          "elus": 253
+        },
+        "86": {
+          "nom": "Vienne",
+          "region": "75",
+          "elus": 265
+        },
+        "87": {
+          "nom": "Haute-Vienne",
+          "region": "75",
+          "elus": 195
+        },
+        "88": {
+          "nom": "Vosges",
+          "region": "44",
+          "elus": 506
+        },
+        "89": {
+          "nom": "Yonne",
+          "region": "27",
+          "elus": 423
+        },
+        "90": {
+          "nom": "Territoire de Belfort",
+          "region": "27",
+          "elus": 101
+        },
+        "91": {
+          "nom": "Essonne",
+          "region": "11",
+          "elus": 194
+        },
+        "92": {
+          "nom": "Hauts-de-Seine",
+          "region": "11",
+          "elus": 36
+        },
+        "93": {
+          "nom": "Seine-Saint-Denis",
+          "region": "11",
+          "elus": 39
+        },
+        "94": {
+          "nom": "Val-de-Marne",
+          "region": "11",
+          "elus": 47
+        },
+        "95": {
+          "nom": "Val-d'Oise",
+          "region": "11",
+          "elus": 183
+        },
+        "971": {
+          "nom": "Guadeloupe",
+          "region": "01",
+          "elus": 32
+        },
+        "972": {
+          "nom": "Martinique",
+          "region": "02",
+          "elus": 34
+        },
+        "973": {
+          "nom": "Guyane",
+          "region": "03",
+          "elus": 22
+        },
+        "974": {
+          "nom": "La Réunion",
+          "region": "04",
+          "elus": 24
+        },
+        "976": {
+          "nom": "Mayotte",
+          "region": "06",
+          "elus": 17
+        },
+        "01": {
+          "nom": "Ain",
+          "region": "84",
+          "elus": 391
+        },
+        "02": {
+          "nom": "Aisne",
+          "region": "32",
+          "elus": 797
+        },
+        "03": {
+          "nom": "Allier",
+          "region": "84",
+          "elus": 317
+        },
+        "04": {
+          "nom": "Alpes-de-Haute-Provence",
+          "region": "93",
+          "elus": 198
+        },
+        "05": {
+          "nom": "Hautes-Alpes",
+          "region": "93",
+          "elus": 162
+        },
+        "06": {
+          "nom": "Alpes-Maritimes",
+          "region": "93",
+          "elus": 163
+        },
+        "07": {
+          "nom": "Ardèche",
+          "region": "84",
+          "elus": 335
+        },
+        "08": {
+          "nom": "Ardennes",
+          "region": "44",
+          "elus": 447
+        },
+        "09": {
+          "nom": "Ariège",
+          "region": "76",
+          "elus": 325
+        },
+        "2A": {
+          "nom": "Corse-du-Sud",
+          "region": "94",
+          "elus": 124
+        },
+        "2B": {
+          "nom": "Haute-Corse",
+          "region": "94",
+          "elus": 236
+        }
+      }
+    },
+    "dynamique": {
+      "statut": "hypothese",
+      "partMobilisable": 0.45,
+      "conversionHebdo": 0.2,
+      "renoncementHebdo": 0.02,
+      "envoiHebdo": 0.5,
+      "tauxInvalidite": 0.015,
+      "partImplantation": 0.7
+    }
+  },
+  "finances": {
+    "statut": "officiel",
+    "sourceId": "cnccfp-guide-2027",
+    "plafondT1Centimes": 1685100000,
+    "plafondT2Centimes": 2250900000,
+    "donMaxCentimes": 460000,
+    "donEspecesMaxCentimes": 15000,
+    "avanceForfaitaireCentimes": 20000000,
+    "remboursement": {
+      "seuilExprimes": 0.05,
+      "tauxSousSeuil": 0.0475,
+      "tauxAuDessus": 0.475
+    },
+    "note": "Guide CNCCFP 2027 : plafonds, dons des personnes physiques (4 600 € par élection ; au-delà de 150 € par chèque, virement ou carte), interdiction des dons de personnes morales autres que les partis, avance de 200 000 €, remboursement forfaitaire. Simplification : chaque offre de don provient d’une personne distincte.",
+    "jeu": {
+      "statut": "hypothese",
+      "partApportPersonnelInitial": 0.2,
+      "emprunt": {
+        "tauxAnnuel": 0.04,
+        "seuilIntentions": 500
+      }
+    }
+  },
+  "medias": {
+    "statut": "hypothese",
+    "sourceId": "conception-du-jeu",
+    "note": "Organes, audiences, temps de parole et émissions réels (medias-2027.json, sources citées). Paramètres de jeu : poids relatif des types de média, crédibilité identique pour tous les organes, bornes de la propension d’exposition, report d’une émission sur ses autres diffuseurs. Aucune ligne éditoriale n’est prêtée à un média ; la couverture d’un candidat est simulée.",
+    "fichier": "medias-2027.json",
+    "empreinte": "ebf724b507053e64f27e10a812736182312088f88b905c5efe8e34d2da5d5cb7",
+    "poidsParType": {
+      "television": 1,
+      "radio": 0.6,
+      "presse": 0.4
+    },
+    "credibilite": 0.7,
+    "propension": {
+      "min": 0.5,
+      "max": 2
+    },
+    "partCodiffusion": 0.5,
+    "notorieteParExposition": 0.02
+  },
+  "debats": {
+    "statut": "hypothese",
+    "preparationMaxHeures": 40,
+    "poids": {
+      "preparation": 0.35,
+      "maitrise": 0.25,
+      "coherence": 0.2,
+      "reponse": 0.2
+    }
+  },
+  "alliances": {
+    "statut": "hypothese",
+    "fenetreSemaines": 10,
+    "seuilIntentions": 400,
+    "proximiteMin": 55,
+    "probabiliteHebdo": 0.25
+  },
+  "ia": {
+    "statut": "hypothese",
+    "accessible": {
+      "multiplicateurBudget": 0.6,
+      "actionsParSemaine": 2,
+      "temperature": 0.8
+    },
+    "standard": {
+      "multiplicateurBudget": 1,
+      "actionsParSemaine": 3,
+      "temperature": 0.5
+    },
+    "expert": {
+      "multiplicateurBudget": 1.4,
+      "actionsParSemaine": 4,
+      "temperature": 0.3
+    }
+  },
+  "personnalitesReelles": {
+    "statut": "hypothese",
+    "sourceId": "conception-du-jeu",
+    "note": "Moyens de départ des personnalités réelles selon leurs niveaux de notoriété (1 à 3) et d’organisation (grande, moyenne, petite, aucune), établis par des règles documentées à partir de faits sourcés (personnalites-2027.json). Valeurs de jeu, sans prétention de mesure : popularité de départ identique pour toutes ; aucun programme attribué par le jeu ; comportement simulé, style et goût du risque identiques pour toutes.",
+    "fichier": "personnalites-2027.json",
+    "empreinte": "086e1b62774e9f8a4f3ea3177bfe59dc808fa9e4189c02a0a9d4934f5ac67a73",
+    "notoriete": [2500, 4500, 7000],
+    "popularite": 3000,
+    "organisation": {
+      "grande": {
+        "budgetCentimes": 700000000,
+        "militants": 2000,
+        "equipe": 0.75,
+        "promessesInitiales": 1200
+      },
+      "moyenne": {
+        "budgetCentimes": 450000000,
+        "militants": 1300,
+        "equipe": 0.65,
+        "promessesInitiales": 800
+      },
+      "petite": {
+        "budgetCentimes": 250000000,
+        "militants": 800,
+        "equipe": 0.55,
+        "promessesInitiales": 450
+      },
+      "aucune": {
+        "budgetCentimes": 80000000,
+        "militants": 400,
+        "equipe": 0.4,
+        "promessesInitiales": 200
+      }
+    },
+    "style": "equilibre",
+    "toleranceRisque": 0.5,
+    "objectif": "victoire"
+  }
+}

@@ -1,0 +1,176 @@
+// Tables techniques des parties, sauvegardes, progressions et journaux (phases 1 et 2).
+// Voir docs/MODELE_DONNEES.md pour le modèle complet visé.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum GameMode {
+  candidat_reel
+  candidat_personnalise
+  observateur
+}
+
+enum Difficulty {
+  accessible
+  standard
+  expert
+}
+
+enum SaveKind {
+  auto
+  manuelle
+  avant_evenement
+  import
+}
+
+enum ActionStatus {
+  validee
+  rejetee
+}
+
+enum DataNature {
+  reel
+  estimation
+  sondage
+  projection
+  simule
+  fictif
+  systeme
+}
+
+model User {
+  id          String   @id @default(uuid()) @db.Uuid
+  displayName String?  @map("display_name")
+  createdAt   DateTime @default(now()) @map("created_at")
+  games       Game[]
+
+  @@map("app_user")
+}
+
+model Game {
+  id                String          @id @default(uuid()) @db.Uuid
+  userId            String          @map("user_id") @db.Uuid
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name              String
+  mode              GameMode
+  difficulty        Difficulty
+  seed              String
+  engineVersion     String          @map("engine_version")
+  rulesetVersion    String          @map("ruleset_version")
+  saveSchemaVersion Int             @map("save_schema_version")
+  phase             String
+  week              Int
+  date              DateTime        @db.Date
+  /// Verrou optimiste : toute écriture concurrente sur une version périmée échoue (409).
+  version           Int             @default(0)
+  state             Json
+  stateHash         String          @map("state_hash")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+  saves             GameSave[]
+  advances          GameAdvance[]
+  actions           GameAction[]
+  events            GameEvent[]
+  logs              SimulationLog[]
+
+  @@index([userId, updatedAt])
+  @@map("game")
+}
+
+model GameSave {
+  id                String   @id @default(uuid()) @db.Uuid
+  gameId            String   @map("game_id") @db.Uuid
+  game              Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  kind              SaveKind
+  /// Emplacement manuel (1..5) ; null pour les sauvegardes automatiques.
+  slot              Int?
+  label             String?
+  week              Int
+  date              DateTime @db.Date
+  state             Json
+  stateHash         String   @map("state_hash")
+  engineVersion     String   @map("engine_version")
+  saveSchemaVersion Int      @map("save_schema_version")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  @@unique([gameId, slot])
+  @@index([gameId, week])
+  @@map("game_save")
+}
+
+/// Progression d'une semaine (`POST /advance`). La clé d'idempotence garantit qu'un même
+/// envoi répété ne fait avancer la partie qu'une fois : la réponse enregistrée est rejouée.
+model GameAdvance {
+  id             String       @id @default(uuid()) @db.Uuid
+  gameId         String       @map("game_id") @db.Uuid
+  game           Game         @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  idempotencyKey String       @map("idempotency_key")
+  /// Empreinte de la requête : une même clé réutilisée pour une autre requête est refusée.
+  requestHash    String       @map("request_hash")
+  fromWeek       Int          @map("from_week")
+  toWeek         Int          @map("to_week")
+  response       Json
+  createdAt      DateTime     @default(now()) @map("created_at")
+  actions        GameAction[]
+
+  @@unique([gameId, idempotencyKey])
+  @@map("game_advance")
+}
+
+model GameAction {
+  id              String       @id @default(uuid()) @db.Uuid
+  gameId          String       @map("game_id") @db.Uuid
+  game            Game         @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  advanceId       String       @map("advance_id") @db.Uuid
+  advance         GameAdvance  @relation(fields: [advanceId], references: [id], onDelete: Cascade)
+  week            Int
+  /// Position de l'action dans le plan soumis pour la semaine.
+  position        Int
+  actorId         String       @map("actor_id")
+  type            String
+  payload         Json
+  status          ActionStatus
+  rejectionReason String?      @map("rejection_reason")
+  createdAt       DateTime     @default(now()) @map("created_at")
+
+  @@index([gameId, week])
+  @@index([advanceId])
+  @@map("game_action")
+}
+
+model GameEvent {
+  id        String     @id @default(uuid()) @db.Uuid
+  gameId    String     @map("game_id") @db.Uuid
+  game      Game       @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  week      Int
+  type      String
+  nature    DataNature
+  payload   Json
+  createdAt DateTime   @default(now()) @map("created_at")
+
+  @@index([gameId, week])
+  @@index([gameId, createdAt])
+  @@map("game_event")
+}
+
+model SimulationLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  gameId    String   @map("game_id") @db.Uuid
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  week      Int
+  /// Étape du pipeline hebdomadaire (1..12, §2).
+  step      Int
+  module    String
+  message   String
+  factors   Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([gameId, week])
+  @@map("simulation_log")
+}

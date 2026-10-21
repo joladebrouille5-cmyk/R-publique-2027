@@ -1,0 +1,67 @@
+export { analyzeSituation, planOpponentActions, scoreAction } from './ai/opponents';
+export { initialRelations, proximity, weeksBeforeFirstRound } from './ai/relations';
+export { targetLabel } from './campaign/actions';
+export {
+  emptyFinances,
+  expectedReimbursementCap,
+  formatEuros,
+  openingAccount,
+  spendingCap,
+} from './campaign/finances';
+export {
+  countedPresentations,
+  emptyParrainages,
+  meetsThreshold,
+  perDepartementCap,
+  presentationWindow,
+  projectedPresentations,
+} from './campaign/parrainages';
+export {
+  credibility,
+  programmeAppeal,
+  programmeCost,
+  validateProgrammeChange,
+} from './campaign/programme';
+export {
+  advanceWeek,
+  WEEKLY_STEPS,
+  type AdvanceInput,
+  type AdvanceResult,
+  type EngineContext,
+} from './core/advanceWeek';
+export { formatFrenchDate, scrutinInWeek, upcomingNotices } from './core/calendar';
+export {
+  createGame,
+  createOpponents,
+  createPlayerActor,
+  distributeInitialPromises,
+  GameCreationError,
+  PLAYER_ACTOR_ID,
+  type CreateGameInput,
+} from './core/createGame';
+export { EngineInputError, type EngineInputErrorCode } from './core/errors';
+export { createRng, deriveRngState, seedSfc32, type Rng } from './core/rng';
+export { sha256Hex } from './core/sha256';
+export { ENGINE_VERSION, SAVE_SCHEMA_VERSION } from './core/versions';
+export { largestRemainder } from './election/apportion';
+export { distribute, summarize } from './election/distribution';
+export { debateComponents, debatePerformance } from './election/flow';
+export { distance, softmax } from './election/model';
+export { marginOfError } from './election/polls';
+export { resolveRound } from './election/rounds';
+export {
+  aggregateCounts,
+  aggregateHierarchy,
+  checkCounts,
+  type VoteCounts,
+} from './territory/aggregate';
+export {
+  demoBaseline,
+  historicalBaseline,
+  nationalBaseline,
+  type CommuneRef,
+  type TerritorialBaseline,
+  type TerritorialUnit,
+} from './territory/baseline';
+export { BaselineMismatchError, communeResults } from './territory/communes';
+export { tallyBaseline, tallyUnit } from './territory/tally';
