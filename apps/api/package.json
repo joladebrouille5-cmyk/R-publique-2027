@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "start": "node dist/server.js",
+    "start": "NODE_ENV=production node dist/server.js",
     "build": "node scripts/build.mjs",
     "typecheck": "tsc -p tsconfig.json",
     "test:integration": "vitest run --config vitest.config.ts",

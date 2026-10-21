@@ -9,6 +9,10 @@ coverage/
 .env
 .env.*
 !.env.example
+# Clés de signature Android (jamais dans le dépôt : voir apps/mobile/README.md)
+*.jks
+*.keystore
+keystore.properties
 
 # Données téléchargées ou générées (volumineuses)
 data/raw/

@@ -371,6 +371,63 @@ describe('journal', () => {
   });
 });
 
+describe('durcissement (phase 8)', () => {
+  it('une avance rapide rend la main au serveur entre deux semaines', async () => {
+    const client = new Client(app);
+    const game = await createGameVia(client, { mode: 'observateur' });
+    const ticks: number[] = [];
+    const timer = setInterval(() => ticks.push(performance.now()), 5);
+    const start = performance.now();
+    const response = await advanceVia(client, game, {
+      expectedWeek: game.week,
+      actions: [],
+      decisions: [],
+      semaines: 52,
+    });
+    const duration = performance.now() - start;
+    clearInterval(timer);
+    expect(response.statusCode).toBe(200);
+    const { avanceRapide } = AdvanceResponseSchema.parse(response.json());
+    expect(avanceRapide!.resolues).toBeGreaterThanOrEqual(10);
+    // Sans pause entre les semaines, la boucle d'événements resterait bloquée pendant tout le
+    // calcul : le plus long intervalle entre deux tops serait proche de la durée totale.
+    const gaps = ticks.slice(1).map((t, i) => t - ticks[i]!);
+    expect(Math.max(...gaps)).toBeLessThan(duration / 3);
+  });
+
+  it('pagine le journal sans sauter les entrées de même horodatage', async () => {
+    // Les événements écrits ensemble (createMany) partagent leur horodatage.
+    const client = new Client(app);
+    const game = await createGameVia(client);
+    const createdAt = new Date('2026-10-21T12:00:00.000Z');
+    await db.gameEvent.createMany({
+      data: [1, 2, 3, 4, 5].map((n) => ({
+        gameId: game.id,
+        week: 0,
+        type: `egalite_${n}`,
+        nature: 'simule' as const,
+        payload: {},
+        createdAt,
+      })),
+    });
+    const all = JournalPageSchema.parse(
+      (await client.get(`/api/games/${game.id}/journal?limit=50`)).json(),
+    );
+    const paged: string[] = [];
+    let before: string | null = null;
+    do {
+      const query: string = before ? `&before=${encodeURIComponent(before)}` : '';
+      const page = JournalPageSchema.parse(
+        (await client.get(`/api/games/${game.id}/journal?limit=2${query}`)).json(),
+      );
+      paged.push(...page.entries.map((e) => e.id));
+      before = page.nextBefore;
+    } while (before);
+    expect(all.entries.filter((e) => e.type.startsWith('egalite_'))).toHaveLength(5);
+    expect(paged).toEqual(all.entries.map((e) => e.id));
+  });
+});
+
 describe('export et import', () => {
   it('exporte un fichier et l’importe dans une nouvelle partie sans perte', async () => {
     const alice = new Client(app);

@@ -1,8 +1,8 @@
 // Essai de l'APK sur un appareil ou un émulateur Android (phase 8), lancé par le workflow
 // .github/workflows/android.yml après la compilation :
 //   node apps/mobile/scripts/essai-android.mjs <chemin de l'APK> [dossier des captures]
-// Exige un serveur adb démarré et un seul appareil connecté (APK de débogage : WebView
-// inspectable). L'appareil est mis hors réseau ; l'application ne demande aucune permission.
+// Exige un serveur adb démarré et un émulateur connecté (APK de débogage : WebView
+// inspectable). L'émulateur est mis hors réseau ; l'application ne demande aucune permission.
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { _android as android, expect } from '@playwright/test';
@@ -15,6 +15,14 @@ await mkdir(captures, { recursive: true });
 
 const [device] = await android.devices({ omitDriverInstall: true });
 if (!device) throw new Error('Aucun appareil Android détecté par adb.');
+// L'essai désinstalle l'application (parties comprises) et active le mode avion : émulateur
+// seulement, sauf demande explicite (R2027_ESSAI_APPAREIL_REEL=1).
+if (!device.serial().startsWith('emulator-') && process.env.R2027_ESSAI_APPAREIL_REEL !== '1') {
+  await device.close();
+  throw new Error(
+    `${device.serial()} n’est pas un émulateur : l’essai effacerait les parties de l’appareil.`,
+  );
+}
 device.setDefaultTimeout(120_000);
 const shell = async (command) => (await device.shell(command)).toString();
 const step = (text) => console.log(`— ${text}`);

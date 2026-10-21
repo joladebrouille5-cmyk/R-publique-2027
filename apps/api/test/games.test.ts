@@ -350,6 +350,43 @@ describe('historique immuable', () => {
   });
 });
 
+describe('durcissement (phase 8)', () => {
+  it('une lecture sans session ne crée aucun utilisateur ni cookie', async () => {
+    const before = await db.user.count();
+    const list = await app.inject({ method: 'GET', url: '/api/games' });
+    expect(list.statusCode).toBe(200);
+    expect(list.json()).toEqual([]);
+    expect(list.cookies).toHaveLength(0);
+    const game = await app.inject({ method: 'GET', url: `/api/games/${crypto.randomUUID()}` });
+    expect(game.statusCode).toBe(404);
+    expect(await db.user.count()).toBe(before);
+  });
+
+  it('refuse un caractère nul plutôt qu’une erreur interne', async () => {
+    const client = new Client(app);
+    const response = await client.post('/api/games', {
+      name: 'Nul\u0000',
+      mode: 'observateur',
+    });
+    expect(response.statusCode).toBe(400);
+    expect(response.json().error.code).toBe('requete_invalide');
+  });
+
+  it('limite à part les écritures coûteuses', async () => {
+    const limited = await testApp(db, { RATE_LIMIT_WRITE_MAX: 2 });
+    const client = new Client(limited);
+    const codes: number[] = [];
+    for (let i = 0; i < 3; i++)
+      codes.push(
+        (await client.post('/api/games', { name: `P${i}`, mode: 'observateur' })).statusCode,
+      );
+    // Les lectures restent sous la limite générale.
+    codes.push((await client.get('/api/games')).statusCode);
+    await limited.close();
+    expect(codes).toEqual([201, 201, 429, 200]);
+  });
+});
+
 describe('limitation de débit', () => {
   it('répond 429 au-delà du plafond', async () => {
     const limited = await testApp(db, { RATE_LIMIT_MAX: 3 });

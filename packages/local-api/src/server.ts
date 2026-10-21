@@ -28,6 +28,9 @@ import {
   FAST_FORWARD_STOPS,
   IDEMPOTENCY_HEADER,
   IdempotencyKeySchema,
+  isBeforeCursor,
+  journalCursor,
+  JournalCursorSchema,
   RestoreSaveRequestSchema,
   WeeklyReportSchema,
   type AdvanceResponse,
@@ -37,6 +40,7 @@ import {
   type GameSummary,
   type HealthResponse,
   type HistoricalStatus,
+  type JournalCursor,
   type JournalPage,
   type SaveSummary,
 } from '@r2027/shared';
@@ -73,18 +77,34 @@ class HttpError extends Error {
 }
 
 const notFound = (message: string) => new HttpError(404, 'introuvable', message);
+
+/** Segment d'URL décodé ; un encodage invalide (« %zz ») désigne une ressource introuvable. */
+function decodeSegment(segment: string): string {
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    throw notFound('Ressource introuvable.');
+  }
+}
 const conflict = (code: string, message: string) => new HttpError(409, code, message);
 
 const GameId = z.uuid();
 const Tour = z.coerce.number().pipe(z.union([z.literal(1), z.literal(2)]));
 const DepartementQuery = z.object({ departement: z.string().regex(/^[0-9AB]{2,3}$/) });
 const JournalQuery = z.object({
-  before: z.iso.datetime().optional(),
+  before: JournalCursorSchema.optional(),
   limit: z.coerce.number().int().min(1).max(50).default(20),
 });
 const MAX_BODY_BYTES = 1024 * 1024;
 /** Nombre de sauvegardes automatiques hebdomadaires conservées par partie (§12). */
 export const AUTO_SAVE_RETENTION = 8;
+/**
+ * Progressions dont la réponse est conservée pour être rejouée (idempotence) : chaque réponse
+ * contient l'état complet (plusieurs centaines de Ko), soit des centaines de Mo sur une partie
+ * entière. Sur l'appareil, seules les plus récentes sont gardées (le journal, lui, est complet) ;
+ * une requête plus ancienne rejouée reçoit « semaine périmée » et l'interface recharge.
+ */
+export const ADVANCE_REPLAY_RETENTION = 10;
 /** Événements résumés dans le bilan de leur semaine : non répétés dans le journal. */
 const SUMMARIZED_IN_REPORT = new Set(['evenement', 'risque', 'sondage_publie', 'resultat_scrutin']);
 const IMPORT_SUFFIX = ' (importée)';
@@ -213,7 +233,7 @@ export class LocalApi {
       Object.entries(request.headers ?? {}).map(([k, v]) => [k.toLowerCase(), v]),
     );
     if (method === 'POST') {
-      if (JSON.stringify(request.body ?? {}).length > MAX_BODY_BYTES)
+      if (new TextEncoder().encode(JSON.stringify(request.body ?? {})).length > MAX_BODY_BYTES)
         throw new HttpError(413, 'requete_trop_volumineuse', 'Requête trop volumineuse (1 Mo).');
     }
     const ok = (body: unknown, status = 200, extra: Record<string, string> = {}) => ({
@@ -267,7 +287,7 @@ export class LocalApi {
       );
     if (method === 'GET' && path === '/api/geo/manifeste') return ok(this.geo.manifest);
     if (method === 'GET' && (m = match(/^\/api\/geo\/fichiers\/(.+)$/))) {
-      const name = decodeURIComponent(m[1]!);
+      const name = decodeSegment(m[1]!);
       const file = this.geo.file(name);
       if (!file) throw notFound(`Fichier cartographique inconnu : ${name}`);
       return ok(await file);
@@ -284,7 +304,7 @@ export class LocalApi {
     if (method === 'GET' && path === '/api/rulesets/courant')
       return ok(getRuleset(CURRENT_RULESET_KEY));
     if (method === 'GET' && (m = match(/^\/api\/rulesets\/(.+)$/))) {
-      const key = z.string().min(1).max(100).parse(decodeURIComponent(m[1]!));
+      const key = z.string().min(1).max(100).parse(decodeSegment(m[1]!));
       try {
         return ok(getRuleset(key));
       } catch (error) {
@@ -527,6 +547,9 @@ export class LocalApi {
     let current: Snapshot = { state, stateHash };
     let stop: FastForwardStop | null = null;
     for (let i = 0; i < requested && stop === null; i++) {
+      // Entre deux semaines d'une avance rapide, l'interface (même fil d'exécution sur
+      // l'appareil) peut se redessiner.
+      if (i > 0) await new Promise<void>((resolve) => setTimeout(resolve, 0));
       const plan =
         i === 0
           ? {
@@ -581,9 +604,12 @@ export class LocalApi {
       response,
       createdAt: this.timestamp(),
     };
+    // Rétention de l'idempotence : seules les réponses des dernières progressions sont gardées.
+    const stale = await this.store.staleAdvances(gameId, ADVANCE_REPLAY_RETENTION - 1);
     const operations: Operation[] = [
       { kind: 'put', table: 'games', value: updated },
       { kind: 'put', table: 'advances', value: advanceRow },
+      ...stale.map((id) => ({ kind: 'delete', table: 'advances', id }) as Operation),
     ];
     for (const { before, result } of weeks)
       operations.push(...this.recordWeek(gameId, before, result));
@@ -637,12 +663,12 @@ export class LocalApi {
 
   private async journal(
     gameId: string,
-    { before, limit }: { before?: string | undefined; limit: number },
+    { before, limit }: { before?: JournalCursor | undefined; limit: number },
   ): Promise<JournalPage> {
     if (!(await this.store.game(gameId))) throw notFound('Partie introuvable');
     const rows = (await this.store.events(gameId))
       .filter((e) => !SUMMARIZED_IN_REPORT.has(e.type))
-      .filter((e) => !before || e.createdAt < new Date(before).toISOString())
+      .filter((e) => !before || isBeforeCursor(e, before))
       .sort((a, b) =>
         a.createdAt === b.createdAt ? (a.id < b.id ? 1 : -1) : a.createdAt < b.createdAt ? 1 : -1,
       )
@@ -662,7 +688,7 @@ export class LocalApi {
     });
     return {
       entries,
-      nextBefore: rows.length > limit ? entries[entries.length - 1]!.createdAt : null,
+      nextBefore: rows.length > limit ? journalCursor(entries[entries.length - 1]!) : null,
     } as JournalPage;
   }
 

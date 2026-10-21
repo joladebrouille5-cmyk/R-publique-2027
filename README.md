@@ -1,6 +1,6 @@
 # RÉPUBLIQUE 2027
 
-Simulation politique française : présidentielle, campagne et quinquennat. Jeu de stratégie dans le navigateur (PC et mobile) où l'on incarne une personnalité réelle ou un candidat personnalisé, semaine par semaine, jusqu'aux deux tours, puis pendant le quinquennat. La carte électorale interactive couvre les communes de métropole et des cinq DROM.
+Simulation politique française : présidentielle, campagne et quinquennat. Jeu de stratégie dans le navigateur (PC et mobile) et en **application Android hors ligne**, où l'on incarne une personnalité réelle ou un candidat personnalisé, semaine par semaine, jusqu'aux deux tours, puis pendant le quinquennat. La carte électorale interactive couvre les communes de métropole et des cinq DROM.
 
 > Nom de projet provisoire.
 
@@ -18,7 +18,7 @@ Simulation politique française : présidentielle, campagne et quinquennat. Jeu 
 | 5 ter | Médias réels (presse, télévision, radio), émissions et journalistes politiques | ✅ terminée |
 | 6 | Quinquennat jouable : gouvernement (personnalités réelles possibles), Assemblée nationale réelle et dissolution, législatives, économie, crises, présidentielle 2032 | ✅ terminée |
 | 7 | Contenu approfondi : scénarios de départ, crises et événements supplémentaires, conséquences à long terme | ✅ terminée |
-| 8 | Version publiable : application Android (APK) hors ligne, sécurité, robustesse | en cours |
+| 8 | Version publiable : application Android (APK) hors ligne, sécurité, robustesse | APK construit ; essai sur émulateur en cours (CI) |
 
 **Ce qui fonctionne aujourd'hui** :
 - créer une partie avec son candidat (prénom, nom, parti, positionnement économique et sociétal, parcours, profil de départ) ou en observateur, avec difficulté, date de départ et graine ;
@@ -43,9 +43,10 @@ Simulation politique française : présidentielle, campagne et quinquennat. Jeu 
 - suivre l'**économie** (croissance, inflation, chômage, solde public, dette, confiance des ménages : valeurs de départ de l'Insee ; pouvoir d'achat et tensions sociales : conventions du jeu), dont l'évolution simulée est décomposée en facteurs, et affronter des **crises fictives** (décision obligatoire) ;
 - vivre les **législatives** : résultats réels de 2024 dans les 577 circonscriptions (sans nom de candidat), dissolution (élections 20 jours plus tard, pas de nouvelle dissolution dans l'année), législatives de fin de législature en juin 2029, deux tours simulés par bloc, nouvelle Assemblée, cohabitation possible ;
 - choisir un **scénario de départ** (situation actuelle, ou situations fictives : tempête économique, colère sociale, monde instable, candidature d'outsider) et affronter **14 crises fictives** (dont la canicule en été) et **12 événements de campagne**, dont les choix laissent des **conséquences durables** (effets semaine après semaine, crises rendues plus ou moins probables), détaillées dans l'écran Crises et le bilan ;
+- jouer sur **Android sans réseau** : l'application (APK) embarque le moteur, les règles et la carte de démonstration, enregistre les parties sur l'appareil, ne demande aucune permission et exporte une partie par la feuille de partage d'Android ([apps/mobile/README.md](apps/mobile/README.md)) ;
 - à la fin du mandat, lire le **bilan du quinquennat** puis repartir en campagne pour la **présidentielle 2032** avec le même moteur (parrainages et comptes remis à zéro ; le président sortant peut se représenter une fois : art. 6), et ainsi de suite jusqu'au mandat issu de 2037.
 
-**Ce qui ne fonctionne pas encore** : dépôt et contrôle du compte de campagne par la CNCCFP (le remboursement affiché reste prévisionnel) ; le Sénat n'est pas modélisé groupe par groupe (accord tiré au sort) ; les désistements entre les deux tours des législatives ne sont pas simulés ; pendant une campagne présidentielle qui suit un quinquennat, l'action du gouvernement sortant, le Parlement et l'économie ne sont pas simulés ; la partie s'arrête explicitement à la fin du mandat issu de la présidentielle de 2037 (aucun cycle prévu au-delà). Les dates des législatives de 2029 et des présidentielles de 2032 et 2037 sont des hypothèses de jeu, affichées comme telles. Les personnalités réelles sont celles de la révision importée de la liste des candidatures (21/10/2026) : une nouvelle déclaration exige une réimportation. Sans import local, la carte n'a que le jeu de démonstration (communes de l'Ain, de la Corse et des DROM ; base électorale **fictive**, affichée comme telle).
+**Ce qui ne fonctionne pas encore** : dépôt et contrôle du compte de campagne par la CNCCFP (le remboursement affiché reste prévisionnel) ; le Sénat n'est pas modélisé groupe par groupe (accord tiré au sort) ; les désistements entre les deux tours des législatives ne sont pas simulés ; pendant une campagne présidentielle qui suit un quinquennat, l'action du gouvernement sortant, le Parlement et l'économie ne sont pas simulés ; la partie s'arrête explicitement à la fin du mandat issu de la présidentielle de 2037 (aucun cycle prévu au-delà). Les dates des législatives de 2029 et des présidentielles de 2032 et 2037 sont des hypothèses de jeu, affichées comme telles. Les personnalités réelles sont celles de la révision importée de la liste des candidatures (21/10/2026) : une nouvelle déclaration exige une réimportation. Sans import local, la carte n'a que le jeu de démonstration (communes de l'Ain, de la Corse et des DROM ; base électorale **fictive**, affichée comme telle) ; c'est toujours le cas dans l'application Android, qui n'embarque pas les résultats de 2022. Pas d'application iOS. La version web n'est pas encore hébergée (API et PostgreSQL : hébergeur à choisir, question Q6).
 
 ## Prérequis
 
@@ -103,6 +104,23 @@ pnpm dev
 
 Le pied de page de l'interface indique « Serveur connecté » quand l'API et la base répondent. Pour tester sur un téléphone du même réseau, voir la section Dépannage.
 
+## Application Android (APK hors ligne)
+
+L'application `apps/mobile` (Capacitor 8) contient tout le jeu et fonctionne sans serveur ni réseau ; elle ne demande aucune permission Android.
+
+- **Sans rien installer** : chaque push lance le workflow GitHub **Android (APK)**, qui construit l'APK et l'essaie sur un émulateur Android 14 en mode avion. Onglet **Actions** → **Android (APK)** → dernière exécution réussie → section **Artifacts** → `republique-2027-apk-debug` (zip contenant `app-debug.apk`).
+- **Sur votre ordinateur** (JDK 21, Android Studio ou SDK Android, `ANDROID_HOME` défini) :
+
+```bash
+pnpm install
+pnpm --filter @r2027/mobile build
+cd apps/mobile && npx cap sync android
+cd android && ./gradlew assembleDebug        # Windows : gradlew.bat assembleDebug
+# → apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+Installation sur le téléphone (`adb install -r app-debug.apk`, ou copie du fichier puis ouverture), APK de publication signé (clé hors du dépôt, variables `R2027_KEYSTORE_*`) et fonctionnement détaillé : [apps/mobile/README.md](apps/mobile/README.md).
+
 ## Déploiement sur Cloudflare Workers (interface seule)
 
 Le dépôt est relié à Cloudflare Workers Builds (Worker `republique-2027`). La configuration est dans `wrangler.jsonc` :
@@ -138,10 +156,11 @@ Les fichiers téléchargés sont gardés dans `data/raw/` (avec leur empreinte S
 | `pnpm test` | tests unitaires, de propriétés et de composants (moteur, jeu de règles, sauvegardes, import de données, interface, Worker Cloudflare) | aucun |
 | `pnpm test:integration` | API réelle contre PostgreSQL : parties, progression idempotente, sauvegardes, journal, export/import, migrations, isolation, sécurité, référentiel cartographique, résultats communaux, campagne (actions ciblées, programme, parrainages jusqu'à la clôture, ralliements), personnalités réelles (candidat réel, adversaires réels), médias réels (interview ciblée, émission politique) | `DATABASE_URL_TEST` |
 | `pnpm test:e2e` | Playwright, navigateur bureau + mobile : création du candidat, actions, progression, bilan, sauvegarde, restauration, journal, export/import, reprise, présidentielle complète jusqu'aux résultats, carte (encarts DROM, recherche, sélection, résultats, motifs, audit d'accessibilité axe-core), campagne (programme, actions ciblées, parrainages, finances, candidat écarté à la clôture, partie en observateur, audit axe-core), personnalités réelles (choix illustré, fiches, crédits, audit axe-core), médias réels (émission politique, interview simulée, logos crédités, audit axe-core) | `DATABASE_URL_TEST` ; navigateur : `pnpm exec playwright install chromium` |
+| `pnpm test:mobile` | Playwright, téléphone émulé : le paquet de l'application Android servi tel quel, **tout le réseau coupé** (aucune requête ne doit sortir, aucune violation de la politique de sécurité du contenu) : création, semaine, reprise après rechargement, carte, export et import | navigateur : `pnpm exec playwright install chromium` |
 | `pnpm lint` · `pnpm typecheck` · `pnpm format:check` | qualité du code | aucun |
 | `pnpm check` | lint + format + typecheck + tests unitaires | aucun |
 
-La base `DATABASE_URL_TEST` est **vidée** par les tests d'intégration : ne jamais y mettre de données à conserver. L'intégration continue (GitHub Actions, `.github/workflows/ci.yml`) exécute toutes ces commandes à chaque push.
+La base `DATABASE_URL_TEST` est **vidée** par les tests d'intégration : ne jamais y mettre de données à conserver. L'intégration continue (GitHub Actions, `.github/workflows/ci.yml`) exécute toutes ces commandes à chaque push ; le workflow `.github/workflows/android.yml` construit l'APK et l'essaie sur un émulateur Android (`apps/mobile/scripts/essai-android.mjs`).
 
 ## Structure
 
@@ -149,6 +168,8 @@ La base `DATABASE_URL_TEST` est **vidée** par les tests d'intégration : ne jam
 apps/api            API Fastify + Prisma (sessions, parties, sauvegardes, carte)
 apps/web            Interface React (Vite, React Router, TanStack Query, Zustand, Tailwind, MapLibre GL)
 apps/web/e2e        Tests Playwright
+apps/mobile         Application Android hors ligne (Capacitor) : écrans de apps/web + moteur local ; projet Android dans android/
+packages/local-api  Contrat de l'API exécuté sur l'appareil (moteur, sauvegardes, journal, carte) avec stockage IndexedDB
 packages/engine     Moteur de simulation pur et déterministe (aucune E/S)
 packages/rulesets   Jeux de règles versionnés et sourcés (calendrier, actions, événements, électorat, adversaires, programme, parrainages, financement, médias, alliances, fiches des personnalités réelles)
 packages/save-engine  Sérialisation canonique, empreintes, migrations et export/import des sauvegardes
@@ -171,7 +192,7 @@ data/raw, data/processed  Téléchargements et imports locaux (ignorés par Git)
 
 ## Principes
 
-- Simulation déterministe (graine aléatoire), exécutée côté serveur, testable sans navigateur ni base.
+- Simulation déterministe (graine aléatoire), exécutée côté serveur (ou sur l'appareil dans l'application Android, derrière le même contrat), jamais par l'interface ; testable sans navigateur ni base.
 - Données réelles, sondages, projections, résultats simulés et événements fictifs toujours distingués.
 - Aucune clé d'API payante requise ; aucun secret dans le dépôt.
 

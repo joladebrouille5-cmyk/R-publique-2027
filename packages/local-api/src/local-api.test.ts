@@ -16,7 +16,12 @@ import {
 import { describe, expect, it } from 'vitest';
 import { LocalGeo } from './geo';
 import { IndexedDbStore } from './indexeddb-store';
-import { AUTO_SAVE_RETENTION, LocalApi, type LocalResponse } from './server';
+import {
+  ADVANCE_REPLAY_RETENTION,
+  AUTO_SAVE_RETENTION,
+  LocalApi,
+  type LocalResponse,
+} from './server';
 import { MemoryStore, type Store } from './store';
 
 // Phase 8 : serveur local de l'application mobile (même contrat que l'API, hors ligne).
@@ -270,6 +275,41 @@ describe('serveur local : carte embarquée', () => {
   });
 });
 
+describe('serveur local : robustesse (phase 8)', () => {
+  it('ne garde sur l’appareil que les dernières réponses rejouables', async () => {
+    for (const store of [new MemoryStore(), await IndexedDbStore.open(new IDBFactory())]) {
+      const api = server(store);
+      let game = await newGame(api);
+      const first = `cle-retention-${++keys}`;
+      const body = { expectedWeek: 0, actions: [], decisions: [] };
+      const response = await call(api, 'POST', `/api/games/${game.id}/advance`, body, first);
+      game = AdvanceResponseSchema.parse(response.body).game;
+      for (let i = 0; i < ADVANCE_REPLAY_RETENTION + 1; i++) game = (await advance(api, game)).game;
+      expect(await store.staleAdvances(game.id, 0)).toHaveLength(ADVANCE_REPLAY_RETENTION);
+      // La progression la plus ancienne n'est plus rejouable : semaine périmée, rien n'est recalculé.
+      const replay = await call(api, 'POST', `/api/games/${game.id}/advance`, body, first);
+      expect(replay.status).toBe(409);
+      expect(error(replay)).toBe('semaine_perimee');
+      // Le journal, lui, reste complet.
+      const journal = JournalPageSchema.parse(
+        (await call(api, 'GET', `/api/games/${game.id}/journal?limit=50`)).body,
+      );
+      expect(journal.entries.filter((e) => e.type === 'semaine_resolue')).toHaveLength(
+        ADVANCE_REPLAY_RETENTION + 2,
+      );
+    }
+  });
+
+  it('répond 404 à une URL mal encodée et 413 au-delà d’1 Mo (en octets)', async () => {
+    const api = server();
+    expect(error(await call(api, 'GET', '/api/geo/fichiers/%E0%A4%A'))).toBe('introuvable');
+    expect(error(await call(api, 'GET', '/api/rulesets/%zz'))).toBe('introuvable');
+    // 400 000 caractères de trois octets chacun : sous 1 Mo de caractères, au-delà en octets.
+    const big = await call(api, 'POST', '/api/games', { name: '€'.repeat(400_000) });
+    expect(big.status).toBe(413);
+  });
+});
+
 describe('stockage IndexedDB de l’appareil', () => {
   it('conserve les parties d’une ouverture de l’application à l’autre', async () => {
     const factory = new IDBFactory();
@@ -289,6 +329,34 @@ describe('stockage IndexedDB de l’appareil', () => {
       (await call(reopened, 'GET', `/api/games/${game.id}/saves`)).body,
     );
     expect(saves.map((s) => s.kind)).toEqual(['auto']);
+  });
+
+  it('migre une base de la version 1 sans perdre ses parties', async () => {
+    // Base telle que l'a créée la première version de l'application (sans l'index par date).
+    const factory = new IDBFactory();
+    await new Promise<void>((resolve, reject) => {
+      const request = factory.open('republique-2027', 1);
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        db.createObjectStore('games', { keyPath: 'id' }).put({ id: 'ancienne', name: 'v1' });
+        db.createObjectStore('saves', { keyPath: 'id' }).createIndex('gameId', 'gameId');
+        db.createObjectStore('events', { keyPath: 'id' }).createIndex('gameId', 'gameId');
+        db.createObjectStore('advances', { keyPath: 'id' }).createIndex(
+          'gameKey',
+          ['gameId', 'idempotencyKey'],
+          { unique: true },
+        );
+      };
+      request.onsuccess = () => {
+        request.result.close();
+        resolve();
+      };
+      request.onerror = () => reject(request.error);
+    });
+    const store = await IndexedDbStore.open(factory);
+    expect((await store.game('ancienne'))?.name).toBe('v1');
+    expect(await store.staleAdvances('ancienne', 0)).toEqual([]);
+    store.close();
   });
 
   it('applique toutes les écritures d’une requête, ou aucune', async () => {

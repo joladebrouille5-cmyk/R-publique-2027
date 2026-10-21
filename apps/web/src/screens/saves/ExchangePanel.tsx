@@ -60,7 +60,8 @@ export function ExchangePanel({ gameId }: { gameId: string }) {
       <p className="text-sm text-slate-600 dark:text-slate-400">
         L’export produit un fichier JSON versionné contenant l’état complet et son empreinte.
         L’import crée toujours une <strong>nouvelle</strong> partie : aucune partie existante n’est
-        écrasée, et un fichier modifié ou corrompu est refusé.
+        écrasée, et un fichier corrompu ou incohérent (empreinte, format, contenu) est refusé.
+        L’empreinte détecte une altération accidentelle ; elle n’est pas une signature.
       </p>
       {platform().kind === 'web' ? (
         <a href={`/api/games/${gameId}/export`} download className={buttonSecondary}>

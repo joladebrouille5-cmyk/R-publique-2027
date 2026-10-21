@@ -12,7 +12,7 @@ Les numéros `§x` renvoient aux sections du cahier des charges.
 
 | Principe | Conséquence technique |
 |---|---|
-| Simulation **persistante, explicable, testable** (résumé exécutif) | Le moteur est une bibliothèque TypeScript pure, sans accès réseau, base ou navigateur (§11). |
+| Simulation **persistante, explicable, testable** (résumé exécutif) | Le moteur est une bibliothèque TypeScript pure, sans accès réseau, base ou navigateur (§11). L'API (serveur) et l'application Android (moteur local, phase 8) l'exécutent derrière le même contrat ; l'interface ne l'exécute jamais. |
 | **Déterminisme** : même sauvegarde + mêmes actions ⇒ même état (§11) | Générateur pseudo-aléatoire à graine, aucun `Math.random()` ni `Date.now()` dans le moteur, calcul autoritaire **côté serveur uniquement**. |
 | Réel, estimé, sondé, simulé et fictif sont **distingués** (§1.1, §3.3, §8, critère 16) | Chaque donnée affichable porte un champ `nature` (`reel`, `estimation`, `sondage`, `projection`, `simule`, `fictif`) et, si réel, une référence `DataSource`. |
 | Règles électorales et institutionnelles **explicites et versionnées** (§2, §6) | Jeux de règles en fichiers de données versionnés (`packages/rulesets`), jamais de dates ou plafonds codés en dur dans la logique. |
@@ -50,6 +50,8 @@ Les numéros `§x` renvoient aux sections du cahier des charges.
 │ → métadonnées d'import, empreintes, données démo     │
 └─────────────────────────────────────────────────────┘
 ```
+
+Phase 8 : l'application Android remplace la flèche « REST JSON » par un appel de fonction vers `packages/local-api`, qui exécute le même moteur sur l'appareil et enregistre les parties dans IndexedDB (§14).
 
 ---
 
@@ -97,7 +99,7 @@ pnpm 10 est installé ; les *workspaces* pnpm permettent de partager les types e
 
 Les douze modules du §11 sont tous représentés : les neuf moteurs sont des dossiers de `packages/engine` (frontières contrôlées par une règle d'import lint), `data-import`, `save-engine`, `ui` (= `apps/web`) et `api` (= `apps/api`) sont des paquets séparés.
 
-**Règle de dépendance** : `engine` ← `save-engine` ← `api` ; `shared` est importable partout ; `web` n'importe jamais `engine` (sauf types). Vérifiée en CI.
+**Règle de dépendance** : `engine` ← `save-engine` ← `api` ; `shared` est importable partout ; `web` n'importe jamais `engine` (sauf types et tests). Vérifiée en CI (règle de lint). Phase 8 : `engine` ← `save-engine` ← `local-api` ← `mobile` ; `mobile` réutilise les écrans de `web` et remplace seulement leur transport d'API (voir §14).
 
 ---
 
@@ -312,7 +314,7 @@ Toutes les entrées et sorties sont validées par des schémas Zod partagés (`p
 - **Sauvegarde automatique** chaque semaine (les 8 plus récentes sont conservées) et avant tout événement majeur ou scrutin (« Avant le premier tour ») ; **manuelle** sur 5 emplacements ; **export/import JSON versionné** avec empreinte et migrations de sauvegarde (`save-engine` : format 1 de la phase 1 → format 2 de la phase 2 → format 3 de la phase 3 → format 4 de la phase 4 → format 5 de la phase 5).
 - **Progression** : chaque `POST /advance` réussi (une semaine, ou plusieurs en avance rapide) est enregistré dans `game_advance` (clé d'idempotence, empreinte de la requête, réponse) ; la même transaction écrit l'état, les actions, les événements, les 12 étapes du journal de simulation et la sauvegarde automatique, avec verrou optimiste sur la version de la partie.
 - Protection contre l'import corrompu : validation complète **avant** écriture, transaction, aucune écriture partielle.
-- Stockage navigateur (IndexedDB) seulement pour le cache et la démo hors ligne.
+- Stockage navigateur (IndexedDB) : aucun pour la version web ; dans l'application Android (phase 8), IndexedDB est le stockage des parties sur l'appareil (mêmes enregistrements que les tables `game`, `game_save`, `game_event` et `game_advance`, écrits dans une seule transaction par requête), voir §14.
 
 ---
 
@@ -339,6 +341,9 @@ Toutes les entrées et sorties sont validées par des schémas Zod partagés (`p
 - Secrets uniquement en variables d'environnement ; `.env.example` sans valeur sensible ; `.env` ignoré par Git.
 - Journaux sans données personnelles ; aucun profilage individuel d'électeurs : toutes les données électorales sont agrégées au minimum à la commune.
 - Licences des données et dépendances vérifiées (`pnpm licenses list` en CI).
+- **Phase 8 — API** : utilisateur créé seulement à la première écriture (une lecture sans session ne crée rien et ne voit rien), limite propre aux écritures coûteuses (`RATE_LIMIT_WRITE_MAX`, 60 par minute et par IP : création, import, progression), corps contenant un caractère NUL refusé (400 au lieu d'une erreur PostgreSQL), en production secret d'exemple refusé et cookie `Secure` (`start` fixe `NODE_ENV=production`), `TRUST_PROXY` en nombre d'intermédiaires ou en liste d'adresses, pagination du journal par curseur (date, identifiant) sans saut d'entrées de même horodatage, avance rapide qui rend la main à la boucle d'événements entre deux semaines (52 semaines de calcul ne bloquent plus les autres joueurs ; dans l'application, l'interface reste fluide), CSP du paquet web construit identique à celle de l'application Android. Limite connue : croissance de `game_advance` (R-45).
+- **Phase 8** : `pnpm audit` sans vulnérabilité connue (correctifs forcés dans `pnpm-workspace.yaml` pour des dépendances indirectes d'outils de développement : adm-zip et fflate via mapshaper, uuid via la CLI Capacitor) ; empreinte du `gradle-wrapper.jar` vérifiée en CI (`gradle/actions/wrapper-validation`).
+- **Application Android** : aucune permission (pas même `INTERNET` : aucune donnée ne peut sortir de l'application), trafic en clair interdit, contenu servi depuis l'APK (`https://localhost`), politique de sécurité du contenu stricte (`script-src 'self'`, `connect-src 'self'`, aucun script en ligne ni distant ; workers et images `blob:` pour MapLibre), partage limité au dossier `cache/exports` (FileProvider non exporté), clé de signature hors du dépôt (variables d'environnement ou secrets GitHub). Les entrées de l'interface sont validées par les mêmes schémas Zod que sur le serveur ; un fichier importé corrompu ou incohérent est refusé (l'empreinte SHA-256 détecte une altération accidentelle ; ce n'est pas une signature : sans classement en ligne, retoucher sa propre partie n'a pas d'enjeu). Sauvegarde Android (`allowBackup`) conservée : les parties ne contiennent ni secret ni donnée personnelle hormis le nom de candidat choisi.
 
 ---
 
@@ -363,6 +368,7 @@ Le moteur se teste sans navigateur, base ni API externe (§11).
 - CI GitHub Actions : lint, typecheck, tests unitaires/propriétés, intégration (service PostgreSQL), Playwright, build Docker.
 - Sauvegardes automatiques de la base (`pg_dump` planifié) + procédure de restauration testée (critère de phase 7/8).
 - Hébergeur : **à choisir** (Node.js + PostgreSQL) — décision ouverte, voir [PLAN](./PLAN_DEVELOPPEMENT.md#5-questions-ouvertes).
+- **Application Android (phase 8)** : APK construit par le workflow `.github/workflows/android.yml` (artefact téléchargeable, APK de publication signé si les secrets de signature sont configurés) ou en local (Android Studio, JDK 21) ; aucun serveur requis (§14).
 - Cloudflare Workers (relié au dépôt le 21/10/2026, Worker `republique-2027`) : **interface seule**. `wrangler.jsonc` publie `apps/web/dist` (repli sur `index.html` pour les routes) ; `cloudflare/worker.js` répond aux requêtes `/api/*` par une erreur 503 explicite (`api_non_deployee`), car l'API Fastify et PostgreSQL ne s'exécutent pas sur Workers. Node.js fixé par `.node-version` (`engine-strict`).
 
 ---
@@ -397,5 +403,32 @@ Prévues pour les phases suivantes (non installées) : maplibre-gl 6.15.0, pmtil
 | D8 | **Appliqué (phase 4)** : contours IGN ADMIN EXPRESS COG CARTO 2026 (Licence Ouverte 2.0), simplifiés par nos soins | contours Etalab (ODbL) | Pas d'obligation de partage à l'identique ; mêmes géométries IGN pour la métropole et les DROM. |
 | D9 | Référentiel territorial en **fichiers versionnés par millésime** (manifeste, TopoJSON, index) chargés en mémoire par l'API | tables `Territory` en base | Données statiques, reproductibles, servies telles quelles à la carte ; aucune importation en base à maintenir par environnement. |
 | D10 | Résultats communaux d'une partie **recalculés à la demande** (comportement des groupes enregistré dans l'état, base électorale identifiée par une empreinte) ; agrégats départementaux et régionaux dans l'état | blocs de résultats communaux en base | ~500 000 nombres par tour évités dans chaque sauvegarde ; export/import inchangés ; résultat identique garanti par test, refus explicite si la base électorale a changé. |
+| D13 | **Phase 8** (décision de l'utilisateur, Q9) : application Android **hors ligne** ; le moteur s'exécute sur l'appareil dans `@r2027/local-api`, qui réimplémente le contrat de l'API au-dessus d'IndexedDB ; l'interface est inchangée (transport remplaçable) | enveloppe Android connectée à un serveur hébergé | Aucun hébergeur choisi (Q6) ; jeu jouable partout sans réseau ni compte ; même moteur, mêmes schémas, même format d'export : une partie passe de l'application au serveur et inversement. D2 reste vrai pour la version web. |
 | D12 | **Phase 5 ter** : médias réels **commités** dans `packages/rulesets` (`medias-2027.json`, empreinte vérifiée) et logos commités dans `apps/web/public/medias` ; aucune ligne éditoriale modélisée, exposition par parti tirée des temps de parole mesurés | ligne éditoriale paramétrée par organe ; données chargées à l'exécution | Faits mesurés et datés plutôt qu'une appréciation du jeu sur des médias réels ; partie reproductible hors ligne ; aucune requête du navigateur vers des services tiers. |
 | D11 | **Phase 5 bis** : fiches des personnalités réelles **commitées** dans `packages/rulesets` (empreinte vérifiée : une réimportation impose une nouvelle version du jeu de règles) et photos commitées dans `apps/web/public` | fiches et photos chargées à l'exécution depuis Wikipédia, Wikidata et Commons | Partie reproductible et jouable hors ligne ; chaque fait vérifié à l'import, daté et sourcé ; aucune requête du navigateur vers des services tiers (vie privée, disponibilité). |
+
+---
+
+## 14. Application Android hors ligne (phase 8)
+
+```
+apps/mobile (Vite + Capacitor 8) ── WebView Android, https://localhost servi depuis l'APK
+ ├─ écrans de apps/web (mountApp), transport d'API remplacé (setApiTransport)
+ │    requête { méthode, URL, en-têtes, corps } ─► copie JSON ─► LocalApi.handle ─► copie JSON
+ ├─ plateforme « local » : export par la feuille de partage (Filesystem + Share), avertissement
+ │    si Android n'accorde pas le stockage persistant (navigator.storage.persist)
+ └─ packages/local-api
+      ├─ LocalApi : mêmes routes, codes d'erreur et schémas que l'API Fastify (parties,
+      │    progression idempotente, avance rapide, sauvegardes automatiques et manuelles,
+      │    journal paginé, export/import avec empreinte, résultats communaux, carte, règles)
+      ├─ IndexedDbStore : base « republique-2027 », tables games, saves, events, advances ;
+      │    toutes les écritures d'une requête dans une seule transaction (tout ou rien)
+      └─ LocalGeo : référentiel de démonstration COG 2026 embarqué (import.meta.glob),
+           base électorale de démonstration fictive (comme l'API sans import local)
+```
+
+- **Même contrat** : les tests de `local-api` rejouent les scénarios de l'API (idempotence, clé réutilisée, semaine périmée, avance rapide arrêtée avant une décision, rotation des sauvegardes automatiques, import refusé si modifié) ; l'interface vérifie chaque réponse avec les schémas de `@r2027/shared`, quelle que soit sa provenance.
+- **Rétention** : seules les réponses des 10 dernières progressions sont gardées pour l'idempotence (chaque réponse contient l'état complet) ; une requête plus ancienne rejouée reçoit « semaine périmée ». Base IndexedDB en version 2 (index des progressions par partie et par date), montée de version testée depuis la version 1.
+- **Requêtes sérialisées** : une file d'attente traite les requêtes une à une (pas d'écriture concurrente sur une même partie) ; horodatages strictement croissants.
+- **Ce qui diffère du serveur** : pas de session (l'appareil n'a qu'un joueur), pas de limitation de débit, pas de résultats réels de 2022 (licence non précisée, Q8), référentiel limité à la démonstration (Ain, Corse, DROM).
+- **Construction** : `pnpm --filter @r2027/mobile build` puis `npx cap sync android` et Gradle ; le workflow `.github/workflows/android.yml` produit l'APK et l'essaie sur un émulateur Android 14 en mode avion. Commandes détaillées : [apps/mobile/README.md](../apps/mobile/README.md).

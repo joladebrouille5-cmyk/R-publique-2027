@@ -257,3 +257,26 @@ export const JournalPageSchema = z.object({
   nextBefore: z.string().nullable(),
 });
 export type JournalPage = z.infer<typeof JournalPageSchema>;
+
+/**
+ * Curseur du journal : horodatage et identifiant de la dernière entrée lue (« date|id »), pour
+ * qu'une page ne saute aucune des entrées de même horodatage. Un horodatage seul (ancien
+ * format) reste accepté.
+ */
+export const JournalCursorSchema = z
+  .string()
+  .max(100)
+  .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z(\|[0-9a-f-]{36})?$/)
+  .transform((cursor) => {
+    const [createdAt, id] = cursor.split('|') as [string, string | undefined];
+    return { createdAt: new Date(createdAt).toISOString(), id: id ?? null };
+  });
+export type JournalCursor = z.infer<typeof JournalCursorSchema>;
+
+export const journalCursor = (entry: { createdAt: string; id: string }): string =>
+  `${entry.createdAt}|${entry.id}`;
+
+/** Entrée strictement antérieure au curseur dans l'ordre du journal (date puis id décroissants). */
+export const isBeforeCursor = (entry: { createdAt: string; id: string }, cursor: JournalCursor) =>
+  entry.createdAt < cursor.createdAt ||
+  (entry.createdAt === cursor.createdAt && cursor.id !== null && entry.id < cursor.id);

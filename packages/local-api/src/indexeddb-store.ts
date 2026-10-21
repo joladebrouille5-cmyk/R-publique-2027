@@ -13,7 +13,8 @@ import {
 // par une seule transaction IndexedDB : elles sont appliquées ensemble, ou pas du tout.
 
 const DATABASE = 'republique-2027';
-const VERSION = 1;
+/** Version 2 : index des progressions par partie et date (rétention de l'idempotence). */
+const VERSION = 2;
 
 function promised<T>(request: IDBRequest<T>): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -24,16 +25,24 @@ function promised<T>(request: IDBRequest<T>): Promise<T> {
 
 function open(factory: IDBFactory): Promise<IDBDatabase> {
   const request = factory.open(DATABASE, VERSION);
-  request.onupgradeneeded = () => {
+  // Montée de version incrémentale : une base existante garde ses données.
+  request.onupgradeneeded = (event) => {
     const db = request.result;
-    db.createObjectStore('games', { keyPath: 'id' });
-    db.createObjectStore('saves', { keyPath: 'id' }).createIndex('gameId', 'gameId');
-    db.createObjectStore('events', { keyPath: 'id' }).createIndex('gameId', 'gameId');
-    db.createObjectStore('advances', { keyPath: 'id' }).createIndex(
-      'gameKey',
-      ['gameId', 'idempotencyKey'],
-      { unique: true },
-    );
+    if (event.oldVersion < 1) {
+      db.createObjectStore('games', { keyPath: 'id' });
+      db.createObjectStore('saves', { keyPath: 'id' }).createIndex('gameId', 'gameId');
+      db.createObjectStore('events', { keyPath: 'id' }).createIndex('gameId', 'gameId');
+      db.createObjectStore('advances', { keyPath: 'id' }).createIndex(
+        'gameKey',
+        ['gameId', 'idempotencyKey'],
+        { unique: true },
+      );
+    }
+    if (event.oldVersion < 2) {
+      request
+        .transaction!.objectStore('advances')
+        .createIndex('gameCreated', ['gameId', 'createdAt']);
+    }
   };
   return promised(request);
 }
@@ -73,6 +82,25 @@ export class IndexedDbStore implements Store {
       'advances',
       (s) => s.index('gameKey').get([gameId, idempotencyKey]) as IDBRequest<AdvanceRow | undefined>,
     );
+  }
+
+  staleAdvances(gameId: string, keep: number): Promise<string[]> {
+    // Parcours des seules clés (sans charger les réponses), des plus récentes aux plus anciennes ;
+    // la rétention borne la table à quelques lignes par partie.
+    return new Promise((resolve, reject) => {
+      const store = this.db.transaction('advances', 'readonly').objectStore('advances');
+      const request = store.index('gameCreated').openKeyCursor(null, 'prev');
+      const ids: string[] = [];
+      let seen = 0;
+      request.onerror = () => reject(request.error ?? new Error('Erreur IndexedDB'));
+      request.onsuccess = () => {
+        const cursor = request.result;
+        if (!cursor) return resolve(ids);
+        if ((cursor.key as [string, string])[0] === gameId && seen++ >= keep)
+          ids.push(String(cursor.primaryKey));
+        cursor.continue();
+      };
+    });
   }
 
   commit(operations: readonly Operation[]): Promise<void> {

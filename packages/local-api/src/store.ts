@@ -75,6 +75,8 @@ export interface Store {
   saves(gameId: string): Promise<SaveRow[]>;
   events(gameId: string): Promise<EventRow[]>;
   advance(gameId: string, idempotencyKey: string): Promise<AdvanceRow | undefined>;
+  /** Identifiants des progressions d'une partie au-delà des `keep` plus récentes. */
+  staleAdvances(gameId: string, keep: number): Promise<string[]>;
   /** Applique toutes les écritures d'une requête, ou aucune. */
   commit(operations: readonly Operation[]): Promise<void>;
 }
@@ -112,6 +114,14 @@ export class MemoryStore implements Store {
       (a) => a.gameId === gameId && a.idempotencyKey === idempotencyKey,
     );
     return row && clone(row);
+  }
+
+  async staleAdvances(gameId: string, keep: number) {
+    return [...this.tables.advances.values()]
+      .filter((a) => a.gameId === gameId)
+      .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
+      .slice(keep)
+      .map((a) => a.id);
   }
 
   async commit(operations: readonly Operation[]) {

@@ -439,9 +439,23 @@ model EconomicIndicator {
 }
 ```
 
+### 5.1 Stockage de l'application Android (phase 8)
+
+L'application hors ligne n'a pas de base PostgreSQL : `packages/local-api` conserve les mêmes enregistrements dans une base IndexedDB `republique-2027` (version 2 ; montée de version incrémentale, sans perte) sur l'appareil. Le format de `GameState` et des sauvegardes est identique (même `SAVE_SCHEMA_VERSION`, mêmes migrations à la lecture, même empreinte) : un export de l'application s'importe sur le serveur et inversement.
+
+| Magasin | Clé | Index | Équivalent serveur |
+|---|---|---|---|
+| `games` | `id` | — | `game` (état courant, version pour le verrou optimiste) |
+| `saves` | `id` | `gameId` | `game_save` (automatiques : 8 plus récentes conservées ; manuelles : 5 emplacements ; avant événement ; import) |
+| `events` | `id` | `gameId` | `game_event` (journal, paginé à la lecture) |
+| `advances` | `id` | `gameKey` = (`gameId`, `idempotencyKey`), unique ; `gameCreated` = (`gameId`, `createdAt`) (version 2) | `game_advance` (progressions idempotentes : même clé et même requête ⇒ même réponse ; seules les 10 dernières sont gardées sur l'appareil) |
+
+Pas de table des sessions (un seul joueur par appareil) ni des projections de résultats (recalculées à la demande, comme sur le serveur). Toutes les écritures d'une requête sont appliquées dans une seule transaction IndexedDB (tout ou rien).
+
 ## 6. Invariants vérifiés par tests
 
 - `Σ voix = exprimes`, `votants = blancs + nuls + exprimes`, `inscrits ≥ votants`, valeurs ≥ 0 (phase 3 : vérifié sur chaque groupe et sur le national ; `abstentions = inscrits − votants`).
+- Phase 8 : l'application hors ligne relit ses parties après fermeture et réouverture de la base ; une transaction dont une écriture échoue n'applique rien ; une progression rejouée avec la même clé renvoie la même réponse sans recalcul ; un export corrompu ou incohérent (empreinte, format) est refusé à l'import ; le journal se pagine sans sauter d'entrée de même horodatage (curseur date + identifiant).
 - Phase 4 : national = Σ régions + hors carte ; région = Σ départements ; département = Σ communes (recalculées à l'identique) ; somme des lignes 2022 importées = totaux proclamés à l'unité ; fusions de communes sommées exactement, scissions ventilées sans perte (propriété) ; import refusé si une commune n'a pas exactement une géométrie.
 - Phase 3 : résultat national = somme exacte des groupes d'électeurs ; répartition au plus fort reste exacte (propriété) ; une consigne de vote ne transfère qu'une partie des électeurs de l'éliminé ; le décompte ne dépend pas de la difficulté ; un aller-retour JSON de l'état ne change rien (aucun `−0`).
 - Phase 5 : budget = Σ recettes − dépenses pour chaque candidat à chaque semaine (propriété) ; aucune dépense acceptée au-delà du plafond légal (dépassement détecté et signalé) ; dons de personnes morales et en espèces au-delà de 150 € refusés, part d'un don au-delà de 4 600 € refusée, chaque refus journalisé ; présentations comptées ≤ 50 par département, présentations invalidées jamais comptées ; un candidat sous le seuil à la clôture n'est pas au premier tour ; un candidat rallié non plus ; la difficulté ne change ni le décompte des voix ni les règles (propriété).

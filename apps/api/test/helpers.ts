@@ -33,6 +33,7 @@ export async function testApp(
       NODE_ENV: 'test',
       SESSION_SECRET: TEST_SECRET,
       RATE_LIMIT_MAX: 10_000,
+      RATE_LIMIT_WRITE_MAX: 10_000,
       TRUST_PROXY: false,
       // Jeu de démonstration commité : mêmes résultats en local et en CI.
       GEO_DATA_DIR: DEMO_GEO_DIR,

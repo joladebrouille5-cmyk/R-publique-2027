@@ -44,6 +44,13 @@ async function findReplay(
   return AdvanceResponseSchema.parse(previous.response);
 }
 
+/**
+ * Rend la main à la boucle d'événements entre deux semaines d'une avance rapide : jusqu'à
+ * 52 semaines de calcul ne bloquent pas les requêtes des autres joueurs (le verrou optimiste
+ * de la partie protège l'écriture finale).
+ */
+const yieldToEventLoop = () => new Promise<void>((resolve) => setImmediate(resolve));
+
 function runEngine(...args: Parameters<typeof advanceWeek>): AdvanceResult {
   try {
     return advanceWeek(...args);
@@ -205,6 +212,7 @@ export async function advanceGame(
   let current: Snapshot = { state, stateHash };
   let stop: FastForwardStop | null = null;
   for (let i = 0; i < requested && stop === null; i++) {
+    if (i > 0) await yieldToEventLoop();
     const plan =
       i === 0
         ? {

@@ -9,6 +9,7 @@ import {
   CreateSaveRequestSchema,
   IDEMPOTENCY_HEADER,
   IdempotencyKeySchema,
+  JournalCursorSchema,
   RestoreSaveRequestSchema,
   type ApiError,
   type HealthResponse,
@@ -27,12 +28,12 @@ import { communeResultsOf, historicalStatus, historicalValues } from './services
 import { createNewGame, getGame, listGames } from './services/games';
 import { journalPage } from './services/journal';
 import { createManualSave, listSaves, restoreSave } from './services/saves';
-import { resolveUserId } from './session';
+import { existingUserId, resolveUserId } from './session';
 import { API_VERSION } from './version';
 
 export type AppOptions = {
   config: Pick<Config, 'NODE_ENV' | 'SESSION_SECRET' | 'RATE_LIMIT_MAX' | 'TRUST_PROXY'> &
-    Partial<Pick<Config, 'GEO_DATA_DIR' | 'RESULTS_DATA_DIR'>>;
+    Partial<Pick<Config, 'GEO_DATA_DIR' | 'RESULTS_DATA_DIR' | 'RATE_LIMIT_WRITE_MAX'>>;
   db: Database;
   /** Référentiel cartographique ; chargé selon GEO_DATA_DIR s'il n'est pas fourni. */
   geo?: GeoRepository;
@@ -50,10 +51,23 @@ const HistoryParams = z.object({
 const GameParams = z.object({ gameId: z.uuid() });
 const SaveParams = z.object({ gameId: z.uuid(), saveId: z.uuid() });
 const JournalQuery = z.object({
-  before: z.iso.datetime().optional(),
+  before: JournalCursorSchema.optional(),
   limit: z.coerce.number().int().min(1).max(50).default(20),
 });
 const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+/** Lecteur sans session : identifiant qu'aucun utilisateur ne porte (listes vides, 404). */
+const NO_USER = '00000000-0000-4000-8000-000000000000';
+
+const trustHops = (hops: number) => (_address: string, hop: number) => hop < hops;
+
+/** Vrai si une chaîne du corps contient un caractère NUL (refusé par PostgreSQL). */
+function containsNul(value: unknown, depth = 0): boolean {
+  if (typeof value === 'string') return value.includes('\u0000');
+  if (depth > 64 || value === null || typeof value !== 'object') return false;
+  for (const [key, item] of Object.entries(value))
+    if (key.includes('\u0000') || containsNul(item, depth + 1)) return true;
+  return false;
+}
 const BODY_LIMIT_BYTES = 1024 * 1024;
 
 function errorBody(code: string, message: string, details?: unknown): ApiError {
@@ -69,7 +83,9 @@ export async function buildApp({ config, db, geo }: AppOptions): Promise<Fastify
   const territoryFor = (ruleset: Ruleset) => electoral.baselineFor(ruleset);
   const app = Fastify({
     bodyLimit: BODY_LIMIT_BYTES,
-    trustProxy: config.TRUST_PROXY,
+    // Nombre d'intermédiaires : les n premiers sauts (depuis le serveur) sont de confiance.
+    trustProxy:
+      typeof config.TRUST_PROXY === 'number' ? trustHops(config.TRUST_PROXY) : config.TRUST_PROXY,
     logger:
       config.NODE_ENV === 'test'
         ? false
@@ -93,6 +109,16 @@ export async function buildApp({ config, db, geo }: AppOptions): Promise<Fastify
       return reply
         .code(415)
         .send(errorBody('type_de_contenu_refuse', 'Les requêtes d’écriture doivent être en JSON.'));
+    }
+  });
+
+  // Caractère NUL : refusé par PostgreSQL (texte et jsonb) ; une requête qui en contient est
+  // invalide plutôt qu'une erreur interne.
+  app.addHook('preValidation', async (request, reply) => {
+    if (request.body !== undefined && containsNul(request.body)) {
+      return reply
+        .code(400)
+        .send(errorBody('requete_invalide', 'Requête invalide : caractère nul interdit.'));
     }
   });
 
@@ -123,8 +149,18 @@ export async function buildApp({ config, db, geo }: AppOptions): Promise<Fastify
     reply.code(404).send(errorBody('introuvable', 'Ressource introuvable.')),
   );
 
+  // Écritures : l'utilisateur est créé à la première (cookie posé alors). Lectures : aucun
+  // utilisateur créé pour un visiteur sans session (listes vides, parties introuvables).
   const userOf = (request: FastifyRequest, reply: FastifyReply) =>
     resolveUserId(db, request, reply, { secureCookie: config.NODE_ENV === 'production' });
+  const readerOf = async (request: FastifyRequest) =>
+    (await existingUserId(db, request)) ?? NO_USER;
+  // Écritures coûteuses (création, import, progression) : limite propre par IP.
+  const writeLimit = {
+    config: {
+      rateLimit: { max: config.RATE_LIMIT_WRITE_MAX ?? 60, timeWindow: '1 minute' },
+    },
+  };
 
   app.get('/api/health', async (_request, reply) => {
     let database: HealthResponse['database'] = 'ok';
@@ -143,25 +179,25 @@ export async function buildApp({ config, db, geo }: AppOptions): Promise<Fastify
 
   app.get('/api/session', async (request, reply) => ({ userId: await userOf(request, reply) }));
 
-  app.get('/api/games', async (request, reply) => listGames(db, await userOf(request, reply)));
+  app.get('/api/games', async (request) => listGames(db, await readerOf(request)));
 
-  app.post('/api/games', async (request, reply) => {
+  app.post('/api/games', writeLimit, async (request, reply) => {
     const body = CreateGameRequestSchema.parse(request.body);
     const game = await createNewGame(db, await userOf(request, reply), body);
     return reply.code(201).send(game);
   });
 
-  app.get('/api/games/:gameId', async (request, reply) => {
+  app.get('/api/games/:gameId', async (request) => {
     const { gameId } = GameParams.parse(request.params);
-    return getGame(db, await userOf(request, reply), gameId);
+    return getGame(db, await readerOf(request), gameId);
   });
 
-  app.post('/api/games/import', async (request, reply) => {
+  app.post('/api/games/import', writeLimit, async (request, reply) => {
     const game = await importGame(db, await userOf(request, reply), request.body);
     return reply.code(201).send(game);
   });
 
-  app.post('/api/games/:gameId/advance', async (request, reply) => {
+  app.post('/api/games/:gameId/advance', writeLimit, async (request, reply) => {
     const { gameId } = GameParams.parse(request.params);
     const key = IdempotencyKeySchema.safeParse(request.headers[IDEMPOTENCY_HEADER]);
     if (!key.success) {
@@ -180,15 +216,15 @@ export async function buildApp({ config, db, geo }: AppOptions): Promise<Fastify
     return outcome.response;
   });
 
-  app.get('/api/games/:gameId/journal', async (request, reply) => {
+  app.get('/api/games/:gameId/journal', async (request) => {
     const { gameId } = GameParams.parse(request.params);
     const query = JournalQuery.parse(request.query);
-    return journalPage(db, await userOf(request, reply), gameId, query);
+    return journalPage(db, await readerOf(request), gameId, query);
   });
 
   app.get('/api/games/:gameId/export', async (request, reply) => {
     const { gameId } = GameParams.parse(request.params);
-    const { fileName, document } = await exportGame(db, await userOf(request, reply), gameId);
+    const { fileName, document } = await exportGame(db, await readerOf(request), gameId);
     return reply
       .header('content-disposition', `attachment; filename="${fileName}"`)
       .header('cache-control', 'no-store')
@@ -213,17 +249,10 @@ export async function buildApp({ config, db, geo }: AppOptions): Promise<Fastify
     return reply.send(gzip ? file.gzip : file.raw);
   });
 
-  app.get('/api/games/:gameId/resultats/:tour/communes', async (request, reply) => {
+  app.get('/api/games/:gameId/resultats/:tour/communes', async (request) => {
     const { gameId, tour } = TourParams.parse(request.params);
     const { departement } = DepartementQuery.parse(request.query);
-    return communeResultsOf(
-      db,
-      await userOf(request, reply),
-      gameId,
-      tour,
-      departement,
-      territoryFor,
-    );
+    return communeResultsOf(db, await readerOf(request), gameId, tour, departement, territoryFor);
   });
 
   // Résultats historiques réels (importés localement par `pnpm data:resultats`).
@@ -257,9 +286,9 @@ export async function buildApp({ config, db, geo }: AppOptions): Promise<Fastify
     }
   });
 
-  app.get('/api/games/:gameId/saves', async (request, reply) => {
+  app.get('/api/games/:gameId/saves', async (request) => {
     const { gameId } = GameParams.parse(request.params);
-    return listSaves(db, await userOf(request, reply), gameId);
+    return listSaves(db, await readerOf(request), gameId);
   });
 
   app.post('/api/games/:gameId/saves', async (request, reply) => {
