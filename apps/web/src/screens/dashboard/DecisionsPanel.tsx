@@ -26,6 +26,8 @@ export function DecisionsPanel({ decisions, answers, onAnswer }: Props) {
               <Badge tone="simule">Consigne de vote</Badge>
             ) : decision.kind === 'gouvernement' ? (
               <Badge tone="alerte">Nomination</Badge>
+            ) : decision.kind === 'texte' ? (
+              <Badge tone="alerte">Parlement</Badge>
             ) : (
               <Badge tone="fictif">Événement fictif</Badge>
             )}

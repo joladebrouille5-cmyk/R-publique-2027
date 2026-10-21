@@ -203,9 +203,15 @@ export function Dashboard() {
               vous présenter à la présidentielle suivante.
             </p>
           )}
+          {state.parlement && (
+            <p>
+              Assemblée nationale : {state.parlement.textes.filter((b) => !b.issue).length} texte(s)
+              en cours, {state.parlement.reformes.filter((r) => r.appliquee).length} réforme(s) en
+              vigueur.
+            </p>
+          )}
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Parlement, économie, crises et législatives : étapes suivantes de la phase 6, pas encore
-            jouables.
+            Économie, crises et législatives : étapes suivantes de la phase 6, pas encore jouables.
           </p>
           <p className="flex flex-wrap gap-x-4">
             <Link
@@ -213,6 +219,12 @@ export function Dashboard() {
               className="text-republique-600 underline dark:text-republique-100"
             >
               Le gouvernement
+            </Link>
+            <Link
+              to="../parlement"
+              className="text-republique-600 underline dark:text-republique-100"
+            >
+              Le Parlement
             </Link>
             <Link
               to="../resultats"

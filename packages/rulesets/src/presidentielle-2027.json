@@ -1,7 +1,7 @@
 {
   "id": "presidentielle-2027",
-  "version": "6.0.0",
-  "libelle": "Présidentielle 2027 et quinquennat — campagne, parrainages, financement, médias réels, présidence et gouvernement (phase 6)",
+  "version": "7.0.0",
+  "libelle": "Présidentielle 2027 et quinquennat — campagne, parrainages, financement, médias réels, présidence, gouvernement et Parlement (phase 6)",
   "verifieLe": "2026-10-21",
   "sources": {
     "elysee-cm-2026-07-01": {
@@ -42,6 +42,21 @@
     "constitution-art-7": {
       "titre": "Constitution du 4 octobre 1958, article 7 (élection « vingt jours au moins et trente-cinq jours au plus avant l'expiration des pouvoirs du président en exercice ») — texte cité par l'article Wikipédia « Article 7 de la Constitution de la Cinquième République française » (révision 240299785 du 12/10/2026) ; texte de Légifrance non relu (accès refusé)",
       "url": "https://fr.wikipedia.org/w/index.php?title=Article_7_de_la_Constitution_de_la_Cinqui%C3%A8me_R%C3%A9publique_fran%C3%A7aise&oldid=240299785",
+      "consulteLe": "2026-10-21"
+    },
+    "constitution-art-28": {
+      "titre": "Constitution du 4 octobre 1958, article 28 (session ordinaire du premier jour ouvrable d'octobre au dernier jour ouvrable de juin) — texte cité par l'article Wikipédia « Article 28 de la Constitution de la Cinquième République française » (révision 234377898 du 23/03/2026) ; texte de Légifrance non relu (accès refusé)",
+      "url": "https://fr.wikipedia.org/w/index.php?title=Article_28_de_la_Constitution_de_la_Cinqui%C3%A8me_R%C3%A9publique_fran%C3%A7aise&oldid=234377898",
+      "consulteLe": "2026-10-21"
+    },
+    "constitution-art-45": {
+      "titre": "Constitution du 4 octobre 1958, article 45 (navette, commission mixte paritaire, dernier mot à l'Assemblée nationale) — texte cité par l'article Wikipédia « Article 45 de la Constitution de la Cinquième République française » (révision 230532500 du 10/11/2025) ; texte de Légifrance non relu (accès refusé)",
+      "url": "https://fr.wikipedia.org/w/index.php?title=Article_45_de_la_Constitution_de_la_Cinqui%C3%A8me_R%C3%A9publique_fran%C3%A7aise&oldid=230532500",
+      "consulteLe": "2026-10-21"
+    },
+    "constitution-art-49": {
+      "titre": "Constitution du 4 octobre 1958, article 49 (motion de censure signée par un dixième des membres et adoptée à la majorité des membres ; engagement de responsabilité sur un texte autre que financier une fois par session) — texte cité par l'article Wikipédia « Article 49 de la Constitution de la Cinquième République française » (révision 240034355 du 03/10/2026) ; texte de Légifrance non relu (accès refusé)",
+      "url": "https://fr.wikipedia.org/w/index.php?title=Article_49_de_la_Constitution_de_la_Cinqui%C3%A8me_R%C3%A9publique_fran%C3%A7aise&oldid=240034355",
       "consulteLe": "2026-10-21"
     }
   },
@@ -3286,6 +3301,64 @@
         "institution": "remaniement"
       }
     ]
+  },
+  "parlement": {
+    "note": "Règles constitutionnelles citées (art. 28, 45 et 49) ; tout le reste — calendrier des textes, modèle de vote par groupe, concessions, Sénat simplifié, décision de censurer et effet des réformes sur la popularité — est un paramètre de jeu (hypothèse). Les votes sont ceux des groupes, simulés : aucun vote individuel n'est attribué à un député réel. Le Sénat n'est pas modélisé groupe par groupe : son accord est tiré au sort, l'Assemblée ayant le dernier mot en cas de désaccord.",
+    "fichier": "assemblee-2026.json",
+    "empreinte": "c8a7a825905cab4763a1e15efdcf8d42690562907723bf748d26dd86b3f6e222",
+    "regles": {
+      "statut": "officiel",
+      "sourceIds": ["constitution-art-28", "constitution-art-45", "constitution-art-49"],
+      "signaturesCensure": 0.1,
+      "autres49_3ParSession": 1,
+      "moisOuvertureSession": 10,
+      "regle": "Motion de censure recevable si elle est signée par un dixième au moins des membres de l'Assemblée, adoptée seulement à la majorité des membres qui la composent (seuls les votes favorables sont recensés) ; engagement de responsabilité sur un projet autre que de finances ou de financement de la sécurité sociale : une fois par session ordinaire, qui commence en octobre ; en cas de désaccord persistant avec le Sénat, l'Assemblée statue définitivement."
+    },
+    "calendrier": {
+      "statut": "hypothese",
+      "intervalleDepotSemaines": 4,
+      "textesSimultanesMax": 2,
+      "commissionSemaines": 3,
+      "navetteSemaines": 6,
+      "lectureDefinitiveSemaines": 3
+    },
+    "vote": {
+      "statut": "hypothese",
+      "poidsProximite": 1,
+      "distanceNeutre": 0.6,
+      "poidsAlignement": 0.4,
+      "seuilSoutien": 85,
+      "seuilOpposition": 50,
+      "cohesion": 0.95,
+      "cohesionNonInscrits": 0.5,
+      "participation": 0.9,
+      "seuilAbstention": 0.15,
+      "alea": 0.1,
+      "margeConfort": 0.05
+    },
+    "concessions": {
+      "statut": "hypothese",
+      "max": 2,
+      "soutienParConcession": 0.15,
+      "reductionEffet": 0.25
+    },
+    "senat": {
+      "statut": "hypothese",
+      "probabiliteAccord": 0.7,
+      "note": "Ordre de grandeur inspiré de l'article Wikipédia consacré à l'article 45 (« en moyenne 70 % [des textes] depuis 1973 » adoptés de façon conjointe), non vérifié auprès d'une source officielle."
+    },
+    "censure": {
+      "statut": "hypothese",
+      "poidsPopularite": 1,
+      "coutPopularite49_3": 150,
+      "coutPopulariteCensure": 100
+    },
+    "reformes": {
+      "statut": "hypothese",
+      "effetPopulariteMax": 150,
+      "accueilNeutre": 0.5,
+      "bonusPublics": 0.3
+    }
   },
   "debats": {
     "statut": "hypothese",

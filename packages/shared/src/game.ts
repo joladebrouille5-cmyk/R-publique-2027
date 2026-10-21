@@ -18,6 +18,7 @@ import {
   CandidateIdentitySchema,
   CandidateIdentityV5Schema,
 } from './politics';
+import { ParliamentSchema } from './parlement';
 import { CycleSchema, QuinquennatSchema, QuinquennatSummarySchema } from './quinquennat';
 import { ResourceKeySchema, ResourcesSchema } from './resources';
 
@@ -248,12 +249,17 @@ export const PendingDecisionV7Schema = PendingDecisionV2Schema.extend({
   kind: z.enum(['evenement', 'consigne']),
 }).strict();
 
+/** Décision obligatoire au format 8 (événement, consigne, gouvernement), figée. */
+export const PendingDecisionV8Schema = PendingDecisionV2Schema.extend({
+  kind: z.enum(['evenement', 'consigne', 'gouvernement']),
+}).strict();
+
 /**
- * Décision obligatoire : réponse à un événement, consigne de vote entre les deux tours, ou
- * choix du gouvernement (phase 6 : nomination du Premier ministre).
+ * Décision obligatoire : réponse à un événement, consigne de vote entre les deux tours, choix
+ * du gouvernement (nomination du Premier ministre) ou conduite d'un texte au Parlement (phase 6).
  */
 export const PendingDecisionSchema = PendingDecisionV2Schema.extend({
-  kind: z.enum(['evenement', 'consigne', 'gouvernement']),
+  kind: z.enum(['evenement', 'consigne', 'gouvernement', 'texte']),
 }).strict();
 export type PendingDecision = z.infer<typeof PendingDecisionSchema>;
 
@@ -487,16 +493,10 @@ export const PresidentialArchiveSchema = z
   .strict();
 export type PresidentialArchive = z.infer<typeof PresidentialArchiveSchema>;
 
-/**
- * État complet d'une partie, format de sauvegarde n° 8 (phase 6) : cycle électoral, présidence
- * et gouvernement, archives des présidentielles et des quinquennats précédents. Toute évolution
- * s'accompagne d'un nouveau numéro de format et d'une migration (packages/save-engine).
- * L'aléa ne figure pas dans l'état : chaque tirage est dérivé de la graine, de la semaine et
- * de son contexte (module, action, événement, groupe d'électeurs…).
- */
-export const GameStateSchema = GameStateV7Schema.extend({
+/** État au format 8 (phase 6, P6-01 à P6-03), figé pour les migrations. */
+export const GameStateV8Schema = GameStateV7Schema.extend({
   meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(8) }).strict(),
-  pendingDecisions: z.array(PendingDecisionSchema),
+  pendingDecisions: z.array(PendingDecisionV8Schema),
   cycle: CycleSchema,
   /** Présidence en cours ; null pendant une campagne présidentielle. */
   quinquennat: QuinquennatSchema.nullable(),
@@ -506,6 +506,21 @@ export const GameStateSchema = GameStateV7Schema.extend({
       quinquennats: z.array(QuinquennatSummarySchema),
     })
     .strict(),
+}).strict();
+export type GameStateV8 = z.infer<typeof GameStateV8Schema>;
+
+/**
+ * État complet d'une partie, format de sauvegarde n° 9 (phase 6) : cycle électoral, présidence
+ * et gouvernement, Parlement (groupes, textes, votes, réformes), archives des présidentielles et
+ * des quinquennats précédents. Toute évolution s'accompagne d'un nouveau numéro de format et
+ * d'une migration (packages/save-engine). L'aléa ne figure pas dans l'état : chaque tirage est
+ * dérivé de la graine, de la semaine et de son contexte (module, action, événement, groupe…).
+ */
+export const GameStateSchema = GameStateV8Schema.extend({
+  meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(9) }).strict(),
+  pendingDecisions: z.array(PendingDecisionSchema),
+  /** Assemblée nationale et textes ; null tant qu'aucun quinquennat n'a commencé. */
+  parlement: ParliamentSchema.nullable(),
 }).strict();
 export type GameState = z.infer<typeof GameStateSchema>;
 

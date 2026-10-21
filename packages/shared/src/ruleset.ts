@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { IsoDateSchema } from './game';
 import { AiObjectiveSchema } from './campaign';
+import { RealAssemblySchema } from './assemblee';
 import { RealMediaSchema } from './medias';
 import { RealPersonalitiesSchema } from './personalities';
 import { MinisterProfileSchema } from './quinquennat';
@@ -229,6 +230,108 @@ export const QuinquennatRulesSchema = z
   })
   .strict();
 export type QuinquennatRules = z.infer<typeof QuinquennatRulesSchema>;
+
+const Weeks = z.number().int().min(1);
+
+/**
+ * Parlement (phase 6, P6-04) : règles constitutionnelles citées (motion de censure, engagement
+ * de responsabilité, session ordinaire) et paramètres de jeu (hypothèses) de la procédure, des
+ * votes par groupe, des concessions, du Sénat simplifié et de l'effet des réformes. La
+ * composition réelle de l'Assemblée (`assemblee`) vient de `pnpm data:assemblee` ; son
+ * empreinte est vérifiée (une nouvelle importation impose une nouvelle version du jeu de règles).
+ */
+export const ParliamentRulesSchema = z
+  .object({
+    note: z.string().min(1),
+    fichier: z.string().regex(/^[a-z0-9-]+\.json$/),
+    /** SHA-256 de la sérialisation JSON de la composition (`JSON.stringify`). */
+    empreinte: z.string().regex(/^[0-9a-f]{64}$/),
+    regles: z
+      .object({
+        statut: DataStatusSchema,
+        sourceIds: z.array(Id).min(1),
+        /** Part des membres qui doivent signer une motion de censure (art. 49 al. 2). */
+        signaturesCensure: Fraction,
+        /** Engagements de responsabilité sur un texte autre que financier, par session (al. 3). */
+        autres49_3ParSession: z.number().int().min(0),
+        /** Mois d'ouverture de la session ordinaire (art. 28). */
+        moisOuvertureSession: z.number().int().min(1).max(12),
+        regle: z.string().min(1),
+      })
+      .strict(),
+    calendrier: z
+      .object({
+        statut: z.literal('hypothese'),
+        intervalleDepotSemaines: Weeks,
+        textesSimultanesMax: z.number().int().min(1),
+        commissionSemaines: Weeks,
+        navetteSemaines: Weeks,
+        lectureDefinitiveSemaines: Weeks,
+      })
+      .strict(),
+    vote: z
+      .object({
+        statut: z.literal('hypothese'),
+        poidsProximite: z.number().min(0),
+        /** Distance (axes du jeu, 0 à 2,83) entre un groupe et un texte qui le laisse neutre. */
+        distanceNeutre: z.number().positive(),
+        poidsAlignement: z.number().min(0),
+        /** Proximité (0 à 100) avec le président au-delà de laquelle un groupe le soutient. */
+        seuilSoutien: z.number().int().min(0).max(100),
+        /** Proximité en deçà de laquelle un groupe est dans l'opposition. */
+        seuilOpposition: z.number().int().min(0).max(100),
+        cohesion: Fraction,
+        cohesionNonInscrits: Fraction,
+        participation: Fraction,
+        /** Soutien (en valeur absolue) en deçà duquel un groupe s'abstient. */
+        seuilAbstention: Fraction,
+        alea: Fraction,
+        /** Avance minimale des voix favorables (en proportion) pour voter sans hésiter. */
+        margeConfort: Fraction,
+      })
+      .strict(),
+    concessions: z
+      .object({
+        statut: z.literal('hypothese'),
+        max: z.number().int().min(0),
+        soutienParConcession: Fraction,
+        /** Part de l'effet de la réforme perdue par concession. */
+        reductionEffet: Fraction,
+      })
+      .strict(),
+    senat: z
+      .object({
+        statut: z.literal('hypothese'),
+        probabiliteAccord: Probability,
+        note: z.string().min(1),
+      })
+      .strict(),
+    censure: z
+      .object({
+        statut: z.literal('hypothese'),
+        /** Poids de l'impopularité du président dans la décision de censurer. */
+        poidsPopularite: z.number().min(0),
+        coutPopularite49_3: z.number().int().min(0),
+        coutPopulariteCensure: z.number().int().min(0),
+      })
+      .strict(),
+    reformes: z
+      .object({
+        statut: z.literal('hypothese'),
+        /** Effet maximal sur la popularité du président à l'entrée en vigueur (centièmes). */
+        effetPopulariteMax: z.number().int().min(0),
+        /** Accueil (moyenne pondérée sur l'électorat) qui ne change pas la popularité. */
+        accueilNeutre: z.number(),
+        /** Accueil supplémentaire des publics particulièrement concernés. */
+        bonusPublics: z.number().min(0),
+      })
+      .strict(),
+  })
+  .strict()
+  .refine((p) => p.vote.seuilOpposition < p.vote.seuilSoutien, {
+    message: 'Seuil d’opposition inférieur au seuil de soutien',
+  });
+export type ParliamentRules = z.infer<typeof ParliamentRulesSchema>;
 
 export const EventConditionSchema = z
   .object({
@@ -626,6 +729,8 @@ export const RulesetSchema = z
       .strict(),
     mediasReels: RealMediaSchema,
     quinquennat: QuinquennatRulesSchema,
+    parlement: ParliamentRulesSchema,
+    assemblee: RealAssemblySchema,
     debats: z
       .object({
         statut: z.literal('hypothese'),
@@ -708,6 +813,7 @@ export const RulesetSchema = z
       ruleset.quinquennat.mandat.sourceId,
       ruleset.quinquennat.investiture.sourceId,
       ruleset.quinquennat.finMandat.sourceId,
+      ...ruleset.parlement.regles.sourceIds,
     ];
     for (const id of referenced) if (!sourceIds.has(id)) issue(`Source inconnue : ${id}`);
 

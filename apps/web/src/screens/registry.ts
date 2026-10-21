@@ -79,8 +79,9 @@ export const GAME_SCREENS: readonly GameScreen[] = [
     path: 'parlement',
     label: 'Parlement',
     phase: 6,
-    available: false,
-    description: 'Groupes, sièges, coalitions et votes à l’Assemblée nationale.',
+    available: true,
+    description:
+      'Groupes et sièges réels de l’Assemblée nationale, textes de la feuille de route et votes simulés par groupe.',
   },
   {
     path: 'economie',

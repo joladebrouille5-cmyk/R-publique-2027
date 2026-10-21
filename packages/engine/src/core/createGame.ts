@@ -350,6 +350,7 @@ export function createGame(input: CreateGameInput, ruleset: Ruleset): GameState 
     cycle: { ...FIRST_CYCLE },
     quinquennat: null,
     historique: { presidentielles: [], quinquennats: [] },
+    parlement: null,
   };
   distributeInitialPromises(state, ruleset);
   return state;

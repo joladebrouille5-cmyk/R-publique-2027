@@ -5,7 +5,8 @@ import {
   FIRST_CYCLE,
   initialRelations,
   openingAccount,
-  openQuinquennat,
+  mandateDates,
+  openParliament,
   PLAYER_ACTOR_ID,
   SAVE_SCHEMA_VERSION,
 } from '@r2027/engine';
@@ -19,6 +20,7 @@ import {
   GameStateV5Schema,
   GameStateV6Schema,
   GameStateV7Schema,
+  GameStateV8Schema,
   type Actor,
   type ActorV4,
   type ActorV5,
@@ -30,6 +32,7 @@ import {
   type GameStateV5,
   type GameStateV6,
   type GameStateV7,
+  type GameStateV8,
 } from '@r2027/shared';
 import { z } from 'zod';
 import { hashState, sha256, canonicalStringify } from './canonical';
@@ -65,7 +68,8 @@ const SCHEMAS: Record<number, z.ZodType> = {
   5: GameStateV5Schema,
   6: GameStateV6Schema,
   7: GameStateV7Schema,
-  8: GameStateSchema,
+  8: GameStateV8Schema,
+  9: GameStateSchema,
 };
 
 /** Jeux de règles des parties aux formats 2 (phase 2) et 3 (phase 3). */
@@ -294,11 +298,11 @@ function migrateV6ToV7(v6: GameStateV6): GameStateV7 {
  * Format 7 → 8 (phase 6) : la partie appartient au cycle de la présidentielle de 2027, sans
  * quinquennat ni archive antérieurs. Une partie terminée au second tour (bloquée sur
  * `fin-de-la-presidentielle`) reprend au début du quinquennat : le vainqueur, joueur ou IA,
- * entre en fonctions à l'investiture, exactement comme une partie jouée avec le moteur
- * courant. Les décisions en attente gardent leur forme (événements, consignes).
+ * entre en fonctions à l'investiture, comme le prévoit le moteur au second tour (l'Assemblée
+ * est ouverte par la migration suivante). Les décisions en attente gardent leur forme.
  */
-function migrateV7ToV8(v7: GameStateV7): GameState {
-  const state: GameState = {
+function migrateV7ToV8(v7: GameStateV7): GameStateV8 {
+  const state: GameStateV8 = {
     ...v7,
     meta: {
       ...v7.meta,
@@ -312,11 +316,46 @@ function migrateV7ToV8(v7: GameStateV7): GameState {
   };
   if (v7.calendar.blockedBy === 'fin-de-la-presidentielle') {
     const winner = v7.elections.t2?.winner ?? v7.elections.t1?.winner;
-    if (!winner)
+    const actor = winner ? v7.actors[winner] : undefined;
+    if (!winner || !actor)
       throw new SaveFormatError('incoherence', 'Présidentielle terminée sans vainqueur.');
-    openQuinquennat(state, getRuleset(CURRENT_RULESET_KEY), winner);
+    // Ouverture du quinquennat telle que la fait le moteur au second tour : la partie, bloquée
+    // la semaine qui suit le scrutin, est antérieure à l'investiture (nomination à venir).
+    const { debut, fin } = mandateDates(getRuleset(CURRENT_RULESET_KEY), FIRST_CYCLE);
+    state.quinquennat = {
+      mandat: { presidentId: winner, debut, fin, numero: 1 },
+      gouvernement: null,
+      anciensGouvernements: [],
+      feuilleDeRoute: [...actor.programme.propositions],
+      refus: [],
+    };
+    state.meta.phase = 'presidence';
+    state.calendar = { blockedBy: null, blockedMessage: null };
   }
   return state;
+}
+
+/**
+ * Format 8 → 9 (phase 6, P6-04) : la partie reçoit l'Assemblée nationale réelle du jeu de
+ * règles courant. Pendant une campagne, pas encore de Parlement (`null`) ; pendant un
+ * quinquennat, l'Assemblée est ouverte comme au début d'un quinquennat (sièges importés,
+ * alignements par rapport au président, aucun texte déposé : la feuille de route est déposée à
+ * partir de la semaine suivante).
+ */
+function migrateV8ToV9(v8: GameStateV8): GameState {
+  const president = v8.quinquennat ? v8.actors[v8.quinquennat.mandat.presidentId] : undefined;
+  if (v8.quinquennat && !president)
+    throw new SaveFormatError('incoherence', 'Président inconnu dans la partie.');
+  return {
+    ...v8,
+    meta: {
+      ...v8.meta,
+      engineVersion: ENGINE_VERSION,
+      rulesetVersion: CURRENT_RULESET_KEY,
+      saveSchemaVersion: 9,
+    },
+    parlement: president ? openParliament(getRuleset(CURRENT_RULESET_KEY), president, null) : null,
+  };
 }
 
 const MIGRATIONS: Record<number, (state: never) => unknown> = {
@@ -327,6 +366,7 @@ const MIGRATIONS: Record<number, (state: never) => unknown> = {
   5: migrateV5ToV6,
   6: migrateV6ToV7,
   7: migrateV7ToV8,
+  8: migrateV8ToV9,
 };
 
 export type LoadedState = { state: GameState; stateHash: string; migratedFrom: number | null };

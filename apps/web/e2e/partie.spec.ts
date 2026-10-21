@@ -106,7 +106,7 @@ test('export puis import dans une nouvelle partie identique', async ({ page }) =
 
 test('les écrans non implémentés sont annoncés comme tels', async ({ page }) => {
   await createGame(page, 'Écrans', 'e2e-ecrans');
-  await openScreen(page, 'Parlement');
+  await openScreen(page, 'Économie');
   await expect(page.getByText('Non disponible — prévu en phase 6')).toBeVisible();
 });
 
@@ -161,6 +161,18 @@ test('présidentielle complète puis quinquennat : deux tours, résultats, gouve
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
     .analyze();
   expect(audit.violations.map((v) => `${v.id} : ${v.help} (${v.nodes.length})`)).toEqual([]);
+
+  // Parlement : composition réelle, votes simulés par groupe.
+  await openScreen(page, 'Parlement');
+  const assembly = page.getByRole('region', { name: /Assemblée nationale \(17e législature\)/ });
+  await expect(assembly.getByRole('table', { name: 'Groupes politiques et sièges' })).toBeVisible();
+  await expect(assembly.getByText(/sans aucun nom de député/)).toBeVisible();
+  const parliamentAudit = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze();
+  expect(parliamentAudit.violations.map((v) => `${v.id} : ${v.help} (${v.nodes.length})`)).toEqual(
+    [],
+  );
 });
 
 test('une date de départ invalide est refusée par le serveur', async ({ page }) => {
@@ -183,6 +195,7 @@ test('aucun défilement horizontal de la page', async ({ page }) => {
     'Sondages',
     'Résultats',
     'Gouvernement',
+    'Parlement',
     'Journal',
     'Sauvegardes',
   ]) {

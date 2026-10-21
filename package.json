@@ -22,6 +22,7 @@
     "data:resultats": "pnpm --filter @r2027/data-import run resultats",
     "data:personnalites": "pnpm --filter @r2027/data-import run personnalites",
     "data:medias": "pnpm --filter @r2027/data-import run medias",
+    "data:assemblee": "pnpm --filter @r2027/data-import run assemblee",
     "mesure:carte": "node scripts/spike-carte/spike.mjs",
     "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test"
   },

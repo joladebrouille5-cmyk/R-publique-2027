@@ -16,6 +16,7 @@ import V4 from './fixtures/v4-phase-4.json' with { type: 'json' };
 import V5 from './fixtures/v5-phase-5.json' with { type: 'json' };
 import V6 from './fixtures/v6-phase-5-bis.json' with { type: 'json' };
 import V7 from './fixtures/v7-phase-5-ter.json' with { type: 'json' };
+import V8 from './fixtures/v8-phase-6.json' with { type: 'json' };
 import { loadStoredState, MIGRATED_CANDIDATE, SaveFormatError, upgradeState } from './versions';
 
 const ruleset = getRuleset(CURRENT_RULESET_KEY);
@@ -231,6 +232,7 @@ describe('migrations de sauvegarde', () => {
       cycle: _cycle,
       quinquennat: _quinquennat,
       historique: _historique,
+      parlement: _parlement,
       ...rest
     } = state;
     const { meta: _m, player: _p, actors: _a, medias: _md, ...restBefore } = V5.state;
@@ -267,6 +269,7 @@ describe('migrations de sauvegarde', () => {
       cycle: _cycle,
       quinquennat: _quinquennat,
       historique: _historique,
+      parlement: _parlement,
       ...rest
     } = state;
     const { meta: _m, medias: _md, ...restBefore } = V6.state;
@@ -312,6 +315,7 @@ describe('migrations de sauvegarde', () => {
     expect(state.calendar).toEqual({ blockedBy: null, blockedMessage: null });
     expect(state.cycle).toEqual({ annee: 2027, decalageSemaines: 0 });
     expect(state.historique).toEqual({ presidentielles: [], quinquennats: [] });
+    expect(state.parlement!.textes).toEqual([]);
     expect(state.quinquennat).toEqual({
       mandat: { presidentId: PLAYER_ACTOR_ID, debut: '2027-05-14', fin: '2032-05-13', numero: 1 },
       gouvernement: null,
@@ -326,6 +330,7 @@ describe('migrations de sauvegarde', () => {
       cycle: _cycle,
       quinquennat: _quinquennat,
       historique: _historique,
+      parlement: _parlement,
       ...rest
     } = state;
     const { meta: _m, calendar: _c, ...restBefore } = V7.state;
@@ -352,6 +357,46 @@ describe('migrations de sauvegarde', () => {
     expect(play()).toEqual(governed);
   });
 
+  it('ouvre l’Assemblée nationale d’une partie réelle en cours de quinquennat (format 8)', () => {
+    const { state, migratedFrom } = loadStoredState(V8.state, V8.stateHash, 8);
+    expect(migratedFrom).toBe(8);
+    expect(state.meta).toMatchObject({
+      week: 43,
+      phase: 'presidence',
+      saveSchemaVersion: SAVE_SCHEMA_VERSION,
+      engineVersion: ENGINE_VERSION,
+      rulesetVersion: CURRENT_RULESET_KEY,
+    });
+    // Rien d'autre ne change ; l'Assemblée est la composition importée, sans texte déposé.
+    const { meta: _meta, parlement, ...rest } = state;
+    const { meta: _m, ...restBefore } = V8.state;
+    expect(rest).toEqual(restBefore);
+    expect(Object.entries(parlement!.groupes).map(([id, g]) => [id, g.sieges])).toEqual(
+      ruleset.assemblee.groupes.map((g) => [g.id, g.sieges]),
+    );
+    expect(parlement!.textes).toEqual([]);
+
+    // La partie continue. Le joueur n'avait annoncé aucune proposition pendant la campagne :
+    // sa feuille de route est vide, aucun texte n'est déposé ; le gouvernement reste en place.
+    let current = state;
+    for (let i = 0; i < 6; i++)
+      current = advanceWeek(
+        current,
+        {
+          actions: [{ actionId: 'allocution' }],
+          decisions: current.pendingDecisions.map((d) => ({
+            decisionId: d.id,
+            optionId: d.defaultOptionId,
+          })),
+        },
+        { ruleset },
+      ).state;
+    expect(state.quinquennat!.feuilleDeRoute).toEqual([]);
+    expect(current.parlement!.textes).toEqual([]);
+    expect(current.quinquennat!.gouvernement!.premierMinistre.ref).toBe('profil-ines-carrel');
+    expect(current.meta.week).toBe(49);
+  });
+
   it('vérifie l’empreinte avant toute migration', () => {
     const altered = { ...V1_STATE, meta: { ...V1_STATE.meta, week: 3 } };
     expect(errorCode(() => loadStoredState(altered, V1_HASH, 1))).toBe('empreinte_incoherente');
@@ -370,6 +415,7 @@ describe('migrations de sauvegarde', () => {
     expect(errorCode(() => upgradeState(V5.state, 6))).toBe('etat_invalide');
     expect(errorCode(() => upgradeState(V6.state, 7))).toBe('etat_invalide');
     expect(errorCode(() => upgradeState(V7.state, 8))).toBe('etat_invalide');
+    expect(errorCode(() => upgradeState(V8.state, 9))).toBe('etat_invalide');
   });
 
   it('refuse un jeu de règles inconnu', () => {

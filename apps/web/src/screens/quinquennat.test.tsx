@@ -138,6 +138,55 @@ describe('quinquennat', () => {
       screen.getByText(/Mandat n° 1 du vendredi 14 mai 2027 au jeudi 13 mai 2032/),
     ).toBeVisible();
     expect(screen.getByRole('heading', { name: 'Feuille de route' })).toBeInTheDocument();
-    expect(screen.getByText(/la feuille de route n’est pas encore appliquée/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/seules celles que le Parlement adopte sont appliquées/),
+    ).toBeInTheDocument();
+  });
+
+  it('le Parlement : groupes réels, textes et votes simulés par groupe', async () => {
+    let state = elected;
+    for (let i = 0; i < 40; i++) state = step(state);
+    mockApi(base(state));
+    renderRoute(`/parties/${GAME_ID}/parlement`);
+    const assembly = await screen.findByRole('region', {
+      name: /Assemblée nationale \(17e législature\)/,
+    });
+    const table = within(assembly).getByRole('table', { name: 'Groupes politiques et sièges' });
+    expect(within(table).getAllByRole('row')).toHaveLength(RULESET.assemblee.groupes.length + 1);
+    expect(within(assembly).getByText(/majorité des membres : \d+ voix/)).toBeInTheDocument();
+    expect(within(assembly).getByText(/sans aucun nom de député/)).toBeInTheDocument();
+    // Le président (candidat fictif) dépose son programme : des textes ont déjà été votés.
+    expect(state.parlement!.textes.some((b) => b.votes.length > 0)).toBe(true);
+    expect(screen.getAllByText(/votes de groupe simulés/).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('table').length).toBeGreaterThan(1);
+  });
+
+  it('le président joueur conduit un texte incertain depuis le tableau de bord', async () => {
+    const start = JSON.parse(JSON.stringify(elected)) as GameState;
+    for (const actor of Object.values(start.actors))
+      if (actor.status === 'elu') actor.status = 'battu';
+    start.actors.joueur!.status = 'elu';
+    // Programme fabriqué pour le test : propositions de centre droit, dans l'ordre.
+    start.actors.joueur!.programme.propositions = [
+      'eco-simplification-pme',
+      'pa-prime-partage-valeur',
+      'immi-integration-langue',
+    ];
+    start.quinquennat = null;
+    openQuinquennat(start, RULESET, 'joueur');
+    let state = start;
+    for (let i = 0; i < 40 && !state.pendingDecisions.some((d) => d.kind === 'texte'); i++)
+      state = step(state);
+    const decision = state.pendingDecisions.find((d) => d.kind === 'texte');
+    expect(decision).toBeDefined();
+    mockApi(base(state));
+    renderRoute(`/parties/${GAME_ID}/tableau-de-bord`);
+    const decisions = await screen.findByRole('region', { name: 'Décisions à prendre' });
+    expect(within(decisions).getByText('Parlement')).toBeInTheDocument();
+    const group = screen.getByRole('group', { name: decision!.label });
+    expect(
+      within(group).getByRole('radio', { name: /Négocier des amendements/ }),
+    ).toBeInTheDocument();
+    expect(within(group).getByText(/Projection du gouvernement/)).toBeInTheDocument();
   });
 });

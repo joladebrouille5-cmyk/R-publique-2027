@@ -12,15 +12,17 @@ import {
 } from '@r2027/shared';
 import { describe, expect, it } from 'vitest';
 import { CURRENT_RULESET_KEY, getRuleset, listRulesetKeys, UnknownRulesetError } from './index';
+import assemblee from './assemblee-2026.json';
 import mediasReels from './medias-2027.json';
 import personnalites from './personnalites-2027.json';
 import raw from './presidentielle-2027.json';
 
 /** Jeu de règles complet (base + données importées), copié pour les tests de rejet. */
 const full = () =>
-  JSON.parse(JSON.stringify({ ...raw, personnalites, mediasReels })) as typeof raw & {
+  JSON.parse(JSON.stringify({ ...raw, personnalites, mediasReels, assemblee })) as typeof raw & {
     personnalites: typeof personnalites;
     mediasReels: typeof mediasReels;
+    assemblee: typeof assemblee;
   };
 
 const ruleset = getRuleset(CURRENT_RULESET_KEY);
@@ -412,5 +414,64 @@ describe('quinquennat (phase 6)', () => {
     const clash = full();
     clash.quinquennat.actions[0]!.id = clash.actions[0]!.id;
     expect(RulesetSchema.safeParse(clash).success).toBe(false);
+  });
+});
+
+describe('Assemblée nationale (phase 6)', () => {
+  const an = ruleset.assemblee;
+
+  it('a l’empreinte déclarée par le jeu de règles : une réimportation impose une nouvelle version', () => {
+    const hash = createHash('sha256').update(JSON.stringify(assemblee)).digest('hex');
+    expect(ruleset.parlement.empreinte).toBe(hash);
+    expect(ruleset.parlement.fichier).toBe('assemblee-2026.json');
+  });
+
+  it('reprend les groupes et sièges de la 17e législature, sans aucun nom de député', () => {
+    expect(an.legislature).toBe(17);
+    expect(an.groupes.reduce((sum, g) => sum + g.sieges, 0) + an.vacants).toBe(577);
+    expect(an.groupes.map((g) => g.sigle)).toEqual(
+      expect.arrayContaining(['RN', 'EPR', 'LFI-NFP', 'SOC', 'DR', 'EcoS', 'Dem', 'HOR']),
+    );
+    for (const g of an.groupes)
+      expect(Object.keys(g).sort()).toEqual(
+        [
+          'ches',
+          'id',
+          'libelle',
+          'nonInscrits',
+          'position',
+          'positionDetail',
+          'positionStatut',
+          'sieges',
+          'sigle',
+        ].sort(),
+      );
+    const source = an.sources.find((s) => s.id === 'an-deputes-en-exercice')!;
+    expect(source.url).toMatch(/^https:\/\/data\.assemblee-nationale\.fr\//);
+    expect(source.licence).toMatch(/Licence Ouverte/);
+    expect(source.sha256).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  it('positionne chaque groupe d’après CHES (estimation) ou une hypothèse motivée', () => {
+    for (const g of an.groupes) {
+      expect(g.positionStatut).toBe(g.ches ? 'estimation' : 'hypothese');
+      if (g.ches) expect(g.positionDetail).toMatch(/enquête CHES 2024/);
+      else expect(g.positionDetail).toMatch(/hypothèse de jeu/);
+    }
+  });
+
+  it('cite les règles de la Constitution et étiquette les paramètres de jeu', () => {
+    const p = ruleset.parlement;
+    expect(p.regles).toMatchObject({
+      statut: 'officiel',
+      sourceIds: ['constitution-art-28', 'constitution-art-45', 'constitution-art-49'],
+      signaturesCensure: 0.1,
+      autres49_3ParSession: 1,
+      moisOuvertureSession: 10,
+    });
+    for (const id of p.regles.sourceIds) expect(ruleset.sources[id]!.url).toMatch(/oldid=\d+$/);
+    for (const block of [p.calendrier, p.vote, p.concessions, p.senat, p.censure, p.reformes])
+      expect(block.statut).toBe('hypothese');
+    expect(p.vote.seuilOpposition).toBeLessThan(p.vote.seuilSoutien);
   });
 });

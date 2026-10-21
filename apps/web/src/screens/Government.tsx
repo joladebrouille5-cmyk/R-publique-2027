@@ -184,10 +184,10 @@ function Content({ state, ruleset }: { state: GameState; ruleset: Ruleset }) {
           </p>
         )}
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          Le vote des textes au Parlement, l’économie, les crises et les législatives arrivent dans
-          les étapes suivantes de la phase 6 : la feuille de route n’est pas encore appliquée.{' '}
-          <Link to="../programme" className="underline">
-            Programme
+          Le gouvernement dépose ces propositions au Parlement, dans l’ordre ; seules celles que le
+          Parlement adopte sont appliquées.{' '}
+          <Link to="../parlement" className="underline">
+            Parlement
           </Link>
         </p>
       </section>

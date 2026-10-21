@@ -18,6 +18,7 @@ import { WEEKLY_STEPS } from '../core/steps';
 import { weeklyDrift } from '../election/opinion';
 import { applyDecisions, validateDecisionAnswers } from '../event/events';
 import { planPresidentActions, validatePresidencyActions } from './actions';
+import { advanceParliament } from './parliament';
 import { nextCampaignStart, weekReaches } from './dates';
 import {
   aiPrimeMinister,
@@ -149,19 +150,20 @@ export function advancePresidencyWeek(
   // 4. Relations entre candidats : sans objet hors campagne.
   set(4, false, 'Pas de campagne en cours : relations et ralliements inchangés.');
 
-  // 5. Décisions, effets des actions, remaniement.
+  // 5. Décisions, effets des actions, remaniement, Parlement.
+  const institutional = new Set(['gouvernement', 'texte']);
   const governmentAnswers = answers.filter((a) => a.decision.kind === 'gouvernement');
+  const billAnswers = answers.filter((a) => a.decision.kind === 'texte');
   const decisions = applyDecisions(
     state,
     ruleset,
     ledger,
     finances,
-    answers.filter((a) => a.decision.kind !== 'gouvernement'),
+    answers.filter((a) => !institutional.has(a.decision.kind)),
     5,
   );
-  for (const answer of governmentAnswers) {
+  for (const answer of [...governmentAnswers, ...billAnswers]) {
     const option = answer.decision.options.find((o) => o.id === answer.optionId)!;
-    events.push(answerGovernment(state, ruleset, answer.optionId));
     decisions.push({
       decisionId: answer.decision.id,
       eventId: answer.decision.eventId,
@@ -170,6 +172,8 @@ export function advancePresidencyWeek(
       automatic: answer.automatic,
     });
   }
+  for (const answer of governmentAnswers)
+    events.push(answerGovernment(state, ruleset, answer.optionId));
   const validated = [...own.validated, ...ai.validated];
   const { risks } = resolveActionEffects(
     state,
@@ -192,6 +196,27 @@ export function advancePresidencyWeek(
         'Le président met fin aux fonctions du gouvernement et nomme un nouveau Premier ministre.',
       nature: 'simule',
       majeur: false,
+      decisionId: null,
+    });
+    if (!playerPresides)
+      events.push(nominate(state, ruleset, aiPrimeMinister(state, ruleset, president)));
+  }
+  const parliament = advanceParliament(
+    { state, ruleset, ledger, step: 5, playerPresides },
+    billAnswers,
+  );
+  events.push(...parliament.events);
+  if (parliament.censured) {
+    endGovernment(state.quinquennat!, date, 'motion de censure');
+    events.push({
+      id: `censure-${week}`,
+      kind: 'evenement',
+      refId: 'gouvernement',
+      label: 'Le gouvernement, renversé, remet sa démission',
+      description:
+        'Une motion de censure a réuni la majorité des membres de l’Assemblée nationale : le président nomme un nouveau Premier ministre.',
+      nature: 'simule',
+      majeur: true,
       decisionId: null,
     });
     if (!playerPresides)
