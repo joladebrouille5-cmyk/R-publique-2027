@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+@import 'tailwindcss' source('..');
 
 /* Thème sombre piloté par la classe `dark` sur <html> (choix clair / sombre / système). */
 @custom-variant dark (&:where(.dark, .dark *));

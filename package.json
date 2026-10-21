@@ -16,6 +16,8 @@
     "test": "vitest run",
     "test:integration": "pnpm --filter @r2027/api run test:integration",
     "test:e2e": "playwright test",
+    "test:mobile": "playwright test -c playwright.mobile.config.ts",
+    "mobile:apk": "pnpm --filter @r2027/mobile run android:apk",
     "db:migrate": "pnpm --filter @r2027/api run db:migrate",
     "db:deploy": "pnpm --filter @r2027/api run db:deploy",
     "data:geo": "pnpm --filter @r2027/data-import run geo",

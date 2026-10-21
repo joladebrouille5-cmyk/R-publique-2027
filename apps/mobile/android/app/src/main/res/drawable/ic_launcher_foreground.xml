@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Icône : drapeau tricolore stylisé, dans la zone sûre des icônes adaptatives (66 dp). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group>
+        <clip-path android:pathData="M37,38h34a4,4 0,0 1,4 4v24a4,4 0,0 1,-4 4h-34a4,4 0,0 1,-4 -4v-24a4,4 0,0 1,4 -4z" />
+        <path android:fillColor="#3B5BDB" android:pathData="M33,38h14v32h-14z" />
+        <path android:fillColor="#F8FAFC" android:pathData="M47,38h14v32h-14z" />
+        <path android:fillColor="#EF4444" android:pathData="M61,38h14v32h-14z" />
+    </group>
+</vector>

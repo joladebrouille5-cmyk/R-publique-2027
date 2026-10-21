@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Fichiers partageables par l'application : uniquement les exports de parties écrits dans le
+  cache (cache/exports). Aucun accès au stockage externe.
+-->
+<paths>
+    <cache-path name="exports" path="exports/" />
+</paths>

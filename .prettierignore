@@ -12,3 +12,5 @@ dist/
 packages/data-import/demo/
 data/
 packages/save-engine/src/fixtures/
+# Projet Android généré par Capacitor (Gradle, XML, copie du paquet construit).
+apps/mobile/android/

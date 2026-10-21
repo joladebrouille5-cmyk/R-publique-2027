@@ -13,6 +13,8 @@ export default tseslint.config(
       'playwright-report/**',
       'test-results/**',
       '.wrangler/**',
+      // Projet Android généré par Capacitor (contient une copie du paquet construit).
+      'apps/mobile/android/**',
     ],
   },
   js.configs.recommended,
@@ -84,6 +86,13 @@ export default tseslint.config(
         },
       ],
     },
+  },
+
+  // Application mobile : l'interface de apps/web branchée sur le moteur local (@r2027/local-api),
+  // qui exécute la simulation sur l'appareil derrière le même contrat que l'API.
+  {
+    files: ['apps/mobile/src/**/*.ts'],
+    languageOptions: { globals: { ...globals.browser } },
   },
 
   {

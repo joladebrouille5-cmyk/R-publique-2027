@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">RÉPUBLIQUE 2027</string>
+    <string name="title_activity_main">RÉPUBLIQUE 2027</string>
+    <string name="package_name">io.github.joladebrouille5cmyk.republique2027</string>
+    <string name="custom_url_scheme">io.github.joladebrouille5cmyk.republique2027</string>
+</resources>

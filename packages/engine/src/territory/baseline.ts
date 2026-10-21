@@ -219,3 +219,46 @@ export function demoBaseline(
     })),
   );
 }
+
+/** Géométries d'un fichier TopoJSON du référentiel (propriétés utiles à la base électorale). */
+type DemoTopology = {
+  objects: Record<
+    string,
+    {
+      geometries: {
+        properties: { code: string; dep: string; reg: string; population: number | null };
+      }[];
+    }
+  >;
+};
+
+/**
+ * Base de démonstration à partir du manifeste et des fichiers TopoJSON déjà lus (communes des
+ * départements cartographiés, une unité pour les autres) ; partagée par l'API et le serveur
+ * local de l'application mobile.
+ */
+export function demoBaselineFromTopologies(
+  ruleset: Ruleset,
+  departements: readonly {
+    code: string;
+    region: string;
+    population: number;
+    fichier: string | null;
+  }[],
+  topologyOf: (fichier: string) => unknown,
+): TerritorialBaseline {
+  const communes = departements.flatMap((d) => {
+    if (!d.fichier) return [];
+    const topology = topologyOf(d.fichier) as DemoTopology;
+    return Object.values(topology.objects)[0]!.geometries.map(({ properties: p }) => ({
+      code: p.code,
+      departement: p.dep,
+      region: p.reg,
+      population: p.population ?? 0,
+    }));
+  });
+  const others = departements
+    .filter((d) => !d.fichier)
+    .map((d) => ({ code: d.code, region: d.region, population: d.population }));
+  return demoBaseline(ruleset, communes, others);
+}

@@ -142,3 +142,94 @@ export function normalizeName(value: string): string {
     .replace(/\s+/g, ' ')
     .trim();
 }
+
+/** Entrée de l'index de recherche des territoires. */
+export type TerritorySearchEntry = { result: TerritorySearchResult; name: string; rank: number };
+
+/**
+ * Index de recherche des territoires (régions, départements, communes) d'un référentiel ;
+ * partagé par l'API et le serveur local de l'application mobile.
+ */
+export function buildTerritorySearch(
+  manifest: GeoManifest,
+  index: readonly CommuneIndexEntry[],
+): TerritorySearchEntry[] {
+  const zoneOfRegion = (regionCode: string) =>
+    manifest.departements.find((d) => d.region === regionCode)?.zone ?? 'metropole';
+  return [
+    ...manifest.regions.map((r) => ({
+      result: {
+        level: 'region' as const,
+        code: r.code,
+        nom: r.nom,
+        departement: null,
+        zone: zoneOfRegion(r.code),
+        bbox: r.bbox,
+      },
+      name: normalizeName(r.nom),
+      rank: 0,
+    })),
+    ...manifest.departements.map((d) => ({
+      result: {
+        level: 'departement' as const,
+        code: d.code,
+        nom: d.nom,
+        departement: d.code,
+        zone: d.zone,
+        bbox: d.bbox,
+      },
+      name: normalizeName(d.nom),
+      rank: 1,
+    })),
+    ...index.map((entry) => {
+      const [code, nom, departement, , w, s, e, n] = entry;
+      return {
+        result: {
+          level: 'commune' as const,
+          code,
+          nom,
+          departement,
+          zone: zoneOfDepartement(departement),
+          bbox: [w, s, e, n] as [number, number, number, number],
+        },
+        name: normalizeName(nom),
+        rank: 2,
+      };
+    }),
+  ];
+}
+
+/**
+ * Recherche par code (exact puis préfixe) ou par nom (sans accents ni casse : égalité, début,
+ * puis contenu). À pertinence égale : régions, départements, puis communes, et ordre des codes.
+ */
+export function searchTerritories(
+  entries: readonly TerritorySearchEntry[],
+  query: string,
+  limit = 10,
+): TerritorySearchResult[] {
+  const q = normalizeName(query);
+  if (q.length === 0) return [];
+  const code = query.trim().toUpperCase();
+  const scored: { entry: TerritorySearchEntry; score: number }[] = [];
+  for (const entry of entries) {
+    let score: number | null = null;
+    if (entry.result.code === code) score = 0;
+    else if (code.length >= 2 && /^[0-9AB]+$/.test(code) && entry.result.code.startsWith(code))
+      score = 1;
+    else if (entry.name === q) score = 2;
+    else if (entry.name.startsWith(q)) score = 3;
+    else if (q.length >= 3 && entry.name.includes(q)) score = 4;
+    if (score !== null) scored.push({ entry, score });
+  }
+  return scored
+    .sort(
+      (a, b) =>
+        a.score - b.score ||
+        a.entry.rank - b.entry.rank ||
+        a.entry.name.length - b.entry.name.length ||
+        (a.entry.result.code < b.entry.result.code ? -1 : 1),
+    )
+    .slice(0, limit)
+    .map((s) => s.entry.result);
+}

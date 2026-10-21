@@ -4,5 +4,11 @@
     "lib": ["ES2023", "DOM"],
     "types": ["node"]
   },
-  "include": ["playwright.config.ts", "vitest.config.ts", "apps/web/e2e"]
+  "include": [
+    "playwright.config.ts",
+    "playwright.mobile.config.ts",
+    "vitest.config.ts",
+    "apps/web/e2e",
+    "apps/mobile/e2e"
+  ]
 }

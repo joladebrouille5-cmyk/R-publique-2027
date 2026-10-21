@@ -1,16 +1,24 @@
 import { Link, Outlet } from 'react-router';
 import { useHealth } from '../api/hooks';
+import { platform } from '../platform';
 import { ThemeToggle, useApplyTheme } from './ThemeToggle';
 
 function ServerStatus() {
   const health = useHealth();
   const data = health.data;
   const ok = data?.status === 'ok';
+  const local = platform().kind === 'local';
   const text = health.isPending
-    ? 'Connexion au serveur…'
+    ? local
+      ? 'Démarrage du moteur local…'
+      : 'Connexion au serveur…'
     : ok
-      ? `Serveur connecté · moteur ${data.versions.engine}`
-      : 'Serveur ou base de données indisponible';
+      ? local
+        ? `Hors ligne · moteur ${data.versions.engine} sur l’appareil`
+        : `Serveur connecté · moteur ${data.versions.engine}`
+      : local
+        ? 'Moteur local indisponible'
+        : 'Serveur ou base de données indisponible';
   return (
     <p className="flex items-center gap-2" role="status">
       <span
@@ -24,6 +32,7 @@ function ServerStatus() {
 
 export function AppLayout() {
   useApplyTheme();
+  const { storageNotice } = platform();
   return (
     <div className="flex min-h-dvh flex-col">
       <a
@@ -55,6 +64,11 @@ export function AppLayout() {
             Simulation : les événements et résultats affichés sont simulés sauf mention contraire.
           </p>
         </div>
+        {storageNotice && (
+          <p className="mx-auto max-w-6xl px-4 pb-3 text-amber-800 dark:text-amber-300">
+            {storageNotice}
+          </p>
+        )}
       </footer>
     </div>
   );

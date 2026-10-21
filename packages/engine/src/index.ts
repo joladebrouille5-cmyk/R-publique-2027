@@ -57,6 +57,7 @@ export {
 } from './territory/aggregate';
 export {
   demoBaseline,
+  demoBaselineFromTopologies,
   historicalBaseline,
   nationalBaseline,
   type CommuneRef,
