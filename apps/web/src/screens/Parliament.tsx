@@ -2,6 +2,7 @@ import type { Alignment, Bill, GameState, Ruleset } from '@r2027/shared';
 import { useRuleset } from '../api/hooks';
 import { Badge, type BadgeTone } from '../components/Badge';
 import { ErrorMessage } from '../components/ErrorMessage';
+import { Hemicycle } from '../components/Hemicycle';
 import { card } from '../components/ui';
 import { formatGameDate } from '../labels';
 import { useCurrentGame } from './GameLayout';
@@ -104,13 +105,14 @@ function BillCard({ bill, state, ruleset }: { bill: Bill; state: GameState; rule
 
 function Content({ state, ruleset }: { state: GameState; ruleset: Ruleset }) {
   const parliament = state.parlement;
-  if (!parliament || !state.quinquennat) {
+  if (!parliament) {
     return (
       <p className={`${card} text-sm`}>
         L’Assemblée nationale entre en jeu avec le quinquennat, après l’élection présidentielle.
       </p>
     );
   }
+  const campaign = state.quinquennat === null;
   const filled = Object.values(parliament.groupes).reduce((sum, g) => sum + g.sieges, 0);
   const majority = Math.floor(filled / 2) + 1;
   const seatsOf = (alignment: Alignment) =>
@@ -123,6 +125,12 @@ function Content({ state, ruleset }: { state: GameState; ruleset: Ruleset }) {
 
   return (
     <>
+      {campaign && (
+        <p className={`${card} text-sm`}>
+          Campagne présidentielle en cours : le Parlement n’est pas simulé (simplification du jeu).
+          Il reprend avec le quinquennat suivant, dans sa composition actuelle.
+        </p>
+      )}
       <section aria-labelledby="titre-assemblee" className={`${card} space-y-3 text-sm`}>
         <h2 id="titre-assemblee" className="text-lg font-semibold">
           Assemblée nationale ({assembly.legislature}e législature)
@@ -132,6 +140,25 @@ function Content({ state, ruleset }: { state: GameState; ruleset: Ruleset }) {
           voix. Soutiens du président : {seatsOf('soutien')} sièges ; non alignés :{' '}
           {seatsOf('independant')} ; opposition : {seatsOf('opposition')}.
         </p>
+        <Hemicycle
+          title="Hémicycle de l’Assemblée nationale"
+          total={assembly.siegesTotal}
+          groups={[...assembly.groupes]
+            .filter((g) => parliament.groupes[g.id])
+            .sort(
+              (a, b) =>
+                a.position.economie - b.position.economie ||
+                a.position.societe - b.position.societe ||
+                a.id.localeCompare(b.id),
+            )
+            .map((g) => ({
+              id: g.id,
+              sigle: g.sigle,
+              libelle: g.libelle,
+              sieges: parliament.groupes[g.id]!.sieges,
+              alignement: parliament.groupes[g.id]!.alignement,
+            }))}
+        />
         <div
           className="overflow-x-auto"
           tabIndex={0}
@@ -184,7 +211,7 @@ function Content({ state, ruleset }: { state: GameState; ruleset: Ruleset }) {
 
       <section aria-labelledby="titre-textes" className="space-y-3">
         <h2 id="titre-textes" className="text-lg font-semibold">
-          Textes de la feuille de route
+          {campaign ? 'Textes du quinquennat précédent' : 'Textes de la feuille de route'}
         </h2>
         {textes.length > 0 ? (
           <ul className="space-y-3">
@@ -194,9 +221,11 @@ function Content({ state, ruleset }: { state: GameState; ruleset: Ruleset }) {
           </ul>
         ) : (
           <p className={`${card} text-sm`}>
-            {state.quinquennat.feuilleDeRoute.length > 0
-              ? 'Aucun texte déposé pour l’instant : le gouvernement dépose la feuille de route après sa nomination.'
-              : 'La feuille de route est vide : aucun texte ne sera déposé.'}
+            {campaign
+              ? 'Aucun texte n’a été déposé pendant le quinquennat précédent.'
+              : state.quinquennat!.feuilleDeRoute.length > 0
+                ? 'Aucun texte déposé pour l’instant : le gouvernement dépose la feuille de route après sa nomination.'
+                : 'La feuille de route est vide : aucun texte ne sera déposé.'}
           </p>
         )}
         <p className="text-xs text-slate-500 dark:text-slate-400">

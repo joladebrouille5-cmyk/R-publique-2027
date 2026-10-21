@@ -71,10 +71,23 @@ function Content({
       </p>
     );
   }
-  const start = economy.historique[0]!;
+  // Référence : début du quinquennat en cours (ou du précédent pendant une campagne), à défaut
+  // la première valeur enregistrée.
+  const term = state.quinquennat?.depart ?? state.historique.quinquennats.at(-1)?.bilan.debut;
+  const start =
+    term?.indicateurs != null
+      ? { semaine: term.semaine, valeurs: term.indicateurs }
+      : economy.historique[0]!;
+  const startLabel = state.quinquennat ? 'du quinquennat' : 'du quinquennat précédent';
   const changes = new Map(lastChanges.map((c) => [c.indicateur, c]));
   return (
     <>
+      {!state.quinquennat && (
+        <p className={`${card} text-sm`}>
+          Campagne présidentielle en cours : l’économie n’est pas simulée (simplification du jeu).
+          Elle reprend à ces valeurs avec le quinquennat suivant.
+        </p>
+      )}
       <section aria-labelledby="titre-indicateurs" className={`${card} space-y-3 text-sm`}>
         <h2 id="titre-indicateurs" className="text-lg font-semibold">
           Indicateurs
@@ -97,7 +110,7 @@ function Content({
                   </span>
                 </p>
                 <p className="text-xs text-slate-600 dark:text-slate-400">
-                  {formatIndicatorDelta(since)} depuis le début du quinquennat (semaine{' '}
+                  {formatIndicatorDelta(since)} depuis le début {startLabel} (semaine{' '}
                   {start.semaine}).
                 </p>
                 <p className="text-xs text-slate-600 dark:text-slate-400">

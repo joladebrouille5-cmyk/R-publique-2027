@@ -1,5 +1,6 @@
 import {
   candidateName,
+  type EconomyChange,
   type GameState,
   type ResourceChange,
   type WeeklyReport,
@@ -9,8 +10,11 @@ import {
   FACTOR_SOURCE_LABELS,
   formatDelta,
   formatGameDate,
+  formatIndicator,
+  formatIndicatorDelta,
   formatRatio,
   formatResource,
+  INDICATOR_LABELS,
   PHASE_LABELS,
   RESOURCE_LABELS,
 } from '../labels';
@@ -90,6 +94,52 @@ function ChangesList({
   );
 }
 
+const ECONOMY_SOURCE_LABELS: Record<EconomyChange['factors'][number]['source'], string> = {
+  conjoncture: 'Conjoncture (modèle de jeu)',
+  reforme: 'Réforme',
+  crise: 'Crise fictive',
+  decision: 'Décision',
+  differe: 'Effet différé',
+  limite: 'Borne',
+};
+
+/** Variations des indicateurs économiques de la semaine (quinquennat), avec leurs facteurs. */
+function EconomyChanges({ changes }: { changes: EconomyChange[] }) {
+  return (
+    <section aria-label="Économie de la semaine">
+      <h3 className="mb-2 flex flex-wrap items-center gap-2 font-semibold">
+        Économie <Badge tone="simule">Simulation</Badge>
+      </h3>
+      <ul className="divide-y divide-slate-200 rounded-lg border border-slate-200 dark:divide-slate-800 dark:border-slate-800">
+        {changes.map((change) => (
+          <li key={change.indicateur}>
+            <details>
+              <summary className="flex cursor-pointer flex-wrap items-baseline justify-between gap-2 px-3 py-2">
+                <span className="font-medium">{INDICATOR_LABELS[change.indicateur].label}</span>
+                <span>
+                  {formatIndicator(change.indicateur, change.before)} →{' '}
+                  {formatIndicator(change.indicateur, change.after)}{' '}
+                  <span className="font-semibold">
+                    ({formatIndicatorDelta(change.after - change.before)})
+                  </span>
+                </span>
+              </summary>
+              <ul className="mx-3 mb-3 space-y-0.5 text-xs">
+                {change.factors.map((factor, i) => (
+                  <li key={i}>
+                    {factor.label} ({ECONOMY_SOURCE_LABELS[factor.source]}) :{' '}
+                    {formatIndicatorDelta(factor.value)}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 /**
  * Bilan hebdomadaire : chaque variation est détaillée par les facteurs du moteur (§13).
  * Les actions et variations du joueur sont séparées de celles des campagnes adverses.
@@ -98,11 +148,14 @@ export function WeeklyReportView({
   report,
   state,
   proposalLabel,
+  blocLabel = (id) => id,
 }: {
   report: WeeklyReport;
   state?: GameState;
   /** Libellé d'une proposition du programme (jeu de règles chargé), sinon son identifiant. */
   proposalLabel?: (id: string) => string;
+  /** Libellé d'un bloc des législatives (jeu de règles chargé), sinon son identifiant. */
+  blocLabel?: (id: string) => string;
 }) {
   const playerId = state?.player.actorId ?? null;
   const nameOf = (actorId: string) => {
@@ -140,6 +193,27 @@ export function WeeklyReportView({
             {election.winner
               ? `${nameOf(election.winner)} est élu(e) avec ${formatRatio(election.voix[election.winner]!, election.exprimes)} des suffrages exprimés.`
               : `Qualifiés : ${election.qualified.map((id) => `${nameOf(id)} (${formatRatio(election.voix[id]!, election.exprimes)})`).join(' et ')}.`}
+          </p>
+        </section>
+      )}
+      {report.legislatives && (
+        <section
+          aria-label="Législatives de la semaine"
+          className="space-y-1 rounded-lg border border-sky-200 bg-sky-50 p-3 dark:border-sky-900 dark:bg-sky-950"
+        >
+          <h3 className="flex flex-wrap items-center gap-2 font-semibold">
+            Élections législatives : {report.legislatives.tour === 1 ? 'premier' : 'second'} tour (
+            {formatGameDate(report.legislatives.date)})
+            <Badge tone="simule">Résultats simulés</Badge>
+          </h3>
+          <p>
+            {report.legislatives.tour === 1
+              ? `${report.legislatives.elus} député(s) élu(s) dès le premier tour ; second tour la semaine suivante.`
+              : `${report.legislatives.elus} député(s) élu(s) au second tour. Nouvelle Assemblée : ${Object.entries(
+                  report.legislatives.siegesParBloc ?? {},
+                )
+                  .map(([bloc, seats]) => `${blocLabel(bloc)} ${seats}`)
+                  .join(' ; ')}.`}
           </p>
         </section>
       )}
@@ -215,7 +289,7 @@ export function WeeklyReportView({
               <li key={event.id}>
                 <span className="flex flex-wrap items-center gap-2">
                   <Badge tone={event.nature === 'fictif' ? 'fictif' : 'simule'}>
-                    {event.nature === 'fictif' ? 'Événement fictif' : 'Aléa simulé'}
+                    {event.nature === 'fictif' ? 'Événement fictif' : 'Simulé'}
                   </Badge>
                   {event.majeur && <Badge tone="alerte">Majeur</Badge>}
                   <span className="font-medium">{event.label}</span>
@@ -233,6 +307,8 @@ export function WeeklyReportView({
           </ul>
         </section>
       )}
+
+      {report.economie.length > 0 && <EconomyChanges changes={report.economie} />}
 
       <CampaignReport
         report={report}

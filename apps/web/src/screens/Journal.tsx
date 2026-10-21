@@ -1,4 +1,4 @@
-import { useJournal } from '../api/hooks';
+import { useJournal, useRuleset } from '../api/hooks';
 import { ErrorMessage } from '../components/ErrorMessage';
 import { buttonSecondary, card } from '../components/ui';
 import { WeeklyReportView } from '../components/WeeklyReportView';
@@ -25,7 +25,10 @@ function describe(type: string, details: Record<string, unknown>): string {
 export function Journal() {
   const game = useCurrentGame();
   const journal = useJournal(game.id);
+  const ruleset = useRuleset(game.rulesetVersion, game.state.cycle);
   const entries = journal.data?.pages.flatMap((page) => page.entries) ?? [];
+  const blocLabel = (id: string) =>
+    ruleset.data?.legislatives.blocs.find((b) => b.id === id)?.libelle ?? id;
 
   return (
     <section aria-labelledby="titre-journal" className="space-y-4">
@@ -63,7 +66,11 @@ export function Journal() {
                   </span>
                 </summary>
                 <div className="mt-4">
-                  <WeeklyReportView report={entry.report} state={game.state} />
+                  <WeeklyReportView
+                    report={entry.report}
+                    state={game.state}
+                    blocLabel={blocLabel}
+                  />
                 </div>
               </details>
             </li>

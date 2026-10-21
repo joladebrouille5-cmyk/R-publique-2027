@@ -1,8 +1,9 @@
 import { advanceWeek, openQuinquennat } from '@r2027/engine';
 import type { GameState } from '@r2027/shared';
-import { cleanup, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
+import { WeeklyReportView } from '../components/WeeklyReportView';
 import {
   GAME_ID,
   gameFixture,
@@ -155,6 +156,15 @@ describe('quinquennat', () => {
     expect(within(table).getAllByRole('row')).toHaveLength(RULESET.assemblee.groupes.length + 1);
     expect(within(assembly).getByText(/majorité des membres : \d+ voix/)).toBeInTheDocument();
     expect(within(assembly).getByText(/sans aucun nom de député/)).toBeInTheDocument();
+    // Hémicycle : un point par siège (577), légende chiffrée par position à l'égard du président.
+    const hemicycle = within(assembly).getByRole('img', { name: /^Hémicycle de l’Assemblée/ });
+    expect(hemicycle.querySelectorAll('circle')).toHaveLength(RULESET.assemblee.siegesTotal);
+    const supporters = Object.values(state.parlement!.groupes)
+      .filter((g) => g.alignement === 'soutien')
+      .reduce((sum, g) => sum + g.sieges, 0);
+    expect(hemicycle).toHaveAccessibleName(
+      expect.stringContaining(`Soutiens du président ${supporters}`),
+    );
     // Le président (candidat fictif) dépose son programme : des textes ont déjà été votés.
     expect(state.parlement!.textes.some((b) => b.votes.length > 0)).toBe(true);
     expect(screen.getAllByText(/votes de groupe simulés/).length).toBeGreaterThan(0);
@@ -351,5 +361,56 @@ describe('quinquennat', () => {
     expect(within(calendar).getByText(/dimanche 18 avril 2032/)).toBeVisible();
     expect(within(calendar).getAllByText('Date hypothèse de jeu').length).toBeGreaterThan(1);
     expect(screen.queryByRole('region', { name: /Quinquennat 2027–2032/ })).toBeNull();
+  });
+
+  it('le bilan hebdomadaire du quinquennat : économie et législatives, avec leurs facteurs', async () => {
+    let state = playerAtInvestiture();
+    while (!state.quinquennat!.gouvernement) state = step(state);
+    let result = advanceWeek(
+      state,
+      { actions: [{ actionId: 'dissolution' }], decisions: [] },
+      { ruleset: RULESET },
+    );
+    while (!result.report.legislatives || result.report.legislatives.tour !== 2)
+      result = advanceWeek(
+        result.state,
+        {
+          actions: [],
+          decisions: result.state.pendingDecisions.map((d) => ({
+            decisionId: d.id,
+            optionId: d.defaultOptionId,
+          })),
+        },
+        { ruleset: RULESET },
+      );
+    const { report } = result;
+    expect(report.economie.length).toBeGreaterThan(0);
+    render(
+      <WeeklyReportView
+        report={report}
+        state={result.state}
+        blocLabel={(id) => RULESET.legislatives.blocs.find((b) => b.id === id)!.libelle}
+      />,
+    );
+    const legislatives = screen.getByRole('region', { name: 'Législatives de la semaine' });
+    expect(
+      within(legislatives).getByRole('heading', { name: /Élections législatives : second tour/ }),
+    ).toBeVisible();
+    expect(within(legislatives).getByText(/Nouvelle Assemblée : Gauche \d+/)).toBeVisible();
+    const economy = screen.getByRole('region', { name: 'Économie de la semaine' });
+    expect(within(economy).getByText('Simulation')).toBeVisible();
+    expect(within(economy).getAllByText(/Conjoncture \(modèle de jeu\)/).length).toBeGreaterThan(0);
+  });
+
+  it('pendant la campagne suivante, le Parlement est figé et l’annonce', async () => {
+    let state = elected;
+    while (state.meta.phase === 'presidence') state = step(state);
+    mockApi(base(state));
+    renderRoute(`/parties/${GAME_ID}/parlement`);
+    expect(
+      await screen.findByText(/Campagne présidentielle en cours : le Parlement n’est pas simulé/),
+    ).toBeVisible();
+    expect(screen.getByRole('img', { name: /^Hémicycle de l’Assemblée/ })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Textes du quinquennat précédent' })).toBeVisible();
   });
 });

@@ -547,7 +547,14 @@ export function Dashboard() {
             : 'Bilan hebdomadaire'}
         </h2>
         {lastReport ? (
-          <WeeklyReportView report={lastReport} state={state} proposalLabel={programmeLabel} />
+          <WeeklyReportView
+            report={lastReport}
+            state={state}
+            proposalLabel={programmeLabel}
+            blocLabel={(id) =>
+              ruleset.data?.legislatives.blocs.find((b) => b.id === id)?.libelle ?? id
+            }
+          />
         ) : (
           <p className="text-sm text-slate-500 dark:text-slate-400">
             Aucune semaine résolue pour l’instant.

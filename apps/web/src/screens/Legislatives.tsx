@@ -125,17 +125,24 @@ function Calendar({ state, ruleset }: { state: GameState; ruleset: Ruleset }) {
           : 'déduite : troisième mardi de juin, cinq ans après son élection'}
         ).
       </p>
-      <p>
-        Dissolution (Constitution, art. 12) :{' '}
-        {prochaine?.motif === 'dissolution' || premierTour
-          ? 'des élections législatives sont en cours.'
-          : state.meta.date < dissolutionFrom
-            ? `impossible dans l’année qui suit les dernières élections, soit avant le ${formatGameDate(dissolutionFrom)}.`
-            : `possible depuis le ${formatGameDate(dissolutionFrom)}.`}{' '}
-        {playerPresides
-          ? 'Le président la décide par l’action « Dissoudre l’Assemblée nationale » du plan d’actions ; les élections ont lieu 20 à 40 jours plus tard et les travaux parlementaires sont suspendus d’ici là.'
-          : 'Le président (IA) dissout si ses soutiens sont trop minoritaires et sa popularité suffisante (règle de jeu, hypothèse).'}
-      </p>
+      {!state.quinquennat ? (
+        <p>
+          Campagne présidentielle en cours : l’Assemblée n’est pas simulée (simplification du jeu)
+          et aucune dissolution n’est possible avant le quinquennat suivant.
+        </p>
+      ) : (
+        <p>
+          Dissolution (Constitution, art. 12) :{' '}
+          {prochaine?.motif === 'dissolution' || premierTour
+            ? 'des élections législatives sont en cours.'
+            : state.meta.date < dissolutionFrom
+              ? `impossible dans l’année qui suit les dernières élections, soit avant le ${formatGameDate(dissolutionFrom)}.`
+              : `possible depuis le ${formatGameDate(dissolutionFrom)}.`}{' '}
+          {playerPresides
+            ? 'Le président la décide par l’action « Dissoudre l’Assemblée nationale » du plan d’actions ; les élections ont lieu 20 à 40 jours plus tard et les travaux parlementaires sont suspendus d’ici là.'
+            : 'Le président (IA) dissout si ses soutiens sont trop minoritaires et sa popularité suffisante (règle de jeu, hypothèse).'}
+        </p>
+      )}
       <p className="text-xs text-slate-500 dark:text-slate-400">{rules.regles.regle}</p>
     </section>
   );

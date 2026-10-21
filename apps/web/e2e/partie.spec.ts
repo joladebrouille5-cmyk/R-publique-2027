@@ -115,10 +115,30 @@ test('fin du quinquennat : bilan, puis campagne de la présidentielle 2032', asy
   test.setTimeout(180_000);
   await createGame(page, 'Cycle 2032', 'e2e-cycle');
   await advanceViaApi(page, (g) => g.state.quinquennat !== null);
+  // De l'investiture à un premier vote à l'Assemblée (votes simulés par groupe).
+  const voted = await advanceViaApi(
+    page,
+    (g) => g.state.parlement?.textes.some((b) => b.votes.length > 0) ?? false,
+    13,
+  );
+  expect(voted.state.meta.phase).toBe('presidence');
+  await page.reload();
+  await openScreen(page, 'Parlement');
+  await expect(
+    page.getByRole('img', { name: /^Hémicycle de l’Assemblée nationale/ }),
+  ).toBeVisible();
+  await expect(page.getByText(/votes de groupe simulés/).first()).toBeVisible();
+  const parliamentAudit = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze();
+  expect(
+    parliamentAudit.violations.map((v) => `Parlement — ${v.id} : ${v.help} (${v.nodes.length})`),
+  ).toEqual([]);
   // Avance rapide du quinquennat (président IA) jusqu'à la campagne suivante (critère 17).
   const campaign = await advanceViaApi(page, (g) => g.state.cycle.annee === 2032, 52);
   expect(campaign.state.meta).toMatchObject({ phase: 'campagne', date: '2031-09-29' });
   await page.reload();
+  await openScreen(page, 'Tableau de bord');
   const panel = page.getByRole('region', { name: 'Présidentielle 2032' });
   await expect(panel).toContainText('Le quinquennat 2027–2032');
   await expect(
