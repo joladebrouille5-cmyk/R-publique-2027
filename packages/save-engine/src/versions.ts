@@ -6,6 +6,7 @@ import {
   initialRelations,
   openingAccount,
   mandateDates,
+  openEconomy,
   openParliament,
   PLAYER_ACTOR_ID,
   SAVE_SCHEMA_VERSION,
@@ -21,6 +22,7 @@ import {
   GameStateV6Schema,
   GameStateV7Schema,
   GameStateV8Schema,
+  GameStateV9Schema,
   type Actor,
   type ActorV4,
   type ActorV5,
@@ -33,6 +35,7 @@ import {
   type GameStateV6,
   type GameStateV7,
   type GameStateV8,
+  type GameStateV9,
 } from '@r2027/shared';
 import { z } from 'zod';
 import { hashState, sha256, canonicalStringify } from './canonical';
@@ -69,7 +72,8 @@ const SCHEMAS: Record<number, z.ZodType> = {
   6: GameStateV6Schema,
   7: GameStateV7Schema,
   8: GameStateV8Schema,
-  9: GameStateSchema,
+  9: GameStateV9Schema,
+  10: GameStateSchema,
 };
 
 /** Jeux de règles des parties aux formats 2 (phase 2) et 3 (phase 3). */
@@ -342,7 +346,7 @@ function migrateV7ToV8(v7: GameStateV7): GameStateV8 {
  * alignements par rapport au président, aucun texte déposé : la feuille de route est déposée à
  * partir de la semaine suivante).
  */
-function migrateV8ToV9(v8: GameStateV8): GameState {
+function migrateV8ToV9(v8: GameStateV8): GameStateV9 {
   const president = v8.quinquennat ? v8.actors[v8.quinquennat.mandat.presidentId] : undefined;
   if (v8.quinquennat && !president)
     throw new SaveFormatError('incoherence', 'Président inconnu dans la partie.');
@@ -358,6 +362,25 @@ function migrateV8ToV9(v8: GameStateV8): GameState {
   };
 }
 
+/**
+ * Format 9 → 10 (phase 6, P6-05 et P6-06) : la partie reçoit l'économie du quinquennat. Pendant
+ * une campagne, pas encore d'économie (`null`) ; pendant un quinquennat, les indicateurs partent
+ * des valeurs de l'Insee du jeu de règles courant, comme au début d'un quinquennat (la
+ * conjoncture des semaines déjà jouées n'est pas reconstituée).
+ */
+function migrateV9ToV10(v9: GameStateV9): GameState {
+  return {
+    ...v9,
+    meta: {
+      ...v9.meta,
+      engineVersion: ENGINE_VERSION,
+      rulesetVersion: CURRENT_RULESET_KEY,
+      saveSchemaVersion: 10,
+    },
+    economie: v9.quinquennat ? openEconomy(getRuleset(CURRENT_RULESET_KEY), v9.meta.week) : null,
+  };
+}
+
 const MIGRATIONS: Record<number, (state: never) => unknown> = {
   1: migrateV1ToV2,
   2: migrateV2ToV3,
@@ -367,6 +390,7 @@ const MIGRATIONS: Record<number, (state: never) => unknown> = {
   6: migrateV6ToV7,
   7: migrateV7ToV8,
   8: migrateV8ToV9,
+  9: migrateV9ToV10,
 };
 
 export type LoadedState = { state: GameState; stateHash: string; migratedFrom: number | null };

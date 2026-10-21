@@ -2,6 +2,7 @@ import type {
   AiObjective,
   CandidateStatus,
   DataStatus,
+  EconomicIndicator,
   Difficulty,
   FactorSource,
   GameMode,
@@ -236,4 +237,32 @@ export function describePosition(position: { economie: number; societe: number }
   const axis = (value: number, left: string, right: string) =>
     value === 0 ? 'centre' : `${value < 0 ? left : right} ${Math.abs(value)}`;
   return `économie : ${axis(position.economie, 'gauche', 'droite')} · société : ${axis(position.societe, 'progressiste', 'conservateur')}`;
+}
+
+/** Indicateurs économiques (phase 6) : libellé et unité d'affichage. */
+export const INDICATOR_LABELS: Record<EconomicIndicator, { label: string; unit: string }> = {
+  croissance: { label: 'Croissance du PIB (sur un an)', unit: ' %' },
+  inflation: { label: 'Inflation (sur un an)', unit: ' %' },
+  chomage: { label: 'Taux de chômage', unit: ' %' },
+  deficit: { label: 'Solde public', unit: ' % du PIB' },
+  dette: { label: 'Dette publique', unit: ' % du PIB' },
+  pouvoirAchat: { label: 'Pouvoir d’achat (indice 100 au début du quinquennat)', unit: '' },
+  confiance: { label: 'Confiance des ménages (moyenne de long terme : 100)', unit: '' },
+  tensions: { label: 'Tensions sociales (indicateur de jeu, 0 à 100)', unit: '' },
+};
+
+const centiemes = new Intl.NumberFormat('fr-FR', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+/** Valeur d'un indicateur (centièmes) avec son unité : « 8,30 % », « −5,00 % du PIB ». */
+export function formatIndicator(indicator: EconomicIndicator, value: number): string {
+  return `${centiemes.format(value / 100).replace('-', '−')}${INDICATOR_LABELS[indicator].unit}`;
+}
+
+/** Variation signée d'un indicateur : « +0,12 », « −0,05 ». */
+export function formatIndicatorDelta(value: number): string {
+  const text = centiemes.format(Math.abs(value) / 100);
+  return value > 0 ? `+${text}` : value < 0 ? `−${text}` : text;
 }

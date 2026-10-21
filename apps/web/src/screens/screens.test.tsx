@@ -46,6 +46,7 @@ describe('navigation de partie', () => {
       'Parlement',
       'Économie',
       'Crises',
+      'Législatives',
       'Journal',
       'Sauvegardes',
     ]) {
@@ -64,9 +65,9 @@ describe('navigation de partie', () => {
 
   it('annonce un écran non implémenté sans données factices', async () => {
     mockApi(gameHandlers);
-    renderRoute(`/parties/${GAME_ID}/economie`);
+    renderRoute(`/parties/${GAME_ID}/legislatives`);
     expect(await screen.findByText('Non disponible — prévu en phase 6')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Économie' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Législatives' })).toBeInTheDocument();
   });
 
   it('signale une partie introuvable', async () => {

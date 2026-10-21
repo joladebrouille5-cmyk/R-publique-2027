@@ -218,6 +218,7 @@ export function reportFixture(overrides: Partial<WeeklyReport> = {}): WeeklyRepo
     relations: [],
     alliances: [],
     strategies: [],
+    economie: [],
     ...overrides,
   };
 }

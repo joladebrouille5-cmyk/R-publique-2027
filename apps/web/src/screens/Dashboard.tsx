@@ -11,6 +11,7 @@ import {
   CANDIDATE_STATUS_LABELS,
   DIFFICULTY_LABELS,
   formatGameDate,
+  formatIndicator,
   formatShare,
   MODE_LABELS,
   PHASE_LABELS,
@@ -210,8 +211,16 @@ export function Dashboard() {
               vigueur.
             </p>
           )}
+          {state.economie && (
+            <p>
+              Économie (simulée) : croissance{' '}
+              {formatIndicator('croissance', state.economie.indicateurs.croissance ?? 0)}, chômage{' '}
+              {formatIndicator('chomage', state.economie.indicateurs.chomage ?? 0)}, inflation{' '}
+              {formatIndicator('inflation', state.economie.indicateurs.inflation ?? 0)}.
+            </p>
+          )}
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Économie, crises et législatives : étapes suivantes de la phase 6, pas encore jouables.
+            Législatives et dissolution : étape suivante de la phase 6, pas encore jouables.
           </p>
           <p className="flex flex-wrap gap-x-4">
             <Link
@@ -225,6 +234,12 @@ export function Dashboard() {
               className="text-republique-600 underline dark:text-republique-100"
             >
               Le Parlement
+            </Link>
+            <Link
+              to="../economie"
+              className="text-republique-600 underline dark:text-republique-100"
+            >
+              L’économie
             </Link>
             <Link
               to="../resultats"

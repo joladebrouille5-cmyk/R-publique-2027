@@ -83,6 +83,14 @@ export {
   openQuinquennat,
   presidentOf,
 } from './presidency/government';
+export { answerCrisis, drawCrises } from './presidency/crises';
+export {
+  applyReformToEconomy,
+  EconomyBook,
+  openEconomy,
+  shareOfGdp,
+  weeklyEconomy,
+} from './presidency/economy';
 export {
   aiBillChoice,
   alignmentOf,

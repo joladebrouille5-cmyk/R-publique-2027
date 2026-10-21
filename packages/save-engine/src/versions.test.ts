@@ -17,6 +17,7 @@ import V5 from './fixtures/v5-phase-5.json' with { type: 'json' };
 import V6 from './fixtures/v6-phase-5-bis.json' with { type: 'json' };
 import V7 from './fixtures/v7-phase-5-ter.json' with { type: 'json' };
 import V8 from './fixtures/v8-phase-6.json' with { type: 'json' };
+import V9 from './fixtures/v9-phase-6.json' with { type: 'json' };
 import { loadStoredState, MIGRATED_CANDIDATE, SaveFormatError, upgradeState } from './versions';
 
 const ruleset = getRuleset(CURRENT_RULESET_KEY);
@@ -233,6 +234,7 @@ describe('migrations de sauvegarde', () => {
       quinquennat: _quinquennat,
       historique: _historique,
       parlement: _parlement,
+      economie: _economie,
       ...rest
     } = state;
     const { meta: _m, player: _p, actors: _a, medias: _md, ...restBefore } = V5.state;
@@ -270,6 +272,7 @@ describe('migrations de sauvegarde', () => {
       quinquennat: _quinquennat,
       historique: _historique,
       parlement: _parlement,
+      economie: _economie,
       ...rest
     } = state;
     const { meta: _m, medias: _md, ...restBefore } = V6.state;
@@ -331,6 +334,7 @@ describe('migrations de sauvegarde', () => {
       quinquennat: _quinquennat,
       historique: _historique,
       parlement: _parlement,
+      economie: _economie,
       ...rest
     } = state;
     const { meta: _m, calendar: _c, ...restBefore } = V7.state;
@@ -368,7 +372,7 @@ describe('migrations de sauvegarde', () => {
       rulesetVersion: CURRENT_RULESET_KEY,
     });
     // Rien d'autre ne change ; l'Assemblée est la composition importée, sans texte déposé.
-    const { meta: _meta, parlement, ...rest } = state;
+    const { meta: _meta, parlement, economie: _economie, ...rest } = state;
     const { meta: _m, ...restBefore } = V8.state;
     expect(rest).toEqual(restBefore);
     expect(Object.entries(parlement!.groupes).map(([id, g]) => [id, g.sieges])).toEqual(
@@ -397,6 +401,43 @@ describe('migrations de sauvegarde', () => {
     expect(current.meta.week).toBe(49);
   });
 
+  it('ouvre l’économie d’une partie réelle en cours de quinquennat (format 9)', () => {
+    const { state, migratedFrom } = loadStoredState(V9.state, V9.stateHash, 9);
+    expect(migratedFrom).toBe(9);
+    expect(state.meta).toMatchObject({
+      week: 61,
+      phase: 'presidence',
+      saveSchemaVersion: SAVE_SCHEMA_VERSION,
+      engineVersion: ENGINE_VERSION,
+      rulesetVersion: CURRENT_RULESET_KEY,
+    });
+    // Rien d'autre ne change ; l'économie part des valeurs de l'Insee du jeu de règles.
+    const { meta: _meta, economie, ...rest } = state;
+    const { meta: _m, ...restBefore } = V9.state;
+    expect(rest).toEqual(restBefore);
+    expect(economie!.indicateurs.chomage).toBe(ruleset.economieReelle.indicateurs.chomage.valeur);
+    expect(economie!.historique).toEqual([{ semaine: 61, valeurs: economie!.indicateurs }]);
+
+    // La partie continue : textes en cours, économie simulée, réformes déjà adoptées conservées.
+    let current = state;
+    for (let i = 0; i < 12; i++)
+      current = advanceWeek(
+        current,
+        {
+          actions: [],
+          decisions: current.pendingDecisions.map((d) => ({
+            decisionId: d.id,
+            optionId: d.defaultOptionId,
+          })),
+        },
+        { ruleset },
+      ).state;
+    expect(current.economie!.historique).toHaveLength(13);
+    expect(current.parlement!.reformes.length).toBeGreaterThanOrEqual(
+      V9.state.parlement.reformes.length,
+    );
+  });
+
   it('vérifie l’empreinte avant toute migration', () => {
     const altered = { ...V1_STATE, meta: { ...V1_STATE.meta, week: 3 } };
     expect(errorCode(() => loadStoredState(altered, V1_HASH, 1))).toBe('empreinte_incoherente');
@@ -416,6 +457,7 @@ describe('migrations de sauvegarde', () => {
     expect(errorCode(() => upgradeState(V6.state, 7))).toBe('etat_invalide');
     expect(errorCode(() => upgradeState(V7.state, 8))).toBe('etat_invalide');
     expect(errorCode(() => upgradeState(V8.state, 9))).toBe('etat_invalide');
+    expect(errorCode(() => upgradeState(V9.state, 10))).toBe('etat_invalide');
   });
 
   it('refuse un jeu de règles inconnu', () => {

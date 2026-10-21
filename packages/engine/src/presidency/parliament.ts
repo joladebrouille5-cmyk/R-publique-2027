@@ -18,6 +18,7 @@ import { proposalsById } from '../campaign/programme';
 import { compareStrings, type Ledger } from '../core/ledger';
 import { stream } from '../core/random';
 import { distance } from '../election/model';
+import { applyReformToEconomy, type EconomyBook } from './economy';
 
 // Assemblée nationale (phase 6, P6-04). Composition réelle importée (groupes et sièges, sans
 // nom de député) ; tout le reste est simulé : chaque groupe vote en bloc, avec sa discipline,
@@ -327,6 +328,8 @@ type Context = {
   state: GameState;
   ruleset: Ruleset;
   ledger: Ledger;
+  /** Registre de l'économie : coût des réformes, tensions dues au 49.3. */
+  economy: EconomyBook | null;
   step: number;
   /** Le joueur préside : il décide de la conduite des textes. */
   playerPresides: boolean;
@@ -408,6 +411,12 @@ function engage(context: Context, bill: Bill, presidentId: string, events: Repor
   const { state, ruleset, ledger, step } = context;
   const parliament = state.parlement!;
   const session = sessionOf(ruleset, state.meta.date);
+  context.economy?.add(
+    'tensions',
+    'Recours à l’article 49 alinéa 3',
+    ruleset.economie.tensions49_3,
+    'decision',
+  );
   parliament.usage49_3 = {
     session,
     autres: (parliament.usage49_3.session === session ? parliament.usage49_3.autres : 0) + 1,
@@ -536,6 +545,13 @@ export function advanceParliament(
         step,
       },
     ]);
+    if (context.economy) {
+      const kept = Math.max(
+        0,
+        1 - ruleset.parlement.concessions.reductionEffet * reform.concessions,
+      );
+      applyReformToEconomy(state, ruleset, context.economy, proposal, kept);
+    }
     events.push(
       event(
         state,

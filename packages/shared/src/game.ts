@@ -18,6 +18,7 @@ import {
   CandidateIdentitySchema,
   CandidateIdentityV5Schema,
 } from './politics';
+import { EconomyStateSchema } from './economie';
 import { ParliamentSchema } from './parlement';
 import { CycleSchema, QuinquennatSchema, QuinquennatSummarySchema } from './quinquennat';
 import { ResourceKeySchema, ResourcesSchema } from './resources';
@@ -254,12 +255,18 @@ export const PendingDecisionV8Schema = PendingDecisionV2Schema.extend({
   kind: z.enum(['evenement', 'consigne', 'gouvernement']),
 }).strict();
 
+/** Décision obligatoire au format 9 (avec la conduite des textes), figée. */
+export const PendingDecisionV9Schema = PendingDecisionV2Schema.extend({
+  kind: z.enum(['evenement', 'consigne', 'gouvernement', 'texte']),
+}).strict();
+
 /**
  * Décision obligatoire : réponse à un événement, consigne de vote entre les deux tours, choix
- * du gouvernement (nomination du Premier ministre) ou conduite d'un texte au Parlement (phase 6).
+ * du gouvernement (nomination du Premier ministre), conduite d'un texte au Parlement ou réponse
+ * à une crise fictive (phase 6).
  */
 export const PendingDecisionSchema = PendingDecisionV2Schema.extend({
-  kind: z.enum(['evenement', 'consigne', 'gouvernement', 'texte']),
+  kind: z.enum(['evenement', 'consigne', 'gouvernement', 'texte', 'crise']),
 }).strict();
 export type PendingDecision = z.infer<typeof PendingDecisionSchema>;
 
@@ -509,18 +516,28 @@ export const GameStateV8Schema = GameStateV7Schema.extend({
 }).strict();
 export type GameStateV8 = z.infer<typeof GameStateV8Schema>;
 
-/**
- * État complet d'une partie, format de sauvegarde n° 9 (phase 6) : cycle électoral, présidence
- * et gouvernement, Parlement (groupes, textes, votes, réformes), archives des présidentielles et
- * des quinquennats précédents. Toute évolution s'accompagne d'un nouveau numéro de format et
- * d'une migration (packages/save-engine). L'aléa ne figure pas dans l'état : chaque tirage est
- * dérivé de la graine, de la semaine et de son contexte (module, action, événement, groupe…).
- */
-export const GameStateSchema = GameStateV8Schema.extend({
+/** État au format 9 (phase 6, P6-04), figé pour les migrations. */
+export const GameStateV9Schema = GameStateV8Schema.extend({
   meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(9) }).strict(),
-  pendingDecisions: z.array(PendingDecisionSchema),
+  pendingDecisions: z.array(PendingDecisionV9Schema),
   /** Assemblée nationale et textes ; null tant qu'aucun quinquennat n'a commencé. */
   parlement: ParliamentSchema.nullable(),
+}).strict();
+export type GameStateV9 = z.infer<typeof GameStateV9Schema>;
+
+/**
+ * État complet d'une partie, format de sauvegarde n° 10 (phase 6) : cycle électoral, présidence
+ * et gouvernement, Parlement (groupes, textes, votes, réformes), économie (indicateurs, effets
+ * différés, historique) et crises (décisions), archives des cycles précédents. Toute évolution
+ * s'accompagne d'un nouveau numéro de format et d'une migration (packages/save-engine). L'aléa
+ * ne figure pas dans l'état : chaque tirage est dérivé de la graine, de la semaine et de son
+ * contexte (module, action, événement, groupe…).
+ */
+export const GameStateSchema = GameStateV9Schema.extend({
+  meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(10) }).strict(),
+  pendingDecisions: z.array(PendingDecisionSchema),
+  /** Économie du quinquennat ; null tant qu'aucun quinquennat n'a commencé. */
+  economie: EconomyStateSchema.nullable(),
 }).strict();
 export type GameState = z.infer<typeof GameStateSchema>;
 

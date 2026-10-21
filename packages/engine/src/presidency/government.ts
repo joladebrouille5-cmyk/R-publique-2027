@@ -17,6 +17,7 @@ import { proximity } from '../ai/relations';
 import { compareStrings } from '../core/ledger';
 import { stream } from '../core/random';
 import { mandateDates, weekReaches } from './dates';
+import { openEconomy } from './economy';
 import { openParliament } from './parliament';
 
 // Investiture et gouvernement (phase 6, P6-03). Le président nomme le Premier ministre : le
@@ -311,6 +312,7 @@ export function openQuinquennat(state: GameState, ruleset: Ruleset, winnerId: st
     refus: [],
   };
   state.parlement = openParliament(ruleset, winner, state.parlement);
+  state.economie ??= openEconomy(ruleset, state.meta.week);
   state.meta.phase = 'presidence';
   state.calendar = { blockedBy: null, blockedMessage: null };
   requestGovernment(state, ruleset);

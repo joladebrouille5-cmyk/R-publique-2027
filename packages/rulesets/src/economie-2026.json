@@ -1,0 +1,119 @@
+{
+  "verifieLe": "2026-10-21",
+  "sources": [
+    {
+      "id": "insee-pib-evolution",
+      "titre": "Insee — Comptes trimestriels (base 2020) - Évolution du Produit intérieur brut total - Volume aux prix de l'année précédente chaînés - Série CVS-CJO (idbank 011794844)",
+      "url": "https://www.insee.fr/fr/statistiques/serie/011794844",
+      "licence": "non relevée (conditions de réutilisation de l’Insee non consultées) ; seules quelques valeurs publiées sont reprises, avec citation de la série",
+      "version": "mise à jour du 2026-08-28",
+      "consulteLe": "2026-10-21",
+      "sha256": "8ab3f7733f42d078e0da40db32c24e7712925220778d3531a380835bedc229a8"
+    },
+    {
+      "id": "insee-ipc-glissement",
+      "titre": "Insee — Indice des prix à la consommation - Base 2025 - Glissement annuel - Ensemble des ménages - France - Nomenclature Coicop : 00 - Ensemble (idbank 011814632)",
+      "url": "https://www.insee.fr/fr/statistiques/serie/011814632",
+      "licence": "non relevée (conditions de réutilisation de l’Insee non consultées) ; seules quelques valeurs publiées sont reprises, avec citation de la série",
+      "version": "mise à jour du 2026-10-15",
+      "consulteLe": "2026-10-21",
+      "sha256": "4dd601df066e3f383b15d86b95ad6a219bbe9168f70db838a7732c46101655f2"
+    },
+    {
+      "id": "insee-chomage-bit",
+      "titre": "Insee — Taux de chômage au sens du BIT - Ensemble - France hors Mayotte - Données CVS (idbank 001688527)",
+      "url": "https://www.insee.fr/fr/statistiques/serie/001688527",
+      "licence": "non relevée (conditions de réutilisation de l’Insee non consultées) ; seules quelques valeurs publiées sont reprises, avec citation de la série",
+      "version": "mise à jour du 2026-08-07",
+      "consulteLe": "2026-10-21",
+      "sha256": "d7cd2846546994160154fbda175cde5a95b5ca5fc6c3e8b3529092510307e872"
+    },
+    {
+      "id": "insee-dette-maastricht",
+      "titre": "Insee — Dette trimestrielle des administrations publiques au sens de Maastricht - Ensemble - En point de PIB - Base 2020 (idbank 010777608)",
+      "url": "https://www.insee.fr/fr/statistiques/serie/010777608",
+      "licence": "non relevée (conditions de réutilisation de l’Insee non consultées) ; seules quelques valeurs publiées sont reprises, avec citation de la série",
+      "version": "mise à jour du 2026-09-29",
+      "consulteLe": "2026-10-21",
+      "sha256": "122b36fff84de403adcef9b98153f98d27e174b77138937925358f22ea9857ad"
+    },
+    {
+      "id": "insee-solde-apu",
+      "titre": "Insee — Capacité (+) ou besoin (-) de financement des administrations publiques - Valeur aux prix courants - Série CVS-CJO (idbank 011794759)",
+      "url": "https://www.insee.fr/fr/statistiques/serie/011794759",
+      "licence": "non relevée (conditions de réutilisation de l’Insee non consultées) ; seules quelques valeurs publiées sont reprises, avec citation de la série",
+      "version": "mise à jour du 2026-08-28",
+      "consulteLe": "2026-10-21",
+      "sha256": "193345218ff5afa3465d4471341e23f05c3df8f491f49b23561f0f1e896f829e"
+    },
+    {
+      "id": "insee-pib-valeur",
+      "titre": "Insee — Produit intérieur brut total - Valeur aux prix courants - Série CVS-CJO (idbank 011794859)",
+      "url": "https://www.insee.fr/fr/statistiques/serie/011794859",
+      "licence": "non relevée (conditions de réutilisation de l’Insee non consultées) ; seules quelques valeurs publiées sont reprises, avec citation de la série",
+      "version": "mise à jour du 2026-08-28",
+      "consulteLe": "2026-10-21",
+      "sha256": "fce0920c34990f09ee50dc70e2b60c4bacc9e45368e7c65a2deff9e69771f668"
+    },
+    {
+      "id": "insee-confiance-menages",
+      "titre": "Insee — Enquête mensuelle de conjoncture auprès des ménages - Indicateur synthétique de confiance des ménages (premier facteur des soldes d'opinion de l'enquête) - Données CVS (idbank 001587668)",
+      "url": "https://www.insee.fr/fr/statistiques/serie/001587668",
+      "licence": "non relevée (conditions de réutilisation de l’Insee non consultées) ; seules quelques valeurs publiées sont reprises, avec citation de la série",
+      "version": "mise à jour du 2026-09-24",
+      "consulteLe": "2026-10-21",
+      "sha256": "8fc8d2bc2d47f1a1961bc1c53deded1d474cf0fe68da4f51cea2a5b5f35b5429"
+    }
+  ],
+  "indicateurs": {
+    "croissance": {
+      "valeur": 50,
+      "periode": "4 trimestres jusqu’au T2 2026",
+      "statut": "deduit",
+      "sourceIds": ["insee-pib-evolution"],
+      "regle": "Évolution du PIB en volume sur un an : produit des quatre dernières évolutions trimestrielles publiées (séries CVS-CJO)."
+    },
+    "inflation": {
+      "valeur": 310,
+      "periode": "septembre 2026",
+      "statut": "estimation",
+      "sourceIds": ["insee-ipc-glissement"],
+      "regle": "Glissement annuel de l’indice des prix à la consommation, dernier mois publié."
+    },
+    "chomage": {
+      "valeur": 830,
+      "periode": "T2 2026",
+      "statut": "estimation",
+      "sourceIds": ["insee-chomage-bit"],
+      "regle": "Taux de chômage au sens du BIT, dernier trimestre publié."
+    },
+    "deficit": {
+      "valeur": -500,
+      "periode": "4 trimestres jusqu’au T2 2026",
+      "statut": "deduit",
+      "sourceIds": ["insee-solde-apu", "insee-pib-valeur"],
+      "regle": "Capacité (+) ou besoin (−) de financement des administrations publiques sur quatre trimestres, rapporté au PIB en valeur des mêmes trimestres (séries CVS-CJO)."
+    },
+    "dette": {
+      "valeur": 11900,
+      "periode": "T2 2026",
+      "statut": "estimation",
+      "sourceIds": ["insee-dette-maastricht"],
+      "regle": "Dette des administrations publiques au sens de Maastricht, en points de PIB, dernier trimestre publié."
+    },
+    "confiance": {
+      "valeur": 8600,
+      "periode": "septembre 2026",
+      "statut": "estimation",
+      "sourceIds": ["insee-confiance-menages"],
+      "regle": "Indicateur synthétique de confiance des ménages (moyenne de longue période : 100), dernier mois publié."
+    }
+  },
+  "pibAnnuelMillions": {
+    "valeur": 3022609,
+    "periode": "4 trimestres jusqu’au T2 2026",
+    "statut": "deduit",
+    "sourceIds": ["insee-pib-valeur"],
+    "regle": "Somme des quatre derniers trimestres du PIB en valeur, en millions d’euros."
+  }
+}

@@ -6,6 +6,8 @@ import { Candidates } from './screens/Candidates';
 import { Dashboard } from './screens/Dashboard';
 import { Finances } from './screens/Finances';
 import { GameLayout } from './screens/GameLayout';
+import { Crises } from './screens/Crises';
+import { Economy } from './screens/Economy';
 import { Government } from './screens/Government';
 import { Parliament } from './screens/Parliament';
 import { Home } from './screens/Home';
@@ -40,6 +42,8 @@ const IMPLEMENTED: Record<string, ComponentType> = {
   finances: Finances,
   gouvernement: Government,
   parlement: Parliament,
+  economie: Economy,
+  crises: Crises,
   sondages: Polls,
   resultats: Results,
   journal: Journal,

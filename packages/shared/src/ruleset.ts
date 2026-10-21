@@ -2,6 +2,8 @@ import { z } from 'zod';
 import { IsoDateSchema } from './game';
 import { AiObjectiveSchema } from './campaign';
 import { RealAssemblySchema } from './assemblee';
+import { EconomicIndicatorSchema } from './economie';
+import { RealEconomySchema } from './economie-reelle';
 import { RealMediaSchema } from './medias';
 import { RealPersonalitiesSchema } from './personalities';
 import { MinisterProfileSchema } from './quinquennat';
@@ -332,6 +334,115 @@ export const ParliamentRulesSchema = z
     message: 'Seuil d’opposition inférieur au seuil de soutien',
   });
 export type ParliamentRules = z.infer<typeof ParliamentRulesSchema>;
+
+/**
+ * Modèle économique du quinquennat (phase 6, P6-05) : cibles de long terme, vitesses de retour,
+ * sensibilités et aléa. Paramètres de jeu (hypothèses) ; les valeurs de départ viennent des
+ * séries de l'Insee (`economieReelle`, `pnpm data:economie`, empreinte vérifiée).
+ */
+export const EconomyRulesSchema = z
+  .object({
+    statut: z.literal('hypothese'),
+    note: z.string().min(1),
+    fichier: z.string().regex(/^[a-z0-9-]+\.json$/),
+    empreinte: z.string().regex(/^[0-9a-f]{64}$/),
+    /** Conventions de départ des indicateurs sans série officielle (centièmes). */
+    depart: z
+      .object({ pouvoirAchat: z.number().int(), tensions: z.number().int().min(0).max(10_000) })
+      .strict(),
+    cibles: z
+      .object({
+        croissancePotentielle: z.number().int(),
+        inflation: z.number().int(),
+        chomageStructurel: z.number().int().min(0),
+      })
+      .strict(),
+    /** Part de l'écart à la cible résorbée chaque semaine. */
+    rappel: z
+      .object({
+        croissance: Fraction,
+        inflation: Fraction,
+        chomage: Fraction,
+        deficit: Fraction,
+        confiance: Fraction,
+        tensions: Fraction,
+      })
+      .strict(),
+    sensibilites: z
+      .object({
+        okun: z.number().min(0),
+        inflationCroissance: z.number().min(0),
+        deficitCroissance: z.number().min(0),
+        multiplicateur: z.number().min(0),
+        pouvoirAchatCroissance: z.number().min(0),
+        pouvoirAchatInflation: z.number().min(0),
+        confianceCroissance: z.number().min(0),
+        confianceInflation: z.number().min(0),
+        confianceChomage: z.number().min(0),
+        tensionsChomage: z.number().min(0),
+        tensionsInflation: z.number().min(0),
+        tensionsConfiance: z.number().min(0),
+        /** Popularité du président (centièmes) par point d'écart de la confiance à 100, chaque semaine. */
+        popularite: z.number().min(0),
+      })
+      .strict(),
+    /** Amplitude de l'aléa hebdomadaire de chaque indicateur (centièmes). */
+    alea: z.record(EconomicIndicatorSchema, z.number().int().min(0)),
+    /** Hausse des tensions sociales à chaque engagement de responsabilité (49.3). */
+    tensions49_3: z.number().int().min(0),
+  })
+  .strict();
+export type EconomyRules = z.infer<typeof EconomyRulesSchema>;
+
+const CrisisEconomyEffectSchema = z
+  .object({
+    indicateur: EconomicIndicatorSchema,
+    valeur: z.number().int(),
+    delaiSemaines: z.number().int().min(0),
+  })
+  .strict();
+
+/** Crise fictive du quinquennat (phase 6, P6-06) : décision obligatoire du président. */
+export const CrisisDefinitionSchema = z
+  .object({
+    id: z.string().regex(/^crise-[a-z0-9-]+$/),
+    libelle: z.string().min(1),
+    description: z.string().min(1),
+    nature: z.literal('fictif'),
+    majeur: z.boolean(),
+    probabiliteHebdomadaire: Probability,
+    /** Conditions sur les indicateurs économiques (centièmes) ou la popularité du président. */
+    conditions: z.array(
+      z
+        .object({
+          sur: z.union([EconomicIndicatorSchema, z.literal('popularite')]),
+          min: z.number().int().nullable(),
+          max: z.number().int().nullable(),
+        })
+        .strict(),
+    ),
+    delaiMinEntreOccurrences: z.number().int().min(0),
+    occurrencesMax: z.number().int().min(1).nullable(),
+    /** Effets immédiats de la crise sur l'économie et sur le président. */
+    economie: z.array(CrisisEconomyEffectSchema),
+    effets: z.array(EffectSchema),
+    choix: z
+      .array(
+        z
+          .object({
+            id: Id,
+            libelle: z.string().min(1),
+            description: z.string().min(1),
+            economie: z.array(CrisisEconomyEffectSchema),
+            effets: z.array(EffectSchema),
+          })
+          .strict(),
+      )
+      .min(2),
+    choixParDefaut: Id,
+  })
+  .strict();
+export type CrisisDefinition = z.infer<typeof CrisisDefinitionSchema>;
 
 export const EventConditionSchema = z
   .object({
@@ -731,6 +842,9 @@ export const RulesetSchema = z
     quinquennat: QuinquennatRulesSchema,
     parlement: ParliamentRulesSchema,
     assemblee: RealAssemblySchema,
+    economie: EconomyRulesSchema,
+    economieReelle: RealEconomySchema,
+    crises: z.array(CrisisDefinitionSchema).min(1),
     debats: z
       .object({
         statut: z.literal('hypothese'),
@@ -863,8 +977,16 @@ export const RulesetSchema = z
       if (action.institution) issue(`${action.id} : acte institutionnel hors du quinquennat`);
     unique(
       'Événement',
-      ruleset.evenements.map((e) => e.id),
+      [...ruleset.evenements, ...ruleset.crises].map((e) => e.id),
     );
+    for (const crisis of ruleset.crises) {
+      unique(
+        `Choix de ${crisis.id}`,
+        crisis.choix.map((c) => c.id),
+      );
+      if (!crisis.choix.some((c) => c.id === crisis.choixParDefaut))
+        issue(`${crisis.id} : choix par défaut inconnu ${crisis.choixParDefaut}`);
+    }
 
     unique(
       'Groupe d’électeurs',

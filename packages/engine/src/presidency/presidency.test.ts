@@ -207,7 +207,8 @@ describe('actions du président', () => {
         change.after - change.before,
       );
     expect(state.actors[PLAYER_ACTOR_ID]!.resources.popularite).toBe(popularity.after);
-    expect(report.steps.find((s) => s.step === 7)).toMatchObject({ active: false });
+    expect(report.steps.find((s) => s.step === 7)).toMatchObject({ active: true });
+    expect(report.economie.length).toBeGreaterThan(0);
   });
 
   it('refuse une cible manquante ou inconnue et le dépassement du temps', () => {

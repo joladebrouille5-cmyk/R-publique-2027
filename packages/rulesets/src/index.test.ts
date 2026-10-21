@@ -13,16 +13,20 @@ import {
 import { describe, expect, it } from 'vitest';
 import { CURRENT_RULESET_KEY, getRuleset, listRulesetKeys, UnknownRulesetError } from './index';
 import assemblee from './assemblee-2026.json';
+import economieReelle from './economie-2026.json';
 import mediasReels from './medias-2027.json';
 import personnalites from './personnalites-2027.json';
 import raw from './presidentielle-2027.json';
 
 /** Jeu de règles complet (base + données importées), copié pour les tests de rejet. */
 const full = () =>
-  JSON.parse(JSON.stringify({ ...raw, personnalites, mediasReels, assemblee })) as typeof raw & {
+  JSON.parse(
+    JSON.stringify({ ...raw, personnalites, mediasReels, assemblee, economieReelle }),
+  ) as typeof raw & {
     personnalites: typeof personnalites;
     mediasReels: typeof mediasReels;
     assemblee: typeof assemblee;
+    economieReelle: typeof economieReelle;
   };
 
 const ruleset = getRuleset(CURRENT_RULESET_KEY);
@@ -473,5 +477,41 @@ describe('Assemblée nationale (phase 6)', () => {
     for (const block of [p.calendrier, p.vote, p.concessions, p.senat, p.censure, p.reformes])
       expect(block.statut).toBe('hypothese');
     expect(p.vote.seuilOpposition).toBeLessThan(p.vote.seuilSoutien);
+  });
+});
+
+describe('économie et crises (phase 6)', () => {
+  it('a l’empreinte déclarée par le jeu de règles : une réimportation impose une nouvelle version', () => {
+    const hash = createHash('sha256').update(JSON.stringify(economieReelle)).digest('hex');
+    expect(ruleset.economie.empreinte).toBe(hash);
+    expect(ruleset.economie.fichier).toBe('economie-2026.json');
+  });
+
+  it('source chaque valeur de départ dans une série de l’Insee, avec sa période et son statut', () => {
+    const real = ruleset.economieReelle;
+    for (const source of real.sources) {
+      expect(source.url).toMatch(/^https:\/\/www\.insee\.fr\/fr\/statistiques\/serie\/\d{9}$/);
+      expect(source.titre).toMatch(/^Insee — .+ \(idbank \d{9}\)$/);
+      expect(source.sha256).toMatch(/^[0-9a-f]{64}$/);
+    }
+    for (const indicator of Object.values(real.indicateurs)) {
+      expect(['estimation', 'deduit']).toContain(indicator.statut);
+      expect(indicator.periode.length).toBeGreaterThan(3);
+    }
+    expect(real.indicateurs.deficit.valeur).toBeLessThan(0);
+    expect(real.indicateurs.dette.valeur).toBeGreaterThan(0);
+    expect(ruleset.economie.statut).toBe('hypothese');
+  });
+
+  it('ne contient que des crises fictives, déclarées comme telles', () => {
+    expect(ruleset.crises.length).toBeGreaterThanOrEqual(6);
+    for (const crisis of ruleset.crises) {
+      expect(crisis.nature).toBe('fictif');
+      expect(crisis.description).toMatch(/^Crise fictive inventée pour le jeu\./);
+      expect(crisis.choix.map((c) => c.id)).toContain(crisis.choixParDefaut);
+    }
+    const unknownDefault = full();
+    unknownDefault.crises[0]!.choixParDefaut = 'absent';
+    expect(RulesetSchema.safeParse(unknownDefault).success).toBe(false);
   });
 });

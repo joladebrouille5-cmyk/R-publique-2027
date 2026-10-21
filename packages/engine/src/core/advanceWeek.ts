@@ -359,6 +359,7 @@ export function advanceWeek(
         priorite: p.strategie.priorite,
         motif: p.strategie.motif,
       })),
+      economie: [],
     },
   };
 }

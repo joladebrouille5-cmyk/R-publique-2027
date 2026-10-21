@@ -106,7 +106,7 @@ test('export puis import dans une nouvelle partie identique', async ({ page }) =
 
 test('les écrans non implémentés sont annoncés comme tels', async ({ page }) => {
   await createGame(page, 'Écrans', 'e2e-ecrans');
-  await openScreen(page, 'Économie');
+  await openScreen(page, 'Législatives');
   await expect(page.getByText('Non disponible — prévu en phase 6')).toBeVisible();
 });
 
@@ -173,6 +173,21 @@ test('présidentielle complète puis quinquennat : deux tours, résultats, gouve
   expect(parliamentAudit.violations.map((v) => `${v.id} : ${v.help} (${v.nodes.length})`)).toEqual(
     [],
   );
+
+  // Économie (valeurs de départ de l'Insee, évolution simulée) et crises fictives.
+  for (const [screenName, landmark] of [
+    ['Économie', page.getByRole('listitem', { name: 'Taux de chômage' })],
+    ['Crises', page.getByRole('region', { name: 'Crises possibles (fictives)' })],
+  ] as const) {
+    await openScreen(page, screenName);
+    await expect(landmark).toBeVisible();
+    const screenAudit = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .analyze();
+    expect(
+      screenAudit.violations.map((v) => `${screenName} — ${v.id} : ${v.help} (${v.nodes.length})`),
+    ).toEqual([]);
+  }
 });
 
 test('une date de départ invalide est refusée par le serveur', async ({ page }) => {
@@ -196,6 +211,8 @@ test('aucun défilement horizontal de la page', async ({ page }) => {
     'Résultats',
     'Gouvernement',
     'Parlement',
+    'Économie',
+    'Crises',
     'Journal',
     'Sauvegardes',
   ]) {

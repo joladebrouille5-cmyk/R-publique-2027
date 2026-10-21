@@ -189,4 +189,30 @@ describe('quinquennat', () => {
     ).toBeInTheDocument();
     expect(within(group).getByText(/Projection du gouvernement/)).toBeInTheDocument();
   });
+
+  it('l’économie : valeurs de départ de l’Insee, valeurs simulées et facteurs', async () => {
+    let state = elected;
+    for (let i = 0; i < 6; i++) state = step(state);
+    mockApi(base(state));
+    renderRoute(`/parties/${GAME_ID}/economie`);
+    const unemployment = await screen.findByRole('listitem', { name: 'Taux de chômage' });
+    expect(within(unemployment).getByText('Donnée Insee')).toBeInTheDocument();
+    expect(
+      within(unemployment).getByRole('link', { name: /Taux de chômage au sens du BIT/ }),
+    ).toHaveAttribute('href', 'https://www.insee.fr/fr/statistiques/serie/001688527');
+    const tensions = screen.getByRole('listitem', {
+      name: 'Tensions sociales (indicateur de jeu, 0 à 100)',
+    });
+    expect(within(tensions).getByText('Convention du jeu')).toBeInTheDocument();
+    expect(screen.getByText(/Aucune valeur simulée n’est une prévision/)).toBeInTheDocument();
+  });
+
+  it('les crises : catalogue fictif et décision en attente', async () => {
+    mockApi(base(elected));
+    renderRoute(`/parties/${GAME_ID}/crises`);
+    const catalog = await screen.findByRole('region', { name: 'Crises possibles (fictives)' });
+    expect(within(catalog).getAllByRole('listitem')).toHaveLength(RULESET.crises.length);
+    expect(within(catalog).getAllByText('Fictif').length).toBe(RULESET.crises.length);
+    expect(screen.getByText('Aucune crise n’attend de décision.')).toBeInTheDocument();
+  });
 });

@@ -13,3 +13,5 @@ export * from './medias';
 export * from './quinquennat';
 export * from './assemblee';
 export * from './parlement';
+export * from './economie';
+export * from './economie-reelle';

@@ -1,7 +1,7 @@
 {
   "id": "presidentielle-2027",
-  "version": "7.0.0",
-  "libelle": "Présidentielle 2027 et quinquennat — campagne, parrainages, financement, médias réels, présidence, gouvernement et Parlement (phase 6)",
+  "version": "8.0.0",
+  "libelle": "Présidentielle 2027 et quinquennat — campagne, parrainages, financement, médias réels, présidence, gouvernement, Parlement, économie et crises (phase 6)",
   "verifieLe": "2026-10-21",
   "sources": {
     "elysee-cm-2026-07-01": {
@@ -3360,6 +3360,773 @@
       "bonusPublics": 0.3
     }
   },
+  "economie": {
+    "statut": "hypothese",
+    "note": "Valeurs de départ : séries de l'Insee (fichier economie-2026.json). Évolution simulée par un modèle de jeu simple : retour progressif vers des cibles de long terme, loi d'Okun, part conjoncturelle du déficit, dette alimentée par le déficit et allégée par la croissance nominale, pouvoir d'achat, confiance et tensions sociales liés à la croissance, à l'inflation et au chômage ; réformes (coût annuel estimé) et crises fictives. Aucun de ces paramètres n'est une prévision.",
+    "fichier": "economie-2026.json",
+    "empreinte": "5a87fa9fa27f6ee04a655996b02025282d15d1c037e9100cbb8a7304513c278c",
+    "depart": {
+      "pouvoirAchat": 10000,
+      "tensions": 4000
+    },
+    "cibles": {
+      "croissancePotentielle": 100,
+      "inflation": 200,
+      "chomageStructurel": 750
+    },
+    "rappel": {
+      "croissance": 0.03,
+      "inflation": 0.03,
+      "chomage": 0.01,
+      "deficit": 0.05,
+      "confiance": 0.05,
+      "tensions": 0.05
+    },
+    "sensibilites": {
+      "okun": 0.5,
+      "inflationCroissance": 0.2,
+      "deficitCroissance": 0.5,
+      "multiplicateur": 0.5,
+      "pouvoirAchatCroissance": 0.5,
+      "pouvoirAchatInflation": 0.5,
+      "confianceCroissance": 3,
+      "confianceInflation": 2,
+      "confianceChomage": 2,
+      "tensionsChomage": 4,
+      "tensionsInflation": 4,
+      "tensionsConfiance": 1,
+      "popularite": 0.5
+    },
+    "alea": {
+      "croissance": 5,
+      "inflation": 3,
+      "chomage": 1,
+      "deficit": 2,
+      "dette": 0,
+      "pouvoirAchat": 2,
+      "confiance": 50,
+      "tensions": 50
+    },
+    "tensions49_3": 500
+  },
+  "crises": [
+    {
+      "id": "crise-energie",
+      "libelle": "Flambée des prix de l'énergie",
+      "description": "Crise fictive inventée pour le jeu. Une envolée des cours du gaz et de l'électricité renchérit le coût de la vie.",
+      "nature": "fictif",
+      "majeur": true,
+      "probabiliteHebdomadaire": 0.004,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 52,
+      "occurrencesMax": 2,
+      "economie": [
+        {
+          "indicateur": "inflation",
+          "valeur": 80,
+          "delaiSemaines": 0
+        },
+        {
+          "indicateur": "pouvoirAchat",
+          "valeur": -60,
+          "delaiSemaines": 0
+        },
+        {
+          "indicateur": "confiance",
+          "valeur": -200,
+          "delaiSemaines": 0
+        }
+      ],
+      "effets": [
+        {
+          "ressource": "popularite",
+          "base": -40,
+          "ecart": 20,
+          "delaiSemaines": 0,
+          "saturation": false
+        }
+      ],
+      "choix": [
+        {
+          "id": "bouclier",
+          "libelle": "Bouclier tarifaire",
+          "description": "Plafonner les tarifs réglementés : l'inflation recule, le déficit se creuse.",
+          "economie": [
+            {
+              "indicateur": "inflation",
+              "valeur": -50,
+              "delaiSemaines": 0
+            },
+            {
+              "indicateur": "deficit",
+              "valeur": -30,
+              "delaiSemaines": 0
+            }
+          ],
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": 60,
+              "ecart": 30,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        },
+        {
+          "id": "cheque",
+          "libelle": "Chèque énergie ciblé",
+          "description": "Aider les ménages modestes : coût budgétaire limité, effet partiel sur le pouvoir d'achat.",
+          "economie": [
+            {
+              "indicateur": "deficit",
+              "valeur": -10,
+              "delaiSemaines": 0
+            },
+            {
+              "indicateur": "pouvoirAchat",
+              "valeur": 30,
+              "delaiSemaines": 0
+            }
+          ],
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": 20,
+              "ecart": 20,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        },
+        {
+          "id": "marche",
+          "libelle": "Laisser jouer le marché",
+          "description": "Aucune dépense nouvelle : colère sociale et perte de pouvoir d'achat.",
+          "economie": [
+            {
+              "indicateur": "tensions",
+              "valeur": 800,
+              "delaiSemaines": 0
+            },
+            {
+              "indicateur": "pouvoirAchat",
+              "valeur": -50,
+              "delaiSemaines": 0
+            }
+          ],
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -80,
+              "ecart": 30,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        }
+      ],
+      "choixParDefaut": "cheque"
+    },
+    {
+      "id": "crise-financiere",
+      "libelle": "Tempête financière en zone euro",
+      "description": "Crise fictive inventée pour le jeu. La faillite d'une grande banque européenne fait chuter les marchés et resserre le crédit.",
+      "nature": "fictif",
+      "majeur": true,
+      "probabiliteHebdomadaire": 0.003,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 104,
+      "occurrencesMax": 1,
+      "economie": [
+        {
+          "indicateur": "croissance",
+          "valeur": -80,
+          "delaiSemaines": 0
+        },
+        {
+          "indicateur": "confiance",
+          "valeur": -300,
+          "delaiSemaines": 0
+        },
+        {
+          "indicateur": "chomage",
+          "valeur": 20,
+          "delaiSemaines": 8
+        }
+      ],
+      "effets": [
+        {
+          "ressource": "popularite",
+          "base": -30,
+          "ecart": 20,
+          "delaiSemaines": 0,
+          "saturation": false
+        }
+      ],
+      "choix": [
+        {
+          "id": "garantie",
+          "libelle": "Garantir les dépôts et soutenir le crédit",
+          "description": "Garantie publique et prêts aux entreprises : coût budgétaire, reprise plus rapide.",
+          "economie": [
+            {
+              "indicateur": "deficit",
+              "valeur": -40,
+              "delaiSemaines": 0
+            },
+            {
+              "indicateur": "croissance",
+              "valeur": 30,
+              "delaiSemaines": 8
+            }
+          ],
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": 40,
+              "ecart": 20,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        },
+        {
+          "id": "rigueur",
+          "libelle": "Plan de rigueur immédiat",
+          "description": "Rassurer les marchés par des économies : déficit réduit, activité et climat social dégradés.",
+          "economie": [
+            {
+              "indicateur": "deficit",
+              "valeur": 30,
+              "delaiSemaines": 0
+            },
+            {
+              "indicateur": "croissance",
+              "valeur": -30,
+              "delaiSemaines": 0
+            },
+            {
+              "indicateur": "tensions",
+              "valeur": 600,
+              "delaiSemaines": 0
+            }
+          ],
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -80,
+              "ecart": 30,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        },
+        {
+          "id": "attente",
+          "libelle": "Attendre la réponse européenne",
+          "description": "Ne rien engager seul : la confiance continue de se dégrader.",
+          "economie": [
+            {
+              "indicateur": "confiance",
+              "valeur": -200,
+              "delaiSemaines": 4
+            }
+          ],
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -20,
+              "ecart": 20,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        }
+      ],
+      "choixParDefaut": "garantie"
+    },
+    {
+      "id": "crise-greve",
+      "libelle": "Mouvement social de grande ampleur",
+      "description": "Crise fictive inventée pour le jeu. Grèves et manifestations se multiplient dans les transports et l'énergie.",
+      "nature": "fictif",
+      "majeur": true,
+      "probabiliteHebdomadaire": 0.02,
+      "conditions": [
+        {
+          "sur": "tensions",
+          "min": 6000,
+          "max": null
+        }
+      ],
+      "delaiMinEntreOccurrences": 26,
+      "occurrencesMax": null,
+      "economie": [
+        {
+          "indicateur": "croissance",
+          "valeur": -20,
+          "delaiSemaines": 0
+        },
+        {
+          "indicateur": "tensions",
+          "valeur": 500,
+          "delaiSemaines": 0
+        }
+      ],
+      "effets": [
+        {
+          "ressource": "popularite",
+          "base": -30,
+          "ecart": 20,
+          "delaiSemaines": 0,
+          "saturation": false
+        }
+      ],
+      "choix": [
+        {
+          "id": "negocier",
+          "libelle": "Ouvrir une négociation",
+          "description": "Concessions salariales et calendrier social : apaisement, coût budgétaire.",
+          "economie": [
+            {
+              "indicateur": "deficit",
+              "valeur": -15,
+              "delaiSemaines": 0
+            },
+            {
+              "indicateur": "tensions",
+              "valeur": -1500,
+              "delaiSemaines": 0
+            }
+          ],
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": 20,
+              "ecart": 20,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        },
+        {
+          "id": "fermete",
+          "libelle": "Tenir bon",
+          "description": "Aucune concession : le conflit se durcit avant de s'essouffler.",
+          "economie": [
+            {
+              "indicateur": "tensions",
+              "valeur": 700,
+              "delaiSemaines": 0
+            },
+            {
+              "indicateur": "croissance",
+              "valeur": -20,
+              "delaiSemaines": 0
+            },
+            {
+              "indicateur": "tensions",
+              "valeur": -900,
+              "delaiSemaines": 6
+            }
+          ],
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -60,
+              "ecart": 30,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        }
+      ],
+      "choixParDefaut": "negocier"
+    },
+    {
+      "id": "crise-inondations",
+      "libelle": "Inondations exceptionnelles",
+      "description": "Crise fictive inventée pour le jeu. Des crues d'une ampleur rare frappent plusieurs départements.",
+      "nature": "fictif",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.004,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 52,
+      "occurrencesMax": null,
+      "economie": [
+        {
+          "indicateur": "croissance",
+          "valeur": -10,
+          "delaiSemaines": 0
+        }
+      ],
+      "effets": [],
+      "choix": [
+        {
+          "id": "reconstruction",
+          "libelle": "Fonds de reconstruction",
+          "description": "Indemnisation rapide et travaux : coût budgétaire, soutien à l'activité.",
+          "economie": [
+            {
+              "indicateur": "deficit",
+              "valeur": -20,
+              "delaiSemaines": 0
+            },
+            {
+              "indicateur": "croissance",
+              "valeur": 10,
+              "delaiSemaines": 12
+            }
+          ],
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": 50,
+              "ecart": 20,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        },
+        {
+          "id": "assurances",
+          "libelle": "S'en remettre aux assurances",
+          "description": "Pas de dépense publique : sentiment d'abandon.",
+          "economie": [
+            {
+              "indicateur": "tensions",
+              "valeur": 300,
+              "delaiSemaines": 0
+            }
+          ],
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -40,
+              "ecart": 20,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        }
+      ],
+      "choixParDefaut": "reconstruction"
+    },
+    {
+      "id": "crise-cyberattaque",
+      "libelle": "Cyberattaque contre des hôpitaux",
+      "description": "Crise fictive inventée pour le jeu. Un rançongiciel paralyse les systèmes informatiques de plusieurs hôpitaux.",
+      "nature": "fictif",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.003,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 52,
+      "occurrencesMax": 2,
+      "economie": [
+        {
+          "indicateur": "confiance",
+          "valeur": -100,
+          "delaiSemaines": 0
+        }
+      ],
+      "effets": [],
+      "choix": [
+        {
+          "id": "plan",
+          "libelle": "Plan national de cybersécurité",
+          "description": "Renfort des équipes et des moyens : coût modeste, crédibilité accrue.",
+          "economie": [
+            {
+              "indicateur": "deficit",
+              "valeur": -5,
+              "delaiSemaines": 0
+            }
+          ],
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": 30,
+              "ecart": 20,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        },
+        {
+          "id": "minimiser",
+          "libelle": "Minimiser l'incident",
+          "description": "Pas d'annonce : les révélations ultérieures coûtent cher.",
+          "economie": [],
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -50,
+              "ecart": 20,
+              "delaiSemaines": 2,
+              "saturation": false
+            }
+          ]
+        }
+      ],
+      "choixParDefaut": "plan"
+    },
+    {
+      "id": "crise-epidemie",
+      "libelle": "Épidémie saisonnière sévère",
+      "description": "Crise fictive inventée pour le jeu. Une épidémie hivernale exceptionnellement forte sature les services d'urgence.",
+      "nature": "fictif",
+      "majeur": true,
+      "probabiliteHebdomadaire": 0.002,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 52,
+      "occurrencesMax": 2,
+      "economie": [
+        {
+          "indicateur": "croissance",
+          "valeur": -40,
+          "delaiSemaines": 0
+        },
+        {
+          "indicateur": "chomage",
+          "valeur": 10,
+          "delaiSemaines": 0
+        }
+      ],
+      "effets": [],
+      "choix": [
+        {
+          "id": "restrictions",
+          "libelle": "Mesures de restriction",
+          "description": "Limiter la propagation : activité freinée.",
+          "economie": [
+            {
+              "indicateur": "croissance",
+              "valeur": -40,
+              "delaiSemaines": 0
+            },
+            {
+              "indicateur": "chomage",
+              "valeur": 10,
+              "delaiSemaines": 6
+            }
+          ],
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -20,
+              "ecart": 20,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        },
+        {
+          "id": "prevention",
+          "libelle": "Campagne de prévention et renfort hospitalier",
+          "description": "Moyens supplémentaires, sans restriction.",
+          "economie": [
+            {
+              "indicateur": "deficit",
+              "valeur": -10,
+              "delaiSemaines": 0
+            }
+          ],
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": 10,
+              "ecart": 20,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        }
+      ],
+      "choixParDefaut": "prevention"
+    },
+    {
+      "id": "crise-taux",
+      "libelle": "Tension sur les taux d'intérêt de la dette",
+      "description": "Crise fictive inventée pour le jeu. Les investisseurs exigent des taux plus élevés pour prêter à l'État.",
+      "nature": "fictif",
+      "majeur": true,
+      "probabiliteHebdomadaire": 0.01,
+      "conditions": [
+        {
+          "sur": "dette",
+          "min": 12000,
+          "max": null
+        }
+      ],
+      "delaiMinEntreOccurrences": 52,
+      "occurrencesMax": null,
+      "economie": [
+        {
+          "indicateur": "deficit",
+          "valeur": -20,
+          "delaiSemaines": 0
+        },
+        {
+          "indicateur": "confiance",
+          "valeur": -100,
+          "delaiSemaines": 0
+        }
+      ],
+      "effets": [
+        {
+          "ressource": "popularite",
+          "base": -20,
+          "ecart": 20,
+          "delaiSemaines": 0,
+          "saturation": false
+        }
+      ],
+      "choix": [
+        {
+          "id": "plan-economies",
+          "libelle": "Plan d'économies",
+          "description": "Réduire les dépenses pour rassurer : déficit réduit à terme, activité et popularité en baisse.",
+          "economie": [
+            {
+              "indicateur": "deficit",
+              "valeur": 40,
+              "delaiSemaines": 26
+            },
+            {
+              "indicateur": "croissance",
+              "valeur": -30,
+              "delaiSemaines": 0
+            }
+          ],
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -60,
+              "ecart": 30,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        },
+        {
+          "id": "statu-quo",
+          "libelle": "Maintenir le cap",
+          "description": "Aucun changement : la charge d'intérêts continue de peser.",
+          "economie": [
+            {
+              "indicateur": "deficit",
+              "valeur": -20,
+              "delaiSemaines": 12
+            },
+            {
+              "indicateur": "confiance",
+              "valeur": -200,
+              "delaiSemaines": 0
+            }
+          ],
+          "effets": []
+        }
+      ],
+      "choixParDefaut": "plan-economies"
+    },
+    {
+      "id": "crise-agricole",
+      "libelle": "Crise agricole et blocages routiers",
+      "description": "Crise fictive inventée pour le jeu. Des agriculteurs bloquent routes et centrales d'achat pour protester contre leurs revenus.",
+      "nature": "fictif",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.006,
+      "conditions": [
+        {
+          "sur": "tensions",
+          "min": 5000,
+          "max": null
+        }
+      ],
+      "delaiMinEntreOccurrences": 52,
+      "occurrencesMax": null,
+      "economie": [
+        {
+          "indicateur": "tensions",
+          "valeur": 300,
+          "delaiSemaines": 0
+        }
+      ],
+      "effets": [],
+      "choix": [
+        {
+          "id": "aides",
+          "libelle": "Aides d'urgence",
+          "description": "Soutien financier immédiat : apaisement, coût budgétaire.",
+          "economie": [
+            {
+              "indicateur": "deficit",
+              "valeur": -8,
+              "delaiSemaines": 0
+            },
+            {
+              "indicateur": "tensions",
+              "valeur": -600,
+              "delaiSemaines": 0
+            }
+          ],
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": 30,
+              "ecart": 20,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        },
+        {
+          "id": "normes",
+          "libelle": "Simplifier les normes",
+          "description": "Allègements réglementaires sans dépense.",
+          "economie": [
+            {
+              "indicateur": "tensions",
+              "valeur": -300,
+              "delaiSemaines": 0
+            }
+          ],
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": 10,
+              "ecart": 20,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        },
+        {
+          "id": "fermete",
+          "libelle": "Lever les blocages",
+          "description": "Fermeté : les tensions montent.",
+          "economie": [
+            {
+              "indicateur": "tensions",
+              "valeur": 400,
+              "delaiSemaines": 0
+            }
+          ],
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -30,
+              "ecart": 20,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        }
+      ],
+      "choixParDefaut": "aides"
+    }
+  ],
   "debats": {
     "statut": "hypothese",
     "preparationMaxHeures": 40,

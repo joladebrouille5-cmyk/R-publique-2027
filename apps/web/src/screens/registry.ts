@@ -87,15 +87,23 @@ export const GAME_SCREENS: readonly GameScreen[] = [
     path: 'economie',
     label: 'Économie',
     phase: 6,
-    available: false,
+    available: true,
     description: 'Croissance, inflation, chômage, dette, déficit et pouvoir d’achat.',
   },
   {
     path: 'crises',
     label: 'Crises',
     phase: 6,
+    available: true,
+    description: 'Crises fictives en cours et passées, choix possibles et conséquences.',
+  },
+  {
+    path: 'legislatives',
+    label: 'Législatives',
+    phase: 6,
     available: false,
-    description: 'Crises en cours, choix possibles et conséquences.',
+    description:
+      'Élections législatives sur les 577 circonscriptions, dissolution et recomposition de l’Assemblée.',
   },
   {
     path: 'journal',

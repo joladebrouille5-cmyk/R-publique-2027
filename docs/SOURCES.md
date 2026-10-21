@@ -196,6 +196,22 @@ Statut : vérifié sur le guide CNCCFP ; les montants de base inscrits dans la l
 - **Règles constitutionnelles** (citées d'après Wikipédia, révisions datées ; Légifrance refusant l'accès) : session ordinaire du premier jour ouvrable d'octobre au dernier jour ouvrable de juin (art. 28, révision 234377898) ; navette, commission mixte paritaire et dernier mot à l'Assemblée (art. 45, révision 230532500) ; motion de censure signée par un dixième des membres, seuls les votes favorables recensés, adoptée à la majorité des membres ; engagement de responsabilité sur un projet de loi de finances ou de financement de la sécurité sociale, et sur un autre texte une fois par session (art. 49, révision 240034355).
 - **Simulation** (hypothèses du jeu de règles) : vote en bloc de chaque groupe (discipline 95 %, non-inscrits 50 %, participation 90 %) selon la distance entre sa position et celle du texte et sa position à l'égard du président (soutien, non aligné, opposition, d'après la proximité des positions) ; concessions (+0,15 de soutien, −25 % d'effet chacune, deux au plus) ; Sénat non modélisé groupe par groupe : accord tiré au sort (70 %, ordre de grandeur indiqué par l'article Wikipédia sur l'article 45, non vérifié), lecture définitive à l'Assemblée sinon ; décision de censurer selon l'éloignement et l'impopularité du président. **Aucun vote n'est attribué à un député réel.**
 
+## 7 bis. Économie (phase 6)
+
+Import `pnpm data:economie` du 21/10/2026 : pages publiques des séries de l'Insee (`https://www.insee.fr/fr/statistiques/serie/{idbank}`, lues par la réponse JSON de la page ; `bdm.insee.fr` et `api.insee.fr` refusés depuis l'environnement). Licence : conditions de réutilisation de l'Insee non consultées ; seules quelques valeurs publiées sont reprises, avec citation de la série. Sortie commitée : `packages/rulesets/src/economie-2026.json` (empreinte vérifiée par `presidentielle-2027@8.0.0`).
+
+| Indicateur | Valeur de départ | Période | Statut | Série(s) |
+|---|---|---|---|---|
+| Croissance du PIB sur un an | +0,50 % | 4 trimestres jusqu'au T2 2026 | déduit (produit des quatre évolutions trimestrielles) | 011794844 (évolution trimestrielle du PIB en volume, CVS-CJO, base 2020) |
+| Inflation | 3,10 % | septembre 2026 | estimation | 011814632 (IPC base 2025, glissement annuel, ensemble) |
+| Chômage (BIT) | 8,30 % | T2 2026 | estimation | 001688527 (France hors Mayotte, CVS) |
+| Solde public | −5,00 % du PIB | 4 trimestres jusqu'au T2 2026 | déduit (somme des besoins de financement / somme des PIB) | 011794759 (capacité ou besoin de financement des APU) et 011794859 (PIB en valeur) |
+| Dette publique | 119,00 % du PIB | T2 2026 | estimation | 010777608 (dette au sens de Maastricht, base 2020) |
+| Confiance des ménages | 86 | septembre 2026 | estimation | 001587668 (indicateur synthétique, CVS) |
+| PIB annuel en valeur | 3 022 609 M€ | 4 trimestres jusqu'au T2 2026 | déduit | 011794859 |
+
+Pouvoir d'achat (indice 100 au début du quinquennat) et tensions sociales (indicateur de jeu, 40/100 au départ) : **conventions du jeu**, sans série officielle. L'évolution de tous les indicateurs est **simulée** (modèle de jeu étiqueté `hypothese` dans le jeu de règles : retour vers une croissance potentielle de 1 %, une inflation de 2 % et un chômage structurel de 7,5 %, loi d'Okun, part conjoncturelle du déficit, dette nourrie par le déficit et allégée par la croissance nominale, réformes chiffrées par le coût annuel estimé de la proposition, crises fictives) : ce ne sont pas des prévisions.
+
 ---
 
 ## 8. Utilisation dans le jeu (phases 2 et 3)
@@ -359,7 +375,7 @@ Règles et remarques :
 4. ~~Structure du fichier communal du 1er tour 2022 pour Paris, Lyon, Marseille, et nombre exact de lignes `ZZ`.~~ Vérifié en phase 4 : une ligne par ville au 1er tour aussi (75056, 69123, 13055) ; 210 lignes `ZZ` à chaque tour.
 5. Licence du fichier INSEE des contours de circonscriptions ; texte de référence du découpage.
 6. Zéros initiaux des codes métropolitains dans les fichiers des législatives 2024.
-7. Sources des indicateurs économiques initiaux (Banque de France, INSEE) : à identifier en phase 6.
+7. ~~Sources des indicateurs économiques initiaux : à identifier en phase 6.~~ Fait (§7 bis, séries de l'Insee) ; conditions de réutilisation de l'Insee à relire avant une mise en ligne publique.
 9. Texte des articles 6 et 7 de la Constitution sur Légifrance (cités d'après Wikipédia, Légifrance refusant l'accès le 21/10/2026).
 8. Conditions de réutilisation des relevés de temps de parole de l'Arcom (page sans licence), des mesures de Médiamétrie et des classements de l'ACPM : seuls quelques chiffres agrégés sont repris avec citation ; à confirmer avant une mise en ligne publique.
 

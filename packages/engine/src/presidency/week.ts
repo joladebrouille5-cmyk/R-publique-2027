@@ -18,6 +18,8 @@ import { WEEKLY_STEPS } from '../core/steps';
 import { weeklyDrift } from '../election/opinion';
 import { applyDecisions, validateDecisionAnswers } from '../event/events';
 import { planPresidentActions, validatePresidencyActions } from './actions';
+import { answerCrisis, drawCrises } from './crises';
+import { EconomyBook, weeklyEconomy } from './economy';
 import { advanceParliament } from './parliament';
 import { nextCampaignStart, weekReaches } from './dates';
 import {
@@ -86,6 +88,7 @@ export function advancePresidencyWeek(
   const set = (step: number, active: boolean, summary: string) =>
     summaries.set(step, { active, summary });
   const events: ReportEvent[] = [];
+  const economy = state.economie ? new EconomyBook(state.economie) : null;
 
   // 1. Réponses aux décisions et actions du président joueur.
   const answers = validateDecisionAnswers(state, plan.decisions);
@@ -151,9 +154,10 @@ export function advancePresidencyWeek(
   set(4, false, 'Pas de campagne en cours : relations et ralliements inchangés.');
 
   // 5. Décisions, effets des actions, remaniement, Parlement.
-  const institutional = new Set(['gouvernement', 'texte']);
+  const institutional = new Set(['gouvernement', 'texte', 'crise']);
   const governmentAnswers = answers.filter((a) => a.decision.kind === 'gouvernement');
   const billAnswers = answers.filter((a) => a.decision.kind === 'texte');
+  const crisisAnswers = answers.filter((a) => a.decision.kind === 'crise');
   const decisions = applyDecisions(
     state,
     ruleset,
@@ -162,7 +166,7 @@ export function advancePresidencyWeek(
     answers.filter((a) => !institutional.has(a.decision.kind)),
     5,
   );
-  for (const answer of [...governmentAnswers, ...billAnswers]) {
+  for (const answer of [...governmentAnswers, ...billAnswers, ...crisisAnswers]) {
     const option = answer.decision.options.find((o) => o.id === answer.optionId)!;
     decisions.push({
       decisionId: answer.decision.id,
@@ -201,8 +205,14 @@ export function advancePresidencyWeek(
     if (!playerPresides)
       events.push(nominate(state, ruleset, aiPrimeMinister(state, ruleset, president)));
   }
+  const crisisContext = economy
+    ? { state, ruleset, ledger, finances, book: economy, presidentId: president.id, step: 5 }
+    : null;
+  if (crisisContext)
+    for (const answer of crisisAnswers)
+      answerCrisis(crisisContext, answer.decision.eventId, answer.optionId);
   const parliament = advanceParliament(
-    { state, ruleset, ledger, step: 5, playerPresides },
+    { state, ruleset, ledger, economy, step: 5, playerPresides },
     billAnswers,
   );
   events.push(...parliament.events);
@@ -223,6 +233,8 @@ export function advancePresidencyWeek(
       events.push(nominate(state, ruleset, aiPrimeMinister(state, ruleset, president)));
   }
   if (playerPresides) requestGovernment(state, ruleset);
+  if (crisisContext && weekReaches(date, state.quinquennat!.mandat.debut))
+    events.push(...drawCrises(crisisContext, playerPresides));
   set(
     5,
     true,
@@ -244,8 +256,25 @@ export function advancePresidencyWeek(
   }
   set(6, true, 'Érosion, retour à la moyenne, attrition et usure du pouvoir appliqués.');
 
-  // 7. et 8. Économie et intentions de vote : pas encore modélisées pendant le quinquennat.
-  set(7, false, 'Économie du quinquennat : pas encore modélisée (phase 6, étape P6-05).');
+  // 7. Économie : effets différés, dynamique des indicateurs, conjoncture et popularité.
+  if (economy) {
+    weeklyEconomy(
+      state,
+      ruleset,
+      economy,
+      ledger,
+      president.id,
+      weekReaches(date, state.quinquennat!.mandat.debut),
+      7,
+    );
+  }
+  set(
+    7,
+    economy !== null,
+    economy
+      ? `${plural(economy.list().length, 'indicateur')} mis à jour avec leurs facteurs (modèle de jeu).`
+      : 'Économie non initialisée.',
+  );
   set(8, false, 'Aucune élection en cours.');
 
   // 9. Semaine suivante, décision de nomination à l'investiture, fin du quinquennat.
@@ -296,6 +325,7 @@ export function advancePresidencyWeek(
       relations: [],
       alliances: [],
       strategies: [],
+      economie: economy?.list() ?? [],
     },
   };
 }

@@ -5,6 +5,7 @@ import {
   RefusedDonationSchema,
   StrategyPrioritySchema,
 } from './campaign';
+import { EconomyChangeSchema } from './economie';
 import { GamePhaseSchema, IsoDateSchema, PollSchema, RoundResultSchema } from './game';
 import { ResourceKeySchema } from './resources';
 import { DataStatusSchema } from './ruleset';
@@ -198,6 +199,8 @@ export const WeeklyReportSchema = z
     relations: z.array(RelationNoteSchema).default([]),
     alliances: z.array(AllianceSchema).default([]),
     strategies: z.array(StrategyNoteSchema).default([]),
+    // Ajout de la phase 6 : variations des indicateurs économiques et leurs facteurs.
+    economie: z.array(EconomyChangeSchema).default([]),
   })
   .strict();
 export type WeeklyReport = z.infer<typeof WeeklyReportSchema>;
