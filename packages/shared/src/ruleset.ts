@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { LongTermEffectSchema } from './consequences';
 import { IsoDateSchema } from './game';
 import { AiObjectiveSchema } from './campaign';
 import { RealAssemblySchema } from './assemblee';
@@ -403,7 +404,11 @@ const CrisisEconomyEffectSchema = z
   })
   .strict();
 
-/** Crise fictive du quinquennat (phase 6, P6-06) : décision obligatoire du président. */
+/**
+ * Crise fictive du quinquennat (phase 6, P6-06) : décision obligatoire du président. Depuis la
+ * phase 7 : saison possible (mois de l'année) et conséquences durables de la crise et de
+ * chaque choix.
+ */
 export const CrisisDefinitionSchema = z
   .object({
     id: z.string().regex(/^crise-[a-z0-9-]+$/),
@@ -412,6 +417,10 @@ export const CrisisDefinitionSchema = z
     nature: z.literal('fictif'),
     majeur: z.boolean(),
     probabiliteHebdomadaire: Probability,
+    /** Mois (1 à 12) où la crise peut survenir ; null : toute l'année. */
+    mois: z.array(z.number().int().min(1).max(12)).min(1).nullable(),
+    /** Séquelles de la crise elle-même, quel que soit le choix. */
+    durable: LongTermEffectSchema.nullable(),
     /** Conditions sur les indicateurs économiques (centièmes) ou la popularité du président. */
     conditions: z.array(
       z
@@ -436,6 +445,8 @@ export const CrisisDefinitionSchema = z
             description: z.string().min(1),
             economie: z.array(CrisisEconomyEffectSchema),
             effets: z.array(EffectSchema),
+            /** Conséquence durable du choix (phase 7). */
+            durable: LongTermEffectSchema.nullable(),
           })
           .strict(),
       )
@@ -573,6 +584,43 @@ const ResourceModifiers = z
   })
   .partial()
   .strict();
+
+/**
+ * Scénario de départ (phase 7) : situation choisie à la création de la partie. Le scénario de
+ * référence ne change rien ; les autres sont des situations fictives, étiquetées comme telles,
+ * dont tous les paramètres sont des hypothèses de jeu.
+ */
+export const ScenarioSchema = z
+  .object({
+    id: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/),
+    libelle: z.string().min(1),
+    description: z.string().min(1),
+    nature: z.enum(['reference', 'fictif']),
+    statut: z.literal('hypothese'),
+    campagne: z
+      .object({
+        /** Écarts appliqués aux moyens de départ du joueur et de ses adversaires. */
+        joueur: ResourceModifiers,
+        adversaires: ResourceModifiers,
+        /** Multiplicateur des probabilités des événements de campagne. */
+        evenements: z.number().min(0).max(5),
+      })
+      .strict(),
+    quinquennat: z
+      .object({
+        /** Choc sur l'économie à l'ouverture du premier quinquennat (centièmes). */
+        economie: z.array(
+          z.object({ indicateur: EconomicIndicatorSchema, valeur: z.number().int() }).strict(),
+        ),
+        /** Multiplicateur des probabilités de toutes les crises. */
+        crises: z.number().min(0).max(5),
+        /** Conséquence durable dès l'ouverture du premier quinquennat. */
+        durable: LongTermEffectSchema.nullable(),
+      })
+      .strict(),
+  })
+  .strict();
+export type Scenario = z.infer<typeof ScenarioSchema>;
 
 /** Groupe d'électeurs du modèle national (hypothèse de jeu : part, position, participation). */
 export const ElectorateGroupSchema = z
@@ -926,6 +974,7 @@ export const RulesetSchema = z
     economie: EconomyRulesSchema,
     economieReelle: RealEconomySchema,
     crises: z.array(CrisisDefinitionSchema).min(1),
+    scenarios: z.array(ScenarioSchema).min(1),
     legislatives: LegislativeRulesSchema,
     legislatives2024: RealLegislativesSchema,
     debats: z
@@ -1086,6 +1135,15 @@ export const RulesetSchema = z
       'Événement',
       [...ruleset.evenements, ...ruleset.crises].map((e) => e.id),
     );
+    const crisisIds = new Set(ruleset.crises.map((c) => c.id));
+    const checkDurable = (
+      owner: string,
+      durable: { vulnerabilites: { crise: string }[] } | null,
+    ) => {
+      for (const v of durable?.vulnerabilites ?? [])
+        if (!crisisIds.has(v.crise))
+          issue(`${owner} : vulnérabilité à une crise inconnue ${v.crise}`);
+    };
     for (const crisis of ruleset.crises) {
       unique(
         `Choix de ${crisis.id}`,
@@ -1093,7 +1151,27 @@ export const RulesetSchema = z
       );
       if (!crisis.choix.some((c) => c.id === crisis.choixParDefaut))
         issue(`${crisis.id} : choix par défaut inconnu ${crisis.choixParDefaut}`);
+      checkDurable(crisis.id, crisis.durable);
+      for (const choice of crisis.choix) checkDurable(`${crisis.id}/${choice.id}`, choice.durable);
     }
+    unique(
+      'Scénario',
+      ruleset.scenarios.map((s) => s.id),
+    );
+    const reference = ruleset.scenarios.filter((s) => s.nature === 'reference');
+    if (reference.length !== 1 || reference[0]!.id !== 'standard')
+      issue('Un seul scénario de référence, « standard »');
+    for (const s of reference) {
+      const neutral =
+        Object.keys(s.campagne.joueur).length === 0 &&
+        Object.keys(s.campagne.adversaires).length === 0 &&
+        s.campagne.evenements === 1 &&
+        s.quinquennat.economie.length === 0 &&
+        s.quinquennat.crises === 1 &&
+        s.quinquennat.durable === null;
+      if (!neutral) issue('Le scénario de référence ne modifie rien');
+    }
+    for (const s of ruleset.scenarios) checkDurable(`Scénario ${s.id}`, s.quinquennat.durable);
 
     unique(
       'Groupe d’électeurs',

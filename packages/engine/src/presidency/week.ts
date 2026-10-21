@@ -18,6 +18,7 @@ import { WEEKLY_STEPS } from '../core/steps';
 import { weeklyDrift } from '../election/opinion';
 import { applyDecisions, validateDecisionAnswers } from '../event/events';
 import { planPresidentActions, validatePresidencyActions } from './actions';
+import { applyConsequences } from './consequences';
 import { answerCrisis, drawCrises } from './crises';
 import { EconomyBook, weeklyEconomy } from './economy';
 import { dissolve, legislativeNotices, legislativeWeek } from './legislatives';
@@ -255,7 +256,9 @@ export function advancePresidencyWeek(
   }
   set(6, true, 'Érosion, retour à la moyenne, attrition et usure du pouvoir appliqués.');
 
-  // 7. Économie : effets différés, dynamique des indicateurs, conjoncture et popularité.
+  // 7. Conséquences durables (phase 7), puis économie : effets différés, dynamique des
+  // indicateurs, conjoncture et popularité.
+  const lasting = applyConsequences(state, economy, ledger, president.id, 7);
   if (economy) {
     weeklyEconomy(
       state,
@@ -271,7 +274,8 @@ export function advancePresidencyWeek(
     7,
     economy !== null,
     economy
-      ? `${plural(economy.list().length, 'indicateur')} mis à jour avec leurs facteurs (modèle de jeu).`
+      ? `${plural(economy.list().length, 'indicateur')} mis à jour avec leurs facteurs (modèle de jeu)` +
+          (lasting ? ` ; ${plural(lasting, 'conséquence durable')} en cours.` : '.')
       : 'Économie non initialisée.',
   );
   // 8. Législatives : premier ou second tour de la semaine, nouvelle Assemblée.

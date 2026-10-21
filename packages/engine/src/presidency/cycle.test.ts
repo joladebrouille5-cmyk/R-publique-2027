@@ -96,6 +96,9 @@ describe('fin du quinquennat', () => {
     expect(bilan.gouvernements).toBe(archived!.gouvernements.length);
     // Législatives de fin de législature (juin 2029) tenues pendant le quinquennat.
     expect(bilan.legislatives).toMatchObject({ motif: 'fin-de-legislature', t2: '2029-06-17' });
+    // Conséquences durables nées pendant le quinquennat ; les achevées quittent l'état courant.
+    for (const c of bilan.consequences) expect(c.debut).toBeGreaterThan(bilan.debut.semaine);
+    expect(campaign.consequences.every((c) => c.fin >= campaign.meta.week - 1)).toBe(true);
   });
 
   it('remet parrainages et comptes de campagne à zéro, par le registre', () => {

@@ -20,6 +20,7 @@ import V8 from './fixtures/v8-phase-6.json' with { type: 'json' };
 import V9 from './fixtures/v9-phase-6.json' with { type: 'json' };
 import V10 from './fixtures/v10-phase-6.json' with { type: 'json' };
 import V11 from './fixtures/v11-phase-6.json' with { type: 'json' };
+import V12 from './fixtures/v12-phase-6.json' with { type: 'json' };
 import { loadStoredState, MIGRATED_CANDIDATE, SaveFormatError, upgradeState } from './versions';
 
 const ruleset = getRuleset(CURRENT_RULESET_KEY);
@@ -44,11 +45,21 @@ const V1_STATE = {
 };
 const V1_HASH = sha256(canonicalStringify(V1_STATE));
 
-/** État migré sans le relevé de départ du quinquennat (ajouté par le format 12). */
-const withoutDepart = <T extends { quinquennat: GameState['quinquennat'] }>(state: T) => ({
-  ...state,
-  quinquennat: state.quinquennat ? { ...state.quinquennat, depart: undefined } : null,
-});
+/**
+ * État migré sans les ajouts des formats 12 (relevé de départ du quinquennat) et 13 (scénario,
+ * conséquences durables) : le reste doit être identique à l'état d'origine.
+ */
+const withoutDepart = <T extends object>(state: T) => {
+  const { quinquennat } = state as { quinquennat?: GameState['quinquennat'] };
+  return {
+    ...state,
+    ...(quinquennat !== undefined
+      ? { quinquennat: quinquennat ? { ...quinquennat, depart: undefined } : null }
+      : {}),
+    scenario: undefined,
+    consequences: undefined,
+  };
+};
 
 const errorCode = (fn: () => unknown) => {
   try {
@@ -247,7 +258,7 @@ describe('migrations de sauvegarde', () => {
       ...rest
     } = state;
     const { meta: _m, player: _p, actors: _a, medias: _md, ...restBefore } = V5.state;
-    expect(rest).toEqual(restBefore);
+    expect(withoutDepart(rest)).toEqual(restBefore);
     expect(state.alliances).toHaveLength(1);
 
     let current = state;
@@ -286,7 +297,7 @@ describe('migrations de sauvegarde', () => {
       ...rest
     } = state;
     const { meta: _m, medias: _md, ...restBefore } = V6.state;
-    expect(rest).toEqual(restBefore);
+    expect(withoutDepart(rest)).toEqual(restBefore);
     expect(state.player).toMatchObject({ mode: 'candidat_reel', adversaires: 'reels' });
 
     // La partie continue : couverture par les organes réels, interview dans une émission réelle.
@@ -356,7 +367,7 @@ describe('migrations de sauvegarde', () => {
       ...rest
     } = state;
     const { meta: _m, calendar: _c, ...restBefore } = V7.state;
-    expect(rest).toEqual(restBefore);
+    expect(withoutDepart(rest)).toEqual(restBefore);
 
     // Critère 10 : la victoire ouvre la phase gouvernementale ; reprise et rejeu déterministes.
     const play = () => {
@@ -543,6 +554,44 @@ describe('migrations de sauvegarde', () => {
     );
   });
 
+  it('ajoute scénario et conséquences à une partie réelle archivée en 2031 (format 12)', () => {
+    const { state, migratedFrom } = loadStoredState(V12.state, V12.stateHash, 12);
+    expect(migratedFrom).toBe(12);
+    expect(state.meta).toMatchObject({
+      week: V12.state.meta.week,
+      phase: 'campagne',
+      saveSchemaVersion: SAVE_SCHEMA_VERSION,
+      engineVersion: ENGINE_VERSION,
+      rulesetVersion: CURRENT_RULESET_KEY,
+    });
+    expect(state.scenario).toBe('standard');
+    expect(state.consequences).toEqual([]);
+    // Bilan archivé : identique, sans conséquence durable (il n'en existait pas).
+    const [archived] = state.historique.quinquennats;
+    const { consequences, ...bilan } = archived!.bilan;
+    expect(consequences).toEqual([]);
+    expect(bilan).toEqual(V12.state.historique.quinquennats[0]!.bilan);
+    const { meta: _meta, historique: _h, ...rest } = state;
+    const { meta: _m, historique: _hb, ...restBefore } = V12.state;
+    expect(withoutDepart(rest)).toEqual(restBefore);
+    // La campagne de 2032 continue.
+    let current = state;
+    for (let i = 0; i < 4; i++)
+      current = advanceWeek(
+        current,
+        {
+          actions: [],
+          decisions: current.pendingDecisions.map((d) => ({
+            decisionId: d.id,
+            optionId: d.defaultOptionId,
+          })),
+        },
+        { ruleset },
+      ).state;
+    expect(current.meta.week).toBe(state.meta.week + 4);
+    expect(current.cycle.annee).toBe(2032);
+  });
+
   it('vérifie l’empreinte avant toute migration', () => {
     const altered = { ...V1_STATE, meta: { ...V1_STATE.meta, week: 3 } };
     expect(errorCode(() => loadStoredState(altered, V1_HASH, 1))).toBe('empreinte_incoherente');
@@ -565,6 +614,7 @@ describe('migrations de sauvegarde', () => {
     expect(errorCode(() => upgradeState(V9.state, 10))).toBe('etat_invalide');
     expect(errorCode(() => upgradeState(V10.state, 11))).toBe('etat_invalide');
     expect(errorCode(() => upgradeState(V11.state, 12))).toBe('etat_invalide');
+    expect(errorCode(() => upgradeState(V12.state, 13))).toBe('etat_invalide');
   });
 
   it('refuse un jeu de règles inconnu', () => {

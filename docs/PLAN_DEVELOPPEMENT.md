@@ -490,9 +490,18 @@ Découpage (une sous-étape = un commit vérifié ; compte rendu à la fin de la
 
 **Prérequis** : `data.assemblee-nationale.fr`, `www.insee.fr` et `www.banque-france.fr` joignables le 21/10/2026 ; `www.data.gouv.fr` joignable par intermittence ; `www.legifrance.gouv.fr` refusé (403) : les articles de la Constitution et du code électoral sont cités d'après leur texte connu et marqués « à vérifier sur Légifrance » tant qu'ils n'y ont pas été relus.
 
-### Phase 7 — Contenu approfondi
+### Phase 7 — Contenu approfondi (terminée)
 
 Scénarios de départ, bibliothèque d'événements et de crises, conséquences à long terme. Chaque événement fictif est étiqueté.
+
+| # | Tâche | Critère d'acceptation |
+|---|---|---|
+| P7-01 | **Scénarios de départ** (jeu de règles 10.0.0) : un scénario de référence neutre et des situations fictives étiquetées (moyens de départ, fréquence des événements, choc économique et fragilités à l'ouverture du premier quinquennat, fréquence des crises) ; choix à la création ; format de sauvegarde 13. | le scénario « standard » ne change rien ; écarts appliqués et affichés ; migration 12 → 13 testée sur un état réel. |
+| P7-02 | **Bibliothèque enrichie** : six crises fictives (canicule — en saison —, logement, affaire dans un cabinet ministériel sans personne réelle, médicaments, accident industriel, guerre commerciale) et six événements de campagne fictifs. | chaque crise et chaque événement est fictif et étiqueté ; une crise de saison ne survient que dans ses mois. |
+| P7-03 | **Conséquences à long terme** : effets hebdomadaires durables et fragilités (crises plus ou moins probables) laissés par les crises, les choix du président et le scénario ; archivés dans le bilan du quinquennat. | chaque effet passe par les registres (somme des facteurs = variation) ; durée exacte ; déterminisme. |
+| P7-04 | **Interface et documentation** : choix du scénario, conséquences durables et saisons dans l'écran Crises, scénario au tableau de bord, conséquences dans le bilan ; documentation. | tests de composants ; Playwright bureau + mobile. |
+
+**Bilan (21/10/2026)** — les quatre tâches sont réalisées. Moteur 0.12.0, format de sauvegarde 13, jeu de règles `presidentielle-2027@10.0.0` : 5 scénarios (standard, Tempête économique, Colère sociale, Monde instable, Candidature d'outsider), 14 crises, 12 événements de campagne, conséquences durables sur 8 crises existantes et sur les nouvelles. Limites : effets, probabilités, durées et fragilités sont des hypothèses de jeu, sans valeur de prévision ; les conséquences durables ne s'appliquent pas pendant une campagne présidentielle (le quinquennat n'y est pas simulé) ; les réformes adoptées n'ont pas encore d'effet structurel propre au-delà de leur coût et de leur effet sur la popularité.
 
 ### Phase 8 — Version publiable
 
@@ -518,4 +527,4 @@ Durcissement sécurité (§14), mesure de performance et fixation des seuils (§
 
 ## 6. Prochaine étape
 
-Phase 6 terminée le 21/10/2026 sur la branche `claude/new-session-lmxg1t` (PR #2) : quinquennat jouable de bout en bout et poursuite de la partie (critères 10, 11 et 17). Suivante : **phase 7 — contenu approfondi** (scénarios de départ, bibliothèque d'événements et de crises, conséquences à long terme), à valider avant de commencer ; puis la phase 8 (version publiable et application Android, Q9). La question Q8 (licence des résultats 2022) reste ouverte.
+Phases 6 et 7 terminées le 21/10/2026 sur la branche `claude/new-session-lmxg1t` (PR #2). En cours : **phase 8 — version publiable et application Android** (Capacitor, mode hors ligne local décidé par l'utilisateur le 21/10/2026 : Q9). La question Q8 (licence des résultats 2022) reste ouverte.

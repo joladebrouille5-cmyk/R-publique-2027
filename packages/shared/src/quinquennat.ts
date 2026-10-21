@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { isValidIsoDate } from './dates';
+import { ConsequenceSummarySchema } from './consequences';
 import { EconomicIndicatorSchema } from './economie';
 import { LEGISLATIVE_MOTIVES } from './legislatives-etat';
 import { PositionSchema } from './politics';
@@ -121,7 +122,7 @@ const Count = z.number().int().min(0);
  * suivante : relevés de départ et de fin, textes et réformes, gouvernements, dernières
  * législatives. Tout y est simulé (sauf les valeurs de départ sourcées de l'économie).
  */
-export const QuinquennatReviewSchema = z
+export const QuinquennatReviewV12Schema = z
   .object({
     debut: QuinquennatSnapshotSchema,
     fin: QuinquennatSnapshotSchema,
@@ -152,6 +153,11 @@ export const QuinquennatReviewSchema = z
       .nullable(),
   })
   .strict();
+
+/** Bilan d'un quinquennat (format 13, phase 7) : conséquences durables nées pendant le mandat. */
+export const QuinquennatReviewSchema = QuinquennatReviewV12Schema.extend({
+  consequences: z.array(ConsequenceSummarySchema),
+}).strict();
 export type QuinquennatReview = z.infer<typeof QuinquennatReviewSchema>;
 
 /** Quinquennat achevé aux formats 8 à 11 (figé pour les migrations). */
@@ -161,6 +167,11 @@ export const QuinquennatSummaryV8Schema = z
     gouvernements: z.array(PastGovernmentSchema),
   })
   .strict();
+
+/** Quinquennat achevé au format 12 (figé pour les migrations). */
+export const QuinquennatSummaryV12Schema = QuinquennatSummaryV8Schema.extend({
+  bilan: QuinquennatReviewV12Schema,
+}).strict();
 
 /** Quinquennat achevé (archivé au début de la campagne présidentielle suivante), avec son bilan. */
 export const QuinquennatSummarySchema = QuinquennatSummaryV8Schema.extend({

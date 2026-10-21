@@ -44,6 +44,12 @@ export const CreateGameRequestSchema = z
     personnaliteId: PersonalityIdSchema.optional(),
     /** Adversaires fictifs (par défaut) ou personnalités réelles. */
     adversaires: OpponentSetSchema.default('fictifs'),
+    /** Scénario de départ du jeu de règles (phase 7). */
+    scenarioId: z
+      .string()
+      .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/)
+      .max(60)
+      .default('standard'),
   })
   .strict()
   .superRefine((body, ctx) => {

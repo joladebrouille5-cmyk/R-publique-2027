@@ -68,7 +68,15 @@ export const EconomyChangeSchema = z
           .object({
             label: z.string().min(1),
             value: z.number().int(),
-            source: z.enum(['conjoncture', 'reforme', 'crise', 'decision', 'differe', 'limite']),
+            source: z.enum([
+              'conjoncture',
+              'reforme',
+              'crise',
+              'decision',
+              'differe',
+              'limite',
+              'durable',
+            ]),
           })
           .strict(),
       )

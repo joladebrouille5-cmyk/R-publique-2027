@@ -104,18 +104,25 @@ describe('avance rapide pendant le quinquennat', () => {
     const response = await advanceVia(client, game, { expectedWeek: 31, semaines: 52 }, key);
     expect(response.statusCode).toBe(200);
     const body = AdvanceResponseSchema.parse(response.json());
-    expect(body.avanceRapide).toEqual({ demandees: 52, resolues: 52, arret: null });
-    expect(body.game.week).toBe(83);
-    expect(body.report).toMatchObject({ week: 82, nextWeek: 83 });
+    // Le défilement va jusqu'à 52 semaines, ou s'arrête sur un fait majeur (crise fictive…).
+    const { resolues, arret } = body.avanceRapide!;
+    expect(body.avanceRapide!.demandees).toBe(52);
+    expect(resolues).toBeGreaterThan(8);
+    if (resolues < 52) {
+      expect(arret).toBe('evenement_majeur');
+      expect(body.report.events.some((e) => e.majeur)).toBe(true);
+    } else expect(arret).toBeNull();
+    expect(body.game.week).toBe(31 + resolues);
+    expect(body.report).toMatchObject({ week: 30 + resolues, nextWeek: 31 + resolues });
     expect(body.game.state.quinquennat!.gouvernement).not.toBeNull();
 
     const weeks = await db.gameEvent.findMany({
       where: { gameId: game.id, type: 'semaine_resolue' },
       orderBy: { week: 'asc' },
     });
-    expect(weeks.map((w) => w.week)).toEqual(Array.from({ length: 52 }, (_, i) => 31 + i));
+    expect(weeks.map((w) => w.week)).toEqual(Array.from({ length: resolues }, (_, i) => 31 + i));
     const advances = await db.gameAdvance.findMany({ where: { gameId: game.id } });
-    expect(advances.map((a) => [a.fromWeek, a.toWeek])).toEqual([[31, 83]]);
+    expect(advances.map((a) => [a.fromWeek, a.toWeek])).toEqual([[31, 31 + resolues]]);
     const nomination = await db.gameEvent.findMany({
       where: { gameId: game.id, type: 'evenement' },
     });
@@ -123,7 +130,7 @@ describe('avance rapide pendant le quinquennat', () => {
       true,
     );
     const logs = await db.simulationLog.count({ where: { gameId: game.id } });
-    expect(logs).toBe(52 * 12);
+    expect(logs).toBe(resolues * 12);
 
     // Même clé, même requête : réponse rejouée, la partie n'avance pas deux fois.
     const replay = await advanceVia(client, game, { expectedWeek: 31, semaines: 52 }, key);

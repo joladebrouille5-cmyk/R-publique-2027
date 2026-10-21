@@ -18,6 +18,7 @@ import {
   CandidateIdentitySchema,
   CandidateIdentityV5Schema,
 } from './politics';
+import { ConsequenceSchema } from './consequences';
 import { EconomyStateSchema } from './economie';
 import { LegislativesStateSchema } from './legislatives-etat';
 import { ParliamentSchema } from './parlement';
@@ -25,6 +26,7 @@ import {
   CycleSchema,
   QuinquennatSchema,
   QuinquennatSummarySchema,
+  QuinquennatSummaryV12Schema,
   QuinquennatSummaryV8Schema,
   QuinquennatV8Schema,
 } from './quinquennat';
@@ -559,19 +561,35 @@ export const GameStateV11Schema = GameStateV10Schema.extend({
 }).strict();
 export type GameStateV11 = z.infer<typeof GameStateV11Schema>;
 
-/**
- * État complet d'une partie, format de sauvegarde n° 12 (phase 6) : cycle électoral, présidence
- * et gouvernement (avec le relevé de départ du quinquennat), Parlement (groupes, textes, votes,
- * réformes), économie et crises, législatives, archives des cycles précédents (présidentielles,
- * quinquennats et leur bilan) ; statut `ineligible` (art. 6). Toute évolution s'accompagne d'un
- * nouveau numéro de format et d'une migration (packages/save-engine). L'aléa ne figure pas dans
- * l'état : chaque tirage est dérivé de la graine, de la semaine et de son contexte (module,
- * action, événement, groupe…).
- */
-export const GameStateSchema = GameStateV11Schema.extend({
+/** État au format 12 (phase 6, P6-08), figé pour les migrations. */
+export const GameStateV12Schema = GameStateV11Schema.extend({
   meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(12) }).strict(),
   actors: z.record(Id, ActorSchema),
   quinquennat: QuinquennatSchema.nullable(),
+  historique: z
+    .object({
+      presidentielles: z.array(PresidentialArchiveSchema),
+      quinquennats: z.array(QuinquennatSummaryV12Schema),
+    })
+    .strict(),
+}).strict();
+export type GameStateV12 = z.infer<typeof GameStateV12Schema>;
+
+/**
+ * État complet d'une partie, format de sauvegarde n° 13 (phase 7) : scénario de départ,
+ * conséquences durables (en cours et passées), cycle électoral, présidence et gouvernement,
+ * Parlement, économie et crises, législatives, archives des cycles précédents (présidentielles,
+ * quinquennats et leur bilan, conséquences comprises) ; statut `ineligible` (art. 6). Toute
+ * évolution s'accompagne d'un nouveau numéro de format et d'une migration (packages/save-engine).
+ * L'aléa ne figure pas dans l'état : chaque tirage est dérivé de la graine, de la semaine et de
+ * son contexte (module, action, événement, groupe…).
+ */
+export const GameStateSchema = GameStateV12Schema.extend({
+  meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(13) }).strict(),
+  /** Scénario de départ (jeu de règles). */
+  scenario: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/),
+  /** Conséquences durables, en cours et passées. */
+  consequences: z.array(ConsequenceSchema),
   historique: z
     .object({
       presidentielles: z.array(PresidentialArchiveSchema),

@@ -9,6 +9,7 @@ import {
   isoWeekday,
   parseIsoDate,
   RulesetSchema,
+  type Ruleset,
 } from '@r2027/shared';
 import { describe, expect, it } from 'vitest';
 import { CURRENT_RULESET_KEY, getRuleset, listRulesetKeys, UnknownRulesetError } from './index';
@@ -564,5 +565,48 @@ describe('législatives (phase 6)', () => {
     const twice = full();
     twice.legislatives.blocs[1]!.groupes.push('rn');
     expect(RulesetSchema.safeParse(twice).success).toBe(false);
+  });
+});
+
+describe('contenu approfondi (phase 7)', () => {
+  const copy = () => JSON.parse(JSON.stringify(ruleset)) as Ruleset;
+
+  it('propose un scénario de référence neutre et des scénarios fictifs étiquetés', () => {
+    const [reference, ...others] = ruleset.scenarios;
+    expect(reference).toMatchObject({ id: 'standard', nature: 'reference', statut: 'hypothese' });
+    expect(others.length).toBeGreaterThanOrEqual(3);
+    for (const scenario of others) {
+      expect(scenario.nature).toBe('fictif');
+      expect(scenario.description).toMatch(/fictif|fictive/i);
+    }
+  });
+
+  it('étiquette chaque crise comme fictive et borne ses conséquences durables', () => {
+    expect(ruleset.crises.length).toBeGreaterThanOrEqual(14);
+    expect(ruleset.evenements.length).toBeGreaterThanOrEqual(12);
+    for (const crisis of ruleset.crises) {
+      expect(crisis.nature).toBe('fictif');
+      expect(crisis.description).toMatch(/^Crise fictive inventée pour le jeu\./);
+    }
+    const durables = ruleset.crises.flatMap((c) => [c.durable, ...c.choix.map((x) => x.durable)]);
+    expect(durables.filter(Boolean).length).toBeGreaterThan(10);
+  });
+
+  it('refuse un scénario de référence actif, une fragilité vers une crise inconnue', () => {
+    const active = copy();
+    active.scenarios[0]!.quinquennat.crises = 2;
+    expect(RulesetSchema.safeParse(active).success).toBe(false);
+    const unknown = copy();
+    unknown.crises[0]!.choix[0]!.durable = {
+      libelle: 'Test',
+      semaines: 4,
+      economie: [],
+      popularite: 0,
+      vulnerabilites: [{ crise: 'crise-inexistante', multiplicateur: 2 }],
+    };
+    expect(RulesetSchema.safeParse(unknown).success).toBe(false);
+    const twoReferences = copy();
+    twoReferences.scenarios[1]!.nature = 'reference';
+    expect(RulesetSchema.safeParse(twoReferences).success).toBe(false);
   });
 });

@@ -147,6 +147,18 @@ describe('création de partie', () => {
     expect(a.seed).not.toBe(b.seed);
   });
 
+  it('crée une partie dans un scénario de départ fictif (phase 7)', async () => {
+    const client = new Client(app);
+    const game = await createGame(client, { ...newGame, scenarioId: 'outsider' });
+    expect(game.state.scenario).toBe('outsider');
+    expect(game.state.consequences).toEqual([]);
+    const standard = await createGame(client, { ...newGame, seed: game.seed });
+    expect(standard.state.scenario).toBe('standard');
+    expect(game.state.actors.joueur!.resources.budgetCentimes).toBeLessThan(
+      standard.state.actors.joueur!.resources.budgetCentimes,
+    );
+  });
+
   it('liste les parties du joueur', async () => {
     const client = new Client(app);
     await createGame(client);
@@ -169,6 +181,8 @@ describe('création de partie', () => {
     ],
     [{ ...newGame, personnaliteId: 'reel-attal' }, 400, 'requete_invalide'],
     [{ ...newGame, adversaires: 'imaginaires' }, 400, 'requete_invalide'],
+    [{ ...newGame, scenarioId: 'scenario-inconnu' }, 422, 'scenario_inconnu'],
+    [{ ...newGame, scenarioId: 'Tempête !' }, 400, 'requete_invalide'],
     [{ ...newGame, candidate: undefined }, 400, 'requete_invalide'],
     [{ ...newGame, mode: 'observateur' }, 400, 'requete_invalide'],
     [{ ...newGame, candidate: { ...candidate, nom: '' } }, 400, 'requete_invalide'],

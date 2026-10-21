@@ -25,6 +25,12 @@ import { memberInfo } from './Government';
 // arrêté par le moteur au début de la campagne présidentielle suivante ; l'écran ne fait que
 // l'afficher. Tout y est simulé, sauf les valeurs de départ sourcées de l'économie.
 
+const CONSEQUENCE_ORIGINS = {
+  crise: 'séquelle d’une crise',
+  decision: 'suite d’une décision',
+  scenario: 'scénario de départ',
+} as const;
+
 const MOTIF_LABELS = {
   'reelles-2024': 'élections de 2024 (réelles)',
   dissolution: 'élections anticipées après dissolution (simulées)',
@@ -158,6 +164,20 @@ function Review({
                 .join(' ; ')}.`
             : 'Aucune élection législative pendant ce quinquennat.'}
         </p>
+      </div>
+      <div className="space-y-1">
+        <h3 className="font-semibold">Conséquences durables</h3>
+        {bilan.consequences.length > 0 ? (
+          <ul className="list-inside list-disc">
+            {bilan.consequences.map((c) => (
+              <li key={`${c.libelle}-${c.debut}`}>
+                {c.libelle} ({CONSEQUENCE_ORIGINS[c.origine]}, semaines {c.debut} à {c.fin})
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>Aucune conséquence durable née pendant ce quinquennat.</p>
+        )}
       </div>
       <p className="text-xs text-slate-500 dark:text-slate-400">
         Valeurs simulées par le jeu (aucune n’est une prévision) ; seules les valeurs de départ de

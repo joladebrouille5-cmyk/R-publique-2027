@@ -85,6 +85,7 @@ export {
   snapshot,
 } from './presidency/government';
 export { openNextCampaign, reviewQuinquennat } from './presidency/cycle';
+export { activeConsequences, addConsequence, crisisMultiplier } from './presidency/consequences';
 export { answerCrisis, drawCrises } from './presidency/crises';
 export {
   blocPositions,

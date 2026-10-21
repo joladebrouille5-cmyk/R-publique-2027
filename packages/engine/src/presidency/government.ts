@@ -19,7 +19,8 @@ import { compareStrings } from '../core/ledger';
 import { stream } from '../core/random';
 import { distance } from '../election/model';
 import { mandateDates, weekReaches } from './dates';
-import { openEconomy } from './economy';
+import { addConsequence } from './consequences';
+import { openEconomy, scheduleEconomy } from './economy';
 import { openLegislatives } from './legislatives';
 import { openParliament } from './parliament';
 
@@ -324,6 +325,20 @@ export function answerGovernment(
   };
 }
 
+/**
+ * Premier quinquennat (phase 7) : choc économique du scénario de départ, appliqué la semaine
+ * suivante comme effet différé nommé, et sa conséquence durable éventuelle.
+ */
+function openScenario(state: GameState, ruleset: Ruleset): void {
+  const scenario = ruleset.scenarios.find((s) => s.id === state.scenario);
+  if (!scenario || scenario.nature === 'reference') return;
+  const label = `Scénario fictif « ${scenario.libelle} » : situation de départ`;
+  for (const e of scenario.quinquennat.economie)
+    scheduleEconomy(state, e.indicateur, e.valeur, 1, label);
+  if (scenario.quinquennat.durable)
+    addConsequence(state, scenario.quinquennat.durable, 'scenario', scenario.id);
+}
+
 /** Relevé du quinquennat à la date de la partie (popularité du président, économie). */
 export function snapshot(state: GameState, presidentId: string): QuinquennatSnapshot {
   return {
@@ -362,7 +377,10 @@ export function openQuinquennat(state: GameState, ruleset: Ruleset, winnerId: st
     },
   };
   state.parlement = openParliament(ruleset, winner, state.parlement);
-  state.economie ??= openEconomy(ruleset, state.meta.week);
+  if (state.economie === null) {
+    state.economie = openEconomy(ruleset, state.meta.week);
+    openScenario(state, ruleset);
+  }
   state.legislatives ??= openLegislatives(ruleset, state.parlement);
   // Relevé de départ (bilan de fin de mandat) : popularité du président élu, économie.
   state.quinquennat.depart = snapshot(state, winnerId);

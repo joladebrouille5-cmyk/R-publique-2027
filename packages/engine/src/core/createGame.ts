@@ -37,6 +37,8 @@ export type CreateGameInput = {
   personnaliteId?: string | undefined;
   /** Adversaires : fictifs (par défaut) ou personnalités réelles. */
   adversaires?: OpponentSet | undefined;
+  /** Scénario de départ (phase 7) ; « standard » par défaut. */
+  scenarioId?: string | undefined;
 };
 
 export class GameCreationError extends Error {
@@ -46,7 +48,8 @@ export class GameCreationError extends Error {
       | 'candidat_requis'
       | 'profil_inconnu'
       | 'personnalite_requise'
-      | 'personnalite_inconnue',
+      | 'personnalite_inconnue'
+      | 'scenario_inconnu',
     message: string,
   ) {
     super(message);
@@ -310,6 +313,11 @@ export function createGame(input: CreateGameInput, ruleset: Ruleset): GameState 
       'Choisissez la personnalité que vous incarnez dans ce mode.',
     );
   }
+  const scenarioId = input.scenarioId ?? 'standard';
+  const scenario = ruleset.scenarios.find((s) => s.id === scenarioId);
+  if (!scenario) {
+    throw new GameCreationError('scenario_inconnu', `Scénario inconnu : ${scenarioId}`);
+  }
   const personality =
     input.mode === 'candidat_reel' ? findPersonality(ruleset, input.personnaliteId!) : null;
   const adversaires: OpponentSet = input.adversaires ?? 'fictifs';
@@ -346,6 +354,21 @@ export function createGame(input: CreateGameInput, ruleset: Ruleset): GameState 
   } else if (personality) {
     actors[PLAYER_ACTOR_ID] = createRealActor(personality, input.difficulty, ruleset, true);
   }
+  // Scénario de départ : écarts sur les moyens du joueur et de ses adversaires (hypothèses).
+  for (const actor of Object.values(actors)) {
+    const modifiers =
+      actor.kind === 'joueur' ? scenario.campagne.joueur : scenario.campagne.adversaires;
+    if (Object.keys(modifiers).length === 0) continue;
+    actor.resources = bounded({
+      ...actor.resources,
+      budgetCentimes: actor.resources.budgetCentimes + (modifiers.budgetCentimes ?? 0),
+      militants: actor.resources.militants + (modifiers.militants ?? 0),
+      notoriete: actor.resources.notoriete + (modifiers.notoriete ?? 0),
+      popularite: actor.resources.popularite + (modifiers.popularite ?? 0),
+    });
+    actor.history = { popularite: [actor.resources.popularite] };
+    actor.finances = openingAccount(actor.resources.budgetCentimes, ruleset);
+  }
   const state: GameState = {
     meta: {
       seed: input.seed,
@@ -381,6 +404,8 @@ export function createGame(input: CreateGameInput, ruleset: Ruleset): GameState 
     parlement: null,
     economie: null,
     legislatives: null,
+    scenario: scenario.id,
+    consequences: [],
   };
   distributeInitialPromises(state, ruleset);
   return state;

@@ -1,6 +1,6 @@
 {
   "id": "presidentielle-2027",
-  "version": "9.0.0",
+  "version": "10.0.0",
   "libelle": "Présidentielle 2027 et quinquennat — campagne, parrainages, financement, médias réels, présidence, gouvernement, Parlement, économie, crises et législatives (phase 6)",
   "verifieLe": "2026-10-21",
   "sources": {
@@ -842,6 +842,265 @@
         }
       ],
       "choixParDefaut": "mediation",
+      "campagne": null
+    },
+    {
+      "id": "afflux-benevoles",
+      "libelle": "Afflux de bénévoles",
+      "description": "Après une semaine remarquée, de nombreux sympathisants proposent leur aide.",
+      "nature": "fictif",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.05,
+      "conditions": [
+        {
+          "ressource": "popularite",
+          "min": 2500,
+          "max": null
+        }
+      ],
+      "delaiMinEntreOccurrences": 8,
+      "occurrencesMax": null,
+      "effets": [
+        {
+          "ressource": "militants",
+          "base": 40,
+          "ecart": 20,
+          "delaiSemaines": 0,
+          "saturation": false
+        }
+      ],
+      "choix": [],
+      "choixParDefaut": null,
+      "campagne": null
+    },
+    {
+      "id": "tribune-soutien",
+      "libelle": "Tribune de soutien d'universitaires",
+      "description": "Un collectif d'universitaires (fictif) publie une tribune favorable à votre projet.",
+      "nature": "fictif",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.04,
+      "conditions": [
+        {
+          "ressource": "notoriete",
+          "min": 600,
+          "max": null
+        }
+      ],
+      "delaiMinEntreOccurrences": 10,
+      "occurrencesMax": null,
+      "effets": [
+        {
+          "ressource": "notoriete",
+          "base": 40,
+          "ecart": 20,
+          "delaiSemaines": 0,
+          "saturation": true
+        },
+        {
+          "ressource": "popularite",
+          "base": 10,
+          "ecart": 10,
+          "delaiSemaines": 0,
+          "saturation": false
+        }
+      ],
+      "choix": [],
+      "choixParDefaut": null,
+      "campagne": null
+    },
+    {
+      "id": "intemperies",
+      "libelle": "Intempéries sur la tournée",
+      "description": "Tempête et routes coupées : la tournée de la semaine prochaine est réduite.",
+      "nature": "fictif",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.03,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 8,
+      "occurrencesMax": null,
+      "effets": [
+        {
+          "ressource": "tempsHeures",
+          "base": -8,
+          "ecart": 0,
+          "delaiSemaines": 1,
+          "saturation": false
+        }
+      ],
+      "choix": [],
+      "choixParDefaut": null,
+      "campagne": null
+    },
+    {
+      "id": "meeting-perturbe",
+      "libelle": "Meeting perturbé",
+      "description": "Des opposants interrompent l'un de vos meetings.",
+      "nature": "fictif",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.03,
+      "conditions": [
+        {
+          "ressource": "notoriete",
+          "min": 1000,
+          "max": null
+        }
+      ],
+      "delaiMinEntreOccurrences": 8,
+      "occurrencesMax": null,
+      "effets": [],
+      "choix": [
+        {
+          "id": "plainte",
+          "libelle": "Porter plainte et poursuivre le meeting",
+          "description": "Rester ferme ; une partie du public apprécie.",
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": 10,
+              "ecart": 10,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        },
+        {
+          "id": "dialoguer",
+          "libelle": "Inviter les opposants à débattre",
+          "description": "Pari risqué : une image d'ouverture, du temps pris la semaine suivante.",
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": 20,
+              "ecart": 30,
+              "delaiSemaines": 0,
+              "saturation": false
+            },
+            {
+              "ressource": "tempsHeures",
+              "base": -5,
+              "ecart": 0,
+              "delaiSemaines": 1,
+              "saturation": false
+            }
+          ]
+        }
+      ],
+      "choixParDefaut": "plainte",
+      "campagne": null
+    },
+    {
+      "id": "fuite-note",
+      "libelle": "Fuite d'une note interne",
+      "description": "Une note stratégique de votre équipe circule dans la presse.",
+      "nature": "fictif",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.03,
+      "conditions": [
+        {
+          "ressource": "militants",
+          "min": 300,
+          "max": null
+        }
+      ],
+      "delaiMinEntreOccurrences": 10,
+      "occurrencesMax": null,
+      "effets": [],
+      "choix": [
+        {
+          "id": "assumer",
+          "libelle": "Assumer la note",
+          "description": "Plus d'exposition, image incertaine.",
+          "effets": [
+            {
+              "ressource": "notoriete",
+              "base": 30,
+              "ecart": 15,
+              "delaiSemaines": 0,
+              "saturation": true
+            },
+            {
+              "ressource": "popularite",
+              "base": -20,
+              "ecart": 30,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        },
+        {
+          "id": "dementir",
+          "libelle": "Démentir",
+          "description": "Minimiser : la polémique s'éteint lentement.",
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -10,
+              "ecart": 10,
+              "delaiSemaines": 1,
+              "saturation": false
+            }
+          ]
+        },
+        {
+          "id": "sanction",
+          "libelle": "Écarter l'auteur de la fuite",
+          "description": "Restaurer la discipline au prix de quelques départs.",
+          "effets": [
+            {
+              "ressource": "militants",
+              "base": -20,
+              "ecart": 10,
+              "delaiSemaines": 0,
+              "saturation": false
+            },
+            {
+              "ressource": "popularite",
+              "base": 10,
+              "ecart": 10,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        }
+      ],
+      "choixParDefaut": "dementir",
+      "campagne": null
+    },
+    {
+      "id": "soutien-elus",
+      "libelle": "Soutien d'élus locaux",
+      "description": "Des maires sans étiquette annoncent publiquement leur soutien.",
+      "nature": "fictif",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.04,
+      "conditions": [
+        {
+          "ressource": "notoriete",
+          "min": 400,
+          "max": null
+        }
+      ],
+      "delaiMinEntreOccurrences": 10,
+      "occurrencesMax": null,
+      "effets": [
+        {
+          "ressource": "notoriete",
+          "base": 20,
+          "ecart": 10,
+          "delaiSemaines": 0,
+          "saturation": true
+        },
+        {
+          "ressource": "popularite",
+          "base": 15,
+          "ecart": 10,
+          "delaiSemaines": 0,
+          "saturation": false
+        }
+      ],
+      "choix": [],
+      "choixParDefaut": null,
       "campagne": null
     }
   ],
@@ -3446,6 +3705,8 @@
       "nature": "fictif",
       "majeur": true,
       "probabiliteHebdomadaire": 0.004,
+      "mois": null,
+      "durable": null,
       "conditions": [],
       "delaiMinEntreOccurrences": 52,
       "occurrencesMax": 2,
@@ -3500,7 +3761,19 @@
               "delaiSemaines": 0,
               "saturation": false
             }
-          ]
+          ],
+          "durable": {
+            "libelle": "Coût durable du bouclier tarifaire",
+            "semaines": 26,
+            "economie": [
+              {
+                "indicateur": "deficit",
+                "valeur": -1
+              }
+            ],
+            "popularite": 0,
+            "vulnerabilites": []
+          }
         },
         {
           "id": "cheque",
@@ -3526,7 +3799,8 @@
               "delaiSemaines": 0,
               "saturation": false
             }
-          ]
+          ],
+          "durable": null
         },
         {
           "id": "marche",
@@ -3552,7 +3826,28 @@
               "delaiSemaines": 0,
               "saturation": false
             }
-          ]
+          ],
+          "durable": {
+            "libelle": "Ressentiment après la flambée des prix",
+            "semaines": 26,
+            "economie": [
+              {
+                "indicateur": "tensions",
+                "valeur": 20
+              },
+              {
+                "indicateur": "pouvoirAchat",
+                "valeur": -1
+              }
+            ],
+            "popularite": -2,
+            "vulnerabilites": [
+              {
+                "crise": "crise-greve",
+                "multiplicateur": 2
+              }
+            ]
+          }
         }
       ],
       "choixParDefaut": "cheque"
@@ -3564,6 +3859,24 @@
       "nature": "fictif",
       "majeur": true,
       "probabiliteHebdomadaire": 0.003,
+      "mois": null,
+      "durable": {
+        "libelle": "Séquelles de la tempête financière",
+        "semaines": 52,
+        "economie": [
+          {
+            "indicateur": "croissance",
+            "valeur": -1
+          }
+        ],
+        "popularite": 0,
+        "vulnerabilites": [
+          {
+            "crise": "crise-taux",
+            "multiplicateur": 1.5
+          }
+        ]
+      },
       "conditions": [],
       "delaiMinEntreOccurrences": 104,
       "occurrencesMax": 1,
@@ -3618,7 +3931,19 @@
               "delaiSemaines": 0,
               "saturation": false
             }
-          ]
+          ],
+          "durable": {
+            "libelle": "Garanties publiques en cours",
+            "semaines": 52,
+            "economie": [
+              {
+                "indicateur": "deficit",
+                "valeur": -1
+              }
+            ],
+            "popularite": 0,
+            "vulnerabilites": []
+          }
         },
         {
           "id": "rigueur",
@@ -3649,7 +3974,28 @@
               "delaiSemaines": 0,
               "saturation": false
             }
-          ]
+          ],
+          "durable": {
+            "libelle": "Austérité prolongée",
+            "semaines": 52,
+            "economie": [
+              {
+                "indicateur": "croissance",
+                "valeur": -1
+              },
+              {
+                "indicateur": "tensions",
+                "valeur": 15
+              }
+            ],
+            "popularite": -2,
+            "vulnerabilites": [
+              {
+                "crise": "crise-greve",
+                "multiplicateur": 2
+              }
+            ]
+          }
         },
         {
           "id": "attente",
@@ -3670,7 +4016,8 @@
               "delaiSemaines": 0,
               "saturation": false
             }
-          ]
+          ],
+          "durable": null
         }
       ],
       "choixParDefaut": "garantie"
@@ -3682,6 +4029,8 @@
       "nature": "fictif",
       "majeur": true,
       "probabiliteHebdomadaire": 0.02,
+      "mois": null,
+      "durable": null,
       "conditions": [
         {
           "sur": "tensions",
@@ -3737,7 +4086,24 @@
               "delaiSemaines": 0,
               "saturation": false
             }
-          ]
+          ],
+          "durable": {
+            "libelle": "Dialogue social renoué",
+            "semaines": 26,
+            "economie": [
+              {
+                "indicateur": "tensions",
+                "valeur": -10
+              }
+            ],
+            "popularite": 1,
+            "vulnerabilites": [
+              {
+                "crise": "crise-greve",
+                "multiplicateur": 0.5
+              }
+            ]
+          }
         },
         {
           "id": "fermete",
@@ -3768,7 +4134,24 @@
               "delaiSemaines": 0,
               "saturation": false
             }
-          ]
+          ],
+          "durable": {
+            "libelle": "Rancœur sociale",
+            "semaines": 26,
+            "economie": [
+              {
+                "indicateur": "tensions",
+                "valeur": 10
+              }
+            ],
+            "popularite": -2,
+            "vulnerabilites": [
+              {
+                "crise": "crise-agricole",
+                "multiplicateur": 1.5
+              }
+            ]
+          }
         }
       ],
       "choixParDefaut": "negocier"
@@ -3780,6 +4163,19 @@
       "nature": "fictif",
       "majeur": false,
       "probabiliteHebdomadaire": 0.004,
+      "mois": null,
+      "durable": {
+        "libelle": "Reconstruction des zones sinistrées",
+        "semaines": 12,
+        "economie": [
+          {
+            "indicateur": "croissance",
+            "valeur": -1
+          }
+        ],
+        "popularite": 0,
+        "vulnerabilites": []
+      },
       "conditions": [],
       "delaiMinEntreOccurrences": 52,
       "occurrencesMax": null,
@@ -3816,7 +4212,8 @@
               "delaiSemaines": 0,
               "saturation": false
             }
-          ]
+          ],
+          "durable": null
         },
         {
           "id": "assurances",
@@ -3837,7 +4234,19 @@
               "delaiSemaines": 0,
               "saturation": false
             }
-          ]
+          ],
+          "durable": {
+            "libelle": "Sinistrés mal indemnisés",
+            "semaines": 26,
+            "economie": [
+              {
+                "indicateur": "tensions",
+                "valeur": 10
+              }
+            ],
+            "popularite": -1,
+            "vulnerabilites": []
+          }
         }
       ],
       "choixParDefaut": "reconstruction"
@@ -3849,6 +4258,8 @@
       "nature": "fictif",
       "majeur": false,
       "probabiliteHebdomadaire": 0.003,
+      "mois": null,
+      "durable": null,
       "conditions": [],
       "delaiMinEntreOccurrences": 52,
       "occurrencesMax": 2,
@@ -3880,7 +4291,19 @@
               "delaiSemaines": 0,
               "saturation": false
             }
-          ]
+          ],
+          "durable": {
+            "libelle": "Cybersécurité renforcée",
+            "semaines": 104,
+            "economie": [],
+            "popularite": 0,
+            "vulnerabilites": [
+              {
+                "crise": "crise-cyberattaque",
+                "multiplicateur": 0.3
+              }
+            ]
+          }
         },
         {
           "id": "minimiser",
@@ -3895,7 +4318,19 @@
               "delaiSemaines": 2,
               "saturation": false
             }
-          ]
+          ],
+          "durable": {
+            "libelle": "Failles informatiques non corrigées",
+            "semaines": 52,
+            "economie": [],
+            "popularite": 0,
+            "vulnerabilites": [
+              {
+                "crise": "crise-cyberattaque",
+                "multiplicateur": 3
+              }
+            ]
+          }
         }
       ],
       "choixParDefaut": "plan"
@@ -3907,6 +4342,8 @@
       "nature": "fictif",
       "majeur": true,
       "probabiliteHebdomadaire": 0.002,
+      "mois": null,
+      "durable": null,
       "conditions": [],
       "delaiMinEntreOccurrences": 52,
       "occurrencesMax": 2,
@@ -3948,7 +4385,19 @@
               "delaiSemaines": 0,
               "saturation": false
             }
-          ]
+          ],
+          "durable": {
+            "libelle": "Effets prolongés des restrictions",
+            "semaines": 12,
+            "economie": [
+              {
+                "indicateur": "croissance",
+                "valeur": -1
+              }
+            ],
+            "popularite": 0,
+            "vulnerabilites": []
+          }
         },
         {
           "id": "prevention",
@@ -3969,7 +4418,24 @@
               "delaiSemaines": 0,
               "saturation": false
             }
-          ]
+          ],
+          "durable": {
+            "libelle": "Hôpital renforcé",
+            "semaines": 52,
+            "economie": [
+              {
+                "indicateur": "deficit",
+                "valeur": -1
+              }
+            ],
+            "popularite": 0,
+            "vulnerabilites": [
+              {
+                "crise": "crise-epidemie",
+                "multiplicateur": 0.5
+              }
+            ]
+          }
         }
       ],
       "choixParDefaut": "prevention"
@@ -3981,6 +4447,8 @@
       "nature": "fictif",
       "majeur": true,
       "probabiliteHebdomadaire": 0.01,
+      "mois": null,
+      "durable": null,
       "conditions": [
         {
           "sur": "dette",
@@ -4036,7 +4504,24 @@
               "delaiSemaines": 0,
               "saturation": false
             }
-          ]
+          ],
+          "durable": {
+            "libelle": "Crédibilité budgétaire restaurée",
+            "semaines": 52,
+            "economie": [
+              {
+                "indicateur": "confiance",
+                "valeur": 5
+              }
+            ],
+            "popularite": 0,
+            "vulnerabilites": [
+              {
+                "crise": "crise-taux",
+                "multiplicateur": 0.5
+              }
+            ]
+          }
         },
         {
           "id": "statu-quo",
@@ -4054,7 +4539,28 @@
               "delaiSemaines": 0
             }
           ],
-          "effets": []
+          "effets": [],
+          "durable": {
+            "libelle": "Défiance des marchés",
+            "semaines": 52,
+            "economie": [
+              {
+                "indicateur": "confiance",
+                "valeur": -5
+              }
+            ],
+            "popularite": 0,
+            "vulnerabilites": [
+              {
+                "crise": "crise-taux",
+                "multiplicateur": 1.5
+              },
+              {
+                "crise": "crise-financiere",
+                "multiplicateur": 1.5
+              }
+            ]
+          }
         }
       ],
       "choixParDefaut": "plan-economies"
@@ -4066,6 +4572,8 @@
       "nature": "fictif",
       "majeur": false,
       "probabiliteHebdomadaire": 0.006,
+      "mois": null,
+      "durable": null,
       "conditions": [
         {
           "sur": "tensions",
@@ -4108,7 +4616,8 @@
               "delaiSemaines": 0,
               "saturation": false
             }
-          ]
+          ],
+          "durable": null
         },
         {
           "id": "normes",
@@ -4129,7 +4638,8 @@
               "delaiSemaines": 0,
               "saturation": false
             }
-          ]
+          ],
+          "durable": null
         },
         {
           "id": "fermete",
@@ -4150,10 +4660,958 @@
               "delaiSemaines": 0,
               "saturation": false
             }
-          ]
+          ],
+          "durable": {
+            "libelle": "Colère paysanne persistante",
+            "semaines": 26,
+            "economie": [
+              {
+                "indicateur": "tensions",
+                "valeur": 10
+              }
+            ],
+            "popularite": -1,
+            "vulnerabilites": [
+              {
+                "crise": "crise-agricole",
+                "multiplicateur": 2
+              }
+            ]
+          }
         }
       ],
       "choixParDefaut": "aides"
+    },
+    {
+      "id": "crise-canicule",
+      "libelle": "Canicule et sécheresse",
+      "description": "Crise fictive inventée pour le jeu. Une vague de chaleur durable assèche les cours d'eau et pèse sur les récoltes.",
+      "nature": "fictif",
+      "majeur": true,
+      "probabiliteHebdomadaire": 0.02,
+      "mois": [6, 7, 8],
+      "durable": null,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 40,
+      "occurrencesMax": null,
+      "economie": [
+        {
+          "indicateur": "croissance",
+          "valeur": -10,
+          "delaiSemaines": 0
+        },
+        {
+          "indicateur": "pouvoirAchat",
+          "valeur": -20,
+          "delaiSemaines": 0
+        },
+        {
+          "indicateur": "confiance",
+          "valeur": -100,
+          "delaiSemaines": 0
+        }
+      ],
+      "effets": [
+        {
+          "ressource": "popularite",
+          "base": -20,
+          "ecart": 20,
+          "delaiSemaines": 0,
+          "saturation": false
+        }
+      ],
+      "choix": [
+        {
+          "id": "plan-eau",
+          "libelle": "Plan d'urgence pour l'eau et les agriculteurs",
+          "description": "Aides immédiates et investissements dans la ressource en eau.",
+          "economie": [
+            {
+              "indicateur": "deficit",
+              "valeur": -10,
+              "delaiSemaines": 0
+            }
+          ],
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": 30,
+              "ecart": 20,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ],
+          "durable": {
+            "libelle": "Investissements dans la ressource en eau",
+            "semaines": 52,
+            "economie": [
+              {
+                "indicateur": "deficit",
+                "valeur": -1
+              }
+            ],
+            "popularite": 0,
+            "vulnerabilites": [
+              {
+                "crise": "crise-canicule",
+                "multiplicateur": 0.6
+              },
+              {
+                "crise": "crise-agricole",
+                "multiplicateur": 0.7
+              }
+            ]
+          }
+        },
+        {
+          "id": "restrictions-eau",
+          "libelle": "Restrictions d'usage de l'eau",
+          "description": "Limiter les usages sans dépense nouvelle : mécontentement local.",
+          "economie": [
+            {
+              "indicateur": "tensions",
+              "valeur": 300,
+              "delaiSemaines": 0
+            }
+          ],
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -10,
+              "ecart": 20,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ],
+          "durable": null
+        }
+      ],
+      "choixParDefaut": "restrictions-eau"
+    },
+    {
+      "id": "crise-logement",
+      "libelle": "Crise du logement",
+      "description": "Crise fictive inventée pour le jeu. La hausse des loyers et la panne de la construction deviennent la première préoccupation des ménages.",
+      "nature": "fictif",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.004,
+      "mois": null,
+      "durable": null,
+      "conditions": [
+        {
+          "sur": "confiance",
+          "min": null,
+          "max": 9500
+        }
+      ],
+      "delaiMinEntreOccurrences": 104,
+      "occurrencesMax": 1,
+      "economie": [
+        {
+          "indicateur": "confiance",
+          "valeur": -100,
+          "delaiSemaines": 0
+        },
+        {
+          "indicateur": "tensions",
+          "valeur": 300,
+          "delaiSemaines": 0
+        },
+        {
+          "indicateur": "pouvoirAchat",
+          "valeur": -30,
+          "delaiSemaines": 0
+        }
+      ],
+      "effets": [
+        {
+          "ressource": "popularite",
+          "base": -30,
+          "ecart": 20,
+          "delaiSemaines": 0,
+          "saturation": false
+        }
+      ],
+      "choix": [
+        {
+          "id": "construction",
+          "libelle": "Plan massif de construction",
+          "description": "Relancer les chantiers : coût budgétaire, soutien durable à l'activité.",
+          "economie": [
+            {
+              "indicateur": "deficit",
+              "valeur": -20,
+              "delaiSemaines": 0
+            }
+          ],
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": 20,
+              "ecart": 20,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ],
+          "durable": {
+            "libelle": "Chantiers du plan logement",
+            "semaines": 104,
+            "economie": [
+              {
+                "indicateur": "croissance",
+                "valeur": 1
+              },
+              {
+                "indicateur": "deficit",
+                "valeur": -1
+              }
+            ],
+            "popularite": 1,
+            "vulnerabilites": []
+          }
+        },
+        {
+          "id": "encadrement",
+          "libelle": "Encadrement des loyers",
+          "description": "Freiner les loyers : soulagement des locataires, investissement ralenti.",
+          "economie": [
+            {
+              "indicateur": "tensions",
+              "valeur": -300,
+              "delaiSemaines": 0
+            }
+          ],
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": 20,
+              "ecart": 20,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ],
+          "durable": {
+            "libelle": "Investissement locatif ralenti",
+            "semaines": 52,
+            "economie": [
+              {
+                "indicateur": "croissance",
+                "valeur": -1
+              },
+              {
+                "indicateur": "pouvoirAchat",
+                "valeur": 1
+              }
+            ],
+            "popularite": 0,
+            "vulnerabilites": []
+          }
+        },
+        {
+          "id": "laisser-faire",
+          "libelle": "Laisser faire le marché",
+          "description": "Aucune mesure nouvelle : le mal-logement s'installe.",
+          "economie": [],
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -30,
+              "ecart": 20,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ],
+          "durable": {
+            "libelle": "Mal-logement persistant",
+            "semaines": 52,
+            "economie": [
+              {
+                "indicateur": "tensions",
+                "valeur": 10
+              }
+            ],
+            "popularite": -1,
+            "vulnerabilites": [
+              {
+                "crise": "crise-greve",
+                "multiplicateur": 1.3
+              }
+            ]
+          }
+        }
+      ],
+      "choixParDefaut": "encadrement"
+    },
+    {
+      "id": "crise-affaire",
+      "libelle": "Affaire au sein d'un cabinet ministériel",
+      "description": "Crise fictive inventée pour le jeu. Des soupçons d'irrégularités visent un cabinet ministériel ; aucune personne réelle n'est en cause.",
+      "nature": "fictif",
+      "majeur": true,
+      "probabiliteHebdomadaire": 0.004,
+      "mois": null,
+      "durable": null,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 52,
+      "occurrencesMax": 2,
+      "economie": [
+        {
+          "indicateur": "confiance",
+          "valeur": -50,
+          "delaiSemaines": 0
+        }
+      ],
+      "effets": [
+        {
+          "ressource": "popularite",
+          "base": -60,
+          "ecart": 20,
+          "delaiSemaines": 0,
+          "saturation": false
+        }
+      ],
+      "choix": [
+        {
+          "id": "demission",
+          "libelle": "Exiger la démission du ministre concerné",
+          "description": "Couper court à l'affaire, au prix d'un départ au gouvernement.",
+          "economie": [],
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": 30,
+              "ecart": 20,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ],
+          "durable": null
+        },
+        {
+          "id": "soutien",
+          "libelle": "Maintenir sa confiance",
+          "description": "Défendre le ministre : les soupçons s'installent.",
+          "economie": [],
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -50,
+              "ecart": 20,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ],
+          "durable": {
+            "libelle": "Soupçons persistants",
+            "semaines": 26,
+            "economie": [],
+            "popularite": -3,
+            "vulnerabilites": [
+              {
+                "crise": "crise-affaire",
+                "multiplicateur": 1.5
+              }
+            ]
+          }
+        },
+        {
+          "id": "inspection",
+          "libelle": "Saisir une inspection indépendante",
+          "description": "Faire la lumière et renforcer les règles de déontologie.",
+          "economie": [],
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": 10,
+              "ecart": 20,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ],
+          "durable": {
+            "libelle": "Règles de déontologie renforcées",
+            "semaines": 104,
+            "economie": [],
+            "popularite": 0,
+            "vulnerabilites": [
+              {
+                "crise": "crise-affaire",
+                "multiplicateur": 0.5
+              }
+            ]
+          }
+        }
+      ],
+      "choixParDefaut": "inspection"
+    },
+    {
+      "id": "crise-medicaments",
+      "libelle": "Pénurie de médicaments",
+      "description": "Crise fictive inventée pour le jeu. Des ruptures d'approvisionnement touchent des médicaments courants dans les pharmacies.",
+      "nature": "fictif",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.003,
+      "mois": null,
+      "durable": null,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 52,
+      "occurrencesMax": 2,
+      "economie": [
+        {
+          "indicateur": "confiance",
+          "valeur": -80,
+          "delaiSemaines": 0
+        }
+      ],
+      "effets": [
+        {
+          "ressource": "popularite",
+          "base": -30,
+          "ecart": 20,
+          "delaiSemaines": 0,
+          "saturation": false
+        }
+      ],
+      "choix": [
+        {
+          "id": "relocalisation",
+          "libelle": "Relocaliser la production",
+          "description": "Investir dans des usines en France : coût durable, dépendance réduite.",
+          "economie": [
+            {
+              "indicateur": "deficit",
+              "valeur": -10,
+              "delaiSemaines": 0
+            }
+          ],
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": 20,
+              "ecart": 20,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ],
+          "durable": {
+            "libelle": "Relocalisation pharmaceutique",
+            "semaines": 104,
+            "economie": [
+              {
+                "indicateur": "deficit",
+                "valeur": -1
+              }
+            ],
+            "popularite": 0,
+            "vulnerabilites": [
+              {
+                "crise": "crise-medicaments",
+                "multiplicateur": 0.4
+              },
+              {
+                "crise": "crise-epidemie",
+                "multiplicateur": 0.8
+              }
+            ]
+          }
+        },
+        {
+          "id": "stocks",
+          "libelle": "Constituer des stocks stratégiques",
+          "description": "Des réserves pour les prochains mois.",
+          "economie": [
+            {
+              "indicateur": "deficit",
+              "valeur": -5,
+              "delaiSemaines": 0
+            }
+          ],
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": 10,
+              "ecart": 20,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ],
+          "durable": {
+            "libelle": "Stocks stratégiques de médicaments",
+            "semaines": 52,
+            "economie": [],
+            "popularite": 0,
+            "vulnerabilites": [
+              {
+                "crise": "crise-medicaments",
+                "multiplicateur": 0.6
+              }
+            ]
+          }
+        },
+        {
+          "id": "importations",
+          "libelle": "Importations d'urgence",
+          "description": "Parer au plus pressé sans changer l'approvisionnement.",
+          "economie": [],
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -10,
+              "ecart": 20,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ],
+          "durable": null
+        }
+      ],
+      "choixParDefaut": "stocks"
+    },
+    {
+      "id": "crise-industrielle",
+      "libelle": "Accident industriel majeur",
+      "description": "Crise fictive inventée pour le jeu. Un incendie dans un site industriel classé provoque l'évacuation des riverains.",
+      "nature": "fictif",
+      "majeur": true,
+      "probabiliteHebdomadaire": 0.002,
+      "mois": null,
+      "durable": null,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 104,
+      "occurrencesMax": 1,
+      "economie": [
+        {
+          "indicateur": "croissance",
+          "valeur": -10,
+          "delaiSemaines": 0
+        },
+        {
+          "indicateur": "confiance",
+          "valeur": -150,
+          "delaiSemaines": 0
+        }
+      ],
+      "effets": [
+        {
+          "ressource": "popularite",
+          "base": -40,
+          "ecart": 20,
+          "delaiSemaines": 0,
+          "saturation": false
+        }
+      ],
+      "choix": [
+        {
+          "id": "indemnisation",
+          "libelle": "Indemniser les victimes et contrôler les sites",
+          "description": "Fonds d'indemnisation et inspections renforcées.",
+          "economie": [
+            {
+              "indicateur": "deficit",
+              "valeur": -15,
+              "delaiSemaines": 0
+            }
+          ],
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": 40,
+              "ecart": 20,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ],
+          "durable": {
+            "libelle": "Contrôles des sites industriels renforcés",
+            "semaines": 104,
+            "economie": [],
+            "popularite": 0,
+            "vulnerabilites": [
+              {
+                "crise": "crise-industrielle",
+                "multiplicateur": 0.3
+              }
+            ]
+          }
+        },
+        {
+          "id": "enquete",
+          "libelle": "S'en remettre à l'enquête judiciaire",
+          "description": "Attendre les conclusions : colère des riverains.",
+          "economie": [],
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -30,
+              "ecart": 20,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ],
+          "durable": {
+            "libelle": "Colère des riverains",
+            "semaines": 26,
+            "economie": [
+              {
+                "indicateur": "tensions",
+                "valeur": 10
+              }
+            ],
+            "popularite": -1,
+            "vulnerabilites": []
+          }
+        }
+      ],
+      "choixParDefaut": "indemnisation"
+    },
+    {
+      "id": "crise-commerciale",
+      "libelle": "Guerre commerciale internationale",
+      "description": "Crise fictive inventée pour le jeu. De grandes puissances relèvent brutalement leurs droits de douane ; les exportations reculent.",
+      "nature": "fictif",
+      "majeur": true,
+      "probabiliteHebdomadaire": 0.003,
+      "mois": null,
+      "durable": null,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 104,
+      "occurrencesMax": 1,
+      "economie": [
+        {
+          "indicateur": "croissance",
+          "valeur": -50,
+          "delaiSemaines": 0
+        },
+        {
+          "indicateur": "confiance",
+          "valeur": -100,
+          "delaiSemaines": 0
+        },
+        {
+          "indicateur": "chomage",
+          "valeur": 10,
+          "delaiSemaines": 12
+        }
+      ],
+      "effets": [
+        {
+          "ressource": "popularite",
+          "base": -20,
+          "ecart": 20,
+          "delaiSemaines": 0,
+          "saturation": false
+        }
+      ],
+      "choix": [
+        {
+          "id": "riposte",
+          "libelle": "Riposte douanière européenne",
+          "description": "Répondre par des droits de douane : prix en hausse, activité freinée.",
+          "economie": [
+            {
+              "indicateur": "inflation",
+              "valeur": 20,
+              "delaiSemaines": 0
+            }
+          ],
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": 10,
+              "ecart": 20,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ],
+          "durable": {
+            "libelle": "Barrières douanières",
+            "semaines": 52,
+            "economie": [
+              {
+                "indicateur": "croissance",
+                "valeur": -1
+              },
+              {
+                "indicateur": "inflation",
+                "valeur": 1
+              }
+            ],
+            "popularite": 0,
+            "vulnerabilites": []
+          }
+        },
+        {
+          "id": "soutien-export",
+          "libelle": "Soutenir les exportateurs",
+          "description": "Aides ciblées aux entreprises touchées.",
+          "economie": [
+            {
+              "indicateur": "deficit",
+              "valeur": -15,
+              "delaiSemaines": 0
+            }
+          ],
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": 10,
+              "ecart": 20,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ],
+          "durable": {
+            "libelle": "Aides aux exportateurs",
+            "semaines": 26,
+            "economie": [
+              {
+                "indicateur": "deficit",
+                "valeur": -1
+              },
+              {
+                "indicateur": "croissance",
+                "valeur": 1
+              }
+            ],
+            "popularite": 0,
+            "vulnerabilites": []
+          }
+        },
+        {
+          "id": "negociation",
+          "libelle": "Négocier un accord",
+          "description": "Privilégier la diplomatie : effets limités, attente.",
+          "economie": [
+            {
+              "indicateur": "confiance",
+              "valeur": -50,
+              "delaiSemaines": 0
+            }
+          ],
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -10,
+              "ecart": 20,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ],
+          "durable": null
+        }
+      ],
+      "choixParDefaut": "negociation"
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "standard",
+      "libelle": "Situation de départ actuelle",
+      "description": "Les conditions de départ du jeu de règles, sans modification.",
+      "nature": "reference",
+      "statut": "hypothese",
+      "campagne": {
+        "joueur": {},
+        "adversaires": {},
+        "evenements": 1
+      },
+      "quinquennat": {
+        "economie": [],
+        "crises": 1,
+        "durable": null
+      }
+    },
+    {
+      "id": "tempete-economique",
+      "libelle": "Tempête économique",
+      "description": "Situation fictive : le quinquennat s'ouvre sur un ralentissement brutal et des marchés nerveux.",
+      "nature": "fictif",
+      "statut": "hypothese",
+      "campagne": {
+        "joueur": {},
+        "adversaires": {},
+        "evenements": 1
+      },
+      "quinquennat": {
+        "economie": [
+          {
+            "indicateur": "croissance",
+            "valeur": -120
+          },
+          {
+            "indicateur": "chomage",
+            "valeur": 80
+          },
+          {
+            "indicateur": "confiance",
+            "valeur": -600
+          },
+          {
+            "indicateur": "tensions",
+            "valeur": 1000
+          }
+        ],
+        "crises": 1.2,
+        "durable": {
+          "libelle": "Économie fragilisée",
+          "semaines": 104,
+          "economie": [
+            {
+              "indicateur": "confiance",
+              "valeur": -2
+            }
+          ],
+          "popularite": 0,
+          "vulnerabilites": [
+            {
+              "crise": "crise-financiere",
+              "multiplicateur": 2.5
+            },
+            {
+              "crise": "crise-taux",
+              "multiplicateur": 2
+            },
+            {
+              "crise": "crise-commerciale",
+              "multiplicateur": 2
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "colere-sociale",
+      "libelle": "Colère sociale",
+      "description": "Situation fictive : défiance envers les responsables politiques, mouvements sociaux à répétition.",
+      "nature": "fictif",
+      "statut": "hypothese",
+      "campagne": {
+        "joueur": {
+          "popularite": -300
+        },
+        "adversaires": {
+          "popularite": -300
+        },
+        "evenements": 1.5
+      },
+      "quinquennat": {
+        "economie": [
+          {
+            "indicateur": "tensions",
+            "valeur": 2500
+          },
+          {
+            "indicateur": "confiance",
+            "valeur": -300
+          }
+        ],
+        "crises": 1.2,
+        "durable": {
+          "libelle": "Défiance envers les institutions",
+          "semaines": 104,
+          "economie": [
+            {
+              "indicateur": "tensions",
+              "valeur": 5
+            }
+          ],
+          "popularite": -1,
+          "vulnerabilites": [
+            {
+              "crise": "crise-greve",
+              "multiplicateur": 2
+            },
+            {
+              "crise": "crise-agricole",
+              "multiplicateur": 2
+            },
+            {
+              "crise": "crise-affaire",
+              "multiplicateur": 1.5
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "monde-instable",
+      "libelle": "Monde instable",
+      "description": "Situation fictive : tensions internationales, énergie chère et menaces informatiques.",
+      "nature": "fictif",
+      "statut": "hypothese",
+      "campagne": {
+        "joueur": {},
+        "adversaires": {},
+        "evenements": 1
+      },
+      "quinquennat": {
+        "economie": [
+          {
+            "indicateur": "inflation",
+            "valeur": 120
+          },
+          {
+            "indicateur": "pouvoirAchat",
+            "valeur": -150
+          },
+          {
+            "indicateur": "confiance",
+            "valeur": -400
+          }
+        ],
+        "crises": 1.3,
+        "durable": {
+          "libelle": "Instabilité internationale",
+          "semaines": 104,
+          "economie": [
+            {
+              "indicateur": "inflation",
+              "valeur": 1
+            }
+          ],
+          "popularite": 0,
+          "vulnerabilites": [
+            {
+              "crise": "crise-energie",
+              "multiplicateur": 3
+            },
+            {
+              "crise": "crise-cyberattaque",
+              "multiplicateur": 2
+            },
+            {
+              "crise": "crise-commerciale",
+              "multiplicateur": 2
+            },
+            {
+              "crise": "crise-medicaments",
+              "multiplicateur": 1.5
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "outsider",
+      "libelle": "Candidature d'outsider",
+      "description": "Défi fictif : votre campagne part avec peu d'argent et une faible notoriété, mais une base militante enthousiaste.",
+      "nature": "fictif",
+      "statut": "hypothese",
+      "campagne": {
+        "joueur": {
+          "budgetCentimes": -150000000,
+          "notoriete": -300,
+          "militants": 300,
+          "popularite": 200
+        },
+        "adversaires": {},
+        "evenements": 1
+      },
+      "quinquennat": {
+        "economie": [],
+        "crises": 1,
+        "durable": null
+      }
     }
   ],
   "legislatives": {

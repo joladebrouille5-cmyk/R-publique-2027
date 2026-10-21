@@ -132,6 +132,7 @@ export const FACTOR_SOURCE_LABELS: Record<FactorSource, string> = {
   opinion: 'Dynamique de l’opinion',
   calendrier: 'Calendrier',
   limite: 'Borne',
+  durable: 'Conséquence durable',
 };
 
 export const PORTEE_LABELS = { locale: 'locale', regionale: 'régionale', nationale: 'nationale' };

@@ -9,13 +9,15 @@ import type { FinanceBook } from '../campaign/finances';
 import { applyOrSchedule } from '../core/effects';
 import { compareStrings, type Ledger } from '../core/ledger';
 import { drawAlea, stream } from '../core/random';
+import { addConsequence, crisisMultiplier } from './consequences';
 import { scheduleEconomy, type EconomyBook } from './economy';
 
 // Crises du quinquennat (phase 6, P6-06) : bibliothèque de crises fictives du jeu de règles,
-// tirées chaque semaine selon leurs conditions, leur probabilité et leur fréquence ; une crise
-// impose une décision au président (le joueur, sinon l'IA retient le choix par défaut). Effets
-// immédiats et différés sur l'économie (registre de l'économie) et sur la popularité du
-// président (registre des ressources).
+// tirées chaque semaine selon leurs conditions, leur saison, leur probabilité et leur fréquence ;
+// une crise impose une décision au président (le joueur, sinon l'IA retient le choix par
+// défaut). Effets immédiats et différés sur l'économie (registre de l'économie) et sur la
+// popularité du président (registre des ressources). Phase 7 : probabilité modulée par le
+// scénario de départ et les fragilités en cours ; séquelles durables de la crise et du choix.
 
 const MAX_CRISES_PER_WEEK = 1;
 
@@ -39,6 +41,7 @@ function eligible(
   if (history && crisis.occurrencesMax !== null && history.count >= crisis.occurrencesMax)
     return false;
   if (history && week - history.lastWeek < crisis.delaiMinEntreOccurrences) return false;
+  if (crisis.mois && !crisis.mois.includes(Number(state.meta.date.slice(5, 7)))) return false;
   const indicators = state.economie!.indicateurs;
   return crisis.conditions.every((c) => {
     const value = c.sur === 'popularite' ? presidentPopularity : (indicators[c.sur] ?? 0);
@@ -119,6 +122,8 @@ export function answerCrisis(context: Context, crisisId: string, optionId: strin
     choice.economie,
     choice.effets,
   );
+  if (choice.durable)
+    addConsequence(context.state, choice.durable, 'decision', `${crisisId}/${choice.id}`);
   return label;
 }
 
@@ -137,7 +142,11 @@ export function drawCrises(context: Context, playerPresides: boolean): ReportEve
     if (events.length >= MAX_CRISES_PER_WEEK) break;
     if (!eligible(state, crisis, popularity)) continue;
     const rng = stream(state.meta.seed, state.meta.week, 'crise', crisis.id, 'tirage');
-    if (rng.nextFloat() >= crisis.probabiliteHebdomadaire) continue;
+    const probability = Math.min(
+      1,
+      crisis.probabiliteHebdomadaire * crisisMultiplier(state, ruleset, crisis.id),
+    );
+    if (rng.nextFloat() >= probability) continue;
     const history = state.eventHistory[crisis.id];
     state.eventHistory[crisis.id] = { count: (history?.count ?? 0) + 1, lastWeek: state.meta.week };
     applyEffects(
@@ -146,6 +155,7 @@ export function drawCrises(context: Context, playerPresides: boolean): ReportEve
       crisis.economie,
       crisis.effets,
     );
+    if (crisis.durable) addConsequence(state, crisis.durable, 'crise', crisis.id);
     let decisionId: string | null = null;
     let outcome = '';
     if (playerPresides) {

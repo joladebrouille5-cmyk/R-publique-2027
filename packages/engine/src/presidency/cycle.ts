@@ -55,6 +55,10 @@ export function reviewQuinquennat(state: GameState): QuinquennatReview {
             siegesParBloc: { ...last.siegesParBloc },
           }
         : null,
+    // Conséquences durables nées pendant le quinquennat (phase 7).
+    consequences: state.consequences
+      .filter((c) => c.debut > start)
+      .map(({ libelle, origine, debut, fin }) => ({ libelle, origine, debut, fin })),
   };
 }
 
@@ -117,6 +121,8 @@ export function openNextCampaign(
   state.medias = null;
   state.alliances = [];
   state.calendar = { blockedBy: null, blockedMessage: null };
+  // Conséquences achevées : archivées dans le bilan, retirées de l'état courant.
+  state.consequences = state.consequences.filter((c) => c.fin >= week);
   for (const id of Object.keys(state.actors).sort(compareStrings)) {
     const actor = state.actors[id]!;
     actor.status = termLimited && id === president.id ? 'ineligible' : 'candidat';

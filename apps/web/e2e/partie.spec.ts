@@ -251,6 +251,26 @@ test('présidentielle complète puis quinquennat : deux tours, résultats, gouve
   ).toBeVisible();
 });
 
+test('scénario de départ fictif : choisi à la création, affiché pendant la partie', async ({
+  page,
+}) => {
+  await page.goto('/nouvelle-partie');
+  await page.getByLabel('Nom de la partie').fill('Scénario');
+  await page.getByLabel(/^Nom \*/).fill('Durand');
+  await page.getByLabel(/^Parti ou mouvement/).fill('Mouvement Playwright');
+  const scenarios = page.getByRole('group', { name: 'Scénario de départ' });
+  await scenarios.getByRole('radio', { name: /Colère sociale/ }).check();
+  await expect(scenarios.getByText(/Événements de campagne × 1,5/)).toBeVisible();
+  await page.getByRole('button', { name: 'Créer la partie' }).click();
+  await expect(page.getByRole('heading', { name: 'Tableau de bord' })).toBeVisible();
+  await expect(page.getByText('Colère sociale', { exact: true })).toBeVisible();
+  await openScreen(page, 'Crises');
+  await expect(page.getByRole('region', { name: 'Conséquences durables' })).toContainText(
+    'Aucune conséquence durable en cours.',
+  );
+  await expect(page.getByText(/probabilité des crises × 1,2/)).toBeVisible();
+});
+
 test('une date de départ invalide est refusée par le serveur', async ({ page }) => {
   await page.goto('/nouvelle-partie');
   await page.getByLabel('Nom de la partie').fill('Date invalide');

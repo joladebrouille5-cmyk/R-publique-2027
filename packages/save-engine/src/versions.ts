@@ -26,6 +26,7 @@ import {
   GameStateV9Schema,
   GameStateV10Schema,
   GameStateV11Schema,
+  GameStateV12Schema,
   addDays,
   daysFromCivil,
   parseIsoDate,
@@ -45,6 +46,7 @@ import {
   type GameStateV9,
   type GameStateV10,
   type GameStateV11,
+  type GameStateV12,
 } from '@r2027/shared';
 import { z } from 'zod';
 import { hashState, sha256, canonicalStringify } from './canonical';
@@ -84,7 +86,8 @@ const SCHEMAS: Record<number, z.ZodType> = {
   9: GameStateV9Schema,
   10: GameStateV10Schema,
   11: GameStateV11Schema,
-  12: GameStateSchema,
+  12: GameStateV12Schema,
+  13: GameStateSchema,
 };
 
 /** Jeux de règles des parties aux formats 2 (phase 2) et 3 (phase 3). */
@@ -421,14 +424,14 @@ function migrateV10ToV11(v10: GameStateV10): GameStateV11 {
  * président à son élection n'était pas enregistrée (null, signalé dans le bilan). Aucun
  * quinquennat ne pouvait être achevé avant ce format (la partie se bloquait à la fin du mandat).
  */
-function migrateV11ToV12(v11: GameStateV11): GameState {
+function migrateV11ToV12(v11: GameStateV11): GameStateV12 {
   if (v11.historique.quinquennats.length > 0) {
     throw new SaveFormatError(
       'incoherence',
       'Quinquennat archivé dans un format antérieur au 12 : impossible, la fin du mandat y bloquait la partie.',
     );
   }
-  let quinquennat: GameState['quinquennat'] = null;
+  let quinquennat: GameStateV12['quinquennat'] = null;
   if (v11.quinquennat) {
     const t2 = getRuleset(CURRENT_RULESET_KEY).calendrier.scrutins.at(-1)!.date;
     const day = (iso: string) => daysFromCivil(parseIsoDate(iso)!);
@@ -458,6 +461,32 @@ function migrateV11ToV12(v11: GameStateV11): GameState {
   };
 }
 
+/**
+ * Format 12 → 13 (phase 7) : scénario de départ et conséquences durables. Les parties
+ * existantes ont commencé sans scénario (« standard », qui ne modifie rien) et sans conséquence
+ * durable ; les bilans déjà archivés n'en comptent donc aucune.
+ */
+function migrateV12ToV13(v12: GameStateV12): GameState {
+  return {
+    ...v12,
+    meta: {
+      ...v12.meta,
+      engineVersion: ENGINE_VERSION,
+      rulesetVersion: CURRENT_RULESET_KEY,
+      saveSchemaVersion: 13,
+    },
+    scenario: 'standard',
+    consequences: [],
+    historique: {
+      presidentielles: v12.historique.presidentielles,
+      quinquennats: v12.historique.quinquennats.map((q) => ({
+        ...q,
+        bilan: { ...q.bilan, consequences: [] },
+      })),
+    },
+  };
+}
+
 const MIGRATIONS: Record<number, (state: never) => unknown> = {
   1: migrateV1ToV2,
   2: migrateV2ToV3,
@@ -470,6 +499,7 @@ const MIGRATIONS: Record<number, (state: never) => unknown> = {
   9: migrateV9ToV10,
   10: migrateV10ToV11,
   11: migrateV11ToV12,
+  12: migrateV12ToV13,
 };
 
 export type LoadedState = { state: GameState; stateHash: string; migratedFrom: number | null };

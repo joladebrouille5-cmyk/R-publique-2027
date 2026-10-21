@@ -14,6 +14,7 @@ import { buttonPrimary, card, input, label } from '../components/ui';
 import { DIFFICULTY_LABELS, MODE_LABELS, OPPONENT_SET_LABELS } from '../labels';
 import { CandidateForm, EMPTY_CANDIDATE, type CandidateDraft } from './new-game/CandidateForm';
 import { PersonalityPicker } from './new-game/PersonalityPicker';
+import { ScenarioPicker } from './new-game/ScenarioPicker';
 
 const MODES: { value: GameMode; description: string }[] = [
   {
@@ -57,6 +58,7 @@ export function NewGame() {
   const [candidate, setCandidate] = useState<CandidateDraft>(EMPTY_CANDIDATE);
   const [personality, setPersonality] = useState<string | null>(null);
   const [opponents, setOpponents] = useState<OpponentSet>('fictifs');
+  const [scenario, setScenario] = useState('standard');
   const [missing, setMissing] = useState<string | null>(null);
   const withCandidate = mode === 'candidat_personnalise';
   const withPersonality = mode === 'candidat_reel';
@@ -85,6 +87,7 @@ export function NewGame() {
           : {}),
         ...(withPersonality && personality ? { personnaliteId: personality } : {}),
         adversaires: opponents,
+        scenarioId: scenario,
       },
       { onSuccess: (game) => void navigate(`/parties/${game.id}/tableau-de-bord`) },
     );
@@ -192,6 +195,8 @@ export function NewGame() {
             La difficulté ne modifie jamais les règles constitutionnelles ni le décompte des voix.
           </p>
         </fieldset>
+
+        <ScenarioPicker value={scenario} onChange={setScenario} />
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1">

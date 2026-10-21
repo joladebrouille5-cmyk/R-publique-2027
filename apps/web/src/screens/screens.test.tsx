@@ -130,6 +130,7 @@ describe('création de partie', () => {
       startDate: '2026-09-28',
       personnaliteId: 'reel-tondelier',
       adversaires: 'reels',
+      scenarioId: 'standard',
     });
   });
 
@@ -146,6 +147,12 @@ describe('création de partie', () => {
     await user.type(screen.getByLabelText(/^Parti ou mouvement/), 'Parti du renouveau');
     await user.click(await screen.findByRole('radio', { name: /Figure de la société civile/ }));
     await user.click(screen.getByRole('radio', { name: /Expert/ }));
+    // Scénario de départ (phase 7) : situation fictive, écarts affichés.
+    const scenarios = screen.getByRole('group', { name: 'Scénario de départ' });
+    const storm = within(scenarios).getByRole('radio', { name: /Tempête économique/ });
+    expect(storm.closest('label')).toHaveTextContent('Scénario fictif');
+    expect(storm.closest('label')).toHaveTextContent(/Crises × 1,2/);
+    await user.click(storm);
     await user.type(screen.getByLabelText('Graine (facultative)'), 'ma-graine');
     await user.click(screen.getByRole('button', { name: 'Créer la partie' }));
 
@@ -158,6 +165,7 @@ describe('création de partie', () => {
       difficulty: 'expert',
       startDate: '2026-09-28',
       seed: 'ma-graine',
+      scenarioId: 'tempete-economique',
       candidate: {
         prenom: 'Lou',
         nom: 'Martin',

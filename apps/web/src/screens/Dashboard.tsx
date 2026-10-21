@@ -164,6 +164,11 @@ export function Dashboard() {
     { label: 'Phase', value: PHASE_LABELS[game.phase] },
     { label: 'Mode', value: MODE_LABELS[game.mode] },
     { label: 'Difficulté', value: DIFFICULTY_LABELS[game.difficulty] },
+    {
+      label: 'Scénario',
+      value:
+        ruleset.data?.scenarios.find((s) => s.id === state.scenario)?.libelle ?? state.scenario,
+    },
     ...(actor
       ? [
           {

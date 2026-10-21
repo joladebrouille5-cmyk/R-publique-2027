@@ -101,6 +101,7 @@ const ECONOMY_SOURCE_LABELS: Record<EconomyChange['factors'][number]['source'], 
   decision: 'Décision',
   differe: 'Effet différé',
   limite: 'Borne',
+  durable: 'Conséquence durable',
 };
 
 /** Variations des indicateurs économiques de la semaine (quinquennat), avec leurs facteurs. */

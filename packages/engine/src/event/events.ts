@@ -154,6 +154,9 @@ export function drawEvents(
   const triggered: ReportEvent[] = [];
   let decisionCreated = false;
 
+  // Scénario de départ (phase 7) : fréquence des événements de campagne.
+  const frequency =
+    ruleset.scenarios.find((s) => s.id === state.scenario)?.campagne.evenements ?? 1;
   const candidates = [...ruleset.evenements].sort((a, b) => compareStrings(a.id, b.id));
   for (const event of candidates) {
     if (triggered.length >= ruleset.jeu.evenementsMaxParSemaine) break;
@@ -161,7 +164,7 @@ export function drawEvents(
     if (hasChoices && decisionCreated) continue;
     if (!isEligible(state, event, actorId)) continue;
     const rng = stream(state.meta.seed, week, 'evenement', event.id);
-    if (rng.nextFloat() >= event.probabiliteHebdomadaire) continue;
+    if (rng.nextFloat() >= Math.min(1, event.probabiliteHebdomadaire * frequency)) continue;
 
     const previous = state.eventHistory[event.id];
     state.eventHistory[event.id] = { count: (previous?.count ?? 0) + 1, lastWeek: week };

@@ -221,9 +221,45 @@ describe('quinquennat', () => {
     mockApi(base(elected));
     renderRoute(`/parties/${GAME_ID}/crises`);
     const catalog = await screen.findByRole('region', { name: 'Crises possibles (fictives)' });
-    expect(within(catalog).getAllByRole('listitem')).toHaveLength(RULESET.crises.length);
+    for (const crisis of RULESET.crises)
+      expect(within(catalog).getByRole('listitem', { name: crisis.libelle })).toBeInTheDocument();
     expect(within(catalog).getAllByText('Fictif').length).toBe(RULESET.crises.length);
+    const heatwave = within(catalog).getByRole('listitem', { name: 'Canicule et sécheresse' });
+    expect(heatwave).toHaveTextContent('Saison : juin, juillet, août.');
     expect(screen.getByText('Aucune crise n’attend de décision.')).toBeInTheDocument();
+    expect(screen.getByText('Aucune conséquence durable en cours.')).toBeInTheDocument();
+  });
+
+  it('les conséquences durables d’un choix de crise, avec leurs fragilités', async () => {
+    const certain = JSON.parse(JSON.stringify(RULESET)) as typeof RULESET;
+    for (const crisis of certain.crises)
+      crisis.probabiliteHebdomadaire = crisis.id === 'crise-cyberattaque' ? 1 : 0;
+    const advance = (state: GameState, ruleset: typeof RULESET, option?: string) =>
+      advanceWeek(
+        state,
+        {
+          actions: [],
+          decisions: state.pendingDecisions.map((d) => ({
+            decisionId: d.id,
+            optionId: d.kind === 'crise' && option ? option : d.defaultOptionId,
+          })),
+        },
+        { ruleset },
+      ).state;
+    let state = playerAtInvestiture();
+    while (!state.quinquennat!.gouvernement) state = advance(state, certain);
+    while (!state.pendingDecisions.some((d) => d.kind === 'crise')) state = advance(state, certain);
+    const calm = JSON.parse(JSON.stringify(certain)) as typeof RULESET;
+    for (const crisis of calm.crises) crisis.probabiliteHebdomadaire = 0;
+    state = advance(advance(state, calm, 'minimiser'), calm);
+    mockApi(base(state));
+    renderRoute(`/parties/${GAME_ID}/crises`);
+    const lasting = await screen.findByRole('region', { name: 'Conséquences durables' });
+    expect(within(lasting).getByText('Failles informatiques non corrigées')).toBeVisible();
+    expect(within(lasting).getByText('Suite d’une décision')).toBeVisible();
+    expect(
+      within(lasting).getByText(/Cyberattaque contre des hôpitaux plus probable \(× 3\)/),
+    ).toBeVisible();
   });
 
   it('les législatives : Assemblée de 2024 réelle, filtre par département, sans nom', async () => {
