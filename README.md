@@ -94,6 +94,16 @@ pnpm dev
 
 Le pied de page de l'interface indique « Serveur connecté » quand l'API et la base répondent. Pour tester sur un téléphone du même réseau, voir la section Dépannage.
 
+## Déploiement sur Cloudflare Workers (interface seule)
+
+Le dépôt est relié à Cloudflare Workers Builds (Worker `republique-2027`). La configuration est dans `wrangler.jsonc` :
+
+- `wrangler deploy` compile l'interface (`pnpm --filter @r2027/web run build`) puis publie `apps/web/dist` en fichiers statiques, avec repli sur `index.html` pour les routes de l'application ;
+- **l'API du jeu (Fastify + PostgreSQL) ne s'exécute pas sur Workers** : `cloudflare/worker.js` répond à toute requête `/api/*` par une erreur 503 explicite (`api_non_deployee`), et l'interface affiche « Serveur ou base de données indisponible ». Aucune partie ne peut donc être jouée depuis ce déploiement tant que le serveur n'est pas hébergé ailleurs (hébergeur à choisir, question Q6 du [plan](docs/PLAN_DEVELOPPEMENT.md#5-questions-ouvertes)) ;
+- la version de Node.js est fixée par `.node-version` (22.22.0) : `.npmrc` impose `engine-strict=true`, et une version plus ancienne fait échouer `pnpm install`.
+
+Réglages attendus dans le tableau de bord Cloudflare (Workers & Pages → `republique-2027` → Settings → Build) : répertoire racine `/`, commande de déploiement `npx wrangler deploy` (valeur par défaut) ; la commande de build peut rester vide (Wrangler compile l'interface lui-même). Vérification locale sans compte Cloudflare : `npx wrangler deploy --dry-run`.
+
 ## Données géographiques et électorales (facultatif)
 
 Le dépôt contient un **jeu de démonstration** (`packages/data-import/demo/`) : la carte et la partie fonctionnent sans réseau, avec les communes de l'Ain, de la Corse et des DROM. Pour la France entière :
@@ -112,7 +122,7 @@ Les fichiers téléchargés sont gardés dans `data/raw/` (avec leur empreinte S
 
 | Commande | Contenu | Prérequis |
 |---|---|---|
-| `pnpm test` | tests unitaires, de propriétés et de composants (moteur, jeu de règles, sauvegardes, import de données, interface) | aucun |
+| `pnpm test` | tests unitaires, de propriétés et de composants (moteur, jeu de règles, sauvegardes, import de données, interface, Worker Cloudflare) | aucun |
 | `pnpm test:integration` | API réelle contre PostgreSQL : parties, progression idempotente, sauvegardes, journal, export/import, migrations, isolation, sécurité, référentiel cartographique, résultats communaux, campagne (actions ciblées, programme, parrainages jusqu'à la clôture, ralliements), personnalités réelles (candidat réel, adversaires réels) | `DATABASE_URL_TEST` |
 | `pnpm test:e2e` | Playwright, navigateur bureau + mobile : création du candidat, actions, progression, bilan, sauvegarde, restauration, journal, export/import, reprise, présidentielle complète jusqu'aux résultats, carte (encarts DROM, recherche, sélection, résultats, motifs, audit d'accessibilité axe-core), campagne (programme, actions ciblées, parrainages, finances, candidat écarté à la clôture, partie en observateur, audit axe-core), personnalités réelles (choix illustré, fiches, crédits, audit axe-core) | `DATABASE_URL_TEST` ; navigateur : `pnpm exec playwright install chromium` |
 | `pnpm lint` · `pnpm typecheck` · `pnpm format:check` | qualité du code | aucun |

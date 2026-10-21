@@ -55,6 +55,14 @@ export default defineConfig({
           environment: 'node',
         },
       },
+      {
+        test: {
+          name: 'cloudflare',
+          root: './cloudflare',
+          include: ['*.test.js'],
+          environment: 'node',
+        },
+      },
     ],
   },
 });

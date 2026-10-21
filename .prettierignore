@@ -4,6 +4,7 @@ docs/*.pdf
 playwright-report/
 test-results/
 coverage/
+.wrangler/
 dist/
 # Documentation rédigée à la main (tableaux larges) : pas de reformatage automatique.
 *.md

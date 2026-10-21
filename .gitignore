@@ -27,3 +27,6 @@ test-results/
 
 # Client Prisma généré
 apps/api/src/generated/
+
+# Fichiers temporaires de Wrangler (Cloudflare Workers : wrangler dev / deploy)
+.wrangler/

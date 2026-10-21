@@ -359,6 +359,7 @@ Le moteur se teste sans navigateur, base ni API externe (§11).
 - CI GitHub Actions : lint, typecheck, tests unitaires/propriétés, intégration (service PostgreSQL), Playwright, build Docker.
 - Sauvegardes automatiques de la base (`pg_dump` planifié) + procédure de restauration testée (critère de phase 7/8).
 - Hébergeur : **à choisir** (Node.js + PostgreSQL) — décision ouverte, voir [PLAN](./PLAN_DEVELOPPEMENT.md#5-questions-ouvertes).
+- Cloudflare Workers (relié au dépôt le 21/10/2026, Worker `republique-2027`) : **interface seule**. `wrangler.jsonc` publie `apps/web/dist` (repli sur `index.html` pour les routes) ; `cloudflare/worker.js` répond aux requêtes `/api/*` par une erreur 503 explicite (`api_non_deployee`), car l'API Fastify et PostgreSQL ne s'exécutent pas sur Workers. Node.js fixé par `.node-version` (`engine-strict`).
 
 ---
 
