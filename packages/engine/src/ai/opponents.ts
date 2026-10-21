@@ -3,12 +3,14 @@ import type {
   Actor,
   GameState,
   PlannedAction,
+  RealOutlet,
   ResourceKey,
   Ruleset,
   Strategy,
   StrategyPriority,
 } from '@r2027/shared';
 import { expectedReimbursementCap, formatEuros, spendingCap } from '../campaign/finances';
+import { arcomParty, outletAudience, propensity } from '../campaign/medias';
 import {
   available,
   committedByDepartement,
@@ -17,7 +19,6 @@ import {
   presentationWindow,
   projectedPresentations,
 } from '../campaign/parrainages';
-import { proposalsById } from '../campaign/programme';
 import { formatFrenchDate } from '../core/calendar';
 import { compareStrings } from '../core/ledger';
 import { stream } from '../core/random';
@@ -206,19 +207,44 @@ function bestDepartement(
   return best;
 }
 
-/** Média le plus utile : audience, crédibilité et priorités proches de son programme. */
+/** Audience touchée par un passage sur un organe, selon l'exposition mesurée de son parti. */
+function outletValue(ruleset: Ruleset, outlet: RealOutlet, party: string | null): number {
+  return outletAudience(ruleset, outlet) * propensity(ruleset, outlet, party);
+}
+
+/** Média le plus utile : audience de l'organe et exposition mesurée de son parti. */
 function bestOutlet(ruleset: Ruleset, actor: Actor, used: ReadonlySet<string>): string {
-  const proposals = proposalsById(ruleset);
-  const domains = actor.programme.propositions.map((id) => proposals.get(id)?.domaine);
-  let best = ruleset.medias.organes[0]!.id;
+  const party = arcomParty(ruleset, actor);
+  let best = ruleset.mediasReels.organes[0]!.id;
   let bestValue = -1;
-  for (const outlet of ruleset.medias.organes) {
-    const matches = domains.filter((d) => d !== undefined && outlet.priorites.includes(d)).length;
-    const value =
-      outlet.audience * outlet.credibilite * (1 + 0.3 * matches) * (used.has(outlet.id) ? 0.4 : 1);
+  for (const outlet of ruleset.mediasReels.organes) {
+    const value = outletValue(ruleset, outlet, party) * (used.has(outlet.id) ? 0.4 : 1);
     if (value > bestValue) {
       bestValue = value;
       best = outlet.id;
+    }
+  }
+  return best;
+}
+
+/** Émission la plus utile : audience de son organe et de ses autres diffuseurs (mêmes règles). */
+function bestShow(ruleset: Ruleset, actor: Actor, used: ReadonlySet<string>): string | undefined {
+  const party = arcomParty(ruleset, actor);
+  const outlets = new Map(ruleset.mediasReels.organes.map((o) => [o.id, o]));
+  let best: string | undefined;
+  let bestValue = -1;
+  for (const show of ruleset.mediasReels.emissions) {
+    const value =
+      (outletValue(ruleset, outlets.get(show.organeId)!, party) +
+        show.autresOrganes.reduce(
+          (sum, id) =>
+            sum + ruleset.medias.partCodiffusion * outletValue(ruleset, outlets.get(id)!, party),
+          0,
+        )) *
+      (used.has(show.id) ? 0.4 : 1);
+    if (value > bestValue) {
+      bestValue = value;
+      best = show.id;
     }
   }
   return best;
@@ -279,6 +305,8 @@ export function planOpponentActions(state: GameState, ruleset: Ruleset): Opponen
               cible = bestDepartement(state, ruleset, actor, usedDeps, engaged) ?? undefined;
             } else if (action.cible === 'media') {
               cible = bestOutlet(ruleset, actor, usedOutlets);
+            } else if (action.cible === 'emission') {
+              cible = bestShow(ruleset, actor, usedOutlets);
             }
             return { action, cible };
           })
@@ -309,7 +337,8 @@ export function planOpponentActions(state: GameState, ruleset: Ruleset): Opponen
             : { actionId: choice.action.id, cible: choice.cible },
         );
         if (choice.action.cible === 'departement' && choice.cible) usedDeps.add(choice.cible);
-        if (choice.action.cible === 'media' && choice.cible) usedOutlets.add(choice.cible);
+        if ((choice.action.cible === 'media' || choice.action.cible === 'emission') && choice.cible)
+          usedOutlets.add(choice.cible);
         budget -= choice.action.cout.budgetCentimes;
         spent += choice.action.cout.budgetCentimes;
         time -= choice.action.cout.tempsHeures;

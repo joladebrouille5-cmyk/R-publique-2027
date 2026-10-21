@@ -389,7 +389,7 @@ Réalisé :
 - **Licence de l'enquête CHES non précisée** (usage avec citation demandé) : seules quelques positions converties sont reprises, avec la citation ; à confirmer avant une mise en ligne publique.
 - **Calibration** : avec les adversaires réels, l'issue dépend surtout des positions et des moyens de départ hypothétiques ; aucune comparaison aux sondages réels n'est faite (volontairement). Relecture juridique recommandée avant toute mise en ligne publique ([R-06](./RISQUES.md)).
 
-### Phase 5 ter — Médias réels, émissions et journalistes politiques
+### Phase 5 ter — Médias réels, émissions et journalistes politiques ✅
 
 Décision de l'utilisateur du 21/10/2026 : après validation de la phase 5 bis, ajouter les **médias réels** (presse, télévision, radio : BFMTV, CNews, TF1…), les **émissions politiques** et leurs **journalistes**, avant la phase 6. Choix retenus :
 - comportement des chaînes de télévision et de radio fondé sur les **temps de parole mesurés par l'Arcom** pour chaque parti et chaque chaîne (exposition) ; la **presse écrite** traite tous les candidats de la même façon ; aucune ligne éditoriale fixée par le jeu ;
@@ -406,7 +406,32 @@ Décision de l'utilisateur du 21/10/2026 : après validation de la phase 5 bis, 
 
 **Règles** : faits publics seulement (nom de l'émission, chaîne, présentateur, jour de diffusion) ; aucune question, réplique ou appréciation attribuée à un journaliste ou à un média ; toute couverture d'un candidat par un média réel est **simulée** et présentée comme telle.
 
-**Prérequis bloquant** : accès réseau à `www.arcom.fr` (relevés des temps de parole), `www.mediametrie.fr` (audiences de la télévision et de la radio) et `www.acpm.fr` (diffusion de la presse), injoignables depuis l'environnement le 21/10/2026 ; Wikipédia, Wikidata et Wikimedia Commons sont déjà ouverts.
+**Prérequis** : accès réseau à `www.arcom.fr`, `www.mediametrie.fr` et `www.acpm.fr`, ouvert par l'utilisateur le 21/10/2026 (Wikipédia et Commons déjà ouverts). L'API REST de Wikipédia limite le débit (`retry-after`) : l'importeur respecte ce délai et garde les réponses du jour dans `data/raw/medias/`.
+
+**Bilan (21/10/2026)** — les cinq tâches sont réalisées.
+
+| Vérification | Résultat |
+|---|---|
+| `pnpm lint`, `pnpm format:check`, `pnpm typecheck` | sans erreur |
+| `pnpm test` | 303 tests réussis : moteur 131 (6 nouveaux, dont la propriété « presse écrite identique quel que soit le parti »), import de données 62 (23 nouveaux), interface 58 (6 nouveaux), sauvegardes 21 (migration 6 → 7), jeu de règles 23 (7 nouveaux), contrats 4, Worker Cloudflare 4 |
+| `pnpm test:integration` (API + PostgreSQL 16 réel) | 76 tests réussis (interview dans un média réel et dans une émission politique, cibles enregistrées) |
+| `pnpm test:e2e` (Playwright, bureau + mobile) | 32 tests réussis, dont la campagne avec interview à France Inter et passage au *Grand Jury* (bilan, écran Médias, logo décodé, couverture simulée) et l'audit axe-core de l'écran Médias |
+| `pnpm data:medias` | 12 relevés mensuels de l'Arcom (août 2025 à juillet 2026, contrôles de totaux et de parts : 0 écart), Médiamat de septembre 2026, EAR d'avril-juin 2026, OneNext 2026 S1 ; 26 organes retenus, 10 lignes écartées avec leur motif ; 7 émissions retenues, 2 écartées (arrêtée, remplacée) ; 18 logos sous licence libre (CC0, domaine public, CC BY-SA 4.0), 8 organes sans logo (fichier hors de Commons ou absent de l'infobox) ; 14 personnalités rattachées à un parti suivi, 3 à l'exposition moyenne |
+| Construction et déploiement simulé | `pnpm build` réussi ; `wrangler deploy --dry-run` : 44 fichiers d'interface, logos compris |
+
+Réalisé :
+- **P5t-01** : importeur `pnpm data:medias` (`packages/data-import/src/medias`) : lecture des CSV mensuels de l'Arcom (réglages de la page, douze derniers mois consécutifs), lecteur de classeurs Excel sans dépendance (archive ZIP, chaînes partagées), Médiamat mensuel et EAR National (population et période vérifiées dans le fichier), classements OneNext de l'ACPM, infobox des articles Wikipédia (API REST, révision consultée), logos et licences sur Commons (redirections de fichier suivies, SVG contrôlés). Chaque critère d'acceptation fait échouer l'import ; un service ou un titre mesuré sans décision de sélection aussi.
+- **P5t-02** : jeu de règles `presidentielle-2027@5.0.0` : médias réels joints (`medias-2027.json`, empreinte vérifiée), organes fictifs supprimés, paramètres de jeu (poids des types, crédibilité uniforme, bornes de la propension, report sur les autres diffuseurs), action « Invité d'une émission politique » (cible `emission`). Format de sauvegarde 7 (`medias.interviews`) et migration 6 → 7, testée sur un état réel produit par le moteur de la phase 5 bis (semaine 10, couverture par les organes fictifs), poursuivi avec une interview réelle.
+- **P5t-03** : moteur : couverture hebdomadaire par organe réel, propension d'exposition par parti à la télévision et à la radio, presse identique pour tous (propriété testée), tonalité tirée des seuls facteurs du jeu (facteur programme neutre pour une personnalité réelle adverse), interviews dans les émissions pour le joueur et l'IA (mêmes règles, choix selon l'audience touchée).
+- **P5t-04** : écran **Médias** (émissions et interviews simulées de la semaine, organes par type, mesures sourcées, temps de parole et exposition mesurée des partis, couverture, sources et méthode, exclusions, crédits des logos) ; plan d'actions avec médias groupés par type et émissions ; tests de composants, Playwright bureau + mobile, axe-core.
+- **P5t-05** : documentation (SOURCES §8 quinquies, RISQUES R-06 et R-29 à R-31, README, ARCHITECTURE, MODELE_DONNEES, CLAUDE.md).
+
+Écarts et limites :
+- **Émissions limitées à celles dont l'article Wikipédia existe** et indique chaîne et présentateurs : aucune émission de BFMTV, LCI, France Inter, France Info ni RMC n'est retenue (articles introuvables sous les titres essayés) ; *Vie politique* (TF1) est dite « en production » par sa source sans date de dernière diffusion.
+- **Mesures d'audience hétérogènes** (part du temps d'écoute pour la télévision et la radio, lectorat pour la presse) : leur combinaison dans le jeu repose sur des poids de type qui sont des hypothèses.
+- **Exposition par parti** mesurée sur douze mois passés (hors période électorale) : elle ne prédit pas la couverture de la campagne 2027 ; trois personnalités (Lutte ouvrière, UPR, Nouvelle Énergie) et tous les candidats fictifs reçoivent l'exposition moyenne.
+- **Licences** des relevés de l'Arcom, de Médiamétrie et de l'ACPM non précisées : quelques chiffres agrégés seulement, avec citation ; à confirmer avant une mise en ligne publique ([R-30](./RISQUES.md)).
+- **Cloudflare Workers** (relié au dépôt par l'utilisateur) : seule l'interface y est publiée ; l'API et PostgreSQL restent à héberger (Q6).
 
 ### Phase 6 — Quinquennat jouable
 
@@ -439,4 +464,4 @@ Durcissement sécurité (§14), mesure de performance et fixation des seuils (§
 
 ## 6. Prochaine étape
 
-**Phase 5 ter — médias réels, émissions et journalistes politiques** (décisions du 21/10/2026 ci-dessus), dès que l'accès à `www.arcom.fr`, `www.mediametrie.fr` et `www.acpm.fr` est ouvert ; puis **phase 6 — quinquennat jouable** (gouvernement et Premier ministre, législatives sur 577 circonscriptions, Assemblée nationale, économie, crises, bilan de fin de mandat et nouvelle présidentielle), qui exigera `data.assemblee-nationale.fr` et `www.banque-france.fr` (injoignables au 21/10/2026) ; `www.data.gouv.fr` et `www.insee.fr` sont joignables. La question Q8 (licence des résultats 2022) reste ouverte.
+Phase 5 ter terminée (médias réels). Prochaine : **phase 6 — quinquennat jouable** (gouvernement et Premier ministre, législatives sur 577 circonscriptions, Assemblée nationale, économie, crises, bilan de fin de mandat et nouvelle présidentielle), qui exigera `data.assemblee-nationale.fr` et `www.banque-france.fr` (injoignables au 21/10/2026) ; `www.data.gouv.fr` et `www.insee.fr` sont joignables. La question Q8 (licence des résultats 2022) reste ouverte.

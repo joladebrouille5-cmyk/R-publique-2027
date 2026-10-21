@@ -30,8 +30,15 @@ export const GAME_SCREENS: readonly GameScreen[] = [
     label: 'Candidats',
     phase: 3,
     available: true,
+    description: 'Candidats, positionnements, parrainages, stratégies, relations et alliances.',
+  },
+  {
+    path: 'medias',
+    label: 'Médias',
+    phase: 5,
+    available: true,
     description:
-      'Candidats, positionnements, parrainages, stratégies, relations, alliances et médias.',
+      'Médias réels : audiences, temps de parole, émissions politiques et couverture simulée.',
   },
   {
     path: 'programme',

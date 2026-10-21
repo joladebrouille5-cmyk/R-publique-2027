@@ -49,7 +49,7 @@ export function newGame(
   );
 }
 
-/** « interview@canal-hexagone » → action et sa cible ; « meeting » → action sans cible. */
+/** « interview@france-inter » → action et sa cible ; « meeting » → action sans cible. */
 export function planned(action: string): PlannedAction {
   const [actionId, cible] = action.split('@') as [string, string | undefined];
   return cible === undefined ? { actionId } : { actionId, cible };

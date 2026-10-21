@@ -48,7 +48,7 @@ describe('cycle hebdomadaire', () => {
 describe('actions et ressources', () => {
   it('débite exactement le coût des actions retenues', () => {
     const state = newGame();
-    const result = advance(state, ['meeting', 'interview@canal-hexagone']);
+    const result = advance(state, ['meeting', 'interview@france-inter']);
     const meeting = RULESET.actions.find((a) => a.id === 'meeting')!;
     expect(own(result).map((a) => a.status)).toEqual(['validee', 'validee']);
     expect(playerResources(result.state).budgetCentimes).toBe(
@@ -130,10 +130,7 @@ describe('comptabilité des facteurs', () => {
 
   it('journalise l’écrêtement aux bornes comme un facteur', () => {
     const state = withResources(newGame(), { budgetCentimes: 100, notoriete: 10_000 });
-    const notoriete = playerChange(
-      advance(state, ['interview@canal-hexagone']).report,
-      'notoriete',
-    )!;
+    const notoriete = playerChange(advance(state, ['interview@france-inter']).report, 'notoriete')!;
     expect(notoriete.after).toBeLessThanOrEqual(10_000);
     expect(notoriete.before + notoriete.factors.reduce((s, f) => s + f.value, 0)).toBe(
       notoriete.after,

@@ -53,7 +53,10 @@ export async function download(
       if (!(response.ok || response.status === 206) || !response.body) {
         throw new Error(`HTTP ${response.status}`);
       }
-      const length = Number(response.headers.get('content-length') ?? NaN);
+      // Contenu compressé à la volée (gzip…) : la taille annoncée est celle du flux compressé,
+      // pas celle du fichier reçu après décompression ; elle ne peut pas servir de contrôle.
+      const encoded = !['', 'identity'].includes(response.headers.get('content-encoding') ?? '');
+      const length = encoded ? NaN : Number(response.headers.get('content-length') ?? NaN);
       if (response.status === 206) {
         const range = /\/(\d+)$/.exec(response.headers.get('content-range') ?? '');
         total = range ? Number(range[1]) : null;

@@ -22,32 +22,43 @@ export type ValidatedAction = {
   actorId: string;
   index: number;
   definition: ActionDefinition;
-  /** Département ou organe de presse choisi, si l'action en demande un. */
+  /** Département, organe de presse ou émission choisi, si l'action en demande un. */
   cible: string | null;
 };
 
-/** Libellé lisible d'une cible : « Ain (01) », « Canal Hexagone ». */
+/** Libellé lisible d'une cible : « Ain (01) », « France Inter », « C politique (France 5) ». */
 export function targetLabel(ruleset: Ruleset, action: ActionDefinition, cible: string): string {
   if (action.cible === 'departement') {
     const dep = ruleset.parrainages.reservoir.departements[cible];
     return dep ? `${dep.nom} (${cible})` : cible;
   }
-  return ruleset.medias.organes.find((o) => o.id === cible)?.libelle ?? cible;
+  const outlets = ruleset.mediasReels.organes;
+  if (action.cible === 'emission') {
+    const show = ruleset.mediasReels.emissions.find((e) => e.id === cible);
+    if (!show) return cible;
+    const outlet = outlets.find((o) => o.id === show.organeId);
+    return outlet ? `${show.titre} (${outlet.libelle})` : show.titre;
+  }
+  return outlets.find((o) => o.id === cible)?.libelle ?? cible;
 }
+
+const MISSING_TARGET = {
+  departement: 'Choisissez le département de la rencontre.',
+  media: 'Choisissez le média de l’interview.',
+  emission: 'Choisissez l’émission politique.',
+} as const;
 
 function targetError(ruleset: Ruleset, definition: ActionDefinition, cible: string | undefined) {
   if (definition.cible === null) {
     return cible === undefined ? null : 'Cette action ne se dirige pas vers une cible.';
   }
-  if (cible === undefined) {
-    return definition.cible === 'departement'
-      ? 'Choisissez le département de la rencontre.'
-      : 'Choisissez le média de l’interview.';
-  }
+  if (cible === undefined) return MISSING_TARGET[definition.cible];
   const known =
     definition.cible === 'departement'
       ? cible in ruleset.parrainages.reservoir.departements
-      : ruleset.medias.organes.some((o) => o.id === cible);
+      : definition.cible === 'emission'
+        ? ruleset.mediasReels.emissions.some((e) => e.id === cible)
+        : ruleset.mediasReels.organes.some((o) => o.id === cible);
   return known ? null : `Cible inconnue : ${cible}.`;
 }
 

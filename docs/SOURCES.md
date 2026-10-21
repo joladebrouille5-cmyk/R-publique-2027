@@ -272,6 +272,70 @@ Remarques :
 - **Candidatures non intégrées** (aucun parti noté par CHES) : Delphine Batho, Bernard Cazeneuve, Sylvain Durif, Anasse Kazib, Selma Labib, Francis Lalanne, Mira Markovic, Benoît Mathieu, Antoine Mikolajczak, Manolo Mlekuz, Florian Philippot, Gilles Platret, Natacha Polony (liste affichée dans le jeu).
 - **Moyens de départ** : niveaux de notoriété et d'organisation établis par des règles écrites à partir des faits ci-dessus ; leur conversion en ressources est une hypothèse du jeu de règles 4.0.0. Aucun sondage réel n'est utilisé.
 
+## 8 quinquies. Médias réels, émissions et journalistes politiques (phase 5 ter)
+
+Décision de l'utilisateur du 21/10/2026 : médias réels (presse, télévision, radio) ; comportement des chaînes et des stations fondé sur les **temps de parole mesurés par l'Arcom** ; presse écrite identique pour tous les candidats ; **émissions politiques réelles** avec leur chaîne et leurs présentateurs (interviews simulées, aucun propos attribué) ; **logos seulement sous licence libre** (ou domaine public), crédités. Import : `pnpm data:medias` ; données dans [`packages/rulesets/src/medias-2027.json`](../packages/rulesets/src/medias-2027.json), logos dans `apps/web/public/medias/`.
+
+| Source | Usage | Version, licence |
+|---|---|---|
+| Arcom, temps de parole des personnalités politiques hors période électorale (`www.arcom.fr/temps-parole/hors-elections`), fichiers mensuels « partis politiques » (CSV) | temps de parole de chaque parti par service (journaux, magazines, autres programmes), temps du pouvoir exécutif ; contrôles : somme des partis = total publié, parts publiées exécutif + partis = 100 % | 12 mois, du 01/08/2025 au 31/07/2026, chacun avec son empreinte SHA-256 ; licence non précisée sur la page (l'Arcom publie des jeux analogues sous Licence Ouverte 2.0 sur data.gouv.fr) : seules des parts agrégées en sont tirées, avec citation |
+| Médiamétrie, Médiamat mensuel (classeur Excel de la page) | part d'audience des chaînes, individus de 4 ans et plus | septembre 2026 ; licence non précisée : quelques parts publiées reprises avec citation |
+| Médiamétrie, EAR National (classeur Excel de la page) | part d'audience des stations, 13 ans et plus, du lundi au vendredi (5 h-24 h) | vague avril-juin 2026 ; idem |
+| ACPM, classements OneNext de la presse quotidienne nationale et régionale | lecteurs au numéro moyen (LNM : moyenne sur les six derniers numéros parus) | 2026 S1 ; licence non précisée : quelques lectorats publiés repris avec citation |
+| Wikipédia (API REST, révision indiquée pour chaque organe et chaque émission) | infobox : logo de l'organe ; chaîne ou station, présentateurs, jour ou périodicité, statut de diffusion de l'émission | 35 articles consultés le 21/10/2026 ; texte CC BY-SA 4.0 : seuls ces faits sont repris |
+| Wikimedia Commons | logos ; licence et auteur lus sur la page du fichier (redirections de fichier suivies) | licences acceptées : CC0, domaine public, CC BY, CC BY-SA ; SVG conservés tels quels après contrôle (aucun script, gestionnaire d'événement ni ressource externe), autres formats réduits et convertis en WebP ; un logo reste une marque de son titulaire |
+| Fiches des personnalités réelles (§8 quater) | rattachement de chaque personnalité à un parti des relevés de l'Arcom (nom identique à l'un des partis de sa fiche) | jeu de règles 5.0.0 |
+
+Organes retenus (26) :
+
+| Organe | Type | Audience mesurée (source) | Temps de parole des partis (Arcom, 12 mois) | Logo |
+|---|---|---|---|---|
+| TF1 | Télévision | part d’audience 19,1 % (septembre 2026) | 36 h | Public domain — Patrick Delobelle (Naked Compagnie) for TF1 |
+| France 2 | Télévision | part d’audience 13,7 % (septembre 2026) | 45 h | CC0 — Pierre-Félix Vautrin |
+| France 3 | Télévision | part d’audience 9,3 % (septembre 2026) | 18 h | CC0 — Pierre-Félix Vautrin |
+| France 5 | Télévision | part d’audience 3,6 % (septembre 2026) | 54 h | CC0 — Pierre-Félix Vautrin |
+| M6 | Télévision | part d’audience 8 % (septembre 2026) | 11 h | Public domain — Étienne Robial (original 1987) - Gédéon pour M6 |
+| TMC | Télévision | part d’audience 3 % (septembre 2026) | 17 h | Public domain — TMC |
+| BFMTV | Télévision | part d’audience 3 % (septembre 2026) | 628 h | aucun (fichier « BFMTV 2025.png » absent de Wikimedia Commons (hébergé sur Wikipédia, hors licence libre)) |
+| CNews | Télévision | part d’audience 3 % (septembre 2026) | 421 h | Public domain — CNews |
+| LCI | Télévision | part d’audience 2,8 % (septembre 2026) | 372 h | aucun (fichier « LCI - Logo (Août 2017).svg » absent de Wikimedia Commons (hébergé sur Wikipédia, hors licence libre)) |
+| France Info (télévision) | Télévision | part d’audience 1,1 % (septembre 2026) | 438 h | aucun (aucun logo dans l’infobox de l’article) |
+| RMC Story | Télévision | part d’audience 1,4 % (septembre 2026) | 57 h | aucun (fichier « RMC Story 2025.png » absent de Wikimedia Commons (hébergé sur Wikipédia, hors licence libre)) |
+| T18 | Télévision | part d’audience 0,9 % (septembre 2026) | 22 h | Public domain — Etienne Robial (logo original) - Llempereur (reproduction) |
+| France Inter | Radio | part d’audience 13,9 % (avril - juin 2026) | 89 h | Public domain — Radio France - Yuma Paris |
+| France Info (radio) | Radio | part d’audience 4,7 % (avril - juin 2026) | 339 h | Public domain — France Info |
+| RTL | Radio | part d’audience 11,2 % (avril - juin 2026) | 88 h | Public domain — CLT (RTL Group) |
+| RMC | Radio | part d’audience 5,2 % (avril - juin 2026) | 98 h | Public domain — RMC BFM - Agence Barjabulle |
+| Europe 1 | Radio | part d’audience 4,4 % (avril - juin 2026) | 347 h | CC BY-SA 4.0 — ONAIR9214 |
+| France Culture | Radio | part d’audience 3,6 % (avril - juin 2026) | 16 h | Public domain — Radio France - Yuma Paris |
+| Le Parisien / Aujourd’hui en France | Presse | 2 920 000 lecteurs par numéro (2026 S1) | — (non mesurée) | Public domain — Le Parisien |
+| Le Monde | Presse | 2 794 000 lecteurs par numéro (2026 S1) | — (non mesurée) | Public domain — Le Monde vectorized by RaphaelQS at English Wikipedia |
+| Le Figaro | Presse | 2 018 000 lecteurs par numéro (2026 S1) | — (non mesurée) | aucun (fichier « Logo Le Figaro.svg » absent de Wikimedia Commons (hébergé sur Wikipédia, hors licence libre)) |
+| Libération | Presse | 1 267 000 lecteurs par numéro (2026 S1) | — (non mesurée) | Public domain — Unknown author |
+| Les Échos | Presse | 843 000 lecteurs par numéro (2026 S1) | — (non mesurée) | aucun (fichier « Logo Les Échos (2021).svg » absent de Wikimedia Commons (hébergé sur Wikipédia, hors licence libre)) |
+| La Croix | Presse | 634 000 lecteurs par numéro (2026 S1) | — (non mesurée) | Public domain — La Croix |
+| L’Humanité | Presse | 578 000 lecteurs par numéro (2026 S1) | — (non mesurée) | aucun (fichier « Logo L'Humanité (2024).svg » absent de Wikimedia Commons (hébergé sur Wikipédia, hors licence libre)) |
+| Presse quotidienne régionale (66 titres) | Presse | 13 505 000 lecteurs par numéro (2026 S1) | — (non mesurée) | aucun (aucun logo dans l’infobox de l’article) |
+
+Émissions politiques retenues (7) — faits de l'infobox de l'article, à la révision consultée ; dans le jeu, l'interview est **simulée** et rien n'est attribué aux journalistes :
+
+| Émission | Organe(s) | Présentation | Diffusion (source) |
+|---|---|---|---|
+| C politique | France 5 | Thomas Snégaroff | Hebdomadaire ; Tous les dimanches |
+| L'Heure de vérité | France 2 | Caroline Roux | non indiquée |
+| Les Quatre Vérités | France 2 | Francis Letellier | Quotidien |
+| Vie politique | TF1 | Gilles Bouleau | Occasionnelle |
+| L'Heure des pros | CNews, Europe 1 | Pascal Praud, Eliot Deval | Quotidienne (du lundi au dimanche) |
+| Le Grand Jury | RTL | Olivier Bost | 12 h - 13 h, le dimanche |
+| Le Grand Rendez-vous | Europe 1, CNews | Pierre de Vilno, Mathieu Bock-Côté, Christophe Jakubyszyn | Le dimanche de 10h à 11h |
+
+Règles et remarques :
+- **Sélection** : télévision et radio = services dont l'Arcom publie les temps de parole, avec au moins une heure par mois en moyenne (exécutif et partis) et une part d'audience publiée par Médiamétrie ; presse = quotidiens nationaux d'information générale et politique du classement OneNext et agrégat PQR66. Non retenus, avec leur motif : RMC Découverte, Radio Classique, Novo19, RMC Life (moins d'une heure par mois), BFM Business et Sud Radio (aucune part d'audience dans les deux mesures utilisées), L'Équipe (quotidien sportif), Le Parisien IDFO (édition déjà comprise), total PQN, 32 lignes régionales représentées par PQR66 ; émissions *L'Événement* (remplacée par *L'Heure de vérité* selon la source) et *Questions politiques* (arrêtée le 28 juin 2026). Articles introuvables sous les titres essayés : « BFM Politique », « Dimanche en politique », « La Grande Interview », « Punchline », « Face à face » (aucune émission de BFMTV, LCI, France Inter, France Info ni RMC n'est donc retenue).
+- **Poids d'audience dans le jeu** (`hypothese`, jeu de règles 5.0.0) : part de l'organe dans l'audience cumulée des organes retenus de son type × poids du type (télévision 1, radio 0,6, presse 0,4). Les indicateurs diffèrent d'un type à l'autre (part du temps d'écoute, lectorat) : ces poids sont des choix de jeu, pas une mesure comparée.
+- **Exposition relative d'un parti** (`estimation`) : part du parti sur le service ÷ part sur l'ensemble des services retenus, bornée à [0,5 ; 2] dans le jeu ; partis suivis : au moins dix heures cumulées. Décrit l'exposition observée sur la période, **pas une ligne éditoriale**. Personnalités sans parti suivi (exposition moyenne) : Nathalie Arthaud (Lutte ouvrière, 4,6 h), François Asselineau (UPR, 2 min), David Lisnard (Nouvelle Énergie, 6,8 h) ; candidats fictifs et personnalisés : exposition moyenne.
+- **Crédibilité** identique pour tous les organes (0,7) ; tonalité de la couverture tirée des seuls facteurs du jeu (popularité, crédibilité du programme, aléa, incidents).
+- Une réimportation (nouveau mois Arcom, nouvelle vague, nouvelle révision) impose une nouvelle version du jeu de règles (empreinte vérifiée par les tests).
+
 ## 9. Points restant non vérifiés
 
 1. Texte exact, sur Légifrance, de la loi n° 62-1292 (parrainages, financement) et de l'article L. 52-11.
@@ -281,6 +345,7 @@ Remarques :
 5. Licence du fichier INSEE des contours de circonscriptions ; texte de référence du découpage.
 6. Zéros initiaux des codes métropolitains dans les fichiers des législatives 2024.
 7. Sources des indicateurs économiques initiaux (Banque de France, INSEE) : à identifier en phase 6.
+8. Conditions de réutilisation des relevés de temps de parole de l'Arcom (page sans licence), des mesures de Médiamétrie et des classements de l'ACPM : seuls quelques chiffres agrégés sont repris avec citation ; à confirmer avant une mise en ligne publique.
 
 ## 10. Métadonnées obligatoires de chaque import (§10)
 

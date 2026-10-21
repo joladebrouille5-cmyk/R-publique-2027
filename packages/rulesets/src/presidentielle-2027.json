@@ -1,7 +1,7 @@
 {
   "id": "presidentielle-2027",
-  "version": "4.0.0",
-  "libelle": "Présidentielle 2027 — règles de campagne, parrainages, financement (phase 5)",
+  "version": "5.0.0",
+  "libelle": "Présidentielle 2027 — règles de campagne, parrainages, financement, médias réels (phase 5 ter)",
   "verifieLe": "2026-10-21",
   "sources": {
     "elysee-cm-2026-07-01": {
@@ -274,8 +274,8 @@
     },
     {
       "id": "interview",
-      "libelle": "Interview dans un média national",
-      "description": "Entretien dans un média choisi : exposition forte dans cet organe, effet incertain sur l’image.",
+      "libelle": "Interview dans un média",
+      "description": "Entretien dans un média réel choisi (télévision, radio ou presse) : exposition forte dans cet organe, effet incertain sur l’image.",
       "portee": "nationale",
       "cout": {
         "budgetCentimes": 0,
@@ -313,10 +313,57 @@
           }
         ]
       },
-      "note": "Les médias seront modélisés individuellement (portée, audience, crédibilité) en phase 5.",
+      "note": "Médias réels (audiences et temps de parole sourcés) ; l’entretien est simulé : aucune question ni aucun propos n’est attribué à un journaliste ou à un média.",
       "cible": "media",
       "campagne": {
         "exposition": 2500
+      }
+    },
+    {
+      "id": "emission-politique",
+      "libelle": "Invité d’une émission politique",
+      "description": "Passage dans une émission politique réelle choisie : exposition forte sur sa chaîne ou sa station (et, en partie, sur ses autres diffuseurs), effet incertain sur l’image.",
+      "portee": "nationale",
+      "cout": {
+        "budgetCentimes": 0,
+        "tempsHeures": 4
+      },
+      "prerequis": {
+        "militantsMin": 0
+      },
+      "effets": [
+        {
+          "ressource": "notoriete",
+          "base": 100,
+          "ecart": 60,
+          "delaiSemaines": 0,
+          "saturation": true
+        },
+        {
+          "ressource": "popularite",
+          "base": 0,
+          "ecart": 80,
+          "delaiSemaines": 0,
+          "saturation": true
+        }
+      ],
+      "risque": {
+        "probabilite": 0.1,
+        "libelle": "Petite phrase reprise en boucle",
+        "effets": [
+          {
+            "ressource": "popularite",
+            "base": -120,
+            "ecart": 60,
+            "delaiSemaines": 0,
+            "saturation": false
+          }
+        ]
+      },
+      "note": "Émissions, chaînes et présentateurs réels (faits sourcés) ; l’interview est simulée : aucune question ni aucun propos n’est attribué aux journalistes.",
+      "cible": "emission",
+      "campagne": {
+        "exposition": 3500
       }
     },
     {
@@ -2783,69 +2830,21 @@
   },
   "medias": {
     "statut": "hypothese",
-    "note": "Organes de presse fictifs : audience, crédibilité et priorités sont des paramètres de jeu.",
-    "organes": [
-      {
-        "id": "canal-hexagone",
-        "libelle": "Canal Hexagone",
-        "type": "television",
-        "portee": "nationale",
-        "audience": 0.45,
-        "credibilite": 0.7,
-        "priorites": ["economie", "securite", "pouvoir-achat"],
-        "nature": "fictif"
-      },
-      {
-        "id": "onde-publique",
-        "libelle": "Onde publique",
-        "type": "radio",
-        "portee": "nationale",
-        "audience": 0.3,
-        "credibilite": 0.8,
-        "priorites": ["institutions", "diplomatie", "environnement"],
-        "nature": "fictif"
-      },
-      {
-        "id": "gazette-republique",
-        "libelle": "La Gazette de la République",
-        "type": "presse",
-        "portee": "nationale",
-        "audience": 0.12,
-        "credibilite": 0.85,
-        "priorites": ["economie", "education", "justice"],
-        "nature": "fictif"
-      },
-      {
-        "id": "info-continu",
-        "libelle": "Info Continu 24",
-        "type": "television",
-        "portee": "nationale",
-        "audience": 0.25,
-        "credibilite": 0.55,
-        "priorites": ["securite", "immigration", "energie"],
-        "nature": "fictif"
-      },
-      {
-        "id": "reseau-des-regions",
-        "libelle": "Réseau des régions",
-        "type": "presse",
-        "portee": "regionale",
-        "audience": 0.35,
-        "credibilite": 0.75,
-        "priorites": ["collectivites", "agriculture", "logement", "sante"],
-        "nature": "fictif"
-      },
-      {
-        "id": "fil-actu",
-        "libelle": "Fil d’actu",
-        "type": "numerique",
-        "portee": "nationale",
-        "audience": 0.4,
-        "credibilite": 0.45,
-        "priorites": ["emploi", "retraites", "pouvoir-achat"],
-        "nature": "fictif"
-      }
-    ],
+    "sourceId": "conception-du-jeu",
+    "note": "Organes, audiences, temps de parole et émissions réels (medias-2027.json, sources citées). Paramètres de jeu : poids relatif des types de média, crédibilité identique pour tous les organes, bornes de la propension d’exposition, report d’une émission sur ses autres diffuseurs. Aucune ligne éditoriale n’est prêtée à un média ; la couverture d’un candidat est simulée.",
+    "fichier": "medias-2027.json",
+    "empreinte": "ebf724b507053e64f27e10a812736182312088f88b905c5efe8e34d2da5d5cb7",
+    "poidsParType": {
+      "television": 1,
+      "radio": 0.6,
+      "presse": 0.4
+    },
+    "credibilite": 0.7,
+    "propension": {
+      "min": 0.5,
+      "max": 2
+    },
+    "partCodiffusion": 0.5,
     "notorieteParExposition": 0.02
   },
   "debats": {

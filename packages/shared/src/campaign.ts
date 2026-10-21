@@ -138,8 +138,8 @@ export const CoverageSchema = z
   .strict();
 export type Coverage = z.infer<typeof CoverageSchema>;
 
-/** Couverture médiatique de la semaine passée (§8), par organe puis par candidat. */
-export const MediaStateSchema = z
+/** Couverture médiatique au format 6 (organes fictifs), figée pour les migrations. */
+export const MediaStateV6Schema = z
   .object({
     semaine: Week,
     couverture: z.record(Id, z.record(Id, CoverageSchema)),
@@ -147,6 +147,18 @@ export const MediaStateSchema = z
     indice: z.record(Id, z.number().min(-1).max(1)),
   })
   .strict();
+
+/** Passage d'un candidat dans une émission politique réelle (interview simulée). */
+export const InterviewSchema = z.object({ emissionId: Id, acteurId: Id }).strict();
+export type Interview = z.infer<typeof InterviewSchema>;
+
+/**
+ * Couverture médiatique de la semaine passée (§8), par organe réel puis par candidat, et
+ * interviews simulées tenues dans les émissions politiques.
+ */
+export const MediaStateSchema = MediaStateV6Schema.extend({
+  interviews: z.array(InterviewSchema),
+}).strict();
 export type MediaState = z.infer<typeof MediaStateSchema>;
 
 /** Relation entre deux candidats (§7) : confiance, proximité, rivalité et historique. */

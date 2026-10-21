@@ -15,6 +15,7 @@ import {
   GameStateV3Schema,
   GameStateV4Schema,
   GameStateV5Schema,
+  GameStateV6Schema,
   type Actor,
   type ActorV4,
   type ActorV5,
@@ -24,6 +25,7 @@ import {
   type GameStateV3,
   type GameStateV4,
   type GameStateV5,
+  type GameStateV6,
 } from '@r2027/shared';
 import { z } from 'zod';
 import { hashState, sha256, canonicalStringify } from './canonical';
@@ -57,7 +59,8 @@ const SCHEMAS: Record<number, z.ZodType> = {
   3: GameStateV3Schema,
   4: GameStateV4Schema,
   5: GameStateV5Schema,
-  6: GameStateSchema,
+  6: GameStateV6Schema,
+  7: GameStateSchema,
 };
 
 /** Jeux de règles des parties aux formats 2 (phase 2) et 3 (phase 3). */
@@ -242,10 +245,10 @@ function migrateV4ToV5(v4: GameStateV4): GameStateV5 {
 
 /**
  * Format 5 → 6 (phase 5 bis) : les candidats existants ne sont pas des personnalités réelles
- * (`personnaliteId` nul) et les adversaires restent fictifs ; jeu de règles courant (4.0.0 n'ajoute
- * que les personnalités réelles et leurs paramètres : la partie se poursuit à l'identique).
+ * (`personnaliteId` nul) et les adversaires restent fictifs ; jeu de règles courant (4.0.0
+ * n'ajoutait que les personnalités réelles et leurs paramètres).
  */
-function migrateV5ToV6(v5: GameStateV5): GameState {
+function migrateV5ToV6(v5: GameStateV5): GameStateV6 {
   const actors: Record<string, Actor> = {};
   for (const [id, actor] of Object.entries(v5.actors)) {
     actors[id] = { ...actor, candidate: { ...actor.candidate, personnaliteId: null } };
@@ -263,12 +266,32 @@ function migrateV5ToV6(v5: GameStateV5): GameState {
   };
 }
 
+/**
+ * Format 6 → 7 (phase 5 ter) : les organes de presse fictifs laissent place aux médias réels.
+ * La couverture de la dernière semaine, qui portait sur les organes fictifs, est effacée ; elle
+ * sera recalculée par les médias réels dès la semaine suivante (indice médiatique neutre d'ici
+ * là). La partie passe au jeu de règles courant.
+ */
+function migrateV6ToV7(v6: GameStateV6): GameState {
+  return {
+    ...v6,
+    meta: {
+      ...v6.meta,
+      engineVersion: ENGINE_VERSION,
+      rulesetVersion: CURRENT_RULESET_KEY,
+      saveSchemaVersion: 7,
+    },
+    medias: null,
+  };
+}
+
 const MIGRATIONS: Record<number, (state: never) => unknown> = {
   1: migrateV1ToV2,
   2: migrateV2ToV3,
   3: migrateV3ToV4,
   4: migrateV4ToV5,
   5: migrateV5ToV6,
+  6: migrateV6ToV7,
 };
 
 export type LoadedState = { state: GameState; stateHash: string; migratedFrom: number | null };

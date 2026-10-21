@@ -90,13 +90,15 @@ describe('plan hebdomadaire de la phase 5', () => {
     const { report } = await advanceOk(client, game, {
       actions: [
         { actionId: 'elus-locaux', cible: '974' },
-        { actionId: 'interview', cible: 'canal-hexagone' },
+        { actionId: 'interview', cible: 'france-inter' },
+        { actionId: 'emission-politique', cible: 'emi-le-grand-jury' },
       ],
     });
     const mine = report.actions.filter((a) => a.actorId === PLAYER_ACTOR_ID);
     expect(mine.map((a) => [a.status, a.cible])).toEqual([
       ['validee', 'La Réunion (974)'],
-      ['validee', 'Canal Hexagone'],
+      ['validee', 'France Inter'],
+      ['validee', 'Le Grand Jury (RTL)'],
     ]);
     const rows = await db.gameAction.findMany({
       where: { gameId: game.id, actorId: PLAYER_ACTOR_ID },
@@ -104,7 +106,8 @@ describe('plan hebdomadaire de la phase 5', () => {
     });
     expect(rows.map((r) => (r.payload as { cible: string }).cible)).toEqual([
       'La Réunion (974)',
-      'Canal Hexagone',
+      'France Inter',
+      'Le Grand Jury (RTL)',
     ]);
 
     const bad = await advance(client, game, {

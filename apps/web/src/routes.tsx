@@ -8,6 +8,7 @@ import { Finances } from './screens/Finances';
 import { GameLayout } from './screens/GameLayout';
 import { Home } from './screens/Home';
 import { Journal } from './screens/Journal';
+import { Medias } from './screens/Medias';
 import { NewGame } from './screens/NewGame';
 import { NotFound, RouteError } from './screens/NotFound';
 import { Polls } from './screens/Polls';
@@ -32,6 +33,7 @@ const IMPLEMENTED: Record<string, ComponentType> = {
   'tableau-de-bord': Dashboard,
   carte: MapScreen,
   candidats: Candidates,
+  medias: Medias,
   programme: Programme,
   finances: Finances,
   sondages: Polls,

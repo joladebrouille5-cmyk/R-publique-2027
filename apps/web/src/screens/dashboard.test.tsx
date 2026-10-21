@@ -46,18 +46,14 @@ describe('tableau de bord', () => {
     renderRoute(`/parties/${GAME_ID}/tableau-de-bord`);
     const user = userEvent.setup();
     await user.click(await screen.findByRole('button', { name: 'Ajouter Meeting public' }));
-    await user.click(
-      screen.getByRole('button', { name: 'Ajouter Interview dans un média national' }),
-    );
+    await user.click(screen.getByRole('button', { name: 'Ajouter Interview dans un média' }));
     const planned = screen.getByRole('list', { name: 'Actions programmées' });
     expect(within(planned).getAllByRole('listitem')).toHaveLength(2);
     expect(
       screen.getByText(/Reste après le plan : 2\s880\s000\s€ · 59 h · 2\/8 actions/),
     ).toBeInTheDocument();
 
-    await user.click(
-      screen.getByRole('button', { name: 'Retirer Interview dans un média national' }),
-    );
+    await user.click(screen.getByRole('button', { name: 'Retirer Interview dans un média' }));
     await user.click(screen.getByRole('button', { name: 'Résoudre la semaine 0' }));
 
     await waitFor(() => expect(calls.some((c) => c.method === 'POST')).toBe(true));

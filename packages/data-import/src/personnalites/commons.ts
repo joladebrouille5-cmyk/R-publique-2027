@@ -16,6 +16,15 @@ export function originalUrl(file: string): string {
   return `https://upload.wikimedia.org/wikipedia/commons/${md5[0]}/${md5.slice(0, 2)}/${encodeURIComponent(name)}`;
 }
 
+/**
+ * Nom réel du fichier affiché par une page de Commons (`wgTitle`) : une page peut être une
+ * redirection vers un autre fichier, dont il faut alors télécharger l'original.
+ */
+export function commonsFileTitle(html: string): string | null {
+  const m = /"wgTitle":("(?:[^"\\]|\\.)*")/.exec(html);
+  return m ? (JSON.parse(m[1]!) as string) : null;
+}
+
 const decode = (html: string) =>
   html
     .replace(/<[^>]+>/g, ' ')
@@ -54,7 +63,14 @@ export function parseAuthor(html: string): string | null {
   const m = /id="fileinfotpl_aut"[\s\S]*?<\/td>\s*<td[^>]*>([\s\S]*?)<\/td>/.exec(text);
   if (!m) return null;
   const author = decode(m[1]!);
-  return author.length > 0 ? author : null;
+  // Certains modèles répètent le texte (libellé visible et libellé accessible) : « X X » → « X ».
+  const words = author.split(' ');
+  const half = words.length / 2;
+  const deduplicated =
+    Number.isInteger(half) && words.slice(0, half).join(' ') === words.slice(half).join(' ')
+      ? words.slice(0, half).join(' ')
+      : author;
+  return deduplicated.length > 0 ? deduplicated : null;
 }
 
 /**

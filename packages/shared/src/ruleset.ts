@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { IsoDateSchema } from './game';
 import { AiObjectiveSchema } from './campaign';
+import { RealMediaSchema } from './medias';
 import { RealPersonalitiesSchema } from './personalities';
 import { CampaignStyleSchema, PositionSchema } from './politics';
 import { ResourceKeySchema, ResourcesSchema } from './resources';
@@ -111,7 +112,10 @@ export const CampaignEffectSchema = z
       .object({ montantCentimes: z.number().int().min(1) })
       .strict()
       .optional(),
-    /** Exposition médiatique supplémentaire (organe ciblé, sinon organes nationaux). */
+    /**
+     * Exposition médiatique supplémentaire : organe ciblé, organe de l'émission ciblée, sinon
+     * organes de même portée (au tiers).
+     */
     exposition: z.number().int().min(0).max(10_000).optional(),
     /** Heures de préparation des débats. */
     preparationDebat: z.number().int().min(0).optional(),
@@ -126,7 +130,7 @@ export const ActionDefinitionSchema = z
     description: z.string().min(1),
     portee: z.enum(['locale', 'regionale', 'nationale']),
     /** Cible à choisir en programmant l'action, le cas échéant. */
-    cible: z.enum(['departement', 'media']).nullable(),
+    cible: z.enum(['departement', 'media', 'emission']).nullable(),
     cout: z
       .object({
         budgetCentimes: z.number().int().min(0),
@@ -287,22 +291,6 @@ export const ProposalSchema = z
   })
   .strict();
 export type Proposal = z.infer<typeof ProposalSchema>;
-
-export const MediaOutletSchema = z
-  .object({
-    id: Id,
-    libelle: z.string().min(1),
-    type: z.enum(['television', 'radio', 'presse', 'numerique']),
-    portee: z.enum(['nationale', 'regionale']),
-    /** Part de l'électorat atteinte chaque semaine. */
-    audience: Fraction,
-    credibilite: Fraction,
-    /** Domaines du programme que l'organe met en avant. */
-    priorites: z.array(Id),
-    nature: z.literal('fictif'),
-  })
-  .strict();
-export type MediaOutlet = z.infer<typeof MediaOutletSchema>;
 
 const DepartementCode = z.string().regex(/^(\d{2}|2A|2B|97\d)$/);
 
@@ -524,15 +512,42 @@ export const RulesetSchema = z
           .strict(),
       })
       .strict(),
+    /**
+     * Médias réels (phase 5 ter) : paramètres de jeu (hypothèses) appliqués aux organes, aux
+     * temps de parole et aux émissions importés par `pnpm data:medias` (`mediasReels`, dont
+     * l'empreinte est vérifiée : une nouvelle importation impose une nouvelle version du jeu de
+     * règles). Aucune crédibilité ni ligne éditoriale n'est propre à un média réel.
+     */
     medias: z
       .object({
         statut: z.literal('hypothese'),
+        sourceId: Id,
         note: z.string().min(1),
-        organes: z.array(MediaOutletSchema).min(1),
+        fichier: z.string().regex(/^[a-z0-9-]+\.json$/),
+        /** SHA-256 de la sérialisation JSON des données (`JSON.stringify`). */
+        empreinte: z.string().regex(/^[0-9a-f]{64}$/),
+        /** Poids d'audience de chaque type de média, réparti selon les parts mesurées. */
+        poidsParType: z
+          .object({
+            television: z.number().positive(),
+            radio: z.number().positive(),
+            presse: z.number().positive(),
+          })
+          .strict(),
+        /** Crédibilité identique pour tous les organes. */
+        credibilite: Fraction,
+        /** Bornes appliquées à la propension d'exposition par parti (temps de parole). */
+        propension: z
+          .object({ min: z.number().positive(), max: z.number().positive() })
+          .strict()
+          .refine((p) => p.min <= 1 && p.max >= 1, 'Bornes encadrant l’exposition moyenne (1)'),
+        /** Part de l'exposition d'une émission reportée sur les autres organes qui la diffusent. */
+        partCodiffusion: Fraction,
         /** Notoriété gagnée par point d'exposition pondérée par l'audience. */
         notorieteParExposition: z.number().min(0),
       })
       .strict(),
+    mediasReels: RealMediaSchema,
     debats: z
       .object({
         statut: z.literal('hypothese'),
@@ -611,6 +626,7 @@ export const RulesetSchema = z
       ruleset.jeu.sourceId,
       ruleset.electorat.inscrits.sourceId,
       ruleset.personnalitesReelles.sourceId,
+      ruleset.medias.sourceId,
     ];
     for (const id of referenced) if (!sourceIds.has(id)) issue(`Source inconnue : ${id}`);
 
@@ -767,13 +783,17 @@ export const RulesetSchema = z
       for (const r of c.implantation)
         if (!regions.has(r)) issue(`${c.id} : région d'implantation inconnue ${r}`);
     }
-    unique(
-      'Organe de presse',
-      ruleset.medias.organes.map((o) => o.id),
-    );
-    for (const outlet of ruleset.medias.organes)
-      for (const d of outlet.priorites)
-        if (!domains.has(d)) issue(`${outlet.id} : domaine inconnu ${d}`);
+    const personalityIds = new Set(ruleset.personnalites.personnalites.map((p) => p.id));
+    for (const r of ruleset.mediasReels.rattachements)
+      if (!personalityIds.has(r.personnaliteId))
+        issue(`Médias : rattachement d’une personnalité inconnue ${r.personnaliteId}`);
+    for (const id of personalityIds)
+      if (!ruleset.mediasReels.rattachements.some((r) => r.personnaliteId === id))
+        issue(`Médias : personnalité ${id} sans rattachement aux temps de parole`);
+    for (const a of ruleset.actions) {
+      if (a.cible === 'emission' && ruleset.mediasReels.emissions.length === 0)
+        issue(`${a.id} : aucune émission politique à cibler`);
+    }
     if (ruleset.finances.plafondT2Centimes < ruleset.finances.plafondT1Centimes)
       issue('Finances : plafond du second tour inférieur à celui du premier');
   });

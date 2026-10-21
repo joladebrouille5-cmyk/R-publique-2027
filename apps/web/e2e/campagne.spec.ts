@@ -31,8 +31,10 @@ test('programme, rencontre d’élus ciblée et interview : bilan, parrainages e
   await expect(page.getByText(/À annoncer : Plan d’investissement public/)).toBeVisible();
   await page.getByRole('button', { name: 'Ajouter Rencontre avec des élus locaux' }).click();
   await page.getByLabel(/Cible de l’action n° 1/).selectOption('2A');
-  await page.getByRole('button', { name: 'Ajouter Interview dans un média national' }).click();
-  await page.getByLabel(/Cible de l’action n° 2/).selectOption('onde-publique');
+  await page.getByRole('button', { name: 'Ajouter Interview dans un média' }).click();
+  await page.getByLabel(/Cible de l’action n° 2/).selectOption('france-inter');
+  await page.getByRole('button', { name: 'Ajouter Invité d’une émission politique' }).click();
+  await page.getByLabel(/Cible de l’action n° 3/).selectOption('emi-le-grand-jury');
   await resolveWeek(page, 0);
 
   const report = page.getByRole('region', { name: /Bilan de la semaine 0/ });
@@ -41,7 +43,10 @@ test('programme, rencontre d’élus ciblée et interview : bilan, parrainages e
   await expect(
     campaign.getByText(/Rencontre avec des élus locaux — Corse-du-Sud \(2A\) : \+/),
   ).toBeVisible();
-  await expect(report.getByText(/Interview dans un média national — Onde publique/)).toBeVisible();
+  await expect(report.getByText(/Interview dans un média — France Inter/)).toBeVisible();
+  await expect(
+    report.getByText(/Invité d’une émission politique — Le Grand Jury \(RTL\)/),
+  ).toBeVisible();
   await expect(page.getByRole('region', { name: 'Parrainages' })).toContainText(
     /présentations comptées sur 500 requises/,
   );
@@ -54,14 +59,33 @@ test('programme, rencontre d’élus ciblée et interview : bilan, parrainages e
     /16\s851\s000\s€/,
   );
 
-  // Candidats : relations et médias.
+  // Candidats : relations.
   await openScreen(page, 'Candidats');
   await expect(
     page.getByRole('region', { name: 'Vos relations avec les autres candidats' }),
   ).toBeVisible();
+
+  // Médias réels : interview simulée dans l'émission, couverture par l'organe, logo crédité.
+  await openScreen(page, 'Médias');
+  await expect(page.getByRole('note')).toContainText('aucun propos n’est attribué');
+  const show = page
+    .getByRole('region', { name: 'Émissions politiques' })
+    .getByRole('listitem', { name: 'Le Grand Jury' });
+  await expect(show.getByText('Interview simulée')).toBeVisible();
+  await expect(show.getByText(/Camille Durand \(vous\)/)).toBeVisible();
+  const inter = page.getByRole('region', { name: 'Radio' }).getByRole('listitem', {
+    name: 'France Inter',
+  });
+  const logo = inter.getByRole('img', { name: 'Logo de France Inter' });
+  // Chargement différé : le logo est décodé une fois arrivé à l'écran.
+  await logo.scrollIntoViewIfNeeded();
+  await expect(logo).toBeVisible();
+  await expect
+    .poll(() => logo.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth))
+    .toBeGreaterThan(0);
   await expect(
-    page.getByRole('region', { name: 'Médias' }).getByText('Onde publique', { exact: true }),
-  ).toBeVisible();
+    inter.getByRole('table', { name: 'Couverture simulée des candidats par France Inter' }),
+  ).toContainText('Camille Durand (vous)');
 });
 
 test('sans parrainages, le candidat est écarté à la clôture et la partie continue', async ({
@@ -94,13 +118,19 @@ test('observateur : les adversaires agissent, collectent et se motivent seuls', 
   ).toBeVisible();
   await report.getByText(/Actions des campagnes adverses/).click();
   await expect(
-    report.getByText(/ — .+\(\d{2,3}\)|— Canal Hexagone|— Onde publique|— Fil d’actu/).first(),
+    report
+      .getByText(
+        / — .+\(\d{2,3}\)| — .*(TF1|France 2|France 5|France Inter|RTL|Europe 1|CNews|Le Monde)/,
+      )
+      .first(),
   ).toBeVisible();
 });
 
-test('accessibilité des écrans Programme et Finances (axe-core, WCAG 2.1 AA)', async ({ page }) => {
+test('accessibilité des écrans Programme, Finances, Candidats et Médias (axe-core, WCAG 2.1 AA)', async ({
+  page,
+}) => {
   await createGame(page, 'Accessibilité', 'e2e-a11y-campagne');
-  for (const screen of ['Programme', 'Finances', 'Candidats']) {
+  for (const screen of ['Programme', 'Finances', 'Candidats', 'Médias']) {
     await openScreen(page, screen);
     await expect(page.getByRole('heading', { level: 1, name: screen })).toBeVisible();
     const audit = await new AxeBuilder({ page })

@@ -141,7 +141,7 @@ describe('finances', () => {
 });
 
 describe('candidats, relations et débat', () => {
-  it('affiche statuts, stratégies, relations et médias ; un ralliement se propose avant le premier tour', async () => {
+  it('affiche statuts, stratégies et relations ; un ralliement se propose avant le premier tour', async () => {
     const state = playedState((s) => s.meta.week === 22);
     mockApi(base(gameFixture({}, state)));
     renderRoute(`/parties/${GAME_ID}/candidats`);
@@ -157,7 +157,6 @@ describe('candidats, relations et débat', () => {
     expect(propose).toBeEnabled();
     await user.click(propose);
     expect(within(relations).getByText(/Proposition\(s\) envoyée\(s\)/)).toBeInTheDocument();
-    expect(screen.getByRole('region', { name: 'Médias' })).toBeInTheDocument();
   });
 
   it('refuse les propositions de ralliement loin du premier tour', async () => {

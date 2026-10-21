@@ -1,13 +1,15 @@
-import type {
-  ActionDefinition,
-  Actor,
-  CampaignEffect,
-  Effect,
-  PlannedAction,
-  Ruleset,
+import {
+  REAL_MEDIA_TYPES,
+  type ActionDefinition,
+  type Actor,
+  type CampaignEffect,
+  type Effect,
+  type PlannedAction,
+  type Ruleset,
 } from '@r2027/shared';
 import { useId } from 'react';
 import { Badge } from '../../components/Badge';
+import { MEDIA_TYPE_LABELS } from '../../components/RealMedia';
 import { buttonPrimary, buttonSecondary, card, input } from '../../components/ui';
 import {
   formatCount,
@@ -30,6 +32,13 @@ type Props = {
   onRemove: (index: number) => void;
   onTarget: (index: number, cible: string) => void;
 };
+
+const TARGET_LABELS = { departement: 'Département', media: 'Média', emission: 'Émission' } as const;
+const TARGET_PROMPTS = {
+  departement: 'Choisir un département…',
+  media: 'Choisir un média…',
+  emission: 'Choisir une émission…',
+} as const;
 
 function describeEffect(effect: Effect): string {
   const amount = formatDelta(effect.ressource, effect.base);
@@ -127,10 +136,11 @@ function TargetSelect({
     ([a], [b]) => (a < b ? -1 : 1),
   );
   const p = actor.parrainages;
+  const outlets = new Map(ruleset.mediasReels.organes.map((o) => [o.id, o]));
   return (
     <div className="flex flex-col gap-1 sm:flex-row sm:items-center">
       <label htmlFor={id} className="text-xs text-slate-600 dark:text-slate-400">
-        {action.cible === 'departement' ? 'Département' : 'Média'}
+        {TARGET_LABELS[action.cible ?? 'media']}
       </label>
       <select
         id={id}
@@ -140,24 +150,36 @@ function TargetSelect({
         aria-label={`Cible de l’action n° ${index + 1} (${action.libelle})`}
         aria-invalid={value === undefined}
       >
-        <option value="">
-          {action.cible === 'departement' ? 'Choisir un département…' : 'Choisir un média…'}
-        </option>
-        {action.cible === 'departement'
-          ? departements.map(([code, dep]) => {
-              const held =
-                (p.promesses[code] ?? 0) + (p.intentions[code] ?? 0) + (p.validees[code] ?? 0);
-              return (
-                <option key={code} value={code}>
-                  {dep.nom} ({code}){held ? ` — ${held} soutiens` : ''}
-                </option>
-              );
-            })
-          : ruleset.medias.organes.map((outlet) => (
-              <option key={outlet.id} value={outlet.id}>
-                {outlet.libelle} — audience {Math.round(outlet.audience * 100)} %
+        <option value="">{TARGET_PROMPTS[action.cible ?? 'media']}</option>
+        {action.cible === 'departement' &&
+          departements.map(([code, dep]) => {
+            const held =
+              (p.promesses[code] ?? 0) + (p.intentions[code] ?? 0) + (p.validees[code] ?? 0);
+            return (
+              <option key={code} value={code}>
+                {dep.nom} ({code}){held ? ` — ${held} soutiens` : ''}
               </option>
-            ))}
+            );
+          })}
+        {action.cible === 'media' &&
+          REAL_MEDIA_TYPES.map((type) => (
+            <optgroup key={type} label={MEDIA_TYPE_LABELS[type]}>
+              {ruleset.mediasReels.organes
+                .filter((outlet) => outlet.type === type)
+                .map((outlet) => (
+                  <option key={outlet.id} value={outlet.id}>
+                    {outlet.libelle}
+                  </option>
+                ))}
+            </optgroup>
+          ))}
+        {action.cible === 'emission' &&
+          ruleset.mediasReels.emissions.map((show) => (
+            <option key={show.id} value={show.id}>
+              {show.titre} ({outlets.get(show.organeId)?.libelle ?? show.organeId}) —{' '}
+              {show.presentateurs.join(', ')}
+            </option>
+          ))}
       </select>
     </div>
   );
@@ -249,7 +271,12 @@ export function ActionPlanner({
                 <Badge>Portée {PORTEE_LABELS[action.portee]}</Badge>
                 {action.cible && (
                   <Badge tone="alerte">
-                    {action.cible === 'departement' ? 'Choix du département' : 'Choix du média'}
+                    Choix{' '}
+                    {action.cible === 'departement'
+                      ? 'du département'
+                      : action.cible === 'emission'
+                        ? 'de l’émission'
+                        : 'du média'}
                   </Badge>
                 )}
               </div>

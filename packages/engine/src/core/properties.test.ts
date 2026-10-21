@@ -9,7 +9,13 @@ import { planned } from './testing';
 const ruleset = getRuleset(CURRENT_RULESET_KEY);
 const ACTION_IDS = [
   ...ruleset.actions.map((a) =>
-    a.cible === 'departement' ? `${a.id}@01` : a.cible === 'media' ? `${a.id}@fil-actu` : a.id,
+    a.cible === 'departement'
+      ? `${a.id}@01`
+      : a.cible === 'media'
+        ? `${a.id}@le-monde`
+        : a.cible === 'emission'
+          ? `${a.id}@emi-c-politique`
+          : a.id,
   ),
   'action-inconnue',
 ];

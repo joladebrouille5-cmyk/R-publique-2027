@@ -2,6 +2,7 @@ import {
   relationKey,
   totalReceipts,
   type GameState,
+  type MediaState,
   type ParrainagesState,
   type Ruleset,
 } from '@r2027/shared';
@@ -25,6 +26,8 @@ import { resolveRound } from '../election/rounds';
 import { debateComponents, debatePerformance } from '../election/flow';
 import { nationalBaseline } from '../territory/baseline';
 import { resolveAlliances, updateRelations } from '../ai/relations';
+import { targetLabel } from './actions';
+import { propensity, updateMedia } from './medias';
 import {
   FinanceBook,
   processDonations,
@@ -335,16 +338,127 @@ describe('financement (§6)', () => {
 });
 
 describe('médias et débats (§8)', () => {
+  const exposition = (m: MediaState, outlet: string, actor = PLAYER_ACTOR_ID) =>
+    m.couverture[outlet]![actor]!.exposition;
+
+  it('couvre chaque semaine tous les organes réels, et eux seuls', () => {
+    const medias = advance(newGame(), []).state.medias!;
+    expect(Object.keys(medias.couverture).sort()).toEqual(
+      RULESET.mediasReels.organes.map((o) => o.id).sort(),
+    );
+    expect(medias.interviews).toEqual([]);
+    for (const indice of Object.values(medias.indice))
+      expect(Math.abs(indice)).toBeLessThanOrEqual(1);
+  });
+
   it('une interview accroît l’exposition dans l’organe choisi', () => {
     const base = advance(newGame(), []).state.medias!;
-    const withInterview = advance(newGame(), ['interview@onde-publique']).state.medias!;
-    const exposition = (m: typeof base, outlet: string) =>
-      m.couverture[outlet]![PLAYER_ACTOR_ID]!.exposition;
+    const withInterview = advance(newGame(), ['interview@france-inter']).state.medias!;
     const gain = (outlet: string) => exposition(withInterview, outlet) - exposition(base, outlet);
-    // L'interview cible « Onde publique » ; ailleurs, seule la notoriété gagnée joue un peu.
-    expect(gain('onde-publique')).toBeGreaterThan(gain('canal-hexagone') + 1_000);
-    for (const indice of Object.values(withInterview.indice))
-      expect(Math.abs(indice)).toBeLessThanOrEqual(1);
+    // L'interview cible France Inter ; ailleurs, seule la notoriété gagnée joue un peu.
+    expect(gain('france-inter')).toBeGreaterThan(gain('rtl') + 1_000);
+  });
+
+  it('une émission politique expose sur sa chaîne, en partie sur ses autres diffuseurs', () => {
+    const show = RULESET.mediasReels.emissions.find((e) => e.autresOrganes.length > 0)!;
+    const other = show.autresOrganes[0]!;
+    const unrelated = RULESET.mediasReels.organes.find(
+      (o) => o.id !== show.organeId && !show.autresOrganes.includes(o.id) && o.type !== 'presse',
+    )!.id;
+    const base = advance(newGame(), []).state.medias!;
+    const after = advance(newGame(), [`emission-politique@${show.id}`]).state.medias!;
+    const gain = (outlet: string) => exposition(after, outlet) - exposition(base, outlet);
+    const bonus = RULESET.actions.find((a) => a.id === 'emission-politique')!.campagne!.exposition!;
+    expect(gain(show.organeId)).toBeGreaterThanOrEqual(bonus);
+    expect(gain(other)).toBeGreaterThanOrEqual(Math.round(bonus * RULESET.medias.partCodiffusion));
+    expect(gain(other)).toBeLessThan(gain(show.organeId));
+    expect(gain(unrelated)).toBeLessThan(bonus / 3);
+    expect(after.interviews).toEqual([{ emissionId: show.id, acteurId: PLAYER_ACTOR_ID }]);
+  });
+
+  it('refuse une émission inconnue ou une émission absente', () => {
+    const report = advance(newGame(), [
+      'emission-politique@emi-inconnue',
+      'emission-politique',
+    ]).report;
+    expect(
+      report.actions.filter((a) => a.actorId === PLAYER_ACTOR_ID).map((a) => [a.status, a.reason]),
+    ).toEqual([
+      ['rejetee', 'Cible inconnue : emi-inconnue.'],
+      ['rejetee', 'Choisissez l’émission politique.'],
+    ]);
+  });
+
+  it('module l’exposition à la télévision et à la radio selon le parti mesuré, bornée', () => {
+    const outlet = RULESET.mediasReels.organes.find((o) => o.tempsDeParole)!;
+    expect(propensity(RULESET, outlet, null)).toBe(1);
+    expect(propensity(RULESET, outlet, 'Parti absent des relevés')).toBe(1);
+    for (const o of RULESET.mediasReels.organes)
+      for (const party of Object.keys(o.tempsDeParole?.propension ?? {})) {
+        const value = propensity(RULESET, o, party);
+        expect(value).toBeGreaterThanOrEqual(RULESET.medias.propension.min);
+        expect(value).toBeLessThanOrEqual(RULESET.medias.propension.max);
+      }
+    const press = RULESET.mediasReels.organes.find((o) => o.type === 'presse')!;
+    for (const r of RULESET.mediasReels.rattachements)
+      expect(propensity(RULESET, press, r.partiArcom)).toBe(1);
+  });
+
+  it('presse écrite : couverture identique quel que soit le parti rattaché (propriété)', () => {
+    const real = playUntil(
+      newGame({ mode: 'observateur', adversaires: 'reels' }),
+      (s) => s.meta.week >= 2,
+      QUIET,
+    ).state;
+    const parties = RULESET.mediasReels.rattachements.map((r) => r.partiArcom);
+    const press = RULESET.mediasReels.organes.filter((o) => o.type === 'presse').map((o) => o.id);
+    const broadcast = RULESET.mediasReels.organes
+      .filter((o) => o.type !== 'presse')
+      .map((o) => o.id);
+    const coverage = (rattachements: Ruleset['mediasReels']['rattachements']) => {
+      const ruleset = { ...QUIET, mediasReels: { ...QUIET.mediasReels, rattachements } };
+      const state = JSON.parse(JSON.stringify(real)) as GameState;
+      return updateMedia(state, ruleset, new Ledger(state), [], new Set(), 6)!;
+    };
+    const reference = coverage(RULESET.mediasReels.rattachements);
+    fc.assert(
+      fc.property(fc.shuffledSubarray(parties, { minLength: parties.length }), (shuffled) => {
+        const permuted = coverage(
+          RULESET.mediasReels.rattachements.map((r, i) => ({ ...r, partiArcom: shuffled[i]! })),
+        );
+        for (const id of press) expect(permuted.couverture[id]).toEqual(reference.couverture[id]);
+      }),
+      { numRuns: 25 },
+    );
+    // Sans aucun parti rattaché, la télévision et la radio changent (exposition mesurée).
+    const neutral = coverage(
+      RULESET.mediasReels.rattachements.map((r) => ({ ...r, partiArcom: null })),
+    );
+    expect(
+      broadcast.some(
+        (id) => JSON.stringify(neutral.couverture[id]) !== JSON.stringify(reference.couverture[id]),
+      ),
+    ).toBe(true);
+    for (const id of press) expect(neutral.couverture[id]).toEqual(reference.couverture[id]);
+  });
+
+  it('les adversaires choisissent eux aussi des émissions réelles, selon les mêmes règles', () => {
+    const { reports } = playUntil(
+      newGame({ mode: 'observateur', adversaires: 'reels' }),
+      (s) => s.meta.week >= 12,
+      QUIET,
+    );
+    const definition = RULESET.actions.find((a) => a.id === 'emission-politique')!;
+    const labels = new Set(
+      RULESET.mediasReels.emissions.map((e) => targetLabel(RULESET, definition, e.id)),
+    );
+    const chosen = reports.flatMap((r) =>
+      r.actions.filter((a) => a.actionId === 'emission-politique' && a.status === 'validee'),
+    );
+    expect(chosen.length).toBeGreaterThan(0);
+    for (const a of chosen) expect(labels.has(a.cible!)).toBe(true);
+    // Les interviews tenues figurent dans l'état des médias de la semaine.
+    expect(reports.length).toBeGreaterThan(0);
   });
 
   it('une meilleure préparation améliore la prestation attendue au débat ; composantes bornées', () => {

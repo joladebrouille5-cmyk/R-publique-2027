@@ -14,6 +14,7 @@ import V2 from './fixtures/v2-phase-2.json' with { type: 'json' };
 import V3 from './fixtures/v3-phase-3.json' with { type: 'json' };
 import V4 from './fixtures/v4-phase-4.json' with { type: 'json' };
 import V5 from './fixtures/v5-phase-5.json' with { type: 'json' };
+import V6 from './fixtures/v6-phase-5-bis.json' with { type: 'json' };
 import { loadStoredState, MIGRATED_CANDIDATE, SaveFormatError, upgradeState } from './versions';
 
 const ruleset = getRuleset(CURRENT_RULESET_KEY);
@@ -218,8 +219,11 @@ describe('migrations de sauvegarde', () => {
         candidate: { ...before.candidate, personnaliteId: null },
       });
     }
-    const { meta: _meta, player: _player, actors: _actors, ...rest } = state;
-    const { meta: _m, player: _p, actors: _a, ...restBefore } = V5.state;
+    // La couverture par les organes fictifs est effacée (format 7, médias réels).
+    expect(V5.state.medias).not.toBeNull();
+    expect(state.medias).toBeNull();
+    const { meta: _meta, player: _player, actors: _actors, medias: _medias, ...rest } = state;
+    const { meta: _m, player: _p, actors: _a, medias: _md, ...restBefore } = V5.state;
     expect(rest).toEqual(restBefore);
     expect(state.alliances).toHaveLength(1);
 
@@ -233,6 +237,45 @@ describe('migrations de sauvegarde', () => {
     }
     expect(current.elections.t2!.winner).not.toBeNull();
     expect(current.elections.debateDetail).not.toBeNull();
+  });
+
+  it('migre une partie réelle de la phase 5 bis vers les médias réels, puis la poursuit', () => {
+    const { state, migratedFrom } = loadStoredState(V6.state, V6.stateHash, 6);
+    expect(migratedFrom).toBe(6);
+    expect(state.meta).toMatchObject({
+      week: 10,
+      saveSchemaVersion: SAVE_SCHEMA_VERSION,
+      engineVersion: ENGINE_VERSION,
+      rulesetVersion: CURRENT_RULESET_KEY,
+    });
+    // Seule la couverture par les organes fictifs disparaît ; tout le reste est conservé.
+    expect(Object.keys(V6.state.medias.couverture)).toContain('onde-publique');
+    expect(state.medias).toBeNull();
+    const { meta: _meta, medias: _medias, ...rest } = state;
+    const { meta: _m, medias: _md, ...restBefore } = V6.state;
+    expect(rest).toEqual(restBefore);
+    expect(state.player).toMatchObject({ mode: 'candidat_reel', adversaires: 'reels' });
+
+    // La partie continue : couverture par les organes réels, interview dans une émission réelle.
+    const show = ruleset.mediasReels.emissions[0]!;
+    const next = advanceWeek(
+      state,
+      {
+        actions: [{ actionId: 'emission-politique', cible: show.id }],
+        decisions: state.pendingDecisions.map((d) => ({
+          decisionId: d.id,
+          optionId: d.defaultOptionId,
+        })),
+      },
+      { ruleset },
+    ).state;
+    expect(Object.keys(next.medias!.couverture).sort()).toEqual(
+      ruleset.mediasReels.organes.map((o) => o.id).sort(),
+    );
+    expect(next.medias!.interviews).toContainEqual({
+      emissionId: show.id,
+      acteurId: PLAYER_ACTOR_ID,
+    });
   });
 
   it('vérifie l’empreinte avant toute migration', () => {
@@ -251,6 +294,7 @@ describe('migrations de sauvegarde', () => {
     expect(errorCode(() => upgradeState(V2.state, 4))).toBe('etat_invalide');
     expect(errorCode(() => upgradeState(V4.state, 5))).toBe('etat_invalide');
     expect(errorCode(() => upgradeState(V5.state, 6))).toBe('etat_invalide');
+    expect(errorCode(() => upgradeState(V6.state, 7))).toBe('etat_invalide');
   });
 
   it('refuse un jeu de règles inconnu', () => {

@@ -6,6 +6,7 @@ import {
   DebateDetailSchema,
   FinancesStateSchema,
   MediaStateSchema,
+  MediaStateV6Schema,
   ParrainagesStateSchema,
   ProgrammeStateSchema,
   RelationSchema,
@@ -443,7 +444,7 @@ export const GameStateV5Schema = z
     }).strict(),
     calendar: CalendarSchema,
     campagne: CampaignRegimeSchema,
-    medias: MediaStateSchema.nullable(),
+    medias: MediaStateV6Schema.nullable(),
     /** Relations entre candidats, par paire (clé « a|b », identifiants triés). */
     relations: z.record(z.string(), RelationSchema),
     alliances: z.array(AllianceSchema),
@@ -451,23 +452,30 @@ export const GameStateV5Schema = z
   .strict();
 export type GameStateV5 = z.infer<typeof GameStateV5Schema>;
 
+/** État au format 6 (phase 5 bis), figé pour les migrations. */
+export const GameStateV6Schema = GameStateV5Schema.extend({
+  meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(6) }).strict(),
+  player: PlayerSchema,
+  actors: z.record(Id, ActorSchema),
+}).strict();
+export type GameStateV6 = z.infer<typeof GameStateV6Schema>;
+
 /**
- * État complet d'une partie, format de sauvegarde n° 6 (phase 5 bis) : candidats pouvant être
- * des personnalités réelles sourcées, jeu d'adversaires choisi à la création. Toute évolution
+ * État complet d'une partie, format de sauvegarde n° 7 (phase 5 ter) : couverture par les
+ * médias réels et interviews simulées dans les émissions politiques. Toute évolution
  * s'accompagne d'un nouveau numéro de format et d'une migration (packages/save-engine).
  * L'aléa ne figure pas dans l'état : chaque tirage est dérivé de la graine, de la semaine et
  * de son contexte (module, action, événement, groupe d'électeurs…).
  */
-export const GameStateSchema = GameStateV5Schema.extend({
-  meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(6) }).strict(),
-  player: PlayerSchema,
-  actors: z.record(Id, ActorSchema),
+export const GameStateSchema = GameStateV6Schema.extend({
+  meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(7) }).strict(),
+  medias: MediaStateSchema.nullable(),
 }).strict();
 export type GameState = z.infer<typeof GameStateSchema>;
 
 /**
  * Action programmée pour la semaine en cours, avec sa cible si l'action en demande une
- * (département pour les élus locaux, organe de presse pour une interview).
+ * (département pour les élus locaux, organe de presse ou émission politique pour une interview).
  */
 export const PlannedActionSchema = z
   .object({ actionId: Id, cible: z.string().min(1).max(60).optional() })

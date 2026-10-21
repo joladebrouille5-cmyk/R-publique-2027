@@ -25,7 +25,6 @@ import {
   PRIORITY_LABELS,
 } from '../labels';
 import { useWeeklyPlan } from '../stores/plan';
-import { Media } from './candidates/Media';
 import { Relations } from './candidates/Relations';
 import { useCurrentGame } from './GameLayout';
 
@@ -318,7 +317,6 @@ export function Candidates() {
           onPropose={plan.togglePropose}
         />
       )}
-      {ruleset.data && <Media state={state} ruleset={ruleset.data} />}
       {ruleset.data && hasReal && <RealSources ruleset={ruleset.data} />}
     </section>
   );

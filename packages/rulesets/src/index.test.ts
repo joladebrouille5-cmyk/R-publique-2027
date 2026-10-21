@@ -5,13 +5,15 @@ import { fileURLToPath } from 'node:url';
 import { addDays, FREE_LICENSES, isoWeekday, parseIsoDate, RulesetSchema } from '@r2027/shared';
 import { describe, expect, it } from 'vitest';
 import { CURRENT_RULESET_KEY, getRuleset, listRulesetKeys, UnknownRulesetError } from './index';
+import mediasReels from './medias-2027.json';
 import personnalites from './personnalites-2027.json';
 import raw from './presidentielle-2027.json';
 
-/** Jeu de règles complet (base + fiches importées), copié pour les tests de rejet. */
+/** Jeu de règles complet (base + données importées), copié pour les tests de rejet. */
 const full = () =>
-  JSON.parse(JSON.stringify({ ...raw, personnalites })) as typeof raw & {
+  JSON.parse(JSON.stringify({ ...raw, personnalites, mediasReels })) as typeof raw & {
     personnalites: typeof personnalites;
+    mediasReels: typeof mediasReels;
   };
 
 const ruleset = getRuleset(CURRENT_RULESET_KEY);
@@ -86,7 +88,6 @@ describe('jeu de règles presidentielle-2027', () => {
     for (const domaine of ruleset.programme.domaines) {
       expect(ruleset.programme.propositions.some((p) => p.domaine === domaine.id)).toBe(true);
     }
-    for (const outlet of ruleset.medias.organes) expect(outlet.nature).toBe('fictif');
   });
 
   it('refuse un programme incohérent et une incompatibilité non réciproque', () => {
@@ -212,5 +213,117 @@ describe('personnalités réelles (phase 5 bis)', () => {
     const nonFree = full();
     nonFree.personnalites.personnalites.find((p) => p.photo)!.photo!.licence = 'CC BY-NC 4.0';
     expect(RulesetSchema.safeParse(nonFree).success).toBe(false);
+  });
+});
+
+describe('médias réels (phase 5 ter)', () => {
+  const media = ruleset.mediasReels;
+  const PUBLIC = join(dirname(fileURLToPath(import.meta.url)), '../../../apps/web/public');
+
+  it('a l’empreinte déclarée par le jeu de règles : une réimportation impose une nouvelle version', () => {
+    const hash = createHash('sha256').update(JSON.stringify(mediasReels)).digest('hex');
+    expect(ruleset.medias.empreinte).toBe(hash);
+    expect(ruleset.medias.statut).toBe('hypothese');
+  });
+
+  it('remplace les organes fictifs par des organes réels, chacun avec sa mesure d’audience sourcée', () => {
+    const sourceIds = new Set(media.sources.map((s) => s.id));
+    expect(media.organes.length).toBeGreaterThanOrEqual(20);
+    for (const type of ['television', 'radio', 'presse'] as const) {
+      const ofType = media.organes.filter((o) => o.type === type);
+      expect(ofType.length).toBeGreaterThan(0);
+      const total = ofType.reduce((sum, o) => sum + o.audience.partDuType, 0);
+      expect(total).toBeCloseTo(1, 3);
+    }
+    for (const o of media.organes) {
+      expect(sourceIds.has(o.audience.sourceId)).toBe(true);
+      expect(o.article).toMatch(
+        /^https:\/\/fr\.wikipedia\.org\/w\/index\.php\?title=.+&oldid=\d+$/,
+      );
+      expect(JSON.stringify(o)).not.toMatch(/fictif/);
+    }
+    for (const s of media.sources) expect(s.sha256).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  it('donne à chaque chaîne et station des temps de parole totalisant 100 %, rien à la presse', () => {
+    for (const o of media.organes) {
+      if (o.type === 'presse') {
+        expect(o.tempsDeParole).toBeNull();
+        continue;
+      }
+      const t = o.tempsDeParole!;
+      const total = Object.values(t.parts).reduce((sum, v) => sum + v, t.autres);
+      expect(Math.abs(total - 1)).toBeLessThanOrEqual(0.002);
+      expect(t.partisSecondes).toBeGreaterThan(0);
+    }
+    expect(media.periodeArcom.debut < media.periodeArcom.fin).toBe(true);
+  });
+
+  it('rattache chaque personnalité réelle à un parti mesuré, ou à l’exposition moyenne avec un motif', () => {
+    expect(media.rattachements.map((r) => r.personnaliteId).sort()).toEqual(
+      ruleset.personnalites.personnalites.map((p) => p.id).sort(),
+    );
+    for (const r of media.rattachements) expect(r.motif.length).toBeGreaterThan(5);
+  });
+
+  it('présente des émissions réelles avec chaîne et présentateurs sourcés, sans aucun propos', () => {
+    expect(media.emissions.length).toBeGreaterThan(0);
+    const ids = new Set(media.organes.map((o) => o.id));
+    for (const e of media.emissions) {
+      expect(ids.has(e.organeId)).toBe(true);
+      expect(e.presentateurs.length).toBeGreaterThan(0);
+      expect(e.article).toMatch(/&oldid=\d+$/);
+      expect(Object.keys(e).sort()).toEqual(
+        [
+          'article',
+          'autresOrganes',
+          'diffusion',
+          'id',
+          'organeId',
+          'presentateurs',
+          'titre',
+        ].sort(),
+      );
+    }
+    expect(ruleset.actions.find((a) => a.id === 'emission-politique')!.cible).toBe('emission');
+  });
+
+  it('ne reprend que des logos sous licence libre, crédités, présents et sans fichier orphelin', () => {
+    const files = new Set<string>();
+    for (const o of media.organes) {
+      if (o.logo) {
+        expect(o.logo.licence).toMatch(FREE_LICENSES);
+        expect(o.logo.auteur.length).toBeGreaterThan(0);
+        expect(existsSync(join(PUBLIC, o.logo.fichier))).toBe(true);
+        files.add(o.logo.fichier.split('/')[1]!);
+      } else {
+        expect(o.logoAbsent).toMatch(/\S/);
+      }
+    }
+    expect(new Set(readdirSync(join(PUBLIC, 'medias')))).toEqual(files);
+  });
+
+  it('refuse un logo non libre, des parts qui ne font pas 100 % ou une émission sans présentateur', () => {
+    const nonFree = full();
+    nonFree.mediasReels.organes.find((o) => o.logo)!.logo!.licence = 'Marque déposée';
+    expect(RulesetSchema.safeParse(nonFree).success).toBe(false);
+
+    const parts = full();
+    const tv = parts.mediasReels.organes.find((o) => o.tempsDeParole)!;
+    tv.tempsDeParole!.autres += 0.05;
+    expect(RulesetSchema.safeParse(parts).success).toBe(false);
+
+    const noHost = full();
+    noHost.mediasReels.emissions[0]!.presentateurs = [];
+    expect(RulesetSchema.safeParse(noHost).success).toBe(false);
+
+    const unknownOutlet = full();
+    unknownOutlet.mediasReels.emissions[0]!.organeId = 'chaine-inconnue';
+    expect(RulesetSchema.safeParse(unknownOutlet).success).toBe(false);
+
+    const pressMeasured = full();
+    const press = pressMeasured.mediasReels.organes.find((o) => o.type === 'presse')!;
+    (press as { tempsDeParole: unknown }).tempsDeParole = tv.tempsDeParole;
+    expect(RulesetSchema.safeParse(pressMeasured).success).toBe(false);
   });
 });

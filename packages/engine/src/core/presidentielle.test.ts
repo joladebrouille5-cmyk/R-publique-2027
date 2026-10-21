@@ -19,7 +19,7 @@ describe('présidentielle complète', () => {
   const { state, reports } = playToEnd(newGame(), RULESET, (s) => [
     ...sponsorship(s),
     'meeting',
-    'interview@canal-hexagone',
+    'interview@france-inter',
   ]);
   const t1 = reports.find((r) => r.election?.round === 1)!;
   const t2 = reports.find((r) => r.election?.round === 2);
