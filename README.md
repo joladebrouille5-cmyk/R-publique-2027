@@ -15,6 +15,7 @@ Simulation politique française : présidentielle, campagne et quinquennat. Jeu 
 | 4 | Carte interactive (communes de métropole et des DROM), résultats territoriaux | ✅ terminée |
 | 5 | Campagne approfondie : programme, parrainages, financement, médias, débats, alliances | ✅ terminée |
 | 5 bis | Personnalités politiques réelles (jouables et adversaires, candidatures déclarées, sources et photos sous licence libre) | ✅ terminée |
+| 5 ter | Médias réels (presse, télévision, radio), émissions et journalistes politiques | à faire : accès réseau aux sources requis |
 | 6–8 | Quinquennat, contenu, mise en ligne | à faire |
 
 **Ce qui fonctionne aujourd'hui** :

@@ -389,6 +389,25 @@ Réalisé :
 - **Licence de l'enquête CHES non précisée** (usage avec citation demandé) : seules quelques positions converties sont reprises, avec la citation ; à confirmer avant une mise en ligne publique.
 - **Calibration** : avec les adversaires réels, l'issue dépend surtout des positions et des moyens de départ hypothétiques ; aucune comparaison aux sondages réels n'est faite (volontairement). Relecture juridique recommandée avant toute mise en ligne publique ([R-06](./RISQUES.md)).
 
+### Phase 5 ter — Médias réels, émissions et journalistes politiques
+
+Décision de l'utilisateur du 21/10/2026 : après validation de la phase 5 bis, ajouter les **médias réels** (presse, télévision, radio : BFMTV, CNews, TF1…), les **émissions politiques** et leurs **journalistes**, avant la phase 6. Choix retenus :
+- comportement des chaînes de télévision et de radio fondé sur les **temps de parole mesurés par l'Arcom** pour chaque parti et chaque chaîne (exposition) ; la **presse écrite** traite tous les candidats de la même façon ; aucune ligne éditoriale fixée par le jeu ;
+- **émissions politiques réelles** avec leur chaîne et leur présentateur (faits sourcés et datés) ; l'interview est **simulée** : aucune question ni aucun propos inventés ne sont attribués aux journalistes ;
+- **logos** seulement sous licence libre (ou domaine public), crédités ; sinon le nom en texte.
+
+| ID | Tâche | Test d'acceptation |
+|---|---|---|
+| P5t-01 | Importeur `pnpm data:medias` : chaînes de télévision et de radio suivies par l'Arcom et leurs temps de parole par parti sur une période de référence, audiences (Médiamétrie), diffusion de la presse (ACPM), émissions politiques et présentateurs (Wikipédia, révision figée), logos sous licence libre (Commons) ; manifeste des sources avec empreintes. | l'import échoue si un média n'a pas de source d'audience, si une émission n'a ni chaîne ni présentateur sourcés, si un logo n'a pas de licence libre et d'auteur, ou si les temps de parole d'une chaîne ne totalisent pas 100 %. |
+| P5t-02 | Jeu de règles 5.0.0 : organes réels (nature, audience sourcée), propension d'exposition par parti d'après l'Arcom (estimation), émissions ; les organes fictifs disparaissent ; format de sauvegarde 7 et migration 6 → 7. | migration testée sur un état réel de la phase 5 bis ; un candidat sans parti mesuré par l'Arcom reçoit l'exposition moyenne (hypothèse documentée). |
+| P5t-03 | Moteur : couverture hebdomadaire par organe réel ; action « interview dans une émission politique » ciblant une émission (joueur et IA, mêmes règles) ; la tonalité ne dépend que des facteurs du jeu, jamais d'une orientation prêtée au média. | une interview accroît l'exposition dans la chaîne de l'émission ; la presse écrite traite tous les candidats à l'identique (propriété). |
+| P5t-04 | Interface : écran des médias (organes, audiences, temps de parole sourcés, émissions et présentateurs, logos crédités), plan d'actions et bilans. | tests de composants ; Playwright bureau + mobile ; axe-core. |
+| P5t-05 | Documentation (SOURCES, RISQUES, README, ARCHITECTURE, MODELE_DONNEES). | — |
+
+**Règles** : faits publics seulement (nom de l'émission, chaîne, présentateur, jour de diffusion) ; aucune question, réplique ou appréciation attribuée à un journaliste ou à un média ; toute couverture d'un candidat par un média réel est **simulée** et présentée comme telle.
+
+**Prérequis bloquant** : accès réseau à `www.arcom.fr` (relevés des temps de parole), `www.mediametrie.fr` (audiences de la télévision et de la radio) et `www.acpm.fr` (diffusion de la presse), injoignables depuis l'environnement le 21/10/2026 ; Wikipédia, Wikidata et Wikimedia Commons sont déjà ouverts.
+
 ### Phase 6 — Quinquennat jouable
 
 Gouvernement et Premier ministre, feuille de route ; législatives (moteur distinct, 577 circonscriptions) ; Assemblée nationale (groupes, sièges, coalitions, discipline, amendements, procédures) ; économie ; crises ; bilan de fin de mandat et poursuite.
@@ -420,4 +439,4 @@ Durcissement sécurité (§14), mesure de performance et fixation des seuils (§
 
 ## 6. Prochaine étape
 
-**Phase 6 — quinquennat jouable** (gouvernement et Premier ministre, législatives sur 577 circonscriptions, Assemblée nationale, économie, crises, bilan de fin de mandat et nouvelle présidentielle), après validation de la phase 5 bis. Elle exigera des données sourcées : composition de l'Assemblée (`data.assemblee-nationale.fr`, injoignable au 21/10/2026), résultats des législatives 2024 et contours des circonscriptions (`www.data.gouv.fr` et `www.insee.fr`, joignables), indicateurs économiques initiaux (INSEE, Banque de France — `www.banque-france.fr` injoignable). La question Q8 (licence des résultats 2022) reste ouverte.
+**Phase 5 ter — médias réels, émissions et journalistes politiques** (décisions du 21/10/2026 ci-dessus), dès que l'accès à `www.arcom.fr`, `www.mediametrie.fr` et `www.acpm.fr` est ouvert ; puis **phase 6 — quinquennat jouable** (gouvernement et Premier ministre, législatives sur 577 circonscriptions, Assemblée nationale, économie, crises, bilan de fin de mandat et nouvelle présidentielle), qui exigera `data.assemblee-nationale.fr` et `www.banque-france.fr` (injoignables au 21/10/2026) ; `www.data.gouv.fr` et `www.insee.fr` sont joignables. La question Q8 (licence des résultats 2022) reste ouverte.
