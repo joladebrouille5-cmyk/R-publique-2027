@@ -394,6 +394,24 @@ Tout le reste est **simulé** et étiqueté `hypothese` dans le jeu de règles (
 
 Aucune donnée officielle n'est reprise : la soirée est une **mise en scène** du résultat simulé du tour. Horaires des tranches (de 20 h 00 à 0 h 00, toutes les demi-heures), ordre et rythme du dépouillement (outre-mer annoncé dès 20 h, départements les moins peuplés plus tôt, tirage déterministe pour le reste), révélation des communes et écart de l'estimation de 20 h (au plus 1,5 point, nul à minuit) sont des **hypothèses de présentation** du jeu, codées dans le module `soiree` de `@r2027/shared` et affichées comme telles à l'écran. Les heures réelles de fermeture des bureaux et de publication des estimations ne sont pas modélisées. Les chiffres affichés à chaque tranche sont des fractions exactes du résultat du moteur ; à minuit, ce sont ceux de l'écran Résultats.
 
+## 8 octies. Débats télévisés et interview longue (phase 10)
+
+Aucune donnée officielle n'est reprise pour les débats : leur organisation n'est fixée par aucun texte, et le jeu ne présente aucun débat comme annoncé. Tout est étiqueté `hypothese` (source `conception-du-jeu`) dans le jeu de règles `presidentielle-2027@12.0.0` :
+
+| Élément | Valeur du jeu | Statut |
+|---|---|---|
+| Dates | « Grand débat à cinq » le mercredi 24 mars 2027 à 21 h (cinq premiers du dernier sondage) ; « Débat de tous les candidats » le mardi 6 avril 2027 à 21 h ; « Débat d'entre-deux-tours » le mercredi 28 avril 2027 à 21 h (deux finalistes). Transposées pour 2032 et 2037 par `cycleRuleset`. | `hypothese` |
+| Chaînes | TF1, BFMTV, France 2 : organes réels de la liste des médias (§8 quinquies) ; aucun journaliste nommé, aucune question attribuée. | chaînes réelles, plateau simulé |
+| Déroulé | 4 séquences et une conclusion (premier tour), 5 et une conclusion (second tour) ; 3 cartes par séquence ; thèmes repris des domaines du programme du jeu. | `hypothese` |
+| Compétence | préparation 30 % (40 heures utiles, usure de 10 % par semaine), maîtrise 25 % (notoriété, équipe), cohérence du programme 15 %, qualité des réponses (aléa) 30 %. | `hypothese` |
+| Approbation du public | de 0 à 100, départ à 50 ; gains et pertes par carte (défendre, attaquer, retour de bâton, riposte, hauteur, petite phrase) ; sondage flash « le plus convaincant » tiré de l'approbation finale. | `hypothese`, simulé |
+| Effets | popularité, notoriété (forte pour les petits candidats), dynamique, chaise vide (−1,2 point de popularité) ; facteur de vote « Débats télévisés » qui s'estompe (au plus environ 2 points d'intentions au premier tour, 3 au second, vérifié par les tests du moteur). | `hypothese` |
+| Refus d'un favori IA | si son avance dépasse 8 points dans le dernier sondage, probabilité 35 %. | `hypothese` |
+
+Les **attaques** ne portent que sur des faits de la partie (crédibilité du programme, revirements, dons refusés, ralliements, bilan d'un président sortant) : une attaque dont le fait est faux se retourne contre son auteur. Les **répliques** sont des modèles du jeu de règles, écrites pour le joueur et les candidats fictifs seulement ; un coup d'une personnalité réelle est décrit sans aucune réplique (« Coup simulé : aucune réplique n'est prêtée à une personnalité réelle »), ce que vérifient les tests du moteur et de l'interface. Les comptes qui réagissent pendant le débat sont inventés.
+
+**Interview longue (format « Legend », §8 sexies)** : le format et son exemple sont réels ; l'entretien est simulé. Effets du jeu (hypothèses) : Jeunesse +10 points, Popularité +1 point, Notoriété +2,5 points, Dynamique +8 points (avec saturation à la répétition) ; risque « contradiction avec son parcours » de 8 %, majoré de 5 points par revirement de programme et de 4 points par interview longue des 12 dernières semaines (au plus 35 %), dont la perte de popularité s'étale sur trois semaines. L'événement ne décrit aucun contenu, et rien n'est attribué à l'animateur ni à une personne réelle.
+
 ## 9. Points restant non vérifiés
 
 1. Texte exact, sur Légifrance, de la loi n° 62-1292 (parrainages, financement) et de l'article L. 52-11.

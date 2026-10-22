@@ -559,7 +559,7 @@ Demandée par l'utilisateur le 22/10/2026 (« carte blanche totale sur l'UI/UX �
 - **Démonstration** : contrastes territoriaux inventés (R-48) ; l'application Android n'embarque toujours que cette base fictive.
 - **APK** : version de débogage en artefact ; l'APK signé n'est produit que sur `main` ou une étiquette `v…`, une fois les secrets de signature configurés.
 
-### Phase 10 — Débats et grands entretiens (en cours)
+### Phase 10 — Débats et grands entretiens (terminée)
 
 Demandée par l'utilisateur le 22/10/2026 : débats avant le premier tour où l'on peut attaquer les autres candidats, débat d'entre-deux-tours jouable, événements qui font gagner ou perdre des points ; format « Legend » (interview longue, parcours personnel) avec un fort bonus de sympathie et de notoriété chez les jeunes, et un risque si une contradiction sur le passé du candidat est relevée. Cadrage validé le 22/10/2026 (26 propositions par défaut acceptées en bloc).
 
@@ -584,6 +584,29 @@ Décisions :
 | P10-05 | **Interface** : annonce au tableau de bord, écran « Débat en direct », relecture, résultats. | tests de composants ; aucune donnée calculée par le navigateur. |
 | P10-06 | E2E, documentation, CI, APK. | Playwright bureau + mobile (débat du premier tour joué, entre-deux-tours, axe-core) ; CI verte ; APK construit. |
 
+**Avancement** :
+- **P10-01 à P10-03 faites** (22/10/2026) — jeu de règles `presidentielle-2027@12.0.0`, format de sauvegarde 15, moteur 0.14.0 : module `election/debats.ts` (programmation, invitations, refus d'un favori IA, cartes, attaques factuelles et retour de bâton, approbation, sondage flash, effets par le registre, facteur de vote « Débats télévisés »), débat d'entre-deux-tours jouable à la place de l'ancien débat automatique ; interview longue : risque majoré par les revirements et la répétition (historique `numerique.passages`), pénalité de répétition de l'IA.
+- **P10-04 faite** — route `POST /api/games/:id/debats/:debatId` dans l'API et dans `@r2027/local-api` (mêmes schémas, mêmes codes d'erreur), tests de contrat et d'intégration.
+- **P10-05 faite** — écran « Débat en direct », panneau « Débats télévisés » du tableau de bord, section des débats dans Résultats ; débat annulé (chaise vide face à un seul invité) affiché comme tel, sans sondage flash.
+- **P10-06 faite** — scénarios Playwright bureau et mobile : débat de tous les candidats joué (carte, attaque ciblée, fin simulée, sondage flash, relecture, Résultats) et débat d'entre-deux-tours revu après la résolution ; axe-core en thème sombre et clair ; application 1.2.0 (`versionCode` 3).
+
+**Bilan (22/10/2026)** — les six tâches sont réalisées.
+
+| Vérification | Résultat |
+|---|---|
+| `pnpm check` (lint, format, types, tests unitaires) | sans erreur ; 489 tests réussis (dont 13 du moteur des débats et 7 de l'interface des débats) |
+| `pnpm test:integration` (API + PostgreSQL 16 réel) | 93 tests réussis |
+| `pnpm test:e2e` (Playwright, bureau + mobile) | 42 tests réussis, dont les deux scénarios de débat |
+| `pnpm test:mobile` (paquet de l'APK, réseau coupé) | 1 test réussi |
+
+Écarts et limites :
+- **Calibrage** : tous les paramètres des débats sont des hypothèses non calibrées ; l'effet d'un débat sur les intentions est borné par les tests, pas mesuré sur des données réelles.
+- **Refus d'un favori IA** : 35 % dès 8 points d'avance ; au second tour, le débat d'entre-deux-tours est donc souvent annulé quand un finaliste domine (2 graines sur 6 dans un essai). Un réglage plus rare demanderait une nouvelle version du jeu de règles (R-50).
+- **Répliques** : modèles génériques du jeu de règles (deux ou trois par carte, deux par angle d’attaque), qui reviennent d’un débat à l’autre ; aucune pour les personnalités réelles, dont les coups sont seulement décrits.
+- **Personnalités réelles** : sans programme dans le jeu, elles ne peuvent être attaquées que sur des faits de la partie (revirements, dons refusés, ralliements, bilan) ; l'angle « programme » est toujours faux contre elles.
+- **Partie migrée** : un débat d'entre-deux-tours déjà tenu par l'ancien moteur (format 14) n'est pas rejoué ; il reste visible dans « Entre-deux-tours » (Résultats).
+- Pas de débat aux législatives (décision de cadrage).
+
 ---
 
 ## 5. Questions ouvertes
@@ -602,4 +625,4 @@ Décisions :
 
 ## 6. Prochaine étape
 
-Phases 6 à 9 terminées le 22/10/2026 sur la branche `claude/new-session-lmxg1t` (PR #2) : le jeu est jouable dans le navigateur (avec le serveur) et en application Android hors ligne (1.1.0), avec l'identité « soirée électorale » et le direct des soirs de scrutin. Restent ouverts : l'hébergement de la version web (Q6 : image Docker, déploiement, sauvegardes du serveur, R-45), la licence des résultats 2022 (Q8), une mesure de fluidité sur un téléphone réel (R-47) et, avant une publication sur un magasin d'applications, la clé de signature et l'identifiant définitif de l'application.
+Phases 6 à 10 terminées le 22/10/2026 sur la branche `claude/new-session-lmxg1t` (PR #2) : le jeu est jouable dans le navigateur (avec le serveur) et en application Android hors ligne (1.2.0), avec l'identité « soirée électorale », le direct des soirs de scrutin et les débats télévisés. Restent ouverts : l'hébergement de la version web (Q6 : image Docker, déploiement, sauvegardes du serveur, R-45), la licence des résultats 2022 (Q8), une mesure de fluidité sur un téléphone réel (R-47), le calibrage des débats (R-50) et, avant une publication sur un magasin d'applications, la clé de signature et l'identifiant définitif de l'application.

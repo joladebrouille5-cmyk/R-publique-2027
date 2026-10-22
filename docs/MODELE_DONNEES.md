@@ -97,6 +97,14 @@ Stocker des valeurs par commune dans chaque instantané hebdomadaire serait proh
 
 > **Phase 5 bis — format 6** (implémenté) : l'identité d'un candidat peut être une **personnalité réelle** (`nature: 'reel'`, `personnaliteId` vers sa fiche du jeu de règles, nul pour les autres natures) ; `player.adversaires` vaut `fictifs` ou `reels`. Les fiches elles-mêmes (faits sourcés, position estimée, crédit photo) ne sont pas copiées dans l'état : elles appartiennent au jeu de règles de la partie (`presidentielle-2027@4.0.0`, schéma [`personalities.ts`](../packages/shared/src/personalities.ts)). Migration 5 → 6 : `personnaliteId: null` pour chaque candidat, adversaires `fictifs`, rien d'autre ne change ; testée sur un état réel produit par le moteur de la phase 5 (semaine 29, entre les deux tours, un ralliement), mené ensuite au second tour.
 >
+> **Phase 9 — format 14** (implémenté, jeu de règles 11.0.0) : chaque acteur gagne les jauges `jeunesse` (écho chez les 18-34 ans) et `dynamique` (élan de campagne), de 0 à 10 000, modifiées par le registre comme les autres ressources ; `numerique` : fil des publications simulées (`numerique.publicationsMax` du jeu de règles au plus, avec vues et réactions de comptes fictifs). Migration 13 → 14 : jauges initialisées aux valeurs de départ du jeu de règles (`numerique.initial`), fil vide.
+>
+> **Phase 10 — format 15** (implémenté, jeu de règles 12.0.0, schémas dans [`packages/shared/src/debats.ts`](../packages/shared/src/debats.ts)) :
+> - `debats.seances` (10 au plus) : pour chaque débat programmé, `id`, `libelle`, `tour`, `date`, `semaine`, `mediaId`, `invites`, `refus` (chaises vides), `statut` (`prevu`, `en_cours`, `termine`), `themes`, `sequences` (coups joués : acteur, carte, cible, angle, issue, effets sur l'approbation, durée, réplique ou `null` pour une personnalité réelle, réaction d'un compte fictif), `enCours` (séquence ouverte au joueur : index, coups d'ouverture, trois cartes proposées), `approbation` (0 à 100 par présent) et `resultat` (sondage flash `convaincant` en centièmes, `prestation` de −1 à +1, `applique` une fois les effets passés par le registre) ;
+> - `numerique.passages` : semaines des passages récents de chaque acteur dans chaque format numérique (acteur → action → 12 semaines au plus), pour la majoration du risque de l'interview longue et la pénalité de répétition de l'IA (le fil, limité, ne suffit pas à compter les répétitions).
+>
+> Migration 14 → 15 : `debats` vide (un débat d'entre-deux-tours déjà tenu par l'ancien moteur reste dans `elections.debate`), `passages` reconstitués depuis le fil des publications encore présent. Fixture de non-régression : un état réel du format 14 (`packages/save-engine/fixtures/v14-phase-9.json`).
+>
 > L'esquisse ci-dessous décrit la cible des phases suivantes.
 
 ```ts

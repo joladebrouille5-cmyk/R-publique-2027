@@ -178,6 +178,24 @@ describe('débats télévisés', () => {
     ).toBe(realMoves.length);
   });
 
+  it('présente un débat annulé faute de contradicteur, sans sondage flash', async () => {
+    // Ralliement de tous les adversaires sauf un, puis chaise vide du joueur : le moteur clôt
+    // le débat sans séquence.
+    const rallied = structuredClone(state);
+    rallied.debats.seances = rallied.debats.seances.filter((d) => d.id !== 'debat-t1-tous');
+    const others = session(state).invites.filter((id) => id !== state.player.actorId);
+    for (const id of others.slice(1)) rallied.actors[id]!.status = 'retire';
+    const cancelled = playDebate(rallied, RULESET, 'debat-t1-tous', { action: 'refuser' }).state;
+    expect(session(cancelled)).toMatchObject({ statut: 'termine', sequences: [] });
+
+    mockApi(handlers(cancelled));
+    renderRoute(`/parties/${GAME_ID}/debat/debat-t1-tous`);
+    expect(await screen.findByText('Débat annulé')).toBeInTheDocument();
+    expect(screen.getByText(/Débat annulé : chaise vide de Camille Test\./)).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Le plus convaincant' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Débat terminé')).not.toBeInTheDocument();
+  });
+
   it('liste les débats tenus dans l’écran Résultats', async () => {
     const done = playDebate(state, RULESET, 'debat-t1-tous', {
       action: 'finir',

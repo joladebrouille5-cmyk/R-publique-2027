@@ -7,7 +7,7 @@ import { ErrorMessage } from '../../components/ErrorMessage';
 import { OutletLogo } from '../../components/RealMedia';
 import { buttonPrimary, buttonSecondary, card } from '../../components/ui';
 import { formatGameDate } from '../../labels';
-import { playerOnStage } from '../debat/parts';
+import { cancelledDebate, cancelledLabel, playerOnStage } from '../debat/parts';
 
 // Débats télévisés au tableau de bord (phase 10) : débat de la semaine (entrer sur le plateau
 // ou laisser une chaise vide), débats à venir (préparation), débats terminés (relecture).
@@ -107,6 +107,7 @@ function DebateRow({
   const [confirm, setConfirm] = useState(false);
   const onStage = playerOnStage(state, session);
   const refused = !!state.player.actorId && session.refus.includes(state.player.actorId);
+  if (cancelledDebate(session)) return <p className="text-sm">{cancelledLabel(state, session)}</p>;
   if (session.statut === 'termine')
     return (
       <p className="flex flex-wrap items-center gap-2 text-sm">

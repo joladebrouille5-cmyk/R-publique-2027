@@ -11,6 +11,7 @@ import {
   formatRatio,
   formatShare,
 } from '../labels';
+import { cancelledDebate, cancelledLabel } from './debat/parts';
 import { useCurrentGame } from './GameLayout';
 
 const nameOf = (state: GameState, id: string) => {
@@ -200,6 +201,8 @@ export function Results() {
   const ruleset = useRuleset(game.rulesetVersion, game.state.cycle);
   const { state } = game;
   const { t1, t2, consignes, debate, debateDetail } = state.elections;
+  const debateT2 = state.debats.seances.find((d) => d.tour === 2);
+  const debateT2Cancelled = !!debateT2 && cancelledDebate(debateT2);
   const scrutins = ruleset.data?.calendrier.scrutins ?? [];
 
   return (
@@ -236,6 +239,13 @@ export function Results() {
             {state.debats.seances
               .filter((d) => d.resultat)
               .map((d) => {
+                if (cancelledDebate(d))
+                  return (
+                    <li key={d.id}>
+                      <span className="font-semibold">{d.libelle}</span> ({formatGameDate(d.date)})
+                      : {cancelledLabel(state, d)}
+                    </li>
+                  );
                 const [winner, share] = Object.entries(d.resultat!.convaincant).sort(
                   (a, b) => b[1] - a[1],
                 )[0] ?? ['', 0];
@@ -277,7 +287,9 @@ export function Results() {
                 {!c.automatic && ' (votre choix)'}
               </li>
             ))}
+            {debateT2Cancelled && <li>{cancelledLabel(state, debateT2)}</li>}
             {debate &&
+              !debateT2Cancelled &&
               Object.entries(debate).map(([id, score]) => (
                 <li key={id}>
                   Débat : prestation de {nameOf(state, id)} jugée{' '}

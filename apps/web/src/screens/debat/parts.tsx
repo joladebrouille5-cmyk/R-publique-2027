@@ -38,6 +38,17 @@ export function playerOnStage(state: GameState, session: DebateSession): boolean
   return status === 'candidat' || status === 'qualifie';
 }
 
+/**
+ * Débat annulé : moins de deux candidats présents (chaise vide face à un seul invité). Le moteur
+ * le clôt sans séquence ni sondage flash significatif ; seule la chaise vide est sanctionnée.
+ */
+export const cancelledDebate = (session: DebateSession) =>
+  session.invites.filter((id) => !session.refus.includes(id)).length < 2;
+
+/** « Débat annulé : chaise vide de X, Y. » */
+export const cancelledLabel = (state: GameState, session: DebateSession) =>
+  `Débat annulé : chaise vide de ${session.refus.map((id) => nameOf(state, id)).join(', ')}.`;
+
 /** Coups joués, dans l'ordre, ouverture de la séquence en cours comprise. */
 export const allMoves = (session: DebateSession): DebateMove[] => [
   ...session.sequences.flatMap((s) => s.coups),
@@ -495,7 +506,7 @@ export function FlashPoll({
   session: DebateSession;
 }) {
   const result = session.resultat;
-  if (!result) return null;
+  if (!result || cancelledDebate(session)) return null;
   const ranking = Object.entries(result.convaincant).sort((a, b) => b[1] - a[1]);
   const max = Math.max(...ranking.map(([, v]) => v), 1);
   const player = state.player.actorId;

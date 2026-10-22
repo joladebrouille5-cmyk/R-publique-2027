@@ -10,6 +10,8 @@ import { formatGameDate } from '../labels';
 import { useMediaQuery } from '../map/useMode';
 import {
   ApprovalChart,
+  cancelledDebate,
+  cancelledLabel,
   CardPicker,
   FlashPoll,
   Lecterns,
@@ -91,6 +93,7 @@ function Plateau({ session }: { session: DebateSession }) {
     ].find((t) => t.id === id)?.libelle ?? id;
   const index = session.enCours?.index ?? session.sequences.length;
   const depart = ruleset.data?.debats.approbation.depart ?? 50;
+  const cancelled = cancelledDebate(session);
 
   const play = (choice: { carte: DebateCard; cible?: string; angle?: DebateAngle }) => {
     if (!session.enCours) return;
@@ -138,7 +141,11 @@ function Plateau({ session }: { session: DebateSession }) {
     <section aria-labelledby="titre-debat" className="space-y-5">
       <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div className="space-y-2">
-          {session.statut === 'termine' ? (
+          {cancelled ? (
+            <p className="inline-flex items-center gap-2 rounded-full bg-slate-700 px-3 py-1 text-sm font-bold text-white">
+              Débat annulé
+            </p>
+          ) : session.statut === 'termine' ? (
             <p className="inline-flex items-center gap-2 rounded-full bg-republique-600 px-3 py-1 text-sm font-bold text-white shadow-neon">
               Débat terminé
             </p>
@@ -255,6 +262,14 @@ function Plateau({ session }: { session: DebateSession }) {
             Simuler la fin du débat
           </button>
         </section>
+      )}
+
+      {cancelled && (
+        <p className={`${card} text-sm`}>
+          {cancelledLabel(state, session)} Faute de contradicteur, aucune séquence n’a été jouée ni
+          aucun sondage flash publié ; la chaise vide pèse sur la popularité de qui l’a laissée, à
+          la résolution de la semaine.
+        </p>
       )}
 
       {!onStage && session.statut !== 'termine' && (
