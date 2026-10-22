@@ -6,7 +6,12 @@ export type EngineInputErrorCode =
   | 'option_inconnue'
   | 'decision_en_double'
   | 'actions_interdites'
-  | 'trop_d_actions';
+  | 'trop_d_actions'
+  | 'debat_introuvable'
+  | 'debat_termine'
+  | 'debat_non_invite'
+  | 'sequence_perimee'
+  | 'carte_invalide';
 
 export class EngineInputError extends Error {
   constructor(

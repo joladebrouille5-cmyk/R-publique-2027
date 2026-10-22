@@ -1,11 +1,12 @@
-import type {
-  DigitalPost,
-  DigitalReaction,
-  DigitalReception,
-  DigitalTone,
-  GameState,
-  ReportEvent,
-  Ruleset,
+import {
+  DIGITAL_HISTORY_WEEKS,
+  type DigitalPost,
+  type DigitalReaction,
+  type DigitalReception,
+  type DigitalTone,
+  type GameState,
+  type ReportEvent,
+  type Ruleset,
 } from '@r2027/shared';
 import type { Rng } from '../core/rng';
 import { stream } from '../core/random';
@@ -104,5 +105,13 @@ export function publishDigital(
   state.numerique.publications = [...state.numerique.publications, ...posts].slice(
     -rules.publicationsMax,
   );
+  // Relevé des passages récents de chaque candidat (le fil, limité, ne suffit pas à compter).
+  for (const post of posts) {
+    const byAction = (state.numerique.passages[post.acteurId] ??= {});
+    byAction[post.actionId] = [
+      ...(byAction[post.actionId] ?? []).filter((w) => w > week - DIGITAL_HISTORY_WEEKS),
+      week,
+    ].slice(-DIGITAL_HISTORY_WEEKS);
+  }
   return posts;
 }

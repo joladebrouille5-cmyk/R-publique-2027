@@ -559,6 +559,31 @@ Demandée par l'utilisateur le 22/10/2026 (« carte blanche totale sur l'UI/UX �
 - **Démonstration** : contrastes territoriaux inventés (R-48) ; l'application Android n'embarque toujours que cette base fictive.
 - **APK** : version de débogage en artefact ; l'APK signé n'est produit que sur `main` ou une étiquette `v…`, une fois les secrets de signature configurés.
 
+### Phase 10 — Débats et grands entretiens (en cours)
+
+Demandée par l'utilisateur le 22/10/2026 : débats avant le premier tour où l'on peut attaquer les autres candidats, débat d'entre-deux-tours jouable, événements qui font gagner ou perdre des points ; format « Legend » (interview longue, parcours personnel) avec un fort bonus de sympathie et de notoriété chez les jeunes, et un risque si une contradiction sur le passé du candidat est relevée. Cadrage validé le 22/10/2026 (26 propositions par défaut acceptées en bloc).
+
+Décisions :
+- **Legend** : la « sympathie » est la Popularité ; bonus de Popularité, Notoriété et Jeunesse (la jauge Jeunesse pèse déjà le plus chez les électeurs éloignés de la politique) ; risque « contradiction avec son parcours » dont la probabilité monte avec les revirements de programme et la répétition des interviews longues, effet étalé sur 2 à 3 semaines ; pour une personnalité réelle, l'événement reste abstrait (aucun contenu inventé).
+- **Débats du premier tour** : un débat à cinq (les cinq premiers du dernier sondage) environ quatre semaines avant le vote, un débat à tous les candidats environ deux semaines avant ; dates : hypothèses du jeu (calendrier transposé pour 2032 et 2037) ; chaînes réelles de la liste des médias, sans journaliste nommé ni question attribuée.
+- **Déroulé** : 4 séquences thématiques et une conclusion (premier tour), 5 et une conclusion (entre-deux-tours) ; à chaque séquence, 3 cartes : défendre (ou répondre à une attaque reçue), attaquer (cible et angle), et une carte de circonstance (rester au-dessus de la mêlée ou tenter une petite phrase).
+- **Attaques** : seulement sur des faits de la partie (crédibilité du programme, revirements, dons refusés, ralliements, bilan d'un président sortant) ; une attaque dont le fait est faux se retourne contre l'attaquant ; les personnalités réelles n'ont pas de programme dans le jeu (attaque « programme » contre elles : fausse).
+- **Chaise vide** : le joueur et l'IA peuvent refuser (petit malus) ; un favori IA large refuse parfois.
+- **Effets** : sondage flash « le plus convaincant » (simulé) ; popularité, notoriété (forte pour les petits candidats), dynamique (petite phrase réussie) par le registre ; facteur de vote « Débats télévisés » qui s'estompe (au plus environ ±2 points d'intentions au premier tour, ±3 au second).
+- **Hasard** : environ 30 % ; préparation commune (heures) qui s'use de 10 % par semaine ; IA meilleure débatteuse en difficulté experte.
+- **Répliques** : écrites (modèles du jeu de règles) pour le joueur et les candidats fictifs seulement ; aucune réplique pour une personnalité réelle (l'action seule est décrite).
+- **Interface** : écran « Débat en direct » (pupitres, chronomètre du temps de parole, courbe d'approbation, réactions de comptes fictifs), 3 à 5 minutes, « simuler la fin », chronomètre optionnel ; débat d'un autre candidat ou en observateur : relecture accélérée et résumé.
+- Toutes les présidentielles (2027, 2032, 2037) ; pas de débat aux législatives.
+
+| # | Tâche | Critère d'acceptation |
+|---|---|---|
+| P10-01 | **Jeu de règles 12.0.0** : séances de débat (échéances datées, invitations, thèmes, cartes, angles, effets, IA, répliques, réactions), interview longue révisée et risque majoré. | schéma et contrôles croisés (échéances, médias, thèmes, domaines du programme) ; aucune réplique ne nomme une personne réelle (test) ; dates étiquetées hypothèses. |
+| P10-02 | **Format de sauvegarde 15** : séances de débat dans l'état ; migration 14 → 15. | migration testée sur un état réel du format 14. |
+| P10-03 | **Moteur des débats** : programmation, invitations, chaise vide, cartes proposées, coups de l'IA, attaques factuelles et retour de bâton, approbation, sondage flash, effets par le registre, facteur de vote décroissant, débat d'entre-deux-tours jouable, usure de la préparation, risque de l'interview longue. | déterminisme (même graine et mêmes choix ⇒ même débat) ; attaque fausse ⇒ toujours défavorable à l'attaquant ; somme des facteurs = variation ; écart d'intentions dû à un débat ≤ 2 points (1er tour) et ≤ 3 points (2nd tour) ; aucune réplique pour une personnalité réelle. |
+| P10-04 | **API et moteur local** : `POST /api/games/:id/debats/:debatId` (ouvrir, jouer une carte, refuser, simuler la fin), mêmes schémas et codes d'erreur des deux côtés. | tests de contrat ; tests d'intégration (PostgreSQL). |
+| P10-05 | **Interface** : annonce au tableau de bord, écran « Débat en direct », relecture, résultats. | tests de composants ; aucune donnée calculée par le navigateur. |
+| P10-06 | E2E, documentation, CI, APK. | Playwright bureau + mobile (débat du premier tour joué, entre-deux-tours, axe-core) ; CI verte ; APK construit. |
+
 ---
 
 ## 5. Questions ouvertes

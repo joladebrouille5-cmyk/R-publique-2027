@@ -22,6 +22,7 @@ import {
 import { formatFrenchDate } from '../core/calendar';
 import { compareStrings } from '../core/ledger';
 import { stream } from '../core/random';
+import { upcomingDebate } from '../election/debats';
 import { softmax } from '../election/model';
 
 // IA des adversaires (§7) : chaque adversaire analyse sa situation, en déduit une priorité
@@ -125,12 +126,20 @@ export function analyzeSituation(state: GameState, ruleset: Ruleset, actor: Acto
       `Trésorerie de ${formatEuros(actor.resources.budgetCentimes)} : priorité aux dons et à l'emprunt.`,
     );
   }
+  const max = ruleset.debats.preparationMaxHeures;
   if (state.meta.phase === 'entre_deux_tours' && actor.status === 'qualifie') {
-    const max = ruleset.debats.preparationMaxHeures;
     if (actor.preparationDebat < max) {
       return make(
         'debat',
         `Débat d'entre-deux-tours à préparer (${actor.preparationDebat} h sur ${max} h utiles).`,
+      );
+    }
+  }
+  if (actor.status === 'candidat' && upcomingDebate(state, ruleset, 3)) {
+    if (actor.preparationDebat < max / 2) {
+      return make(
+        'debat',
+        `Débat télévisé dans les trois semaines : préparation à poursuivre (${actor.preparationDebat} h).`,
       );
     }
   }
@@ -170,6 +179,24 @@ function relevance(action: ActionDefinition, priority: StrategyPriority): number
     case 'mobilisation':
       return effect('militants') / 30;
   }
+}
+
+/** Lassitude du public : un même format numérique répété perd de son intérêt (phase 10). */
+const REPEAT_PENALTY = 2.5;
+
+/** Passages récents du candidat dans le format de l'action (quatre semaines), plan compris. */
+function recentRepeats(
+  state: GameState,
+  actorId: string,
+  action: ActionDefinition,
+  planned: readonly PlannedAction[],
+): number {
+  if (!action.format) return 0;
+  const since = state.meta.week - 4;
+  return (
+    (state.numerique.passages[actorId]?.[action.id] ?? []).filter((w) => w >= since).length +
+    planned.filter((p) => p.actionId === action.id).length
+  );
 }
 
 /** Bonus selon l'objectif de l'adversaire (§7). */
@@ -266,7 +293,12 @@ function worthTrying(state: GameState, ruleset: Ruleset, actor: Actor, action: A
     const room = expectedReimbursementCap(ruleset, share) - actor.finances.recettes.emprunts;
     if (room < action.campagne.emprunt.montantCentimes) return false;
   }
-  if (action.campagne?.preparationDebat && state.meta.phase !== 'entre_deux_tours') return false;
+  if (
+    action.campagne?.preparationDebat &&
+    state.meta.phase !== 'entre_deux_tours' &&
+    !upcomingDebate(state, ruleset, 3)
+  )
+    return false;
   return true;
 }
 
@@ -322,7 +354,8 @@ export function planOpponentActions(state: GameState, ruleset: Ruleset): Opponen
             ({ action }) =>
               (scoreAction(actor, action, budget) +
                 PRIORITY_WEIGHT * relevance(action, strategie.priorite) +
-                objectiveBonus(actor, action)) /
+                objectiveBonus(actor, action) -
+                REPEAT_PENALTY * recentRepeats(state, actor.id, action, planned)) /
               level.temperature,
           ),
         );

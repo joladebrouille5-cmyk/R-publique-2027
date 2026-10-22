@@ -10,6 +10,7 @@ import { credibility, programmeAppeal } from '../campaign/programme';
 import { compareStrings } from '../core/ledger';
 import { stream } from '../core/random';
 import { largestRemainder } from './apportion';
+import { debateVoteFactors } from './debats';
 import {
   blankRate,
   distance,
@@ -174,7 +175,9 @@ export function distribute(
       const alea = (rng.nextFloat() * 2 - 1) * model.alea;
       const extra = [
         ...campaignFactors(state, ruleset, group, contender),
-        ...(round === 2 ? secondRoundFactors(state, ruleset, group.id, contender) : []),
+        ...(round === 2
+          ? secondRoundFactors(state, ruleset, group.id, contender)
+          : debateVoteFactors(state, ruleset, contender.id)),
       ];
       return utilityFactors(group, contender, model, alea, extra);
     });

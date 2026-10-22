@@ -11,7 +11,6 @@ import { provisionalReimbursement } from '../campaign/finances';
 import { credibility } from '../campaign/programme';
 import { scrutinInWeek } from '../core/calendar';
 import { compareStrings } from '../core/ledger';
-import { stream } from '../core/random';
 import { openQuinquennat } from '../presidency/government';
 import { distance } from './model';
 
@@ -184,41 +183,4 @@ export function debatePerformance(detail: DebateDetail, ruleset: Ruleset): numbe
     w.coherence * detail.coherence +
     w.reponse * detail.reponse;
   return round2(Math.max(-1, Math.min(1, 2 * total - 1)));
-}
-
-/** Débat d'entre-deux-tours : prestation simulée de chaque finaliste, de −1 à +1 (§5.3, §8). */
-export function holdDebate(state: GameState, ruleset: Ruleset): ReportEvent | null {
-  if (state.meta.phase !== 'entre_deux_tours' || state.elections.debate) return null;
-  const finalists = Object.values(state.actors)
-    .filter((a) => a.status === 'qualifie')
-    .sort((a, b) => compareStrings(a.id, b.id));
-  if (finalists.length !== 2) return null;
-  const debate: Record<string, number> = {};
-  const detail: Record<string, DebateDetail> = {};
-  for (const finalist of finalists) {
-    const rng = stream(state.meta.seed, state.meta.week, 'debat', finalist.id);
-    detail[finalist.id] = debateComponents(state, ruleset, finalist.id, rng.nextFloat());
-    debate[finalist.id] = debatePerformance(detail[finalist.id]!, ruleset);
-  }
-  state.elections.debate = debate;
-  state.elections.debateDetail = detail;
-  const [a, b] = finalists as [(typeof finalists)[0], (typeof finalists)[0]];
-  const leader = debate[a.id]! >= debate[b.id]! ? a : b;
-  return {
-    id: `debat-${state.meta.week}`,
-    kind: 'evenement',
-    refId: 'debat-entre-deux-tours',
-    label: `Débat d’entre-deux-tours : ${candidateName(leader.candidate)} jugé(e) plus convaincant(e)`,
-    description: `Prestations simulées : ${finalists
-      .map(
-        (f) =>
-          `${candidateName(f.candidate)} ${debate[f.id]! >= 0 ? '+' : ''}${debate[f.id]!.toFixed(2).replace('.', ',')}`,
-      )
-      .join(
-        ' ; ',
-      )} (échelle de −1 à +1), d'après la préparation, la maîtrise, la cohérence du programme et la qualité des réponses.`,
-    nature: 'simule',
-    majeur: false,
-    decisionId: null,
-  };
 }

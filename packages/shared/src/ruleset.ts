@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { DEBATE_ANGLES, DebateRulesSchema } from './debats';
 import { LongTermEffectSchema } from './consequences';
 import { IsoDateSchema } from './game';
 import { AiObjectiveSchema } from './campaign';
@@ -152,6 +153,19 @@ export const ActionDefinitionSchema = z
         probabilite: Probability,
         libelle: z.string().min(1),
         effets: z.array(EffectSchema).min(1),
+        /**
+         * Majoration de la probabilité (phase 10, interview longue) : par revirement de
+         * programme du candidat et par passage du même format dans les dernières semaines.
+         */
+        majoration: z
+          .object({
+            parRevirement: Probability,
+            parRepetition: Probability,
+            semainesRepetition: z.number().int().min(1),
+            max: Probability,
+          })
+          .strict()
+          .optional(),
       })
       .strict()
       .nullable(),
@@ -1046,20 +1060,8 @@ export const RulesetSchema = z
     scenarios: z.array(ScenarioSchema).min(1),
     legislatives: LegislativeRulesSchema,
     legislatives2024: RealLegislativesSchema,
-    debats: z
-      .object({
-        statut: z.literal('hypothese'),
-        preparationMaxHeures: z.number().int().min(1),
-        poids: z
-          .object({
-            preparation: Fraction,
-            maitrise: Fraction,
-            coherence: Fraction,
-            reponse: Fraction,
-          })
-          .strict(),
-      })
-      .strict(),
+    /** Débats télévisés (phase 10) : séances, cartes, angles, effets, répliques. */
+    debats: DebateRulesSchema,
     alliances: z
       .object({
         statut: z.literal('hypothese'),
@@ -1369,6 +1371,37 @@ export const RulesetSchema = z
           if (ids.includes(other)) issue(`${owner} : ${id} et ${other} incompatibles`);
       }
     };
+
+    // Débats télévisés (phase 10) : échéances datées, chaînes réelles, thèmes et domaines connus.
+    const { debats } = ruleset;
+    if (!sourceIds.has(debats.sourceId)) issue(`Source inconnue : ${debats.sourceId}`);
+    unique(
+      'Débat',
+      debats.seances.map((d) => d.id),
+    );
+    const debateThemes = new Set(debats.themes.map((t) => t.id));
+    unique('Thème de débat', [...debats.themes.map((t) => t.id), debats.conclusion.id]);
+    for (const theme of [...debats.themes, debats.conclusion])
+      for (const d of theme.domaines)
+        if (!domains.has(d)) issue(`Thème ${theme.id} : domaine inconnu ${d}`);
+    const channels = new Set(
+      ruleset.mediasReels.organes.filter((o) => o.type === 'television').map((o) => o.id),
+    );
+    const debateEcheances = new Map(ruleset.calendrier.echeances.map((e) => [e.id, e]));
+    for (const d of debats.seances) {
+      if (!debateEcheances.has(d.echeanceId)) issue(`${d.id} : échéance inconnue ${d.echeanceId}`);
+      if (!channels.has(d.mediaId)) issue(`${d.id} : chaîne de télévision inconnue ${d.mediaId}`);
+      for (const t of d.themes) if (!debateThemes.has(t)) issue(`${d.id} : thème inconnu ${t}`);
+      if ((d.tour === 2) !== (d.invites.mode === 'finalistes'))
+        issue(`${d.id} : seul le débat d'entre-deux-tours réunit les finalistes`);
+    }
+    if (debats.seances.filter((d) => d.tour === 2).length > 1)
+      issue('Un seul débat d’entre-deux-tours');
+    const angleIds = debats.angles.map((a) => a.id).sort();
+    if (angleIds.join() !== [...DEBATE_ANGLES].sort().join())
+      issue('Débats : un libellé par angle d’attaque, ni plus ni moins');
+    const debateWeights = Object.values(debats.poids).reduce((a, b) => a + b, 0);
+    if (Math.abs(debateWeights - 1) > 1e-9) issue(`Débats : poids totalisant ${debateWeights}`);
 
     // Parrainages, financement, médias.
     const { parrainages } = ruleset;

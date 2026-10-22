@@ -46,6 +46,16 @@ export { ENGINE_VERSION, SAVE_SCHEMA_VERSION } from './core/versions';
 export { largestRemainder } from './election/apportion';
 export { distribute, summarize } from './election/distribution';
 export { debateComponents, debatePerformance } from './election/flow';
+export {
+  angleHolds,
+  debateSkills,
+  debateVoteFactors,
+  invitedTo,
+  playDebate,
+  resolveWeekDebates,
+  scheduleDebates,
+  upcomingDebate,
+} from './election/debats';
 export { distance, softmax } from './election/model';
 export { marginOfError } from './election/polls';
 export { resolveRound } from './election/rounds';

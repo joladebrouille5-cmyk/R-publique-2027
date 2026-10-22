@@ -139,6 +139,7 @@ export const FACTOR_SOURCE_LABELS: Record<FactorSource, string> = {
   calendrier: 'Calendrier',
   limite: 'Borne',
   durable: 'Conséquence durable',
+  debat: 'Débat télévisé',
 };
 
 export const PORTEE_LABELS = { locale: 'locale', regionale: 'régionale', nationale: 'nationale' };

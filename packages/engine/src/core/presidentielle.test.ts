@@ -34,9 +34,7 @@ describe('présidentielle complète', () => {
     expect(t1.phaseChange).toEqual({ from: 'campagne', to: 'entre_deux_tours' });
     expect(t2).toMatchObject({ week: 30, date: '2027-04-26' });
     expect(t2!.election).toMatchObject({ scrutinId: 'presidentielle-2027-t2', date: '2027-05-02' });
-    expect(reports.some((r) => r.events.some((e) => e.refId === 'debat-entre-deux-tours'))).toBe(
-      true,
-    );
+    expect(reports.some((r) => r.events.some((e) => e.refId === 'debat-t2'))).toBe(true);
     expect(state.elections.debate).not.toBeNull();
   });
 

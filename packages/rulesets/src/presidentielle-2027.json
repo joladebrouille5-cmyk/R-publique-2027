@@ -1,6 +1,6 @@
 {
   "id": "presidentielle-2027",
-  "version": "11.0.0",
+  "version": "12.0.0",
   "libelle": "Présidentielle 2027 et quinquennat — campagne, parrainages, financement, médias réels, présidence, gouvernement, Parlement, économie, crises et législatives (phase 6)",
   "verifieLe": "2026-10-22",
   "sources": {
@@ -132,6 +132,33 @@
         "statut": "deduit",
         "regle": "Sixième vendredi précédant le premier tour, à dix-huit heures (I de l'article 3 de la loi du 6 novembre 1962)",
         "sourceId": "cnccfp-guide-2027"
+      },
+      {
+        "id": "debat-t1-principaux",
+        "libelle": "Grand débat télévisé à cinq candidats (premier tour)",
+        "date": "2027-03-24",
+        "heure": "21:00",
+        "statut": "hypothese",
+        "regle": "Hypothèse du jeu : un mercredi, environ quatre semaines avant le premier tour et après la clôture des présentations ; les cinq premiers du dernier sondage sont invités.",
+        "sourceId": "conception-du-jeu"
+      },
+      {
+        "id": "debat-t1-tous",
+        "libelle": "Débat télévisé de tous les candidats (premier tour)",
+        "date": "2027-04-06",
+        "heure": "21:00",
+        "statut": "hypothese",
+        "regle": "Hypothèse du jeu : environ deux semaines avant le premier tour ; tous les candidats sont invités.",
+        "sourceId": "conception-du-jeu"
+      },
+      {
+        "id": "debat-t2",
+        "libelle": "Débat d’entre-deux-tours",
+        "date": "2027-04-28",
+        "heure": "21:00",
+        "statut": "hypothese",
+        "regle": "Hypothèse du jeu : le mercredi qui précède le second tour ; les deux finalistes sont invités.",
+        "sourceId": "conception-du-jeu"
       },
       {
         "id": "depot-comptes-campagne",
@@ -455,7 +482,7 @@
     {
       "id": "interview-longue",
       "libelle": "Interview longue sur YouTube",
-      "description": "Un entretien de plusieurs heures sur une chaîne d’interviews au long cours : forte audience chez les 18-34 ans, buzz durable si la séquence circule.",
+      "description": "Un entretien de plusieurs heures, très axé sur le parcours personnel et la sincérité : forte hausse de sympathie et de notoriété, surtout chez les 18-34 ans et les électeurs éloignés de la politique ; risque si une contradiction avec son parcours est relevée.",
       "portee": "nationale",
       "cible": null,
       "cout": {
@@ -468,43 +495,57 @@
       "effets": [
         {
           "ressource": "jeunesse",
-          "base": 900,
+          "base": 1000,
           "ecart": 400,
           "delaiSemaines": 0,
           "saturation": true
         },
         {
-          "ressource": "dynamique",
-          "base": 1000,
-          "ecart": 600,
+          "ressource": "popularite",
+          "base": 100,
+          "ecart": 40,
           "delaiSemaines": 0,
           "saturation": true
         },
         {
           "ressource": "notoriete",
-          "base": 180,
+          "base": 250,
           "ecart": 80,
           "delaiSemaines": 0,
           "saturation": true
         },
         {
-          "ressource": "popularite",
-          "base": 30,
-          "ecart": 60,
+          "ressource": "dynamique",
+          "base": 800,
+          "ecart": 500,
           "delaiSemaines": 0,
           "saturation": true
         }
       ],
       "campagne": null,
       "risque": {
-        "probabilite": 0.12,
-        "libelle": "Un extrait sorti de son contexte tourne en boucle",
+        "probabilite": 0.08,
+        "libelle": "Une séquence de l’entretien est jugée contradictoire avec son parcours (simulé)",
         "effets": [
           {
             "ressource": "popularite",
-            "base": -120,
+            "base": -150,
             "ecart": 60,
             "delaiSemaines": 0,
+            "saturation": false
+          },
+          {
+            "ressource": "popularite",
+            "base": -100,
+            "ecart": 40,
+            "delaiSemaines": 1,
+            "saturation": false
+          },
+          {
+            "ressource": "popularite",
+            "base": -60,
+            "ecart": 30,
+            "delaiSemaines": 2,
             "saturation": false
           },
           {
@@ -513,10 +554,23 @@
             "ecart": 300,
             "delaiSemaines": 0,
             "saturation": false
+          },
+          {
+            "ressource": "dynamique",
+            "base": -300,
+            "ecart": 150,
+            "delaiSemaines": 1,
+            "saturation": false
           }
-        ]
+        ],
+        "majoration": {
+          "parRevirement": 0.05,
+          "parRepetition": 0.04,
+          "semainesRepetition": 12,
+          "max": 0.35
+        }
       },
-      "note": "Effets et risque : hypothèses du jeu. Le format et ses exemples sont réels ; l’entretien, ses questions et ses réponses sont simulés.",
+      "note": "Effets et risque : hypothèses du jeu. Le format et ses exemples sont réels ; l’entretien, ses questions et ses réponses sont simulés. Le risque augmente avec les revirements de programme du candidat et avec la répétition de ce format ; l’événement ne décrit aucun contenu.",
       "format": "interview-longue"
     },
     {
@@ -869,7 +923,7 @@
     {
       "id": "preparation-debat",
       "libelle": "Préparation des débats",
-      "description": "Séances de travail avec l’équipe : dossiers, réponses, mises en situation.",
+      "description": "Séances de travail avec l’équipe : dossiers, réponses, mises en situation. Les heures servent à tous les débats et s’usent de 10 % par semaine.",
       "portee": "nationale",
       "cible": null,
       "cout": {
@@ -1584,7 +1638,7 @@
     },
     "secondTour": {
       "effetConsigne": 0.8,
-      "effetDebat": 0.25,
+      "effetDebat": 0.1,
       "abstentionDifferentielle": 0.12,
       "seuilConsigne": 0.9
     },
@@ -6179,12 +6233,250 @@
   },
   "debats": {
     "statut": "hypothese",
+    "sourceId": "conception-du-jeu",
+    "note": "Débats simulés : dates, invitations, déroulé, effets et répliques sont des hypothèses du jeu. Les chaînes sont réelles, mais aucun journaliste n’est nommé et aucune question n’est attribuée ; les répliques sont des modèles du jeu, écrites pour le joueur et les candidats fictifs seulement.",
     "preparationMaxHeures": 40,
+    "usurePreparation": 0.1,
     "poids": {
-      "preparation": 0.35,
+      "preparation": 0.3,
       "maitrise": 0.25,
-      "coherence": 0.2,
-      "reponse": 0.2
+      "coherence": 0.15,
+      "reponse": 0.3
+    },
+    "seances": [
+      {
+        "id": "debat-t1-principaux",
+        "echeanceId": "debat-t1-principaux",
+        "libelle": "Grand débat à cinq",
+        "tour": 1,
+        "invites": {
+          "mode": "sondage",
+          "nombre": 5
+        },
+        "mediaId": "tf1",
+        "themes": ["pouvoir-achat", "securite", "ecologie", "europe-institutions"],
+        "coupsIaParSequence": 4
+      },
+      {
+        "id": "debat-t1-tous",
+        "echeanceId": "debat-t1-tous",
+        "libelle": "Débat de tous les candidats",
+        "tour": 1,
+        "invites": {
+          "mode": "tous"
+        },
+        "mediaId": "bfmtv",
+        "themes": ["pouvoir-achat", "securite", "ecologie", "sante-education"],
+        "coupsIaParSequence": 3
+      },
+      {
+        "id": "debat-t2",
+        "echeanceId": "debat-t2",
+        "libelle": "Débat d’entre-deux-tours",
+        "tour": 2,
+        "invites": {
+          "mode": "finalistes"
+        },
+        "mediaId": "france-2",
+        "themes": [
+          "pouvoir-achat",
+          "securite",
+          "ecologie",
+          "sante-education",
+          "europe-institutions"
+        ],
+        "coupsIaParSequence": 1
+      }
+    ],
+    "themes": [
+      {
+        "id": "pouvoir-achat",
+        "libelle": "Pouvoir d’achat et emploi",
+        "domaines": ["pouvoir-achat", "economie", "emploi", "retraites", "logement"]
+      },
+      {
+        "id": "securite",
+        "libelle": "Sécurité, justice et immigration",
+        "domaines": ["securite", "justice", "immigration"]
+      },
+      {
+        "id": "ecologie",
+        "libelle": "Écologie et énergie",
+        "domaines": ["environnement", "energie", "agriculture"]
+      },
+      {
+        "id": "sante-education",
+        "libelle": "Santé et éducation",
+        "domaines": ["sante", "education"]
+      },
+      {
+        "id": "europe-institutions",
+        "libelle": "Europe, institutions et international",
+        "domaines": ["institutions", "diplomatie", "defense", "collectivites"]
+      }
+    ],
+    "conclusion": {
+      "id": "conclusion",
+      "libelle": "Conclusion",
+      "domaines": []
+    },
+    "angles": [
+      {
+        "id": "programme",
+        "libelle": "Programme non financé",
+        "fait": "programme jugé peu crédible (coût, faisabilité)"
+      },
+      {
+        "id": "revirements",
+        "libelle": "Revirements",
+        "fait": "propositions retirées en cours de campagne"
+      },
+      {
+        "id": "finances",
+        "libelle": "Comptes de campagne",
+        "fait": "dons irréguliers refusés"
+      },
+      {
+        "id": "ralliement",
+        "libelle": "Ralliements",
+        "fait": "soutien d’un candidat rallié"
+      },
+      {
+        "id": "bilan",
+        "libelle": "Bilan du sortant",
+        "fait": "président(e) sortant(e)"
+      }
+    ],
+    "seuilCredibilite": 0,
+    "approbation": {
+      "depart": 50,
+      "defendre": 6,
+      "attaque": 7,
+      "gainAttaquant": 3,
+      "agressivite": {
+        "seuil": 2,
+        "malus": 2
+      },
+      "retour": 6,
+      "riposte": 5,
+      "riposteFausse": 2,
+      "hauteur": 2,
+      "hauteurFavori": 3.5,
+      "hauteurAmortit": 0.4,
+      "petitePhrase": {
+        "reussite": 0.35,
+        "echec": 0.3,
+        "gain": 7,
+        "perte": 4
+      }
+    },
+    "ia": {
+      "attaque": {
+        "prudent": 0.25,
+        "equilibre": 0.4,
+        "offensif": 0.6
+      },
+      "riposte": 0.7,
+      "hauteurFavori": 0.6,
+      "petitePhrase": 0.15,
+      "erreurAngle": 0.25,
+      "difficulte": {
+        "accessible": -0.1,
+        "standard": 0,
+        "expert": 0.1
+      },
+      "refus": {
+        "ecartMin": 800,
+        "probabilite": 0.35
+      }
+    },
+    "effets": {
+      "popularite": 150,
+      "notoriete": 400,
+      "dynamiquePetitePhrase": 900,
+      "chaiseVide": 120,
+      "prestationChaiseVide": -0.3,
+      "voteT1": 0.12,
+      "persistance": 0.6
+    },
+    "sondageFlash": {
+      "temperature": 6
+    },
+    "repliques": {
+      "defendre": [
+        "« Je défends une mesure précise : {proposition}. Elle est chiffrée, et je dis comment la financer. »",
+        "« Pas de promesse en l’air : {proposition}. C’est ce que je ferai dès la première année. »",
+        "« Les Français attendent du concret. Le voici : {proposition}. »"
+      ],
+      "vision": [
+        "« Sur {theme}, je veux parler vrai : ma priorité, c’est de redonner des perspectives à ceux qui n’en ont plus. »",
+        "« {theme} : ce n’est pas un sujet technique, c’est la vie quotidienne de millions de familles. »",
+        "« Ma ligne n’a pas changé : de la constance, des résultats, et des comptes rendus chaque année. »"
+      ],
+      "attaque": {
+        "programme": [
+          "« Votre programme n’est pas financé. Qui paiera la facture ? »",
+          "« Vous promettez tout à tout le monde : ce n’est pas un projet, c’est un catalogue. »"
+        ],
+        "revirements": [
+          "« Vous avez changé d’avis en pleine campagne : que vaut votre parole ? »",
+          "« Ce que vous défendiez il y a quelques semaines, vous l’avez retiré. Les électeurs méritent de la constance. »"
+        ],
+        "finances": [
+          "« Votre campagne a dû refuser des dons irréguliers : on attend plus de rigueur d’un candidat à la présidence. »",
+          "« Avant de parler des comptes de la Nation, parlons de vos comptes de campagne. »"
+        ],
+        "ralliement": [
+          "« Votre ralliement de dernière minute ressemble à un arrangement d’appareil, pas à un projet. »",
+          "« Vous avez réuni des soutiens qui ne partagent pas vos idées : sur quelle ligne gouvernerez-vous ? »"
+        ],
+        "bilan": [
+          "« Vous avez eu cinq ans. Pourquoi croire vos promesses aujourd’hui ? »",
+          "« Votre bilan parle pour vous, et il n’est pas bon. »"
+        ]
+      },
+      "repondre": [
+        "« Je l’assume, et je vais vous dire pourquoi. »",
+        "« Vous attaquez parce que vous n’avez rien à proposer. Moi, je propose. »",
+        "« Les Français valent mieux que ces petites phrases. Parlons de leurs problèmes. »"
+      ],
+      "repondreFausse": [
+        "« C’est tout simplement faux. Vérifiez vos fiches avant de venir sur ce plateau. »",
+        "« Vous inventez : rien de ce que vous venez de dire n’est exact. »"
+      ],
+      "hauteur": [
+        "« Je ne répondrai pas aux attaques : je suis venu parler aux Français, pas à mes adversaires. »",
+        "« Laissons les polémiques de côté. Le pays a besoin d’apaisement et de solutions. »"
+      ],
+      "petitePhraseReussie": [
+        "« Vous parlez d’avenir avec les recettes du passé. »",
+        "« Un programme, ce n’est pas une lettre au Père Noël. »",
+        "« Je ne fais pas campagne pour un plateau de télévision, je fais campagne pour un pays. »"
+      ],
+      "petitePhraseRatee": [
+        "« Comme je le disais… enfin, vous m’avez compris. »",
+        "« La France, c’est… c’est la France, voilà. »"
+      ]
+    },
+    "reactions": {
+      "positif": [
+        "Cette réponse-là va tourner toute la soirée 🔥",
+        "Enfin du concret sur ce plateau",
+        "Clair, net, précis. Ça change.",
+        "Moment fort du débat, sans hésiter"
+      ],
+      "neutre": [
+        "On attend toujours les chiffres…",
+        "Débat très technique jusqu’ici",
+        "Pas convaincu, pas déçu non plus",
+        "Je prends des notes, on verra"
+      ],
+      "negatif": [
+        "Mais c’est complètement faux ?!",
+        "Ça sonne creux…",
+        "Gros malaise sur le plateau",
+        "Attaque gratuite, ça ne passe pas"
+      ]
     }
   },
   "alliances": {

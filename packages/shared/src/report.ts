@@ -25,6 +25,7 @@ export const FACTOR_SOURCES = [
   'calendrier',
   'limite',
   'durable',
+  'debat',
 ] as const;
 export const FactorSourceSchema = z.enum(FACTOR_SOURCES);
 export type FactorSource = z.infer<typeof FactorSourceSchema>;

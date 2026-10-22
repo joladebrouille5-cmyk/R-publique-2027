@@ -22,6 +22,7 @@ import V10 from './fixtures/v10-phase-6.json' with { type: 'json' };
 import V11 from './fixtures/v11-phase-6.json' with { type: 'json' };
 import V12 from './fixtures/v12-phase-6.json' with { type: 'json' };
 import V13 from './fixtures/v13-phase-9.json' with { type: 'json' };
+import V14 from './fixtures/v14-phase-9.json' with { type: 'json' };
 import { loadStoredState, MIGRATED_CANDIDATE, SaveFormatError, upgradeState } from './versions';
 
 const ruleset = getRuleset(CURRENT_RULESET_KEY);
@@ -55,8 +56,8 @@ const v1Resources = ({
 
 /**
  * État migré sans les ajouts des formats 12 (relevé de départ du quinquennat), 13 (scénario,
- * conséquences durables) et 14 (jauges Jeunesse et Dynamique, fil des réseaux) : le reste doit
- * être identique à l'état d'origine.
+ * conséquences durables), 14 (jauges Jeunesse et Dynamique, fil des réseaux) et 15 (débats
+ * télévisés) : le reste doit être identique à l'état d'origine.
  */
 const withoutDepart = <T extends object>(state: T) => {
   const { quinquennat, actors } = state as {
@@ -81,6 +82,7 @@ const withoutDepart = <T extends object>(state: T) => {
     scenario: undefined,
     consequences: undefined,
     numerique: undefined,
+    debats: undefined,
   };
 };
 
@@ -631,8 +633,8 @@ describe('migrations de sauvegarde', () => {
       expect(actor.resources).toEqual({ ...before[id]!.resources, ...ruleset.numerique.initial });
       expect({ ...actor, resources: before[id]!.resources }).toEqual(before[id]);
     }
-    expect(state.numerique).toEqual({ publications: [] });
-    const { meta: _meta, actors: _a, numerique: _n, ...rest } = state;
+    expect(state.numerique).toEqual({ publications: [], passages: {} });
+    const { meta: _meta, actors: _a, numerique: _n, debats: _d, ...rest } = state;
     const { meta: _m, actors: _ab, ...restBefore } = V13.state;
     expect(rest).toEqual(restBefore);
     // La campagne continue avec une interview longue : publication simulée et jauges en hausse.
@@ -652,6 +654,41 @@ describe('migrations de sauvegarde', () => {
     expect(next.numerique.publications.some((p) => p.acteurId === player)).toBe(true);
     const jeunesse = report.changes.find((c) => c.actorId === player && c.ressource === 'jeunesse');
     expect(jeunesse!.factors.some((f) => f.source === 'action')).toBe(true);
+  });
+
+  it('ajoute les débats télévisés et passe au jeu de règles 12 (format 14)', () => {
+    const { state, migratedFrom } = loadStoredState(V14.state, V14.stateHash, 14);
+    expect(migratedFrom).toBe(14);
+    expect(state.meta).toMatchObject({
+      week: V14.state.meta.week,
+      date: V14.state.meta.date,
+      saveSchemaVersion: SAVE_SCHEMA_VERSION,
+      engineVersion: ENGINE_VERSION,
+      rulesetVersion: CURRENT_RULESET_KEY,
+    });
+    expect(state.debats).toEqual({ seances: [] });
+    // Passages récents reconstitués d'après le fil des publications.
+    expect(state.numerique.publications).toEqual(V14.state.numerique.publications);
+    for (const post of V14.state.numerique.publications)
+      expect(state.numerique.passages[post.acteurId]?.[post.actionId]).toContain(post.semaine);
+    const { meta: _meta, debats: _d, numerique: _n, ...rest } = state;
+    const { meta: _m, numerique: _nb, ...restBefore } = V14.state;
+    expect(rest).toEqual(restBefore);
+    // La campagne continue : la semaine du premier débat télévisé se résout.
+    let current = state;
+    for (let i = 0; i < 2; i++)
+      current = advanceWeek(
+        current,
+        {
+          actions: [],
+          decisions: current.pendingDecisions.map((d) => ({
+            decisionId: d.id,
+            optionId: d.defaultOptionId,
+          })),
+        },
+        { ruleset },
+      ).state;
+    expect(current.meta.week).toBe(state.meta.week + 2);
   });
 
   it('vérifie l’empreinte avant toute migration', () => {
@@ -678,6 +715,7 @@ describe('migrations de sauvegarde', () => {
     expect(errorCode(() => upgradeState(V11.state, 12))).toBe('etat_invalide');
     expect(errorCode(() => upgradeState(V12.state, 13))).toBe('etat_invalide');
     expect(errorCode(() => upgradeState(V13.state, 14))).toBe('etat_invalide');
+    expect(errorCode(() => upgradeState(V14.state, 15))).toBe('etat_invalide');
   });
 
   it('refuse un jeu de règles inconnu', () => {

@@ -150,6 +150,31 @@ export function consumeActions(
   }
 }
 
+/**
+ * Probabilité d'un aléa d'action, majorée le cas échéant (phase 10, interview longue) par les
+ * revirements de programme du candidat et par ses passages récents dans le même format.
+ */
+export function riskProbability(
+  state: GameState,
+  actorId: string,
+  definition: ActionDefinition,
+  risk: NonNullable<ActionDefinition['risque']>,
+): number {
+  const extra = risk.majoration;
+  if (!extra) return risk.probabilite;
+  const actor = state.actors[actorId]!;
+  const since = state.meta.week - extra.semainesRepetition;
+  const repeats = (state.numerique.passages[actorId]?.[definition.id] ?? []).filter(
+    (w) => w >= since && w < state.meta.week,
+  ).length;
+  return Math.min(
+    extra.max,
+    risk.probabilite +
+      extra.parRevirement * actor.programme.revirements +
+      extra.parRepetition * repeats,
+  );
+}
+
 export type CampaignBooks = { finances: FinanceBook; parrainages: ParrainageBook };
 
 /**
@@ -220,7 +245,8 @@ export function resolveActionEffects(
       state.actors[actorId]!.preparationDebat += campagne.preparationDebat;
     }
     const risk = definition.risque;
-    if (risk && rng.nextFloat() < risk.probabilite) {
+    const probability = risk ? riskProbability(state, actorId, definition, risk) : 0;
+    if (risk && rng.nextFloat() < probability) {
       const riskRef = `${ref}-risque`;
       risk.effets.forEach((effect, i) =>
         applyOrSchedule(
@@ -241,7 +267,7 @@ export function resolveActionEffects(
         kind: 'risque',
         refId: definition.id,
         label: risk.libelle,
-        description: `Aléa de l'action « ${definition.libelle} » de ${state.actors[actorId]!.label} (probabilité ${Math.round(risk.probabilite * 100)} %).`,
+        description: `Aléa de l'action « ${definition.libelle} » de ${state.actors[actorId]!.label} (probabilité ${Math.round(probability * 100)} %).`,
         nature: 'simule',
         majeur: false,
         decisionId: null,

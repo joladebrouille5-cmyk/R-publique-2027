@@ -28,7 +28,9 @@ import {
   GameStateV11Schema,
   GameStateV12Schema,
   GameStateV13Schema,
+  GameStateV14Schema,
   addDays,
+  DIGITAL_HISTORY_WEEKS,
   daysFromCivil,
   parseIsoDate,
   type Actor,
@@ -49,6 +51,7 @@ import {
   type GameStateV11,
   type GameStateV12,
   type GameStateV13,
+  type GameStateV14,
 } from '@r2027/shared';
 import { z } from 'zod';
 import { hashState, sha256, canonicalStringify } from './canonical';
@@ -90,7 +93,8 @@ const SCHEMAS: Record<number, z.ZodType> = {
   11: GameStateV11Schema,
   12: GameStateV12Schema,
   13: GameStateV13Schema,
-  14: GameStateSchema,
+  14: GameStateV14Schema,
+  15: GameStateSchema,
 };
 
 /** Jeux de règles des parties aux formats 2 (phase 2) et 3 (phase 3). */
@@ -495,7 +499,7 @@ function migrateV12ToV13(v12: GameStateV12): GameStateV13 {
  * reçoit les jauges de départ du jeu de règles courant (identiques pour tous) ; le fil des
  * publications simulées commence vide.
  */
-function migrateV13ToV14(v13: GameStateV13): GameState {
+function migrateV13ToV14(v13: GameStateV13): GameStateV14 {
   const initial = getRuleset(CURRENT_RULESET_KEY).numerique.initial;
   return {
     ...v13,
@@ -515,6 +519,34 @@ function migrateV13ToV14(v13: GameStateV13): GameState {
   };
 }
 
+/**
+ * 14 → 15 (phase 10) : débats télévisés. Aucun débat n'a encore eu lieu dans le format 14 : la
+ * liste est vide ; le débat d'entre-deux-tours éventuellement tenu (automatique) reste dans
+ * `elections`. Passage au jeu de règles courant (12.0.0 : séances de débat, interview longue).
+ */
+function migrateV14ToV15(v14: GameStateV14): GameState {
+  // Passages récents reconstitués d'après le fil conservé (seule trace du format 14).
+  const passages: GameState['numerique']['passages'] = {};
+  for (const post of v14.numerique.publications) {
+    if (post.semaine < v14.meta.week - DIGITAL_HISTORY_WEEKS) continue;
+    const byAction = (passages[post.acteurId] ??= {});
+    byAction[post.actionId] = [...(byAction[post.actionId] ?? []), post.semaine].slice(
+      -DIGITAL_HISTORY_WEEKS,
+    );
+  }
+  return {
+    ...v14,
+    meta: {
+      ...v14.meta,
+      engineVersion: ENGINE_VERSION,
+      rulesetVersion: CURRENT_RULESET_KEY,
+      saveSchemaVersion: 15,
+    },
+    numerique: { ...v14.numerique, passages },
+    debats: { seances: [] },
+  };
+}
+
 const MIGRATIONS: Record<number, (state: never) => unknown> = {
   1: migrateV1ToV2,
   2: migrateV2ToV3,
@@ -529,6 +561,7 @@ const MIGRATIONS: Record<number, (state: never) => unknown> = {
   11: migrateV11ToV12,
   12: migrateV12ToV13,
   13: migrateV13ToV14,
+  14: migrateV14ToV15,
 };
 
 export type LoadedState = { state: GameState; stateHash: string; migratedFrom: number | null };

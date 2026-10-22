@@ -30,7 +30,8 @@ import {
   QuinquennatSummaryV8Schema,
   QuinquennatV8Schema,
 } from './quinquennat';
-import { DigitalStateSchema } from './numerique';
+import { DebatesStateSchema } from './debats';
+import { DigitalStateSchema, DigitalStateV14Schema } from './numerique';
 import { ResourceKeySchema, ResourcesSchema, ResourcesV1Schema } from './resources';
 
 export const GAME_MODES = ['candidat_reel', 'candidat_personnalise', 'observateur'] as const;
@@ -596,21 +597,33 @@ export const GameStateV13Schema = GameStateV12Schema.extend({
 }).strict();
 export type GameStateV13 = z.infer<typeof GameStateV13Schema>;
 
-/**
- * État complet d'une partie, format de sauvegarde n° 14 (phase 9) : jauges Jeunesse et
- * Dynamique de chaque candidat, fil des publications simulées sur les réseaux et nouveaux
- * médias ; scénario de départ, conséquences durables (en cours et passées), cycle électoral,
- * présidence et gouvernement, Parlement, économie et crises, législatives, archives des cycles
- * précédents ; statut `ineligible` (art. 6). Toute évolution s'accompagne d'un nouveau numéro
- * de format et d'une migration (packages/save-engine). L'aléa ne figure pas dans l'état :
- * chaque tirage est dérivé de la graine, de la semaine et de son contexte (module, action,
- * événement, groupe…).
- */
-export const GameStateSchema = GameStateV13Schema.extend({
+/** État au format 14 (phase 9) : jauges Jeunesse et Dynamique, fil des réseaux ; figé. */
+export const GameStateV14Schema = GameStateV13Schema.extend({
   meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(14) }).strict(),
   actors: z.record(Id, ActorSchema),
   /** Réseaux sociaux et nouveaux médias : publications simulées des dernières semaines. */
+  numerique: DigitalStateV14Schema,
+}).strict();
+export type GameStateV14 = z.infer<typeof GameStateV14Schema>;
+
+/**
+ * État complet d'une partie, format de sauvegarde n° 15 (phase 10) : débats télévisés de la
+ * présidentielle en cours (invités, chaises vides, séquences jouées, approbation, sondage flash),
+ * relevé des passages récents de chaque candidat dans les formats numériques ;
+ * jauges Jeunesse et Dynamique de chaque candidat, fil des publications simulées sur les réseaux
+ * et nouveaux médias ; scénario de départ, conséquences durables (en cours et passées), cycle
+ * électoral, présidence et gouvernement, Parlement, économie et crises, législatives, archives
+ * des cycles précédents ; statut `ineligible` (art. 6). Toute évolution s'accompagne d'un nouveau
+ * numéro de format et d'une migration (packages/save-engine). L'aléa ne figure pas dans l'état :
+ * chaque tirage est dérivé de la graine, de la semaine et de son contexte (module, action,
+ * événement, groupe…).
+ */
+export const GameStateSchema = GameStateV14Schema.extend({
+  meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(15) }).strict(),
+  /** Réseaux et nouveaux médias : publications simulées et passages récents par candidat. */
   numerique: DigitalStateSchema,
+  /** Débats télévisés de la présidentielle en cours (phase 10). */
+  debats: DebatesStateSchema,
 }).strict();
 export type GameState = z.infer<typeof GameStateSchema>;
 

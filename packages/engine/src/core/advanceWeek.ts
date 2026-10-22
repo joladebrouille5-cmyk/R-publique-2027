@@ -27,7 +27,8 @@ import {
 } from '../campaign/parrainages';
 import { applyProgramme, programmeReport, validateProgrammeChange } from '../campaign/programme';
 import { distribute, summarize } from '../election/distribution';
-import { concludeRound, holdDebate, scrutinOfWeek } from '../election/flow';
+import { resolveWeekDebates, scheduleDebates } from '../election/debats';
+import { concludeRound, scrutinOfWeek } from '../election/flow';
 import { weeklyDrift } from '../election/opinion';
 import { publishPolls } from '../election/polls';
 import { resolveRound } from '../election/rounds';
@@ -222,9 +223,9 @@ export function advanceWeek(
     `${plural(allianceOutcome.alliances.length, 'ralliement')}, ${plural(relationNotes.length, 'fait')} marquant(s) entre candidats.`,
   );
 
-  // 5. Décisions de la semaine passée, débat, effets des actions, nouveaux événements.
+  // 5. Décisions de la semaine passée, débats télévisés, effets des actions, nouveaux événements.
   const decisions = applyDecisions(state, ruleset, ledger, finances, answers, 5);
-  const debate = holdDebate(state, ruleset);
+  const debates = resolveWeekDebates(state, ruleset, ledger, 5);
   const allValidated = [...own.validated, ...opponentValidated];
   const { risks, incidents } = resolveActionEffects(
     state,
@@ -241,7 +242,7 @@ export function advanceWeek(
     true,
     `${plural(events.length, 'événement')}, ${plural(risks.length, 'aléa')} d'action, ${plural(decisions.length, 'décision appliquée')}` +
       (posts.length ? `, ${plural(posts.length, 'publication')} sur les réseaux` : '') +
-      (debate ? ', débat d’entre-deux-tours' : ''),
+      (debates.length ? `, ${plural(debates.length, 'débat télévisé')}` : ''),
   );
 
   // 6. Médias, puis dynamique de l'opinion et historique de popularité.
@@ -250,6 +251,10 @@ export function advanceWeek(
   for (const actor of Object.values(state.actors)) {
     actor.history.popularite = [...actor.history.popularite, actor.resources.popularite].slice(
       -HISTORY_LENGTH,
+    );
+    // La préparation des débats s'use d'une semaine à l'autre (hypothèse du jeu).
+    actor.preparationDebat = Math.floor(
+      actor.preparationDebat * (1 - ruleset.debats.usurePreparation),
     );
   }
   set(6, true, 'Couverture médiatique, érosion, retour à la moyenne et attrition appliqués.');
@@ -304,6 +309,8 @@ export function advanceWeek(
     electionEvents.push(...concluded.events);
   }
   const { notices, appliedScheduled } = enterNextWeek(state, ruleset, ledger, finances, 9);
+  // Débats de la nouvelle semaine : invitations d'après le dernier sondage publié.
+  scheduleDebates(state, ruleset);
   // Victoire : nomination du Premier ministre dès la semaine de l'investiture.
   if (state.quinquennat) requestGovernment(state, ruleset);
   set(
@@ -325,7 +332,7 @@ export function advanceWeek(
   const allEvents = [
     ...events,
     ...allianceOutcome.events,
-    ...(debate ? [debate] : []),
+    ...debates,
     ...nominationEvents,
     ...electionEvents,
     ...risks,

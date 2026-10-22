@@ -72,11 +72,18 @@ describe('jeu de règles presidentielle-2027', () => {
     for (const item of [...ruleset.calendrier.scrutins, ...ruleset.calendrier.echeances]) {
       expect(ruleset.sources[item.sourceId]).toBeDefined();
     }
-    // Seule échéance supposée : l'ouverture des présentations, liée à un décret non encore publié.
+    // Échéances supposées : l'ouverture des présentations, liée à un décret non encore publié,
+    // et les débats télévisés (phase 10), hypothèses du jeu.
     const assumed = ruleset.calendrier.echeances.filter((e) => e.statut === 'hypothese');
-    expect(assumed.map((e) => e.id)).toEqual(['ouverture-presentations']);
-    expect(assumed[0]!.sourceId).toBe('conception-du-jeu');
-    expect(assumed[0]!.regle).toMatch(/non encore publié/);
+    expect(assumed.map((e) => e.id).sort()).toEqual(
+      ['debat-t1-principaux', 'debat-t1-tous', 'debat-t2', 'ouverture-presentations'].sort(),
+    );
+    for (const e of assumed) expect(e.sourceId).toBe('conception-du-jeu');
+    expect(assumed.find((e) => e.id === 'ouverture-presentations')!.regle).toMatch(
+      /non encore publié/,
+    );
+    for (const e of assumed.filter((x) => x.id.startsWith('debat-')))
+      expect(e.regle).toMatch(/^Hypothèse du jeu/);
     expect(ruleset.jeu.statut).toBe('hypothese');
     expect(ruleset.sources[ruleset.jeu.sourceId]?.url).toBeNull();
   });
@@ -656,5 +663,78 @@ describe('contenu approfondi (phase 7)', () => {
     const twoReferences = copy();
     twoReferences.scenarios[1]!.nature = 'reference';
     expect(RulesetSchema.safeParse(twoReferences).success).toBe(false);
+  });
+
+  describe('débats télévisés (phase 10)', () => {
+    const { debats } = ruleset;
+    const date = (id: string) => ruleset.calendrier.echeances.find((e) => e.id === id)!.date;
+    const [t1, t2] = ruleset.calendrier.scrutins.map((s) => s.date) as [string, string];
+
+    it('date les débats du premier tour après la clôture des présentations, avant le vote', () => {
+      const closing = date('presentation-candidatures');
+      for (const seance of debats.seances) {
+        const day = date(seance.echeanceId);
+        if (seance.tour === 1) {
+          expect(day > closing && day < t1).toBe(true);
+        } else {
+          expect(day > t1 && day < t2).toBe(true);
+          expect(seance.invites.mode).toBe('finalistes');
+        }
+      }
+      expect(debats.seances.filter((s) => s.tour === 1)).toHaveLength(2);
+      expect(debats.statut).toBe('hypothese');
+    });
+
+    it('n’écrit aucune réplique ni réaction nommant une personnalité réelle ou un candidat', () => {
+      const lines = [
+        ...Object.values(debats.repliques).flatMap((v) =>
+          Array.isArray(v) ? v : Object.values(v).flat(),
+        ),
+        ...Object.values(debats.reactions).flat(),
+      ];
+      expect(lines.length).toBeGreaterThan(30);
+      const names = [
+        ...ruleset.personnalites.personnalites.map((p) => p.nom),
+        ...ruleset.candidatsFictifs.map((c) => c.nom),
+      ];
+      for (const line of lines) for (const name of names) expect(line).not.toContain(name);
+      // Seuls les marqueurs connus sont remplacés par le moteur.
+      for (const line of lines)
+        for (const marker of line.match(/\{[^}]*\}/g) ?? [])
+          expect(['{proposition}', '{theme}']).toContain(marker);
+    });
+
+    it('refuse une chaîne inconnue, un thème inconnu, un deuxième débat d’entre-deux-tours', () => {
+      const channel = copy();
+      channel.debats.seances[0]!.mediaId = 'chaine-inexistante';
+      expect(RulesetSchema.safeParse(channel).success).toBe(false);
+      const theme = copy();
+      theme.debats.seances[0]!.themes = ['theme-inexistant'];
+      expect(RulesetSchema.safeParse(theme).success).toBe(false);
+      const twice = copy();
+      twice.debats.seances.push({ ...twice.debats.seances.at(-1)!, id: 'debat-t2-bis' });
+      expect(RulesetSchema.safeParse(twice).success).toBe(false);
+    });
+
+    it('fait de l’interview longue un fort levier de sympathie, avec un risque majoré', () => {
+      const legend = ruleset.actions.find((a) => a.id === 'interview-longue')!;
+      const gain = (r: string) =>
+        legend.effets.filter((e) => e.ressource === r).reduce((s, e) => s + e.base, 0);
+      // Le plus fort gain de popularité de toutes les actions de campagne.
+      const best = Math.max(
+        ...ruleset.actions
+          .filter((a) => a.id !== legend.id)
+          .map((a) =>
+            a.effets.filter((e) => e.ressource === 'popularite').reduce((s, e) => s + e.base, 0),
+          ),
+      );
+      expect(gain('popularite')).toBeGreaterThan(best);
+      expect(gain('notoriete')).toBeGreaterThan(0);
+      expect(gain('jeunesse')).toBeGreaterThan(0);
+      expect(legend.risque?.majoration).toBeDefined();
+      expect(legend.risque!.libelle).toMatch(/simulé/);
+      // L'effet du risque s'étale sur plusieurs semaines.
+      expect(new Set(legend.risque!.effets.map((e) => e.delaiSemaines)).size).toBeGreaterThan(1);
+    });
   });
 });

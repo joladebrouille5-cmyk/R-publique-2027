@@ -414,7 +414,8 @@ export function createGame(input: CreateGameInput, ruleset: Ruleset): GameState 
     legislatives: null,
     scenario: scenario.id,
     consequences: [],
-    numerique: { publications: [] },
+    numerique: { publications: [], passages: {} },
+    debats: { seances: [] },
   };
   distributeInitialPromises(state, ruleset);
   return state;

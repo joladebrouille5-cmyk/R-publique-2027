@@ -118,6 +118,7 @@ export function openNextCampaign(
   state.opinion = null;
   state.polls = [];
   state.elections = { t1: null, t2: null, consignes: [], debate: null, debateDetail: null };
+  state.debats = { seances: [] };
   state.medias = null;
   state.alliances = [];
   state.calendar = { blockedBy: null, blockedMessage: null };
