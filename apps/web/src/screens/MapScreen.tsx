@@ -8,11 +8,11 @@ import {
 } from '@r2027/shared';
 import { useQueries } from '@tanstack/react-query';
 import { Info, MapPin, MousePointerClick, SlidersHorizontal, X } from 'lucide-react';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ErrorMessage } from '../components/ErrorMessage';
 import { buttonSecondary, card, input, label, screenTitle } from '../components/ui';
 import { formatCount, formatRatio } from '../labels';
-import { colorScheme, leaderOf, MAP_SURFACE, type Coloring, type Mode } from '../map/colors';
+import { colorScheme, leaderOf, MAP_SURFACE, type Coloring } from '../map/colors';
 import {
   availableSources,
   fetchCommuneResults,
@@ -26,7 +26,7 @@ import {
   type TerritoryResult,
 } from '../map/data';
 import { ElectionMap, type BBox, type Insets, type MapSelection } from '../map/ElectionMap';
-import { useThemeStore } from '../stores/theme';
+import { useMediaQuery, useMode } from '../map/useMode';
 import { useCurrentGame } from './GameLayout';
 import {
   Legend,
@@ -43,25 +43,6 @@ const MAX_LOADED = 6;
 /** Zoom maximal d'un vol vers un territoire touché : ses voisins restent visibles. */
 const CLICK_MAX_ZOOM: Partial<Record<TerritoryLevel, number>> = { region: 6.5, departement: 7 };
 const WIDE_QUERY = '(min-width: 1024px)';
-
-function useMediaQuery(query: string): boolean {
-  const [matches, setMatches] = useState(() => window.matchMedia?.(query).matches ?? false);
-  useEffect(() => {
-    const media = window.matchMedia?.(query);
-    if (!media) return;
-    const update = () => setMatches(media.matches);
-    media.addEventListener('change', update);
-    return () => media.removeEventListener('change', update);
-  }, [query]);
-  return matches;
-}
-
-/** Thème de la carte : choix de l'utilisateur, ou préférence du système suivie en direct. */
-function useMode(): Mode {
-  const theme = useThemeStore((s) => s.theme);
-  const systemDark = useMediaQuery('(prefers-color-scheme: dark)');
-  return theme === 'sombre' || (theme === 'systeme' && systemDark) ? 'dark' : 'light';
-}
 
 const intersects = (a: BBox, b: BBox) =>
   a[0] <= b[2] && a[2] >= b[0] && a[1] <= b[3] && a[3] >= b[1];

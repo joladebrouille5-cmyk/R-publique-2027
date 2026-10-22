@@ -4,6 +4,7 @@ import {
   ENGINE_VERSION,
   presentationWindow,
   SAVE_SCHEMA_VERSION,
+  type TerritorialBaseline,
 } from '@r2027/engine';
 import { CURRENT_RULESET_KEY, getRuleset } from '@r2027/rulesets';
 import type { GameDetail, GameState, SaveSummary, WeeklyReport } from '@r2027/shared';
@@ -57,10 +58,14 @@ function sponsorship(state: GameState) {
   }));
 }
 
-/** Fait avancer le vrai moteur jusqu'à `done(state)` (décisions par défaut, parrainages). */
+/**
+ * Fait avancer le vrai moteur jusqu'à `done(state)` (décisions par défaut, parrainages), sur la
+ * base électorale nationale ou, si elle est fournie, sur une base territoriale.
+ */
 export function playedState(
   done: (state: GameState) => boolean,
   start = initialState(),
+  territory?: TerritorialBaseline,
 ): GameState {
   let state = start;
   for (let i = 0; i < 80 && !done(state) && !state.calendar.blockedBy; i++) {
@@ -71,7 +76,7 @@ export function playedState(
     state = advanceWeek(
       state,
       { actions: sponsorship(state), decisions },
-      { ruleset: RULESET },
+      { ruleset: RULESET, ...(territory ? { territory } : {}) },
     ).state;
   }
   return state;

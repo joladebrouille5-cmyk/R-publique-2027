@@ -111,7 +111,7 @@ export type SourceData = {
   horsCarte: Map<string, TerritoryResult>;
 };
 
-const fromCounts = (c: Counts, keys: readonly string[]): TerritoryResult => ({
+export const fromCounts = (c: Counts, keys: readonly string[]): TerritoryResult => ({
   inscrits: c.inscrits,
   votants: c.votants,
   blancs: c.blancs,

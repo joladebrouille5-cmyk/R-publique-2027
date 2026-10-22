@@ -11,6 +11,7 @@ export * from './electoral';
 export * from './personalities';
 export * from './medias';
 export * from './numerique';
+export * from './soiree';
 export * from './quinquennat';
 export * from './consequences';
 export * from './cycle';

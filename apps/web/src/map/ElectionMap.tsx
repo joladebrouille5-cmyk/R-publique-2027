@@ -37,6 +37,11 @@ type Props = {
   selected: MapSelection | null;
   onSelect: (selection: MapSelection) => void;
   describe: (level: TerritoryLevel, code: string) => string;
+  /**
+   * Territoires du niveau affiché à faire briller un instant (soirée électorale : ceux qui viennent
+   * d'être dépouillés) ; l'éclat se rejoue quand `key` change.
+   */
+  flash?: { codes: readonly string[]; key: string } | null;
   /** Vue demandée (recherche, clic, tableau) : la carte y vole quand `key` change. */
   focus?: { bbox: BBox; key: string; maxZoom?: number } | null;
   /** Zones recouvertes par l'interface, mesurées au moment de cadrer la vue. */
@@ -65,6 +70,9 @@ const asBounds = (b: BBox): LngLatBoundsLike => [
 ];
 /** Durée des vols de caméra ; MapLibre la ramène à zéro si le mouvement réduit est demandé. */
 const FLIGHT_MS = 900;
+/** Fondu de l'éclat des territoires qui viennent d'être dépouillés. */
+const FLASH_MS = 1_600;
+const FLASH = { light: '#2b46d9', dark: '#93aaff' };
 const CAMERA_BUTTONS = [
   { kind: 'avant', name: 'Zoom avant', Icon: Plus },
   { kind: 'arriere', name: 'Zoom arrière', Icon: Minus },
@@ -206,6 +214,17 @@ export function ElectionMap(props: Props) {
             'line-width': ['case', ['boolean', ['feature-state', 'selected'], false], 2.5, 0],
           },
         });
+        map.addLayer({
+          id: `eclat-${level}`,
+          type: 'line',
+          source: level,
+          paint: {
+            'line-color': FLASH[latest.current.mode],
+            'line-width': ['case', ['boolean', ['feature-state', 'eclat'], false], 3, 0],
+            'line-blur': 1.5,
+            'line-opacity': 0,
+          },
+        });
       }
       setReady(true);
     });
@@ -278,6 +297,7 @@ export function ElectionMap(props: Props) {
           visible && motifs ? 'visible' : 'none',
         );
       map.setLayoutProperty(`selection-${level}`, 'visibility', visible ? 'visible' : 'none');
+      map.setLayoutProperty(`eclat-${level}`, 'visibility', visible ? 'visible' : 'none');
       map.setLayoutProperty(
         `contour-${level}`,
         'visibility',
@@ -318,8 +338,33 @@ export function ElectionMap(props: Props) {
     for (const level of LEVELS) {
       map.setPaintProperty(`contour-${level}`, 'line-color', BORDER[props.mode]);
       map.setPaintProperty(`selection-${level}`, 'line-color', SELECTED[props.mode]);
+      map.setPaintProperty(`eclat-${level}`, 'line-color', FLASH[props.mode]);
     }
   }, [ready, props.mode]);
+
+  // Éclat : contour lumineux qui s'estompe (immobile si le mouvement réduit est demandé).
+  const flashed = useRef<MapSelection[]>([]);
+  const flashKey = props.flash?.key;
+  useEffect(() => {
+    const map = mapRef.current;
+    const flash = latest.current.flash;
+    if (!map || !ready || !flash) return;
+    const level = latest.current.level;
+    for (const previous of flashed.current)
+      map.setFeatureState({ source: previous.level, id: previous.code }, { eclat: false });
+    for (const code of flash.codes)
+      map.setFeatureState({ source: level, id: code }, { eclat: true });
+    flashed.current = flash.codes.map((code) => ({ level, code }));
+    const layer = `eclat-${level}`;
+    map.setPaintProperty(layer, 'line-opacity-transition', { duration: 0, delay: 0 });
+    map.setPaintProperty(layer, 'line-opacity', 1);
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    const timer = window.setTimeout(() => {
+      map.setPaintProperty(layer, 'line-opacity-transition', { duration: FLASH_MS, delay: 0 });
+      map.setPaintProperty(layer, 'line-opacity', 0);
+    }, 80);
+    return () => window.clearTimeout(timer);
+  }, [ready, flashKey]);
 
   // Sélection.
   const previous = useRef<MapSelection | null>(null);

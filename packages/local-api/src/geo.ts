@@ -12,7 +12,7 @@ import {
 } from '@r2027/shared';
 
 // Référentiel cartographique embarqué dans l'application (phase 8) : le jeu de démonstration
-// commité (communes de l'Ain, de la Corse et des DROM), lu depuis les fichiers de l'application.
+// commité (communes de l'Ain, de la Corse, de la Somme et des DROM), lu depuis les fichiers de l'application.
 // La base électorale du moteur est alors la base de démonstration, FICTIVE et affichée comme
 // telle — comme l'API sans import local. Les résultats réels de 2022 ne sont pas embarqués.
 

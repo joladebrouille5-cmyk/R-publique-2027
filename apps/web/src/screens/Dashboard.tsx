@@ -6,7 +6,7 @@ import {
   type Ruleset,
 } from '@r2027/shared';
 import { useRef, useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { ApiRequestError, newIdempotencyKey } from '../api/client';
 import { spendingCapOf } from '../campaign';
 import { useAdvance, useJournal, useRuleset } from '../api/hooks';
@@ -62,6 +62,7 @@ export function Dashboard() {
   const ruleset = useRuleset(game.rulesetVersion, game.state.cycle);
   const journal = useJournal(game.id);
   const advance = useAdvance(game.id);
+  const navigate = useNavigate();
   const plan = useWeeklyPlan(game.id, game.week);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [fastWeeks, setFastWeeks] = useState(13);
@@ -145,10 +146,13 @@ export function Dashboard() {
         },
       },
       {
-        onSuccess: () => {
+        onSuccess: (response) => {
           attemptKey.current = null;
           plan.clear();
           setAnswers({});
+          // Soir de scrutin : la partie passe en direct de la soirée électorale.
+          if (response.report.election)
+            void navigate(`../soiree/${response.report.election.round}`);
         },
         onError: (error) => {
           if (!(error instanceof ApiRequestError && error.code === 'serveur_injoignable')) {

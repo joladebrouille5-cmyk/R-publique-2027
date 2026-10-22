@@ -390,6 +390,10 @@ Formats réels repris comme exemples, chacun avec un fait vérifié dans une ré
 
 Tout le reste est **simulé** et étiqueté `hypothese` dans le jeu de règles (`numerique`) : effets des formats sur les jauges Jeunesse (écho chez les 18-34 ans) et Dynamique (buzz), usure (4 % par semaine) et retombée (35 % par semaine), poids dans le score latent (un poids plus fort pour les électeurs éloignés de la politique, hypothèse non calibrée), vues des publications, réactions. Les comptes qui réagissent sont **inventés** (pseudonymes du jeu de règles) ; leurs textes sont des modèles du jeu, sans nom de personne et sans propos prêté à un animateur, à une chaîne ni à une personne réelle (contrôlé par les tests du jeu de règles). Aucune audience réelle d'une plateforme n'est reprise.
 
+## 8 septies. Soirée électorale (phase 9)
+
+Aucune donnée officielle n'est reprise : la soirée est une **mise en scène** du résultat simulé du tour. Horaires des tranches (de 20 h 00 à 0 h 00, toutes les demi-heures), ordre et rythme du dépouillement (outre-mer annoncé dès 20 h, départements les moins peuplés plus tôt, tirage déterministe pour le reste), révélation des communes et écart de l'estimation de 20 h (au plus 1,5 point, nul à minuit) sont des **hypothèses de présentation** du jeu, codées dans le module `soiree` de `@r2027/shared` et affichées comme telles à l'écran. Les heures réelles de fermeture des bureaux et de publication des estimations ne sont pas modélisées. Les chiffres affichés à chaque tranche sont des fractions exactes du résultat du moteur ; à minuit, ce sont ceux de l'écran Résultats.
+
 ## 9. Points restant non vérifiés
 
 1. Texte exact, sur Légifrance, de la loi n° 62-1292 (parrainages, financement) et de l'article L. 52-11.
@@ -410,4 +414,4 @@ Chaque import enregistre dans `DataImport` : source, URL exacte, date de récup�
 
 Un jeu réduit, commité dans `data/demo/`, permet de jouer hors ligne (§10). S'il est dérivé de données réelles, il en conserve la source et la licence (sous réserve du point 3 de la section 9) ; s'il est synthétique, il est étiqueté `fictif`.
 
-Réalisé en phase 4 : `packages/data-import/demo/cog-2026/` contient des géométries réelles (IGN, INSEE, Licence Ouverte 2.0, sources et empreintes dans son manifeste) pour l'aperçu national et les communes de l'Ain, de la Corse, de la Somme (ajoutée en phase 9 : 772 communes, dont Amiens) et des DROM. Aucun résultat 2022 n'y figure : la base électorale de démonstration est synthétique et affichée « Démonstration fictive ».
+Réalisé en phase 4 : `packages/data-import/demo/cog-2026/` contient des géométries réelles (IGN, INSEE, Licence Ouverte 2.0, sources et empreintes dans son manifeste) pour l'aperçu national et les communes de l'Ain, de la Corse, de la Somme (ajoutée en phase 9 : 771 communes, dont Amiens) et des DROM. Aucun résultat 2022 n'y figure : la base électorale de démonstration est synthétique et affichée « Démonstration fictive ». Depuis la phase 9, ses affinités et sa participation combinent trois tirages déterministes (région, département, commune) pour que la carte et la soirée électorale montrent des territoires contrastés ; ces contrastes sont inventés et ne reproduisent pas la géographie électorale réelle.

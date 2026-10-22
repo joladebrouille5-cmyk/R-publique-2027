@@ -34,6 +34,15 @@ function MapScreen() {
     </Suspense>
   );
 }
+// Soirée électorale (direct du dépouillement) : hors du menu, ouverte après chaque tour.
+const LazySoiree = lazy(() => import('./screens/Soiree').then((m) => ({ default: m.Soiree })));
+function Soiree() {
+  return (
+    <Suspense fallback={<p>Ouverture de la soirée électorale…</p>}>
+      <LazySoiree />
+    </Suspense>
+  );
+}
 
 const IMPLEMENTED: Record<string, ComponentType> = {
   'tableau-de-bord': Dashboard,
@@ -74,6 +83,7 @@ export const routes: RouteObject[] = [
               element: screen.available && Screen ? <Screen /> : <Unavailable screen={screen} />,
             };
           }),
+          { path: 'soiree/:tour', element: <Soiree /> },
         ],
       },
       { path: '*', element: <NotFound /> },

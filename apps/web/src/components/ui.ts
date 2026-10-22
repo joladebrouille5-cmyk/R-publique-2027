@@ -4,7 +4,7 @@
 
 const focus =
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-republique-500 dark:focus-visible:outline-republique-400';
-const pressable = `transition duration-200 ease-sortie active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:active:scale-100 ${focus}`;
+export const pressable = `transition duration-200 ease-sortie active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:active:scale-100 ${focus}`;
 
 export const buttonPrimary = `inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-republique-600 px-5 py-2.5 text-sm font-bold text-white shadow-card hover:bg-republique-700 hover:shadow-raised dark:bg-republique-500 dark:hover:bg-republique-400 dark:hover:shadow-neon ${pressable}`;
 

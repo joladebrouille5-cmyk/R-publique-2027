@@ -1,4 +1,5 @@
 import { candidateName, type GameState, type RoundResult, type Ruleset } from '@r2027/shared';
+import { Link } from 'react-router';
 import { useRuleset } from '../api/hooks';
 import { Badge } from '../components/Badge';
 import { ShareBar } from '../components/ShareBar';
@@ -49,6 +50,12 @@ function RoundCard({
           {roundLabel} — {formatGameDate(result.date)}
         </h2>
         <Badge tone="simule">Résultat simulé</Badge>
+        <Link
+          to={`../soiree/${result.round}`}
+          className="ml-auto rounded-full px-2 py-1 text-sm font-semibold text-republique-700 underline-offset-2 hover:bg-republique-50 hover:underline dark:text-republique-300 dark:hover:bg-slate-800"
+        >
+          Revivre la soirée électorale
+        </Link>
       </div>
       {result.winner ? (
         <p className="font-semibold">
