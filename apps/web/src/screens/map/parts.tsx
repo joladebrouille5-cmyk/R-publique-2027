@@ -339,7 +339,7 @@ export function TerritorySheet({
           <p className="text-sm text-slate-600 dark:text-slate-400">
             Pas de résultat détaillé pour ce territoire
             {data.nature === 'fictif'
-              ? ' dans le jeu de démonstration (communes de l’Ain, de la Corse et des DROM uniquement).'
+              ? ' dans le jeu de démonstration (communes de l’Ain, de la Corse, de la Somme et des DROM uniquement).'
               : '.'}
           </p>
         )

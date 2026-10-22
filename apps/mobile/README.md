@@ -11,7 +11,7 @@ WebView Android (Capacitor 8, https://localhost servi depuis l'APK)
          └─ @r2027/local-api : même contrat que l'API Fastify
              ├─ moteur (@r2027/engine), règles (@r2027/rulesets), sauvegardes (@r2027/save-engine)
              ├─ IndexedDB « republique-2027 » : parties, sauvegardes, journal, progressions
-             └─ cartes : jeu de démonstration COG 2026 (Ain, Corse, DROM), embarqué
+             └─ cartes : jeu de démonstration COG 2026 (Ain, Corse, Somme, DROM), embarqué
 ```
 
 - Chaque requête de l'interface est copiée comme sur le réseau (JSON) : l'interface ne calcule jamais l'état et ne partage aucun objet avec le moteur.

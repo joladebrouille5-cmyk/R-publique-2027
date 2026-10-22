@@ -410,4 +410,4 @@ Chaque import enregistre dans `DataImport` : source, URL exacte, date de récup�
 
 Un jeu réduit, commité dans `data/demo/`, permet de jouer hors ligne (§10). S'il est dérivé de données réelles, il en conserve la source et la licence (sous réserve du point 3 de la section 9) ; s'il est synthétique, il est étiqueté `fictif`.
 
-Réalisé en phase 4 : `packages/data-import/demo/cog-2026/` contient des géométries réelles (IGN, INSEE, Licence Ouverte 2.0, sources et empreintes dans son manifeste) pour l'aperçu national et les communes de l'Ain, de la Corse et des DROM. Aucun résultat 2022 n'y figure : la base électorale de démonstration est synthétique et affichée « Démonstration fictive ».
+Réalisé en phase 4 : `packages/data-import/demo/cog-2026/` contient des géométries réelles (IGN, INSEE, Licence Ouverte 2.0, sources et empreintes dans son manifeste) pour l'aperçu national et les communes de l'Ain, de la Corse, de la Somme (ajoutée en phase 9 : 772 communes, dont Amiens) et des DROM. Aucun résultat 2022 n'y figure : la base électorale de démonstration est synthétique et affichée « Démonstration fictive ».

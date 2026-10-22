@@ -3,8 +3,21 @@
 
 export const MILLESIME = 'cog-2026';
 
-/** Départements du jeu de démonstration commité : Ain, Corse et les cinq DROM. */
-export const DEMO_DEPARTEMENTS = ['01', '2A', '2B', '971', '972', '973', '974', '976'] as const;
+/**
+ * Départements du jeu de démonstration commité (et embarqué dans l'application Android) : Ain,
+ * Corse, Somme (phase 9 : Amiens et ses 772 communes) et les cinq DROM.
+ */
+export const DEMO_DEPARTEMENTS = [
+  '01',
+  '2A',
+  '2B',
+  '80',
+  '971',
+  '972',
+  '973',
+  '974',
+  '976',
+] as const;
 
 const INSEE = 'https://www.insee.fr/fr/statistiques/fichier/8740222';
 const COG = {

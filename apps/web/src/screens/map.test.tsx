@@ -56,7 +56,7 @@ describe('carte électorale', () => {
     renderRoute(`/parties/${GAME_ID}/carte`);
     expect(await screen.findByRole('heading', { name: 'Carte électorale' })).toBeInTheDocument();
     expect(screen.getAllByText(/La carte nécessite WebGL/).length).toBeGreaterThan(0);
-    expect(screen.getByText(/Jeu de démonstration : 880 communes/)).toBeInTheDocument();
+    expect(screen.getByText(/Jeu de démonstration : 1\s651 communes/)).toBeInTheDocument();
     expect(screen.getByText(/Résultats 2022 non chargés \(test\)/)).toBeInTheDocument();
     const table = screen.getByRole('region', { name: /Tableau des territoires/ });
     expect(within(table).getByText('Corse-du-Sud')).toBeInTheDocument();
