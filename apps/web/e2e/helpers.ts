@@ -111,8 +111,9 @@ export async function openScreen(page: Page, label: string) {
 export async function resolveWeek(page: Page, week: number) {
   const decisions = page.getByRole('region', { name: 'Décisions à prendre' });
   if (await decisions.isVisible()) {
-    for (const group of await decisions.getByRole('group').all()) {
-      await group.getByRole('radio').first().check();
+    // Une décision par fieldset (les groupes repliables d'une nomination sont aussi des « group »).
+    for (const decision of await decisions.locator('fieldset').all()) {
+      await decision.getByRole('radio').first().check();
     }
   }
   await page.getByRole('button', { name: `Résoudre la semaine ${week}` }).click();

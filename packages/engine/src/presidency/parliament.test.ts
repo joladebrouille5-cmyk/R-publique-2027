@@ -11,8 +11,10 @@ import {
   censureVote,
   filledSeats,
   membersMajority,
+  openness,
   reformDelayWeeks,
   sessionOf,
+  tallyVote,
 } from './parliament';
 
 // Phase 6 (P6-04) : Assemblée nationale réelle, procédure législative simulée.
@@ -27,6 +29,8 @@ const PROGRAMME = [
   'dip-integration-europeenne',
 ];
 const proposals = proposalsById(RULES);
+/** Profil fictif de compétence moyenne (0,5). */
+const AVERAGE = RULES.quinquennat.profils.find((p) => p.competence === 0.5)!.id;
 
 /** Campagne d'un candidat de centre droit qui annonce son programme, jouée jusqu'à l'élection. */
 const campaign = (() => {
@@ -211,6 +215,8 @@ describe('Assemblée nationale', () => {
     )![0];
     hostile.parlement!.groupes[opposition]!.sieges = 450;
     hostile.actors[PLAYER_ACTOR_ID]!.resources.popularite = 1_000;
+    // Premier ministre de compétence moyenne : sa compétence ne pèse pas sur la censure.
+    hostile.quinquennat!.gouvernement!.premierMinistre = { nature: 'profil', ref: AVERAGE };
     expect(censureVote(hostile, RULES, null)!.adoptee).toBe(true);
     const decision = hostile.pendingDecisions.find((d) => d.kind === 'texte')!;
     const billId = decision.id.replace(/^t-\d+-/, '');
@@ -238,6 +244,58 @@ describe('Assemblée nationale', () => {
     );
     // Un seul engagement de responsabilité hors loi de finances par session ordinaire.
     expect(canEngage(result.state, RULES)).toBe(false);
+  });
+
+  it('ouverture : un groupe non allié représenté au gouvernement soutient plus et censure moins', () => {
+    const asked = untilDecision(playerElected(), 'texte');
+    const bill = asked.parlement!.textes.find((b) => b.etape === 'seance')!;
+    // Un groupe non allié et une figure qui lui est rattachée.
+    const figure = RULES.figures.figures.find(
+      (f) => f.groupe && asked.parlement!.groupes[f.groupe]?.alignement !== 'soutien',
+    )!;
+    const groupe = figure.groupe!;
+    const base = JSON.parse(JSON.stringify(asked)) as GameState;
+    const government = base.quinquennat!.gouvernement!;
+    government.premierMinistre = { nature: 'profil', ref: AVERAGE };
+    government.ministres = government.ministres.map((m) =>
+      m.nature === 'figure' && RULES.figures.figures.find((f) => f.id === m.ref)!.groupe === groupe
+        ? { nature: 'profil', ref: AVERAGE, posteId: m.posteId }
+        : m,
+    );
+    expect(openness(base, RULES).get(groupe)).toBeUndefined();
+    const open = JSON.parse(JSON.stringify(base)) as GameState;
+    open.quinquennat!.gouvernement!.ministres[0] = {
+      nature: 'figure',
+      ref: figure.id,
+      posteId: open.quinquennat!.gouvernement!.ministres[0]!.posteId,
+    };
+    expect(openness(open, RULES).get(groupe)).toBe(1);
+    const before = tallyVote(base, RULES, bill, 'premiere', null).parGroupe[groupe]!;
+    const after = tallyVote(open, RULES, bill, 'premiere', null).parGroupe[groupe]!;
+    // Le groupe passe du vote contre à l'abstention, ou de l'abstention au vote pour.
+    expect(after.pour - after.contre).toBeGreaterThan(before.pour - before.contre);
+    const hostile = (state: GameState) => {
+      const copy = JSON.parse(JSON.stringify(state)) as GameState;
+      copy.actors[PLAYER_ACTOR_ID]!.resources.popularite = 500;
+      return censureVote(copy, RULES, null)!;
+    };
+    expect(hostile(open).parGroupe[groupe] ?? 0).toBeLessThanOrEqual(
+      hostile(base).parGroupe[groupe] ?? 0,
+    );
+  });
+
+  it('un Premier ministre plus compétent n’augmente jamais les voix de la censure', () => {
+    const asked = untilDecision(playerElected(), 'texte');
+    const profiles = [...RULES.quinquennat.profils].sort((a, b) => a.competence - b.competence);
+    let previous = Infinity;
+    for (const profile of profiles) {
+      const state = JSON.parse(JSON.stringify(asked)) as GameState;
+      state.actors[PLAYER_ACTOR_ID]!.resources.popularite = 500;
+      state.quinquennat!.gouvernement!.premierMinistre = { nature: 'profil', ref: profile.id };
+      const pour = censureVote(state, RULES, null)?.pour ?? 0;
+      expect(pour).toBeLessThanOrEqual(previous);
+      previous = pour;
+    }
   });
 
   it('compte les sessions ordinaires à partir d’octobre (art. 28)', () => {

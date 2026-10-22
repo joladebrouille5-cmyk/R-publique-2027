@@ -19,6 +19,7 @@ import { compareStrings, type Ledger } from '../core/ledger';
 import { stream } from '../core/random';
 import { distance } from '../election/model';
 import { applyReformToEconomy, type EconomyBook } from './economy';
+import { governmentGroups, memberTraits } from './members';
 
 // Assemblée nationale (phase 6, P6-04). Composition réelle importée (groupes et sièges, sans
 // nom de député) ; tout le reste est simulé : chaque groupe vote en bloc, avec sa discipline,
@@ -28,7 +29,9 @@ import { applyReformToEconomy, type EconomyBook } from './economy';
 // majorité des membres (art. 49), un engagement de responsabilité hors lois financières par
 // session ordinaire, ouverte en octobre (art. 28), dernier mot à l'Assemblée (art. 45). Une
 // réforme rejetée ou retirée n'est jamais appliquée ; une réforme adoptée entre en vigueur
-// après le délai de sa proposition.
+// après le délai de sa proposition. Phase 11 : un groupe non allié représenté au gouvernement
+// (ouverture) soutient davantage les textes et censure moins ; la compétence du Premier
+// ministre réduit la propension à censurer (hypothèses de jeu).
 
 export const BILL_DECISION_EVENT = 'conduite-texte';
 export type BillChoice = 'voter' | 'negocier' | '49-3' | 'retirer';
@@ -147,6 +150,20 @@ function groupVote(
 }
 
 /**
+ * Membres du gouvernement rattachés à chaque groupe non allié du président (ouverture), bornés
+ * par le jeu de règles.
+ */
+export function openness(state: GameState, ruleset: Ruleset): Map<string, number> {
+  const { membresMax } = ruleset.quinquennat.equipe.ouverture;
+  const counts = new Map<string, number>();
+  for (const [groupId, count] of governmentGroups(state, ruleset)) {
+    const alignment = state.parlement?.groupes[groupId]?.alignement;
+    if (alignment && alignment !== 'soutien') counts.set(groupId, Math.min(count, membresMax));
+  }
+  return counts;
+}
+
+/**
  * Décompte d'un vote sur un texte. `noise` fournit l'aléa de chaque groupe (null : projection
  * du gouvernement, sans aléa). Adopté si les voix pour l'emportent sur les voix contre.
  */
@@ -163,11 +180,14 @@ export function tallyVote(
   let pour = 0;
   let contre = 0;
   let abstention = 0;
+  const open = openness(state, ruleset);
+  const { soutienParMembre } = ruleset.quinquennat.equipe.ouverture;
   for (const group of assemblyGroups(ruleset)) {
     const current = parliament.groupes[group.id];
     if (!current || current.sieges === 0) continue;
     const value =
       support(ruleset, group, current.alignement, proposal, bill.concessions) +
+      soutienParMembre * (open.get(group.id) ?? 0) +
       (noise ? noise(group.id) : 0);
     const vote = groupVote(ruleset, group, current.sieges, value);
     parGroupe[group.id] = vote;
@@ -207,6 +227,13 @@ export function censureVote(
   if (signatories < Math.ceil(regles.signaturesCensure * filledSeats(parliament))) return null;
   const reference = ruleset.jeu.opinion.popularite.reference;
   const unpopularity = (reference - president.resources.popularite) / 5_000;
+  const { equipe } = ruleset.quinquennat;
+  const government = state.quinquennat!.gouvernement;
+  const competence = government
+    ? equipe.censureCompetence *
+      (memberTraits(state, ruleset, government.premierMinistre).competence - 0.5)
+    : 0;
+  const open = openness(state, ruleset);
   const parGroupe: Record<string, number> = {};
   let pour = 0;
   for (const group of assemblyGroups(ruleset)) {
@@ -215,7 +242,9 @@ export function censureVote(
     const near = proximity(president, positioned(group));
     const value =
       (vote.seuilOpposition - near) / 50 +
-      censure.poidsPopularite * unpopularity +
+      censure.poidsPopularite * unpopularity -
+      competence -
+      equipe.ouverture.censureParMembre * (open.get(group.id) ?? 0) +
       (noise ? noise(group.id) : 0);
     if (value <= 0) continue;
     const cohesion = group.nonInscrits ? vote.cohesionNonInscrits : vote.cohesion;

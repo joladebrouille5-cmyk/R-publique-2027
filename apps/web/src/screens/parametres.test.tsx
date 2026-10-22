@@ -30,6 +30,7 @@ describe('paramètres', () => {
     for (const source of Object.values(RULESET.sources)) expect(text).toContain(source.titre);
     for (const source of [
       ...RULESET.personnalites.sources,
+      ...RULESET.figures.sources,
       ...RULESET.mediasReels.sources,
       ...RULESET.economieReelle.sources,
       ...RULESET.assemblee.sources,
@@ -56,6 +57,16 @@ describe('paramètres', () => {
         expect(text).toContain(p.photo.licence);
       } else expect(text).toContain(p.photoAbsente!);
     }
+    // Personnalités nominables au gouvernement : photo, révision de l'article, compétence.
+    for (const f of RULESET.figures.figures) {
+      if (f.photo) {
+        expect(text).toContain(f.photo.auteur);
+        expect(text).toContain(f.photo.licence);
+      } else expect(text).toContain(f.photoAbsente!);
+      expect(text).toContain(f.notoriete.motif);
+    }
+    expect(text).toContain(RULESET.figures.decision);
+    expect(text).toContain(RULESET.quinquennat.equipe.note);
     // Logos des médias : auteur et licence, ou motif de l'absence.
     for (const o of RULESET.mediasReels.organes) {
       if (o.logo) {

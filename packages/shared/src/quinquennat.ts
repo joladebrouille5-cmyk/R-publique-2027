@@ -31,9 +31,10 @@ export type Cycle = z.infer<typeof CycleSchema>;
 
 /**
  * Membre du gouvernement : acteur de la partie (personnalité réelle, adversaire fictif ou
- * candidat personnalisé) ou profil fictif du jeu de règles.
+ * candidat personnalisé), figure réelle nominable du jeu de règles (phase 11) ou profil fictif.
  */
-export const MemberRefSchema = z.object({ nature: z.enum(['acteur', 'profil']), ref: Id }).strict();
+export const MEMBER_NATURES = ['acteur', 'figure', 'profil'] as const;
+export const MemberRefSchema = z.object({ nature: z.enum(MEMBER_NATURES), ref: Id }).strict();
 export type MemberRef = z.infer<typeof MemberRefSchema>;
 
 export const MinisterSchema = MemberRefSchema.extend({ posteId: Id }).strict();
@@ -73,14 +74,17 @@ export const MandateSchema = z
   .strict();
 export type Mandate = z.infer<typeof MandateSchema>;
 
-/** Refus simulé d'un acteur sollicité pour un poste. */
+/** Refus simulé d'un acteur ou d'une figure (identifiant dans `acteurId`) sollicité pour un poste. */
 export const RefusalSchema = z
   .object({ acteurId: Id, semaine: z.number().int().min(0), posteId: Id })
   .strict();
 export type Refusal = z.infer<typeof RefusalSchema>;
 
-/** Poste du Premier ministre dans les refus (les ministres ne sont sollicités que s'ils acceptent). */
+/** Poste du Premier ministre dans les refus (les autres refus portent l'identifiant du ministère). */
 export const PRIME_MINISTER_POST = 'premier-ministre';
+
+/** Événement des décisions de nomination à un ministère régalien (phase 11). */
+export const MINISTER_DECISION_EVENT = 'nomination-ministre';
 
 /** Quinquennat aux formats 8 à 11 (figé pour les migrations). */
 export const QuinquennatV8Schema = z

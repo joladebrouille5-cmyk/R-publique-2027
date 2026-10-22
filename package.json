@@ -23,6 +23,7 @@
     "data:geo": "pnpm --filter @r2027/data-import run geo",
     "data:resultats": "pnpm --filter @r2027/data-import run resultats",
     "data:personnalites": "pnpm --filter @r2027/data-import run personnalites",
+    "data:gouvernement": "pnpm --filter @r2027/data-import run gouvernement",
     "data:medias": "pnpm --filter @r2027/data-import run medias",
     "data:assemblee": "pnpm --filter @r2027/data-import run assemblee",
     "data:economie": "pnpm --filter @r2027/data-import run economie",

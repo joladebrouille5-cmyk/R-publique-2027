@@ -157,9 +157,24 @@ describe('avance rapide pendant le quinquennat', () => {
         })
       ).json(),
     );
-    expect(second.avanceRapide).toEqual({ demandees: 10, resolues: 10, arret: null });
+    // Le Premier ministre nommé, l'avance s'arrête sur les ministères régaliens à pourvoir.
+    expect(second.avanceRapide).toEqual({ demandees: 10, resolues: 1, arret: 'decision' });
     expect(second.game.state.quinquennat!.gouvernement).toMatchObject({ numero: 1 });
-    expect(second.game.week).toBe(first.game.week + 10);
+    const ministries = second.game.state.pendingDecisions;
+    expect(ministries.map((d) => d.eventId)).toEqual(ministries.map(() => 'nomination-ministre'));
+    expect(ministries.length).toBeGreaterThan(0);
+
+    const third = AdvanceResponseSchema.parse(
+      (
+        await advanceVia(client, second.game, {
+          expectedWeek: second.game.week,
+          semaines: 10,
+          decisions: ministries.map((d) => ({ decisionId: d.id, optionId: d.defaultOptionId })),
+        })
+      ).json(),
+    );
+    expect(third.avanceRapide).toEqual({ demandees: 10, resolues: 10, arret: null });
+    expect(third.game.week).toBe(second.game.week + 10);
   });
 
   it('refuse les actions en avance rapide et celles d’un joueur qui ne préside pas', async () => {
@@ -199,9 +214,14 @@ describe('dissolution et législatives', () => {
         })
       ).json(),
     );
+    // Ministères régaliens : propositions du Premier ministre confirmées, avec la dissolution.
     const dissolved = await advanceVia(client, named.game, {
       expectedWeek: named.game.week,
       actions: [{ actionId: 'dissolution' }],
+      decisions: named.game.state.pendingDecisions.map((d) => ({
+        decisionId: d.id,
+        optionId: d.defaultOptionId,
+      })),
     });
     expect(dissolved.statusCode).toBe(200);
     const afterDissolution = AdvanceResponseSchema.parse(dissolved.json());

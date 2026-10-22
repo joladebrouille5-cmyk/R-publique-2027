@@ -11,6 +11,7 @@ import { compareStrings, type Ledger } from '../core/ledger';
 import { drawAlea, stream } from '../core/random';
 import { addConsequence, crisisMultiplier } from './consequences';
 import { scheduleEconomy, type EconomyBook } from './economy';
+import { memberInCharge, memberName, memberTraits } from './members';
 
 // Crises du quinquennat (phase 6, P6-06) : bibliothèque de crises fictives du jeu de règles,
 // tirées chaque semaine selon leurs conditions, leur saison, leur probabilité et leur fréquence ;
@@ -18,6 +19,8 @@ import { scheduleEconomy, type EconomyBook } from './economy';
 // défaut). Effets immédiats et différés sur l'économie (registre de l'économie) et sur la
 // popularité du président (registre des ressources). Phase 7 : probabilité modulée par le
 // scénario de départ et les fragilités en cours ; séquelles durables de la crise et du choix.
+// Phase 11 : la compétence du membre du gouvernement chargé de la crise (ministre du poste
+// concerné, sinon le Premier ministre) module l'effet de la réponse sur la popularité.
 
 const MAX_CRISES_PER_WEEK = 1;
 
@@ -124,7 +127,29 @@ export function answerCrisis(context: Context, crisisId: string, optionId: strin
   );
   if (choice.durable)
     addConsequence(context.state, choice.durable, 'decision', `${crisisId}/${choice.id}`);
+  crisisManagement(context, crisis);
   return label;
+}
+
+/** Gestion de la crise par le membre du gouvernement qui en a la charge (registre). */
+function crisisManagement(context: Context, crisis: CrisisDefinition): void {
+  const { state, ruleset, ledger, presidentId, step } = context;
+  const member = memberInCharge(state, crisis.poste);
+  if (!member) return;
+  const competence = memberTraits(state, ruleset, member).competence;
+  const value = Math.round(ruleset.quinquennat.equipe.crise * (competence - 0.5));
+  if (value === 0) return;
+  const poste = crisis.poste
+    ? (ruleset.quinquennat.postes.find((p) => p.id === crisis.poste)?.libelle ?? crisis.poste)
+    : 'Premier ministre';
+  ledger.apply(presidentId, 'popularite', [
+    {
+      label: `${crisis.libelle} : gestion par ${memberName(state, ruleset, member)} (${poste}, compétence ${Math.round(competence * 100)} %, hypothèse de jeu)`,
+      value,
+      source: 'decision',
+      step,
+    },
+  ]);
 }
 
 /**

@@ -1,6 +1,6 @@
 # Modèle de données — RÉPUBLIQUE 2027
 
-> Statut : **phases 1 à 7 réalisées** pour les tables techniques (`User`, `Game`, `GameSave`, `GameAdvance`, `GameAction`, `GameEvent`, `SimulationLog`) — schéma réel : [`apps/api/prisma/schema.prisma`](../apps/api/prisma/schema.prisma) ; état de partie réel (format 13) : [`packages/shared/src/game.ts`](../packages/shared/src/game.ts). Depuis la phase 4, le référentiel territorial et les résultats historiques sont des **fichiers versionnés** produits par `packages/data-import` (décision D9), et non des tables. Le reste du schéma ci-dessous reste indicatif et sera complété phase par phase.
+> Statut : **phases 1 à 7 réalisées** pour les tables techniques (`User`, `Game`, `GameSave`, `GameAdvance`, `GameAction`, `GameEvent`, `SimulationLog`) — schéma réel : [`apps/api/prisma/schema.prisma`](../apps/api/prisma/schema.prisma) ; état de partie réel (format 16) : [`packages/shared/src/game.ts`](../packages/shared/src/game.ts). Depuis la phase 4, le référentiel territorial et les résultats historiques sont des **fichiers versionnés** produits par `packages/data-import` (décision D9), et non des tables. Le reste du schéma ci-dessous reste indicatif et sera complété phase par phase.
 > Voir aussi [ARCHITECTURE.md §7](./ARCHITECTURE.md#7-persistance-et-sauvegardes-12).
 
 ## 1. Principe : trois familles de données
@@ -104,6 +104,12 @@ Stocker des valeurs par commune dans chaque instantané hebdomadaire serait proh
 > - `numerique.passages` : semaines des passages récents de chaque acteur dans chaque format numérique (acteur → action → 12 semaines au plus), pour la majoration du risque de l'interview longue et la pénalité de répétition de l'IA (le fil, limité, ne suffit pas à compter les répétitions).
 >
 > Migration 14 → 15 : `debats` vide (un débat d'entre-deux-tours déjà tenu par l'ancien moteur reste dans `elections.debate`), `passages` reconstitués depuis le fil des publications encore présent. Fixture de non-régression : un état réel du format 14 (`packages/save-engine/fixtures/v14-phase-9.json`).
+>
+> **Phase 11 — format 16** (en cours, jeu de règles 13.0.0) :
+> - sondages : `variation` et `explication` (décomposition en faits et part d'échantillon) de chaque résultat publié, conservées sur la dernière vague de chaque institut ; `sondagesBase` (vague de référence de chaque institut) ;
+> - gouvernement : un membre (`MemberRef`) peut être une `figure` réelle du jeu de règles (`figures`, issues de `pnpm data:gouvernement`), en plus d'un `acteur` de la partie ou d'un `profil` fictif ; `quinquennat.refus` porte aussi les refus d'un ministère (`posteId` du ministère) et l'identifiant d'une figure dans `acteurId` ; décisions en attente `nomination-ministre` (une par ministère régalien, après la nomination du Premier ministre). Compétence et popularité des membres ne sont pas dans l'état : elles se lisent dans le jeu de règles (fiches et `quinquennat.equipe`) ou dans les ressources de l'acteur.
+>
+> Migration 15 → 16 : sondages déjà publiés sans variation ni explication, aucune vague de référence ; les gouvernements en place restent composés d'acteurs et de profils (les figures n'entrent qu'aux nominations suivantes).
 >
 > L'esquisse ci-dessous décrit la cible des phases suivantes.
 

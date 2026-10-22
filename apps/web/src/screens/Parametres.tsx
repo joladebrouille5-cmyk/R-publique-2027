@@ -63,7 +63,7 @@ type Imported = { id: string; titre: string; url: string; licence: string; versi
 
 /** Sources des données importées, chacune une seule fois (même source pour deux jeux). */
 function ImportedSources({ sources }: { sources: readonly Imported[] }) {
-  const unique = [...new Map(sources.map((s) => [s.url, s])).values()];
+  const unique = [...new Map(sources.map((s) => [`${s.url} ${s.titre}`, s])).values()];
   return (
     <ul className="space-y-1 text-sm">
       {unique.map((s) => (
@@ -129,13 +129,15 @@ function Credits({ ruleset }: { ruleset: Ruleset }) {
 
       <Sub title="Données importées">
         <p className="text-sm text-slate-600 dark:text-slate-400">
-          Personnalités (relevé du {formatGameDate(ruleset.personnalites.verifieLe)}), médias (
+          Personnalités (relevé du {formatGameDate(ruleset.personnalites.verifieLe)}), personnalités
+          nominables au gouvernement ({formatGameDate(ruleset.figures.verifieLe)}), médias (
           {formatGameDate(ruleset.mediasReels.verifieLe)}), économie, Assemblée nationale et
           législatives de 2024.
         </p>
         <ImportedSources
           sources={[
             ...ruleset.personnalites.sources,
+            ...ruleset.figures.sources,
             ...ruleset.mediasReels.sources,
             ...ruleset.economieReelle.sources,
             ...ruleset.assemblee.sources,
@@ -160,6 +162,10 @@ function Credits({ ruleset }: { ruleset: Ruleset }) {
               </dd>
             </div>
           )}
+          <div>
+            <dt className="font-semibold">Personnalités nominables au gouvernement</dt>
+            <dd className="text-slate-600 dark:text-slate-400">{ruleset.figures.decision}</dd>
+          </div>
           <div>
             <dt className="font-semibold">Médias</dt>
             <dd className="text-slate-600 dark:text-slate-400">{ruleset.mediasReels.decision}</dd>
@@ -237,6 +243,40 @@ function Credits({ ruleset }: { ruleset: Ruleset }) {
         </ul>
       </Sub>
 
+      <Sub title="Personnalités nominables au gouvernement">
+        <ul className="space-y-2">
+          {ruleset.figures.figures.map((f) => (
+            <li key={f.id}>
+              <p className="text-sm font-semibold">
+                {f.prenom} {f.nom}
+              </p>
+              <PhotoCreditLine personality={f} />
+              <p className="text-xs text-slate-600 dark:text-slate-400">
+                Position : {f.position.detail} Compétence estimée :{' '}
+                {f.competence.facteurs
+                  .map(
+                    (x) =>
+                      `${x.libelle} (${x.valeur > 0 ? '+' : ''}${x.valeur.toFixed(2).replace('.', ',')})`,
+                  )
+                  .join(' ; ')}
+                . Notoriété {f.notoriete.niveau} : {f.notoriete.motif}.
+              </p>
+              <p className="text-xs text-slate-600 dark:text-slate-400">
+                Fiche :{' '}
+                <a href={f.article} {...external}>
+                  article Wikipédia (révision importée)
+                </a>
+                {', '}
+                <a href={`https://www.wikidata.org/wiki/${f.wikidata}`} {...external}>
+                  Wikidata
+                </a>
+                .
+              </p>
+            </li>
+          ))}
+        </ul>
+      </Sub>
+
       <Sub title="Logos des médias">
         <ul className="space-y-1 text-xs text-slate-600 dark:text-slate-400">
           {outlets.map((o) => (
@@ -280,8 +320,15 @@ function Credits({ ruleset }: { ruleset: Ruleset }) {
             <dt className="font-semibold">Sondages simulés</dt>
             <dd className="text-slate-600 dark:text-slate-400">{ruleset.sondages.limites}</dd>
           </div>
+          <div>
+            <dt className="font-semibold">Équipe gouvernementale</dt>
+            <dd className="text-slate-600 dark:text-slate-400">
+              {ruleset.quinquennat.equipe.note}
+            </dd>
+          </div>
           {[
             ...Object.values(ruleset.personnalites.methode),
+            ...Object.values(ruleset.figures.methode),
             ...Object.values(ruleset.mediasReels.methode),
             ...Object.values(ruleset.assemblee.methode),
           ].map((text) => (

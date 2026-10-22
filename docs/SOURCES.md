@@ -412,6 +412,57 @@ Les **attaques** ne portent que sur des faits de la partie (crédibilité du pro
 
 **Interview longue (format « Legend », §8 sexies)** : le format et son exemple sont réels ; l'entretien est simulé. Effets du jeu (hypothèses) : Jeunesse +10 points, Popularité +1 point, Notoriété +2,5 points, Dynamique +8 points (avec saturation à la répétition) ; risque « contradiction avec son parcours » de 8 %, majoré de 5 points par revirement de programme et de 4 points par interview longue des 12 dernières semaines (au plus 35 %), dont la perte de popularité s'étale sur trois semaines. L'événement ne décrit aucun contenu, et rien n'est attribué à l'animateur ni à une personne réelle.
 
+## 8 nonies. Personnalités nominables au gouvernement (phase 11)
+
+Demande de l'utilisateur du 22/10/2026 (phase 11, demande 2) : figures clés des partis, dont Jordan Bardella et Jean-Philippe Tanguy, nominables à Matignon et aux ministères régaliens. Sélection éditoriale (dans [`packages/data-import/src/gouvernement/selection.ts`](../packages/data-import/src/gouvernement/selection.ts)) : responsables nationaux des partis représentés par un groupe à l'Assemblée nationale ; les personnalités candidates à la présidentielle (§8 quater) restent nominables comme acteurs de la partie et ne sont pas reprises ici. Import : `pnpm data:gouvernement` ; fiches dans [`packages/rulesets/src/gouvernement-2027.json`](../packages/rulesets/src/gouvernement-2027.json), photos dans `apps/web/public/gouvernement/`. Jeu de règles `presidentielle-2027@13.0.0`.
+
+| Source | Usage | Version, licence |
+|---|---|---|
+| Wikipédia, article de chaque figure (infobox « Personnalité politique ») | libellés des fonctions et leurs dates (`fonctionN`, « depuis le », « à partir du », « jusqu'au ») ; aucune phrase de l'article | révisions du 22/10/2026 (numéro de révision dans chaque fiche) ; texte CC BY-SA 4.0 : seuls les libellés des fonctions et leurs dates sont repris ; empreinte SHA-256 de la réponse dans les fiches |
+| Wikidata (requête SPARQL) | identifiant ; appartenance en cours au parti (P102, sans date de fin), vérifiée ; ancien parti pour une position « hypothèse » ; photo (P18) | CC0 1.0 ; requête du 22/10/2026, empreinte dans les fiches |
+| Wikimedia Commons | photos ; licence et auteur lus dans les champs lisibles par machine de la page du fichier | licences acceptées : CC0, domaine public, CC BY et CC BY-SA 1.0 à 4.0 (2.5 comprise), Licence Ouverte d'Etalab ; photos réduites (240 px, WebP), métadonnées retirées |
+| Chapel Hill Expert Survey 2024 (§8 quater) | position du parti, convertie par (x − 5) × 20 | même fichier et même licence qu'au §8 quater |
+| Assemblée nationale (§7, fichier du 19/10/2026) | taille du groupe associé au parti (niveau 3 de notoriété à partir de 60 députés) ; groupe associé à chaque parti (table du jeu) | Licence Ouverte |
+
+Méthodes (écrites dans les fiches et affichées dans Paramètres → Crédits) :
+- **Nature des fonctions** : déduite du libellé (Premier ministre ; ministre ou garde des Sceaux ; secrétaire d'État ou ministre délégué ; mandat parlementaire ; exécutif local ; direction d'un parti, d'un groupe, d'une assemblée, d'une commission ou d'une association d'élus ; autre).
+- **Compétence** (`estimation`, somme de facteurs affichée) : 0,30 ; + 0,30 si Premier ministre ; + 0,15 pour une fonction de ministre et + 0,05 par fonction de ministre supplémentaire (plafond + 0,25) ; + 0,05 par fonction de secrétaire d'État ou de ministre délégué (plafond + 0,10) ; + 0,05 à partir de 5 ans de mandats parlementaires cumulés, + 0,10 à partir de 10 ans ; + 0,05 pour un exécutif local ; + 0,05 pour une fonction de direction ; plafond 0,90. Une estimation de jeu, sans prétention de mesure.
+- **Notoriété** (1 à 3) : niveau 3 pour un Premier ministre (en fonction ou ancien) ou la direction nationale en cours d'un parti dont le groupe compte au moins 60 députés ; niveau 2 pour un ministre, secrétaire d'État ou ministre délégué, une autre fonction de direction en cours ou la présidence en cours d'un conseil régional ; niveau 1 sinon. Le jeu en tire une **popularité prêtée** (hypothèse, `quinquennat.equipe.popularite` : 27, 30 et 33 points), jamais présentée comme un sondage.
+
+Fiches retenues (économie / société sur −100 … +100) :
+
+| Personnalité | Parti | Groupe | Fonction principale (source) | Révision | Position | Compétence | Notoriété | Photo |
+|---|---|---|---|---|---|---|---|---|
+| Jordan Bardella | Rassemblement national | rn | Président du groupe Patriotes pour l'Europe au Parlement européen | 240613637 | 20 / 67 (`estimation`) | 0,40 | 3 | CC BY-SA 4.0 — English: Raphael ATTAL @BootEXE |
+| Jean-Philippe Tanguy | Rassemblement national | rn | Député français | 240277243 | 20 / 67 (`estimation`) | 0,35 | 2 | CC BY-SA 4.0 — Rafaels06 |
+| Sébastien Chenu | Rassemblement national | rn | Député français | 240310368 | 20 / 67 (`estimation`) | 0,35 | 1 | aucune (licence non reconnue comme libre (GFDL 1.2)) |
+| Éric Ciotti | Union des droites pour la République | udr | Président de la Métropole Nice Côte d'Azur | 240251063 | 56 / 44 (`hypothese`) | 0,50 | 2 | CC BY 2.0 — European People's Party |
+| Mathilde Panot | La France insoumise | lfi-nfp | Présidente du groupe LFI à l’Assemblée nationale | 240363721 | -82 / -64 (`estimation`) | 0,40 | 2 | CC BY 4.0 — original : Antoine Stouls modification : O.Taris |
+| Manuel Bompard | La France insoumise | lfi-nfp | Coordinateur de La France insoumise | 240615624 | -82 / -64 (`estimation`) | 0,40 | 3 | aucune (licence non reconnue comme libre (European Parliament)) |
+| Éric Coquerel | La France insoumise | lfi-nfp | Président de la commission des Finances de l’Assemblée nationale | 240568424 | -82 / -64 (`estimation`) | 0,40 | 2 | CC BY-SA 4.0 — Marche des fiertés de Paris 2017-14.jpg : Jérémie Silvestro Derivative work : Keymap9 |
+| Élisabeth Borne | Renaissance | epr | Députée française | 240523260 | 24 / -18 (`estimation`) | 0,90 | 3 | CC BY-SA 4.0 — Andrea Adriani © European Union 2022 |
+| Gérald Darmanin | Renaissance | epr | Garde des Sceaux, ministre de la Justice | 240592460 | 24 / -18 (`estimation`) | 0,60 | 2 | CC BY 2.5 — UK Home Office |
+| Yaël Braun-Pivet | Renaissance | epr | Présidente de l'Assemblée nationale | 239994034 | 24 / -18 (`estimation`) | 0,55 | 2 | CC BY 2.0 — Houses of the Oireachtas from Ireland |
+| Sébastien Lecornu | Renaissance | epr | Premier ministre français chargé de la Planification écologique et énergétique | 240418778 | 24 / -18 (`estimation`) | 0,90 | 3 | Public domain — U.S. Secretary of Defense |
+| Olivier Faure | Parti socialiste | soc | Premier secrétaire du Parti socialiste | 240579524 | -33 / -45 (`estimation`) | 0,45 | 3 | CC BY-SA 2.0 — Olivier Faure |
+| Boris Vallaud | Parti socialiste | soc | Président du groupe socialiste à l'Assemblée nationale | 239852242 | -33 / -45 (`estimation`) | 0,40 | 2 | CC BY-SA 4.0 — Bloody-libu |
+| Carole Delga | Parti socialiste | soc | Présidente des Régions de France | 239496419 | -33 / -45 (`estimation`) | 0,45 | 2 | CC BY-SA 3.0 — Clément Bucco-Lechat |
+| Laurent Wauquiez | Les Républicains | dr | Président du groupe Droite républicaine à l'Assemblée nationale | 240253315 | 56 / 44 (`estimation`) | 0,70 | 2 | CC BY 2.0 — European People's Party |
+| Valérie Pécresse | Les Républicains | dr | Présidente de Soyons libres | 240408505 | 56 / 44 (`estimation`) | 0,60 | 2 | CC BY-SA 4.0 — Gail Leenstra |
+| Cyrielle Chatelain | Les Écologistes | ecos | Présidente du groupe écologiste et social à l'Assemblée nationale | 237388032 | -54 / -66 (`estimation`) | 0,35 | 2 | CC BY-SA 4.0 — GLaG 38 - Guillaume LAGET |
+| Yannick Jadot | Les Écologistes | ecos | Sénateur français | 240052469 | -54 / -66 (`estimation`) | 0,40 | 1 | aucune (licence non reconnue comme libre (European Parliament)) |
+| François Bayrou | Mouvement démocrate | dem | Président du Mouvement démocrate | 240230804 | 14 / -10 (`estimation`) | 0,90 | 3 | Licence Ouverte — Service photographique de Matignon |
+| Marc Fesneau | Mouvement démocrate | dem | Président du groupe Les Démocrates à l'Assemblée nationale | 236197196 | 14 / -10 (`estimation`) | 0,60 | 2 | CC BY 4.0 — European Commission Audiovisual Center |
+| Christian Estrosi | Horizons | hor | Président délégué du conseil régional de Provence-Alpes-Côte-d'Azur | 240310067 | 36 / 6 (`estimation`) | 0,65 | 2 | CC BY-SA 3.0 — Olivier Ezratty |
+| Ian Brossat | Parti communiste français | gdr | Sénateur français | 240072173 | -75 / -29 (`estimation`) | 0,35 | 1 | CC BY-SA 4.0 — Ismaelelhajri |
+
+Remarques :
+- **Rattachement des candidats** : les personnalités candidates dont l'étiquette cite un parti de la table (Renaissance, Rassemblement national, La France insoumise, Parti socialiste, Les Républicains, Les Écologistes, Horizons, Parti communiste français…) sont associées au groupe de ce parti (`rattachements`) ; les autres n'apportent le soutien d'aucun groupe.
+- **Photos non reprises** : licence GFDL seule (Sébastien Chenu) ou licence propre au Parlement européen (Manuel Bompard, Yannick Jadot) ; l'interface affiche alors les initiales.
+- **Fonctions** : l'infobox de Wikipédia peut être en retard ou en avance sur un changement de fonction ; le libellé et les dates sont ceux de la révision importée, sans correction manuelle.
+- **Ce qui est simulé** : la réponse d'une personnalité sollicitée (acceptation au-delà d'une proximité de 60/100 avec le président, sinon 25 % de chances ; en cohabitation, une personnalité d'un groupe de la majorité accepte Matignon), son action au gouvernement et ses effets. Aucun propos ni aucune citation n'est attribué (le schéma n'a aucun champ pour cela ; les tests du jeu de règles le vérifient).
+- **Effets dans le jeu** (hypothèses, `quinquennat.equipe`) : popularité du président à la nomination (0,25 × écart de la popularité prêtée du Premier ministre à la référence, 0,05 par ministre régalien) ; action hebdomadaire du gouvernement (16 × (compétence de l'équipe − 0,5), équipe = moitié Premier ministre, moitié moyenne des ministres régaliens) ; gestion des crises (80 × (compétence du ministre du poste concerné − 0,5)) ; ouverture (un groupe non allié représenté au gouvernement : + 0,15 de soutien aux textes et − 0,3 de propension à censurer par membre, au plus deux) ; censure (− 0,6 × (compétence du Premier ministre − 0,5)). Tous passent par le registre des facteurs.
+
 ## 9. Points restant non vérifiés
 
 1. Texte exact, sur Légifrance, de la loi n° 62-1292 (parrainages, financement) et de l'article L. 52-11.

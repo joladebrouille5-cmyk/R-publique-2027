@@ -29,18 +29,12 @@ const base = (state: GameState) => ({
 
 const elected = playedState((s) => s.quinquennat !== null);
 
+/** Réponses par défaut aux décisions en attente (Matignon, ministères régaliens, textes…). */
+const defaults = (state: GameState) =>
+  state.pendingDecisions.map((d) => ({ decisionId: d.id, optionId: d.defaultOptionId }));
+
 const step = (state: GameState) =>
-  advanceWeek(
-    state,
-    {
-      actions: [],
-      decisions: state.pendingDecisions.map((d) => ({
-        decisionId: d.id,
-        optionId: d.defaultOptionId,
-      })),
-    },
-    { ruleset: RULESET },
-  ).state;
+  advanceWeek(state, { actions: [], decisions: defaults(state) }, { ruleset: RULESET }).state;
 
 /** Le joueur déclaré élu, puis la semaine de l'investiture : la nomination l'attend. */
 function playerAtInvestiture(): GameState {
@@ -89,6 +83,73 @@ describe('quinquennat', () => {
     expect(screen.getByText(/Reste après le plan : 70 h · 0\/8 actions/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Ajouter Meeting public' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Résoudre la semaine 32' })).toBeDisabled();
+  });
+
+  it('le président joueur pourvoit les ministères régaliens : options groupées, personnalités réelles', async () => {
+    const named = step(playerAtInvestiture());
+    expect(named.quinquennat!.gouvernement).not.toBeNull();
+    mockApi(base(named));
+    renderRoute(`/parties/${GAME_ID}/tableau-de-bord`);
+    const decision = await screen.findByRole('group', { name: 'Ministère : Intérieur' });
+    const groups = within(decision)
+      .getAllByText(/\(\d+\)$/)
+      .map((n) => n.textContent!.replace(/ \(\d+\)$/, ''));
+    expect(groups).toEqual(
+      expect.arrayContaining([
+        'Proposition du Premier ministre',
+        'Personnalités réelles',
+        'Profils fictifs',
+      ]),
+    );
+    const current = named.quinquennat!.gouvernement!.ministres.find(
+      (m) => m.posteId === 'interieur',
+    )!;
+    const pending = named.pendingDecisions.find((d) => d.label === 'Ministère : Intérieur')!;
+    expect(pending.defaultOptionId).toBe(current.ref);
+    // Une personnalité réelle hors du gouvernement, proposée avec sa compétence estimée.
+    const members = new Set(
+      [
+        named.quinquennat!.gouvernement!.premierMinistre,
+        ...named.quinquennat!.gouvernement!.ministres,
+      ].map((m) => m.ref),
+    );
+    const figure = RULESET.figures.figures.find((f) => !members.has(f.id))!;
+    const radio = within(decision).getByRole('radio', {
+      name: new RegExp(`${figure.prenom} ${figure.nom} — ${figure.parti}`),
+    });
+    expect(radio.closest('label')!.textContent).toMatch(/Compétence estimée : \d+ %/);
+    expect(radio.closest('label')!.textContent).toMatch(/aucun propos ne lui est attribué/);
+    await userEvent.setup().click(radio);
+    expect(radio).toBeChecked();
+  });
+
+  it('l’écran Gouvernement présente les personnalités réelles nommées et nominables', async () => {
+    let state = step(playerAtInvestiture());
+    state = step(state);
+    const government = state.quinquennat!.gouvernement!;
+    const figures = [government.premierMinistre, ...government.ministres].filter(
+      (m) => m.nature === 'figure',
+    );
+    expect(figures.length).toBeGreaterThan(0);
+    mockApi(base(state));
+    renderRoute(`/parties/${GAME_ID}/gouvernement`);
+    await screen.findByRole('heading', { name: 'Gouvernement n° 1' });
+    const section = screen.getByRole('region', { name: 'Gouvernement n° 1' });
+    for (const m of figures) {
+      const f = RULESET.figures.figures.find((x) => x.id === m.ref)!;
+      expect(within(section).getAllByText(`${f.prenom} ${f.nom}`).length).toBeGreaterThan(0);
+    }
+    expect(within(section).getAllByText('Estimation').length).toBeGreaterThanOrEqual(
+      figures.length,
+    );
+    const nominable = screen.getByRole('region', { name: 'Personnalités nominables' });
+    for (const f of RULESET.figures.figures)
+      expect(
+        within(nominable).getByRole('listitem', { name: `${f.prenom} ${f.nom}` }),
+      ).toBeInTheDocument();
+    // Les photos sous licence libre des personnalités réelles (créditées dans Paramètres).
+    const photos = nominable.querySelectorAll('img');
+    expect(photos.length).toBe(RULESET.figures.figures.filter((f) => f.photo).length);
   });
 
   it('le joueur battu suit le quinquennat en avance rapide', async () => {
@@ -303,7 +364,7 @@ describe('quinquennat', () => {
     while (!state.quinquennat!.gouvernement) state = step(state);
     const dissolved = advanceWeek(
       state,
-      { actions: [{ actionId: 'dissolution' }], decisions: [] },
+      { actions: [{ actionId: 'dissolution' }], decisions: defaults(state) },
       { ruleset: RULESET },
     ).state;
     let current = dissolved;
@@ -348,7 +409,7 @@ describe('quinquennat', () => {
 
     let current = advanceWeek(
       state,
-      { actions: [{ actionId: 'dissolution' }], decisions: [] },
+      { actions: [{ actionId: 'dissolution' }], decisions: defaults(state) },
       { ruleset: RULESET },
     ).state;
     while (current.legislatives!.derniere.motif === 'reelles-2024') current = step(current);
@@ -403,7 +464,7 @@ describe('quinquennat', () => {
     while (!state.quinquennat!.gouvernement) state = step(state);
     let result = advanceWeek(
       state,
-      { actions: [{ actionId: 'dissolution' }], decisions: [] },
+      { actions: [{ actionId: 'dissolution' }], decisions: defaults(state) },
       { ruleset: RULESET },
     );
     while (!result.report.legislatives || result.report.legislatives.tour !== 2)

@@ -1,5 +1,6 @@
 import {
   candidateName,
+  MINISTER_DECISION_EVENT,
   type DecisionAnswer,
   type GameState,
   type ReportEvent,
@@ -28,7 +29,9 @@ import { nextCampaignStart, weekReaches } from './dates';
 import {
   aiPrimeMinister,
   answerGovernment,
+  answerMinister,
   endGovernment,
+  governmentAction,
   governmentDue,
   nominate,
   presidentOf,
@@ -130,7 +133,9 @@ export function advancePresidencyWeek(
   let ai: ReturnType<typeof validatePresidencyActions> = { outcomes: [], validated: [] };
   if (!playerPresides) {
     if (governmentDue(state))
-      events.push(nominate(state, ruleset, aiPrimeMinister(state, ruleset, president)));
+      events.push(
+        nominate(state, ruleset, aiPrimeMinister(state, ruleset, president), { ledger, step: 3 }),
+      );
     const rng = stream(state.meta.seed, week, 'president', president.id);
     const planned = planPresidentActions(
       state,
@@ -174,8 +179,15 @@ export function advancePresidencyWeek(
       automatic: answer.automatic,
     });
   }
-  for (const answer of governmentAnswers)
-    events.push(answerGovernment(state, ruleset, answer.optionId));
+  for (const answer of governmentAnswers) {
+    if (answer.decision.eventId === MINISTER_DECISION_EVENT) {
+      const event = answerMinister(state, ruleset, answer.decision, answer.optionId, {
+        ledger,
+        step: 5,
+      });
+      if (event) events.push(event);
+    } else events.push(answerGovernment(state, ruleset, answer.optionId, { ledger, step: 5 }));
+  }
   const validated = [...own.validated, ...ai.validated];
   const { risks } = resolveActionEffects(
     state,
@@ -203,7 +215,9 @@ export function advancePresidencyWeek(
       decisionId: null,
     });
     if (!playerPresides)
-      events.push(nominate(state, ruleset, aiPrimeMinister(state, ruleset, president)));
+      events.push(
+        nominate(state, ruleset, aiPrimeMinister(state, ruleset, president), { ledger, step: 5 }),
+      );
   }
   const crisisContext = economy
     ? { state, ruleset, ledger, finances, book: economy, presidentId: president.id, step: 5 }
@@ -230,7 +244,9 @@ export function advancePresidencyWeek(
       decisionId: null,
     });
     if (!playerPresides)
-      events.push(nominate(state, ruleset, aiPrimeMinister(state, ruleset, president)));
+      events.push(
+        nominate(state, ruleset, aiPrimeMinister(state, ruleset, president), { ledger, step: 5 }),
+      );
   }
   if (playerPresides) requestGovernment(state, ruleset);
   if (crisisContext && weekReaches(date, state.quinquennat!.mandat.debut))
@@ -248,13 +264,18 @@ export function advancePresidencyWeek(
     ledger.apply(president.id, 'popularite', [
       { label: 'Usure du pouvoir (hypothèse de jeu)', value: -usure, source: 'opinion', step: 6 },
     ]);
+    governmentAction(state, ruleset, president.id, { ledger, step: 6 });
   }
   for (const actor of Object.values(state.actors)) {
     actor.history.popularite = [...actor.history.popularite, actor.resources.popularite].slice(
       -HISTORY_LENGTH,
     );
   }
-  set(6, true, 'Érosion, retour à la moyenne, attrition et usure du pouvoir appliqués.');
+  set(
+    6,
+    true,
+    'Érosion, retour à la moyenne, attrition, usure du pouvoir et action du gouvernement appliquées.',
+  );
 
   // 7. Conséquences durables (phase 7), puis économie : effets différés, dynamique des
   // indicateurs, conjoncture et popularité.
@@ -284,7 +305,9 @@ export function advancePresidencyWeek(
   if (legislatives.newAssembly) {
     endGovernment(state.quinquennat!, date, 'élections législatives');
     if (!playerPresides)
-      events.push(nominate(state, ruleset, aiPrimeMinister(state, ruleset, president)));
+      events.push(
+        nominate(state, ruleset, aiPrimeMinister(state, ruleset, president), { ledger, step: 8 }),
+      );
   }
   set(
     8,

@@ -1,0 +1,2385 @@
+{
+  "verifieLe": "2026-10-22",
+  "decision": "Demande de l’utilisateur du 22/10/2026 (phase 11) : figures clés des partis, nominables au gouvernement, dont Jordan Bardella et Jean-Philippe Tanguy. Sélection éditoriale : responsables nationaux (présidence de parti ou de groupe parlementaire, anciens Premiers ministres ou ministres) des partis représentés par un groupe à l’Assemblée nationale ; les personnalités candidates à la présidentielle sont nominables comme acteurs de la partie et ne figurent pas ici. Fonctions relevées dans les articles ; compétence estimée et notoriété déduites par des règles documentées ; aucun propos attribué ; nominations, refus et action au gouvernement simulés.",
+  "sources": [
+    {
+      "id": "wikipedia-figures",
+      "titre": "Wikipédia — articles des figures (infobox « Personnalité politique »)",
+      "url": "https://fr.wikipedia.org/w/api.php",
+      "licence": "CC BY-SA 4.0 (texte des articles) ; seuls les libellés des fonctions et leurs dates en sont repris",
+      "version": "révisions du 2026-10-22 (lien de chaque révision dans la fiche)",
+      "consulteLe": "2026-10-22",
+      "sha256": "5f8a7cfe6da07b0e4d7e4b5bd655d97855784703f19fdccad535b1fc8b44c256"
+    },
+    {
+      "id": "wikidata-figures",
+      "titre": "Wikidata — identifiants, partis (P102) et photos (P18) des figures",
+      "url": "https://query.wikidata.org/",
+      "licence": "CC0 1.0",
+      "version": "requête du 2026-10-22",
+      "consulteLe": "2026-10-22",
+      "sha256": "fef8be976d3351500df61993e095326c41bc1acf74c9249d032bbc1a93ac9ca4"
+    },
+    {
+      "id": "ches-2024",
+      "titre": "Chapel Hill Expert Survey 2024 — positions moyennes des partis",
+      "url": "https://github.com/chesdata/chesdata.github.io/releases/download/ches-europe/CHES_2024_final_v2.csv",
+      "licence": "non précisée ; usage avec citation demandé (Rovny et al., « The 2024 Chapel Hill Expert Survey on political party positioning in Europe », 2025)",
+      "version": "vague 2024 (fichier final v2)",
+      "consulteLe": "2026-10-21",
+      "sha256": "1c1ec0532afa2a0a13317122cbbe40eb9ff35425191892d1fff24fbef6acc6a8"
+    }
+  ],
+  "methode": {
+    "fonctions": "Fonctions de l’infobox « Personnalité politique » de l’article Wikipédia (révision importée), avec leurs dates. Nature déduite du libellé : Premier ministre ; ministre ou garde des Sceaux ; secrétaire d’État ou ministre délégué ; mandat parlementaire (député, sénateur, député européen) ; exécutif local (maire, présidence d’un conseil régional, départemental ou général, d’une métropole ou d’une communauté) ; direction (présidence ou secrétariat national d’un parti, présidence d’un groupe, d’une assemblée, d’une commission, d’une association d’élus) ; autre.",
+    "competence": "Estimation de jeu, sans prétention de mesure : 0,30 ; + 0,30 si Premier ministre ; + 0,15 pour une fonction de ministre et + 0,05 par fonction de ministre supplémentaire (plafond + 0,25) ; + 0,05 par fonction de secrétaire d’État ou de ministre délégué (plafond + 0,10) ; + 0,05 à partir de 5 ans de mandats parlementaires cumulés, + 0,10 à partir de 10 ans ; + 0,05 pour un exécutif local ; + 0,05 pour une fonction de direction ; plafond 0,90.",
+    "notoriete": "Niveau 3 : Premier ministre (en fonction ou ancien), ou direction nationale en cours d’un parti dont le groupe compte au moins 60 députés. Niveau 2 : ministre, secrétaire d’État ou ministre délégué (en fonction ou ancien), autre fonction de direction en cours, ou présidence en cours d’un conseil régional. Niveau 1 : autres. Le jeu en tire une popularité de départ (hypothèse, jamais un sondage).",
+    "position": "Position du parti dans l’enquête d’experts Chapel Hill 2024, convertie par (x − 5) × 20 sur chaque axe (économie = lrecon, société = galtan) — estimation. Parti actuel absent de l’enquête : position de l’ancien parti dont Wikidata atteste l’appartenance (P102) — hypothèse.",
+    "groupe": "Groupe de l’Assemblée nationale associé au parti (table du jeu, composition du 19/10/2026) ; pour les personnalités candidates, d’après l’étiquette de leur fiche. Une personnalité sans parti associé à un groupe n’apporte le soutien d’aucun groupe."
+  },
+  "figures": [
+    {
+      "id": "figure-bardella",
+      "prenom": "Jordan",
+      "nom": "Bardella",
+      "parti": "Rassemblement national",
+      "groupe": "rn",
+      "wikidata": "Q40655898",
+      "article": "https://fr.wikipedia.org/w/index.php?title=Jordan_Bardella&oldid=240613637",
+      "fonctions": [
+        {
+          "libelle": "Président du groupe Patriotes pour l'Europe au Parlement européen",
+          "debut": "2024-07-16",
+          "fin": null,
+          "enCours": true,
+          "nature": "direction"
+        },
+        {
+          "libelle": "Président du Rassemblement national",
+          "debut": "2021-09-13",
+          "fin": null,
+          "enCours": true,
+          "nature": "direction"
+        },
+        {
+          "libelle": "Député européen",
+          "debut": "2019-07-02",
+          "fin": null,
+          "enCours": true,
+          "nature": "parlementaire"
+        },
+        {
+          "libelle": "Conseiller régional d'Île-de-France",
+          "debut": "2015-12-18",
+          "fin": "2025-02-17",
+          "enCours": false,
+          "nature": "autre"
+        },
+        {
+          "libelle": "Vice-président du Rassemblement national",
+          "debut": "2019-06-16",
+          "fin": "2022-11-05",
+          "enCours": false,
+          "nature": "autre"
+        },
+        {
+          "libelle": "Directeur national de Génération nation",
+          "debut": "2018-03-12",
+          "fin": "2021-07-04",
+          "enCours": false,
+          "nature": "autre"
+        }
+      ],
+      "position": {
+        "economie": 20,
+        "societe": 67,
+        "statut": "estimation",
+        "methode": "parti",
+        "partisReference": ["RN"],
+        "vague": 2024,
+        "ches": {
+          "lrecon": 6,
+          "galtan": 8.36
+        },
+        "detail": "Position du parti RN dans l’enquête CHES 2024."
+      },
+      "competence": {
+        "valeur": 0.4,
+        "statut": "estimation",
+        "facteurs": [
+          {
+            "libelle": "Base de l’estimation",
+            "valeur": 0.3
+          },
+          {
+            "libelle": "7 ans de mandats parlementaires cumulés",
+            "valeur": 0.05
+          },
+          {
+            "libelle": "Direction d’un parti, d’un groupe, d’une assemblée ou d’une commission",
+            "valeur": 0.05
+          }
+        ]
+      },
+      "notoriete": {
+        "niveau": 3,
+        "motif": "Président du Rassemblement national (groupe de 121 députés à l’Assemblée nationale)"
+      },
+      "photo": {
+        "fichier": "gouvernement/figure-bardella.webp",
+        "auteur": "English: Raphael ATTAL @BootEXE",
+        "licence": "CC BY-SA 4.0",
+        "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+        "source": "https://commons.wikimedia.org/wiki/File:Jordan_Bardella_-_Strasbourg_European_Parliament_September_2022_(Cropped).jpg",
+        "modification": "Redimensionnée (240 pixels de large) et convertie en WebP ; métadonnées retirées."
+      },
+      "photoAbsente": null
+    },
+    {
+      "id": "figure-tanguy",
+      "prenom": "Jean-Philippe",
+      "nom": "Tanguy",
+      "parti": "Rassemblement national",
+      "groupe": "rn",
+      "wikidata": "Q46138822",
+      "article": "https://fr.wikipedia.org/w/index.php?title=Jean-Philippe_Tanguy&oldid=240277243",
+      "fonctions": [
+        {
+          "libelle": "Député français",
+          "debut": "2022-06-22",
+          "fin": null,
+          "enCours": true,
+          "nature": "parlementaire"
+        },
+        {
+          "libelle": "Conseiller régional des Hauts-de-France",
+          "debut": "2021-07-02",
+          "fin": null,
+          "enCours": true,
+          "nature": "autre"
+        },
+        {
+          "libelle": "Coordinateur national de L'Avenir français",
+          "debut": "2021-03-22",
+          "fin": null,
+          "enCours": true,
+          "nature": "direction"
+        }
+      ],
+      "position": {
+        "economie": 20,
+        "societe": 67,
+        "statut": "estimation",
+        "methode": "parti",
+        "partisReference": ["RN"],
+        "vague": 2024,
+        "ches": {
+          "lrecon": 6,
+          "galtan": 8.36
+        },
+        "detail": "Position du parti RN dans l’enquête CHES 2024."
+      },
+      "competence": {
+        "valeur": 0.35,
+        "statut": "estimation",
+        "facteurs": [
+          {
+            "libelle": "Base de l’estimation",
+            "valeur": 0.3
+          },
+          {
+            "libelle": "Direction d’un parti, d’un groupe, d’une assemblée ou d’une commission",
+            "valeur": 0.05
+          }
+        ]
+      },
+      "notoriete": {
+        "niveau": 2,
+        "motif": "Coordinateur national de L'Avenir français"
+      },
+      "photo": {
+        "fichier": "gouvernement/figure-tanguy.webp",
+        "auteur": "Rafaels06",
+        "licence": "CC BY-SA 4.0",
+        "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+        "source": "https://commons.wikimedia.org/wiki/File:JeanPhilippe_Tanguy.jpg",
+        "modification": "Redimensionnée (240 pixels de large) et convertie en WebP ; métadonnées retirées."
+      },
+      "photoAbsente": null
+    },
+    {
+      "id": "figure-chenu",
+      "prenom": "Sébastien",
+      "nom": "Chenu",
+      "parti": "Rassemblement national",
+      "groupe": "rn",
+      "wikidata": "Q21294609",
+      "article": "https://fr.wikipedia.org/w/index.php?title=S%C3%A9bastien_Chenu&oldid=240310368",
+      "fonctions": [
+        {
+          "libelle": "Cinquième vice-président de l’Assemblée nationale",
+          "debut": "2025-10-01",
+          "fin": null,
+          "enCours": true,
+          "nature": "autre"
+        },
+        {
+          "libelle": "Vice-président du Rassemblement national",
+          "debut": "2022-11-05",
+          "fin": null,
+          "enCours": true,
+          "nature": "autre"
+        },
+        {
+          "libelle": "Député français",
+          "debut": "2017-06-21",
+          "fin": null,
+          "enCours": true,
+          "nature": "parlementaire"
+        },
+        {
+          "libelle": "Conseiller régional des Hauts-de-France",
+          "debut": "2016-01-04",
+          "fin": null,
+          "enCours": true,
+          "nature": "autre"
+        },
+        {
+          "libelle": "Adjoint au maire de Beauvais",
+          "debut": "2001-03-18",
+          "fin": "2014-03-30",
+          "enCours": false,
+          "nature": "autre"
+        },
+        {
+          "libelle": "Vice-président de la communauté d'agglomération du Beauvaisis",
+          "debut": "2001-03-18",
+          "fin": "2014-03-30",
+          "enCours": false,
+          "nature": "autre"
+        }
+      ],
+      "position": {
+        "economie": 20,
+        "societe": 67,
+        "statut": "estimation",
+        "methode": "parti",
+        "partisReference": ["RN"],
+        "vague": 2024,
+        "ches": {
+          "lrecon": 6,
+          "galtan": 8.36
+        },
+        "detail": "Position du parti RN dans l’enquête CHES 2024."
+      },
+      "competence": {
+        "valeur": 0.35,
+        "statut": "estimation",
+        "facteurs": [
+          {
+            "libelle": "Base de l’estimation",
+            "valeur": 0.3
+          },
+          {
+            "libelle": "9 ans de mandats parlementaires cumulés",
+            "valeur": 0.05
+          }
+        ]
+      },
+      "notoriete": {
+        "niveau": 1,
+        "motif": "Aucune fonction retenue pour les niveaux 2 et 3."
+      },
+      "photo": null,
+      "photoAbsente": "Photo non reprise : licence non reconnue comme libre (GFDL 1.2)."
+    },
+    {
+      "id": "figure-ciotti",
+      "prenom": "Éric",
+      "nom": "Ciotti",
+      "parti": "Union des droites pour la République",
+      "groupe": "udr",
+      "wikidata": "Q1844180",
+      "article": "https://fr.wikipedia.org/w/index.php?title=%C3%89ric_Ciotti&oldid=240251063",
+      "fonctions": [
+        {
+          "libelle": "Président de la Métropole Nice Côte d'Azur",
+          "debut": "2026-04-09",
+          "fin": null,
+          "enCours": true,
+          "nature": "executif-local"
+        },
+        {
+          "libelle": "Maire de Nice",
+          "debut": "2026-03-27",
+          "fin": null,
+          "enCours": true,
+          "nature": "executif-local"
+        },
+        {
+          "libelle": "Président de l'Union des droites pour la République",
+          "debut": "2024-10-03",
+          "fin": null,
+          "enCours": true,
+          "nature": "direction"
+        },
+        {
+          "libelle": "Président du groupe UDR à l'Assemblée nationale",
+          "debut": "2024-07-18",
+          "fin": null,
+          "enCours": true,
+          "nature": "direction"
+        },
+        {
+          "libelle": "Conseiller général puis départemental des Alpes-Maritimes",
+          "debut": "2008-12-07",
+          "fin": null,
+          "enCours": true,
+          "nature": "autre"
+        },
+        {
+          "libelle": "Député français",
+          "debut": "2007-06-20",
+          "fin": null,
+          "enCours": true,
+          "nature": "parlementaire"
+        },
+        {
+          "libelle": "Président des Républicains",
+          "debut": "2022-12-11",
+          "fin": "2024-09-30",
+          "enCours": false,
+          "nature": "direction"
+        },
+        {
+          "libelle": "Questeur de l'Assemblée nationale",
+          "debut": "2018-01-16",
+          "fin": "2024-06-09",
+          "enCours": false,
+          "nature": "autre"
+        },
+        {
+          "libelle": "Président du conseil général puis départemental des Alpes-Maritimes",
+          "debut": "2008-12-18",
+          "fin": "2017-09-15",
+          "enCours": false,
+          "nature": "executif-local"
+        },
+        {
+          "libelle": "Premier adjoint au maire de Nice",
+          "debut": "2008",
+          "fin": "2008-12-18",
+          "enCours": false,
+          "nature": "autre"
+        }
+      ],
+      "position": {
+        "economie": 56,
+        "societe": 44,
+        "statut": "hypothese",
+        "methode": "ancien_parti",
+        "partisReference": ["LR"],
+        "vague": 2024,
+        "ches": {
+          "lrecon": 7.82,
+          "galtan": 7.18
+        },
+        "detail": "Parti actuel absent de l’enquête CHES : position de « Les Républicains » (2015 → 2024), ancien parti dont Wikidata atteste l’appartenance, dans l’enquête CHES 2024."
+      },
+      "competence": {
+        "valeur": 0.5,
+        "statut": "estimation",
+        "facteurs": [
+          {
+            "libelle": "Base de l’estimation",
+            "valeur": 0.3
+          },
+          {
+            "libelle": "19 ans de mandats parlementaires cumulés",
+            "valeur": 0.1
+          },
+          {
+            "libelle": "Exécutif local",
+            "valeur": 0.05
+          },
+          {
+            "libelle": "Direction d’un parti, d’un groupe, d’une assemblée ou d’une commission",
+            "valeur": 0.05
+          }
+        ]
+      },
+      "notoriete": {
+        "niveau": 2,
+        "motif": "Président de l'Union des droites pour la République"
+      },
+      "photo": {
+        "fichier": "gouvernement/figure-ciotti.webp",
+        "auteur": "European People's Party",
+        "licence": "CC BY 2.0",
+        "licenceUrl": "https://creativecommons.org/licenses/by/2.0",
+        "source": "https://commons.wikimedia.org/wiki/File:%C3%89ric_Ciotti%2C_EPP_Summit%2C_23_March%2C_Brussels_(52765298047)_(cropped).jpg",
+        "modification": "Redimensionnée (240 pixels de large) et convertie en WebP ; métadonnées retirées."
+      },
+      "photoAbsente": null
+    },
+    {
+      "id": "figure-panot",
+      "prenom": "Mathilde",
+      "nom": "Panot",
+      "parti": "La France insoumise",
+      "groupe": "lfi-nfp",
+      "wikidata": "Q30343128",
+      "article": "https://fr.wikipedia.org/w/index.php?title=Mathilde_Panot&oldid=240363721",
+      "fonctions": [
+        {
+          "libelle": "Présidente du groupe LFI à l’Assemblée nationale",
+          "debut": "2021-10-12",
+          "fin": null,
+          "enCours": true,
+          "nature": "direction"
+        },
+        {
+          "libelle": "Députée française",
+          "debut": "2017-06-21",
+          "fin": null,
+          "enCours": true,
+          "nature": "parlementaire"
+        },
+        {
+          "libelle": "Vice-présidente du groupe LFI à l’Assemblée nationale",
+          "debut": "2019-06-18",
+          "fin": "2021-10-12",
+          "enCours": false,
+          "nature": "autre"
+        }
+      ],
+      "position": {
+        "economie": -82,
+        "societe": -64,
+        "statut": "estimation",
+        "methode": "parti",
+        "partisReference": ["FI"],
+        "vague": 2024,
+        "ches": {
+          "lrecon": 0.91,
+          "galtan": 1.82
+        },
+        "detail": "Position du parti FI dans l’enquête CHES 2024."
+      },
+      "competence": {
+        "valeur": 0.4,
+        "statut": "estimation",
+        "facteurs": [
+          {
+            "libelle": "Base de l’estimation",
+            "valeur": 0.3
+          },
+          {
+            "libelle": "9 ans de mandats parlementaires cumulés",
+            "valeur": 0.05
+          },
+          {
+            "libelle": "Direction d’un parti, d’un groupe, d’une assemblée ou d’une commission",
+            "valeur": 0.05
+          }
+        ]
+      },
+      "notoriete": {
+        "niveau": 2,
+        "motif": "Présidente du groupe LFI à l’Assemblée nationale"
+      },
+      "photo": {
+        "fichier": "gouvernement/figure-panot.webp",
+        "auteur": "original : Antoine Stouls modification : O.Taris",
+        "licence": "CC BY 4.0",
+        "licenceUrl": "https://creativecommons.org/licenses/by/4.0",
+        "source": "https://commons.wikimedia.org/wiki/File:Mathilde_Panot_2021-3.jpg",
+        "modification": "Redimensionnée (240 pixels de large) et convertie en WebP ; métadonnées retirées."
+      },
+      "photoAbsente": null
+    },
+    {
+      "id": "figure-bompard",
+      "prenom": "Manuel",
+      "nom": "Bompard",
+      "parti": "La France insoumise",
+      "groupe": "lfi-nfp",
+      "wikidata": "Q29575749",
+      "article": "https://fr.wikipedia.org/w/index.php?title=Manuel_Bompard&oldid=240615624",
+      "fonctions": [
+        {
+          "libelle": "Coordinateur de La France insoumise",
+          "debut": "2022-12-10",
+          "fin": null,
+          "enCours": true,
+          "nature": "direction"
+        },
+        {
+          "libelle": "Député français",
+          "debut": "2022-06-22",
+          "fin": null,
+          "enCours": true,
+          "nature": "parlementaire"
+        },
+        {
+          "libelle": "Député européen",
+          "debut": "2019-07-02",
+          "fin": "2022-07-28",
+          "enCours": false,
+          "nature": "parlementaire"
+        },
+        {
+          "libelle": "Secrétaire national du Parti de gauche chargé des Pratiques citoyennes, de la Sixième République et du Suivi des régions",
+          "debut": "2010",
+          "fin": "2018",
+          "enCours": false,
+          "nature": "direction"
+        }
+      ],
+      "position": {
+        "economie": -82,
+        "societe": -64,
+        "statut": "estimation",
+        "methode": "parti",
+        "partisReference": ["FI"],
+        "vague": 2024,
+        "ches": {
+          "lrecon": 0.91,
+          "galtan": 1.82
+        },
+        "detail": "Position du parti FI dans l’enquête CHES 2024."
+      },
+      "competence": {
+        "valeur": 0.4,
+        "statut": "estimation",
+        "facteurs": [
+          {
+            "libelle": "Base de l’estimation",
+            "valeur": 0.3
+          },
+          {
+            "libelle": "7 ans de mandats parlementaires cumulés",
+            "valeur": 0.05
+          },
+          {
+            "libelle": "Direction d’un parti, d’un groupe, d’une assemblée ou d’une commission",
+            "valeur": 0.05
+          }
+        ]
+      },
+      "notoriete": {
+        "niveau": 3,
+        "motif": "Coordinateur de La France insoumise (groupe de 70 députés à l’Assemblée nationale)"
+      },
+      "photo": null,
+      "photoAbsente": "Photo non reprise : licence non reconnue comme libre (European Parliament)."
+    },
+    {
+      "id": "figure-coquerel",
+      "prenom": "Éric",
+      "nom": "Coquerel",
+      "parti": "La France insoumise",
+      "groupe": "lfi-nfp",
+      "wikidata": "Q17485936",
+      "article": "https://fr.wikipedia.org/w/index.php?title=%C3%89ric_Coquerel&oldid=240568424",
+      "fonctions": [
+        {
+          "libelle": "Président de la commission des Finances de l’Assemblée nationale",
+          "debut": "2022-06-30",
+          "fin": null,
+          "enCours": true,
+          "nature": "direction"
+        },
+        {
+          "libelle": "Député français",
+          "debut": "2017-06-21",
+          "fin": null,
+          "enCours": true,
+          "nature": "parlementaire"
+        },
+        {
+          "libelle": "Coordinateur puis co-coordinateur du Parti de gauche",
+          "debut": "2014-08-23",
+          "fin": "2021-03-31",
+          "enCours": false,
+          "nature": "direction"
+        },
+        {
+          "libelle": "Conseiller régional d'Île-de-France",
+          "debut": "2010-03-26",
+          "fin": "2017-11-16",
+          "enCours": false,
+          "nature": "autre"
+        }
+      ],
+      "position": {
+        "economie": -82,
+        "societe": -64,
+        "statut": "estimation",
+        "methode": "parti",
+        "partisReference": ["FI"],
+        "vague": 2024,
+        "ches": {
+          "lrecon": 0.91,
+          "galtan": 1.82
+        },
+        "detail": "Position du parti FI dans l’enquête CHES 2024."
+      },
+      "competence": {
+        "valeur": 0.4,
+        "statut": "estimation",
+        "facteurs": [
+          {
+            "libelle": "Base de l’estimation",
+            "valeur": 0.3
+          },
+          {
+            "libelle": "9 ans de mandats parlementaires cumulés",
+            "valeur": 0.05
+          },
+          {
+            "libelle": "Direction d’un parti, d’un groupe, d’une assemblée ou d’une commission",
+            "valeur": 0.05
+          }
+        ]
+      },
+      "notoriete": {
+        "niveau": 2,
+        "motif": "Président de la commission des Finances de l’Assemblée nationale"
+      },
+      "photo": {
+        "fichier": "gouvernement/figure-coquerel.webp",
+        "auteur": "Marche des fiertés de Paris 2017-14.jpg : Jérémie Silvestro Derivative work : Keymap9",
+        "licence": "CC BY-SA 4.0",
+        "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+        "source": "https://commons.wikimedia.org/wiki/File:Eric_Coquerel_en_2017.jpg",
+        "modification": "Redimensionnée (240 pixels de large) et convertie en WebP ; métadonnées retirées."
+      },
+      "photoAbsente": null
+    },
+    {
+      "id": "figure-borne",
+      "prenom": "Élisabeth",
+      "nom": "Borne",
+      "parti": "Renaissance",
+      "groupe": "epr",
+      "wikidata": "Q20020731",
+      "article": "https://fr.wikipedia.org/w/index.php?title=%C3%89lisabeth_Borne&oldid=240523260",
+      "fonctions": [
+        {
+          "libelle": "Députée française",
+          "debut": "2025-11-13",
+          "fin": null,
+          "enCours": true,
+          "nature": "parlementaire"
+        },
+        {
+          "libelle": "Ministre d'État Ministre de l'Éducation nationale, de l'Enseignement supérieur et de la Recherche",
+          "debut": "2024-12-23",
+          "fin": "2025-10-12",
+          "enCours": false,
+          "nature": "ministre"
+        },
+        {
+          "libelle": "Présidente du Conseil national de Renaissance",
+          "debut": "2024-12-08",
+          "fin": "2026-05-06",
+          "enCours": false,
+          "nature": "direction"
+        },
+        {
+          "libelle": "Première ministre française chargée de la Planification écologique et énergétique",
+          "debut": "2022-05-16",
+          "fin": "2024-01-09",
+          "enCours": false,
+          "nature": "premier-ministre"
+        },
+        {
+          "libelle": "Ministre du Travail, de l'Emploi et de l'Insertion",
+          "debut": "2020-07-06",
+          "fin": "2022-05-16",
+          "enCours": false,
+          "nature": "ministre"
+        },
+        {
+          "libelle": "Ministre de la Transition écologique et solidaire",
+          "debut": "2019-07-16",
+          "fin": "2020-07-06",
+          "enCours": false,
+          "nature": "ministre"
+        },
+        {
+          "libelle": "Ministre chargée des Transports",
+          "debut": "2017-05-17",
+          "fin": "2019-07-16",
+          "enCours": false,
+          "nature": "ministre"
+        },
+        {
+          "libelle": "Présidente-directrice générale de la Régie autonome des transports parisiens",
+          "debut": "2015-05-21",
+          "fin": "2017-05-17",
+          "enCours": false,
+          "nature": "autre"
+        },
+        {
+          "libelle": "Préfète du Poitou-Charentes et de la Vienne",
+          "debut": "2013-02-01",
+          "fin": "2014-04-23",
+          "enCours": false,
+          "nature": "autre"
+        }
+      ],
+      "position": {
+        "economie": 24,
+        "societe": -18,
+        "statut": "estimation",
+        "methode": "parti",
+        "partisReference": ["RE"],
+        "vague": 2024,
+        "ches": {
+          "lrecon": 6.18,
+          "galtan": 4.09
+        },
+        "detail": "Position du parti RE dans l’enquête CHES 2024."
+      },
+      "competence": {
+        "valeur": 0.9,
+        "statut": "estimation",
+        "facteurs": [
+          {
+            "libelle": "Base de l’estimation",
+            "valeur": 0.3
+          },
+          {
+            "libelle": "Premier ministre (en fonction ou ancien)",
+            "valeur": 0.3
+          },
+          {
+            "libelle": "4 fonctions de ministre",
+            "valeur": 0.25
+          },
+          {
+            "libelle": "Direction d’un parti, d’un groupe, d’une assemblée ou d’une commission",
+            "valeur": 0.05
+          }
+        ]
+      },
+      "notoriete": {
+        "niveau": 3,
+        "motif": "Première ministre française chargée de la Planification écologique et énergétique (ancien)"
+      },
+      "photo": {
+        "fichier": "gouvernement/figure-borne.webp",
+        "auteur": "Andrea Adriani © European Union 2022",
+        "licence": "CC BY-SA 4.0",
+        "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+        "source": "https://commons.wikimedia.org/wiki/File:Elisabeth_Borne_November_2022_close-up.jpg",
+        "modification": "Redimensionnée (240 pixels de large) et convertie en WebP ; métadonnées retirées."
+      },
+      "photoAbsente": null
+    },
+    {
+      "id": "figure-darmanin",
+      "prenom": "Gérald",
+      "nom": "Darmanin",
+      "parti": "Renaissance",
+      "groupe": "epr",
+      "wikidata": "Q3123610",
+      "article": "https://fr.wikipedia.org/w/index.php?title=G%C3%A9rald_Darmanin&oldid=240592460",
+      "fonctions": [
+        {
+          "libelle": "Garde des Sceaux, ministre de la Justice",
+          "debut": "2024-12-23",
+          "fin": null,
+          "enCours": true,
+          "nature": "ministre"
+        },
+        {
+          "libelle": "Premier adjoint au maire de Tourcoing",
+          "debut": "2026-03-28",
+          "fin": null,
+          "enCours": true,
+          "nature": "autre"
+        },
+        {
+          "libelle": "Député français",
+          "debut": "2024-07-08",
+          "fin": "2025-01-23",
+          "enCours": false,
+          "nature": "parlementaire"
+        },
+        {
+          "libelle": "Ministre de l'Intérieur et des Outre-mer",
+          "debut": "2020-07-06",
+          "fin": "2024-09-21",
+          "enCours": false,
+          "nature": "ministre"
+        },
+        {
+          "libelle": "Conseiller départemental du Nord",
+          "debut": "2021-07-01",
+          "fin": "2022-08-28",
+          "enCours": false,
+          "nature": "autre"
+        },
+        {
+          "libelle": "Maire de Tourcoing",
+          "debut": "2020",
+          "fin": "2020-09-03",
+          "enCours": false,
+          "nature": "executif-local"
+        },
+        {
+          "libelle": "Ministre de l'Action et des Comptes publics",
+          "debut": "2017-05-17",
+          "fin": "2020-07-06",
+          "enCours": false,
+          "nature": "ministre"
+        },
+        {
+          "libelle": "Vice-président du conseil régional des Hauts-de-France",
+          "debut": "2016-01-04",
+          "fin": "2017-05-17",
+          "enCours": false,
+          "nature": "autre"
+        },
+        {
+          "libelle": "Conseiller régional des Hauts-de-France",
+          "debut": "2016-01-04",
+          "fin": "2020-07-06",
+          "enCours": false,
+          "nature": "autre"
+        },
+        {
+          "libelle": "Conseiller régional du Nord-Pas-de-Calais",
+          "debut": "2010-03-26",
+          "fin": "2014-03-30",
+          "enCours": false,
+          "nature": "autre"
+        }
+      ],
+      "position": {
+        "economie": 24,
+        "societe": -18,
+        "statut": "estimation",
+        "methode": "parti",
+        "partisReference": ["RE"],
+        "vague": 2024,
+        "ches": {
+          "lrecon": 6.18,
+          "galtan": 4.09
+        },
+        "detail": "Position du parti RE dans l’enquête CHES 2024."
+      },
+      "competence": {
+        "valeur": 0.6,
+        "statut": "estimation",
+        "facteurs": [
+          {
+            "libelle": "Base de l’estimation",
+            "valeur": 0.3
+          },
+          {
+            "libelle": "3 fonctions de ministre",
+            "valeur": 0.25
+          },
+          {
+            "libelle": "Exécutif local",
+            "valeur": 0.05
+          }
+        ]
+      },
+      "notoriete": {
+        "niveau": 2,
+        "motif": "Garde des Sceaux, ministre de la Justice"
+      },
+      "photo": {
+        "fichier": "gouvernement/figure-darmanin.webp",
+        "auteur": "UK Home Office",
+        "licence": "CC BY 2.5",
+        "licenceUrl": "https://creativecommons.org/licenses/by/2.5",
+        "source": "https://commons.wikimedia.org/wiki/File:G%C3%A9rald_Darmanin_in_2022.jpg",
+        "modification": "Redimensionnée (240 pixels de large) et convertie en WebP ; métadonnées retirées."
+      },
+      "photoAbsente": null
+    },
+    {
+      "id": "figure-braun-pivet",
+      "prenom": "Yaël",
+      "nom": "Braun-Pivet",
+      "parti": "Renaissance",
+      "groupe": "epr",
+      "wikidata": "Q30339422",
+      "article": "https://fr.wikipedia.org/w/index.php?title=Ya%C3%ABl_Braun-Pivet&oldid=239994034",
+      "fonctions": [
+        {
+          "libelle": "Présidente de l'Assemblée nationale",
+          "debut": "2022-06-28",
+          "fin": null,
+          "enCours": true,
+          "nature": "direction"
+        },
+        {
+          "libelle": "Députée française",
+          "debut": "2017-06-21",
+          "fin": null,
+          "enCours": true,
+          "nature": "parlementaire"
+        },
+        {
+          "libelle": "Ministre des Outre-mer",
+          "debut": null,
+          "fin": "2022-06-25",
+          "enCours": false,
+          "nature": "ministre"
+        },
+        {
+          "libelle": "Présidente de la commission des Lois de l'Assemblée nationale",
+          "debut": "2017-06-30",
+          "fin": "2022-06-20",
+          "enCours": false,
+          "nature": "direction"
+        }
+      ],
+      "position": {
+        "economie": 24,
+        "societe": -18,
+        "statut": "estimation",
+        "methode": "parti",
+        "partisReference": ["RE"],
+        "vague": 2024,
+        "ches": {
+          "lrecon": 6.18,
+          "galtan": 4.09
+        },
+        "detail": "Position du parti RE dans l’enquête CHES 2024."
+      },
+      "competence": {
+        "valeur": 0.55,
+        "statut": "estimation",
+        "facteurs": [
+          {
+            "libelle": "Base de l’estimation",
+            "valeur": 0.3
+          },
+          {
+            "libelle": "1 fonction de ministre",
+            "valeur": 0.15
+          },
+          {
+            "libelle": "9 ans de mandats parlementaires cumulés",
+            "valeur": 0.05
+          },
+          {
+            "libelle": "Direction d’un parti, d’un groupe, d’une assemblée ou d’une commission",
+            "valeur": 0.05
+          }
+        ]
+      },
+      "notoriete": {
+        "niveau": 2,
+        "motif": "Ministre des Outre-mer"
+      },
+      "photo": {
+        "fichier": "gouvernement/figure-braun-pivet.webp",
+        "auteur": "Houses of the Oireachtas from Ireland",
+        "licence": "CC BY 2.0",
+        "licenceUrl": "https://creativecommons.org/licenses/by/2.0",
+        "source": "https://commons.wikimedia.org/wiki/File:Ya%C3%ABl_Braun-Pivet_2023_(cropped).jpg",
+        "modification": "Redimensionnée (240 pixels de large) et convertie en WebP ; métadonnées retirées."
+      },
+      "photoAbsente": null
+    },
+    {
+      "id": "figure-lecornu",
+      "prenom": "Sébastien",
+      "nom": "Lecornu",
+      "parti": "Renaissance",
+      "groupe": "epr",
+      "wikidata": "Q20089181",
+      "article": "https://fr.wikipedia.org/w/index.php?title=S%C3%A9bastien_Lecornu&oldid=240418778",
+      "fonctions": [
+        {
+          "libelle": "Premier ministre français chargé de la Planification écologique et énergétique",
+          "debut": "2025-09-09",
+          "fin": null,
+          "enCours": true,
+          "nature": "premier-ministre"
+        },
+        {
+          "libelle": "Premier adjoint au maire de Vernon",
+          "debut": "2026-03-20",
+          "fin": null,
+          "enCours": true,
+          "nature": "autre"
+        },
+        {
+          "libelle": "Vice-président de Seine Normandie Agglomération",
+          "debut": "2026-04-09",
+          "fin": null,
+          "enCours": true,
+          "nature": "autre"
+        },
+        {
+          "libelle": "Conseiller départemental de l'Eure",
+          "debut": "2015-04-02",
+          "fin": null,
+          "enCours": true,
+          "nature": "autre"
+        },
+        {
+          "libelle": "Ministre des Armées",
+          "debut": "2025",
+          "fin": "2025-10-12",
+          "enCours": false,
+          "nature": "ministre"
+        },
+        {
+          "libelle": "Président du conseil départemental de l'Eure",
+          "debut": "2021-07-01",
+          "fin": "2022-12-16",
+          "enCours": false,
+          "nature": "executif-local"
+        },
+        {
+          "libelle": "Sénateur français",
+          "debut": null,
+          "fin": "2020-11-01",
+          "enCours": false,
+          "nature": "parlementaire"
+        },
+        {
+          "libelle": "Ministre des Outre-mer",
+          "debut": "2020-07-06",
+          "fin": "2022-05-20",
+          "enCours": false,
+          "nature": "ministre"
+        },
+        {
+          "libelle": "Ministre chargé des Collectivités territoriales",
+          "debut": "2018-10-16",
+          "fin": "2020-07-06",
+          "enCours": false,
+          "nature": "ministre"
+        },
+        {
+          "libelle": "Secrétaire d'État auprès du ministre de la Transition écologique et solidaire",
+          "debut": "2017-06-21",
+          "fin": "2018-10-16",
+          "enCours": false,
+          "nature": "secretaire-etat"
+        },
+        {
+          "libelle": "Maire de Vernon",
+          "debut": "2014-04-05",
+          "fin": "2015-12-04",
+          "enCours": false,
+          "nature": "executif-local"
+        }
+      ],
+      "position": {
+        "economie": 24,
+        "societe": -18,
+        "statut": "estimation",
+        "methode": "parti",
+        "partisReference": ["RE"],
+        "vague": 2024,
+        "ches": {
+          "lrecon": 6.18,
+          "galtan": 4.09
+        },
+        "detail": "Position du parti RE dans l’enquête CHES 2024."
+      },
+      "competence": {
+        "valeur": 0.9,
+        "statut": "estimation",
+        "facteurs": [
+          {
+            "libelle": "Base de l’estimation",
+            "valeur": 0.3
+          },
+          {
+            "libelle": "Premier ministre (en fonction ou ancien)",
+            "valeur": 0.3
+          },
+          {
+            "libelle": "3 fonctions de ministre",
+            "valeur": 0.25
+          },
+          {
+            "libelle": "1 fonction de secrétaire d’État ou de ministre délégué",
+            "valeur": 0.05
+          },
+          {
+            "libelle": "Exécutif local",
+            "valeur": 0.05
+          },
+          {
+            "libelle": "Plafond de l’estimation (0,90)",
+            "valeur": -0.05
+          }
+        ]
+      },
+      "notoriete": {
+        "niveau": 3,
+        "motif": "Premier ministre français chargé de la Planification écologique et énergétique"
+      },
+      "photo": {
+        "fichier": "gouvernement/figure-lecornu.webp",
+        "auteur": "U.S. Secretary of Defense",
+        "licence": "Public domain",
+        "licenceUrl": null,
+        "source": "https://commons.wikimedia.org/wiki/File:S%C3%A9bastien_Lecornu_2024_(2x3_crop).jpg",
+        "modification": "Redimensionnée (240 pixels de large) et convertie en WebP ; métadonnées retirées."
+      },
+      "photoAbsente": null
+    },
+    {
+      "id": "figure-faure",
+      "prenom": "Olivier",
+      "nom": "Faure",
+      "parti": "Parti socialiste",
+      "groupe": "soc",
+      "wikidata": "Q3351018",
+      "article": "https://fr.wikipedia.org/w/index.php?title=Olivier_Faure&oldid=240579524",
+      "fonctions": [
+        {
+          "libelle": "Premier secrétaire du Parti socialiste",
+          "debut": "2018-04-07",
+          "fin": null,
+          "enCours": true,
+          "nature": "direction"
+        },
+        {
+          "libelle": "Député français",
+          "debut": "2012-06-20",
+          "fin": null,
+          "enCours": true,
+          "nature": "parlementaire"
+        },
+        {
+          "libelle": "Président du groupe socialiste à l’Assemblée nationale",
+          "debut": "2016-12-13",
+          "fin": "2018-04-11",
+          "enCours": false,
+          "nature": "direction"
+        },
+        {
+          "libelle": "Porte-parole du Parti socialiste",
+          "debut": "2014-08-26",
+          "fin": "2016-12-17",
+          "enCours": false,
+          "nature": "autre"
+        }
+      ],
+      "position": {
+        "economie": -33,
+        "societe": -45,
+        "statut": "estimation",
+        "methode": "parti",
+        "partisReference": ["PS"],
+        "vague": 2024,
+        "ches": {
+          "lrecon": 3.36,
+          "galtan": 2.73
+        },
+        "detail": "Position du parti PS dans l’enquête CHES 2024."
+      },
+      "competence": {
+        "valeur": 0.45,
+        "statut": "estimation",
+        "facteurs": [
+          {
+            "libelle": "Base de l’estimation",
+            "valeur": 0.3
+          },
+          {
+            "libelle": "14 ans de mandats parlementaires cumulés",
+            "valeur": 0.1
+          },
+          {
+            "libelle": "Direction d’un parti, d’un groupe, d’une assemblée ou d’une commission",
+            "valeur": 0.05
+          }
+        ]
+      },
+      "notoriete": {
+        "niveau": 3,
+        "motif": "Premier secrétaire du Parti socialiste (groupe de 68 députés à l’Assemblée nationale)"
+      },
+      "photo": {
+        "fichier": "gouvernement/figure-faure.webp",
+        "auteur": "Olivier Faure",
+        "licence": "CC BY-SA 2.0",
+        "licenceUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+        "source": "https://commons.wikimedia.org/wiki/File:Portrait_d'Olivier_Faure.jpg",
+        "modification": "Redimensionnée (240 pixels de large) et convertie en WebP ; métadonnées retirées."
+      },
+      "photoAbsente": null
+    },
+    {
+      "id": "figure-vallaud",
+      "prenom": "Boris",
+      "nom": "Vallaud",
+      "parti": "Parti socialiste",
+      "groupe": "soc",
+      "wikidata": "Q29021094",
+      "article": "https://fr.wikipedia.org/w/index.php?title=Boris_Vallaud&oldid=239852242",
+      "fonctions": [
+        {
+          "libelle": "Président du groupe socialiste à l'Assemblée nationale",
+          "debut": "2022-06-28",
+          "fin": null,
+          "enCours": true,
+          "nature": "direction"
+        },
+        {
+          "libelle": "Député français",
+          "debut": "2017-06-21",
+          "fin": null,
+          "enCours": true,
+          "nature": "parlementaire"
+        },
+        {
+          "libelle": "Conseiller départemental des Landes",
+          "debut": "2021-07-01",
+          "fin": null,
+          "enCours": true,
+          "nature": "autre"
+        },
+        {
+          "libelle": "Porte-parole du Parti socialiste",
+          "debut": "2018-04-15",
+          "fin": "2023-04-12",
+          "enCours": false,
+          "nature": "autre"
+        },
+        {
+          "libelle": "Conseiller auprès du président de la République française",
+          "debut": "2017-01-01",
+          "fin": "2017-05-15",
+          "enCours": false,
+          "nature": "autre"
+        },
+        {
+          "libelle": "Secrétaire général adjoint de la présidence de la République française",
+          "debut": "2014-11-17",
+          "fin": "2016-12-30",
+          "enCours": false,
+          "nature": "direction"
+        }
+      ],
+      "position": {
+        "economie": -33,
+        "societe": -45,
+        "statut": "estimation",
+        "methode": "parti",
+        "partisReference": ["PS"],
+        "vague": 2024,
+        "ches": {
+          "lrecon": 3.36,
+          "galtan": 2.73
+        },
+        "detail": "Position du parti PS dans l’enquête CHES 2024."
+      },
+      "competence": {
+        "valeur": 0.4,
+        "statut": "estimation",
+        "facteurs": [
+          {
+            "libelle": "Base de l’estimation",
+            "valeur": 0.3
+          },
+          {
+            "libelle": "9 ans de mandats parlementaires cumulés",
+            "valeur": 0.05
+          },
+          {
+            "libelle": "Direction d’un parti, d’un groupe, d’une assemblée ou d’une commission",
+            "valeur": 0.05
+          }
+        ]
+      },
+      "notoriete": {
+        "niveau": 2,
+        "motif": "Président du groupe socialiste à l'Assemblée nationale"
+      },
+      "photo": {
+        "fichier": "gouvernement/figure-vallaud.webp",
+        "auteur": "Bloody-libu",
+        "licence": "CC BY-SA 4.0",
+        "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+        "source": "https://commons.wikimedia.org/wiki/File:Boris_Vallaud_en_2023.jpg",
+        "modification": "Redimensionnée (240 pixels de large) et convertie en WebP ; métadonnées retirées."
+      },
+      "photoAbsente": null
+    },
+    {
+      "id": "figure-delga",
+      "prenom": "Carole",
+      "nom": "Delga",
+      "parti": "Parti socialiste",
+      "groupe": "soc",
+      "wikidata": "Q2939880",
+      "article": "https://fr.wikipedia.org/w/index.php?title=Carole_Delga&oldid=239496419",
+      "fonctions": [
+        {
+          "libelle": "Présidente des Régions de France",
+          "debut": "2021-07-09",
+          "fin": null,
+          "enCours": true,
+          "nature": "direction"
+        },
+        {
+          "libelle": "Présidente du conseil régional d’Occitanie",
+          "debut": "2016-01-04",
+          "fin": null,
+          "enCours": true,
+          "nature": "executif-local"
+        },
+        {
+          "libelle": "Députée française",
+          "debut": "2015-07-18",
+          "fin": "2017-06-20",
+          "enCours": false,
+          "nature": "parlementaire"
+        },
+        {
+          "libelle": "Secrétaire d'État chargée du Commerce, de l'Artisanat, de la Consommation et de l'Économie sociale et solidaire",
+          "debut": "2014-06-03",
+          "fin": "2015-06-17",
+          "enCours": false,
+          "nature": "secretaire-etat"
+        },
+        {
+          "libelle": "Vice-présidente du conseil régional de Midi-Pyrénées",
+          "debut": "2010-03-26",
+          "fin": "2012-09-01",
+          "enCours": false,
+          "nature": "autre"
+        },
+        {
+          "libelle": "Maire de Martres-Tolosane",
+          "debut": "2008-03-16",
+          "fin": "2014-07-04",
+          "enCours": false,
+          "nature": "executif-local"
+        },
+        {
+          "libelle": "Présidente de la Fédération nationale des élus socialistes et républicains",
+          "debut": "2022-08-25",
+          "fin": "2023-06-12",
+          "enCours": false,
+          "nature": "direction"
+        }
+      ],
+      "position": {
+        "economie": -33,
+        "societe": -45,
+        "statut": "estimation",
+        "methode": "parti",
+        "partisReference": ["PS"],
+        "vague": 2024,
+        "ches": {
+          "lrecon": 3.36,
+          "galtan": 2.73
+        },
+        "detail": "Position du parti PS dans l’enquête CHES 2024."
+      },
+      "competence": {
+        "valeur": 0.45,
+        "statut": "estimation",
+        "facteurs": [
+          {
+            "libelle": "Base de l’estimation",
+            "valeur": 0.3
+          },
+          {
+            "libelle": "1 fonction de secrétaire d’État ou de ministre délégué",
+            "valeur": 0.05
+          },
+          {
+            "libelle": "Exécutif local",
+            "valeur": 0.05
+          },
+          {
+            "libelle": "Direction d’un parti, d’un groupe, d’une assemblée ou d’une commission",
+            "valeur": 0.05
+          }
+        ]
+      },
+      "notoriete": {
+        "niveau": 2,
+        "motif": "Secrétaire d'État chargée du Commerce, de l'Artisanat, de la Consommation et de l'Économie sociale et solidaire"
+      },
+      "photo": {
+        "fichier": "gouvernement/figure-delga.webp",
+        "auteur": "Clément Bucco-Lechat",
+        "licence": "CC BY-SA 3.0",
+        "licenceUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+        "source": "https://commons.wikimedia.org/wiki/File:Carole_Delga.jpg",
+        "modification": "Redimensionnée (240 pixels de large) et convertie en WebP ; métadonnées retirées."
+      },
+      "photoAbsente": null
+    },
+    {
+      "id": "figure-wauquiez",
+      "prenom": "Laurent",
+      "nom": "Wauquiez",
+      "parti": "Les Républicains",
+      "groupe": "dr",
+      "wikidata": "Q984375",
+      "article": "https://fr.wikipedia.org/w/index.php?title=Laurent_Wauquiez&oldid=240253315",
+      "fonctions": [
+        {
+          "libelle": "Président du groupe Droite républicaine à l'Assemblée nationale",
+          "debut": "2024-07-10",
+          "fin": null,
+          "enCours": true,
+          "nature": "direction"
+        },
+        {
+          "libelle": "Député français",
+          "debut": "2024-07-08",
+          "fin": null,
+          "enCours": true,
+          "nature": "parlementaire"
+        },
+        {
+          "libelle": "Président du conseil régional d'Auvergne-Rhône-Alpes",
+          "debut": "2016-01-04",
+          "fin": "2024-09-04",
+          "enCours": false,
+          "nature": "executif-local"
+        },
+        {
+          "libelle": "Président des Républicains",
+          "debut": "2017-12-10",
+          "fin": "2019-06-02",
+          "enCours": false,
+          "nature": "direction"
+        },
+        {
+          "libelle": "Vice-président délégué puis premier vice-président des Républicains",
+          "debut": "2015-12-15",
+          "fin": "2017-12-10",
+          "enCours": false,
+          "nature": "autre"
+        },
+        {
+          "libelle": "Secrétaire général de l'Union pour un mouvement populaire puis des Républicains",
+          "debut": "2014-12-05",
+          "fin": "2015-12-15",
+          "enCours": false,
+          "nature": "direction"
+        },
+        {
+          "libelle": "Ministre de l'Enseignement supérieur et de la Recherche",
+          "debut": "2011-06-29",
+          "fin": "2012-05-10",
+          "enCours": false,
+          "nature": "ministre"
+        },
+        {
+          "libelle": "Ministre chargé des Affaires européennes",
+          "debut": "2010-11-14",
+          "fin": "2011-06-29",
+          "enCours": false,
+          "nature": "ministre"
+        },
+        {
+          "libelle": "Secrétaire d'État chargé de l'Emploi",
+          "debut": "2008-03-18",
+          "fin": "2010-11-14",
+          "enCours": false,
+          "nature": "secretaire-etat"
+        },
+        {
+          "libelle": "Secrétaire d'État auprès du Premier ministre Porte-parole du gouvernement",
+          "debut": "2007-06-18",
+          "fin": "2008-03-18",
+          "enCours": false,
+          "nature": "secretaire-etat"
+        },
+        {
+          "libelle": "Maire du Puy-en-Velay",
+          "debut": "2008-03-14",
+          "fin": "2016-01-29",
+          "enCours": false,
+          "nature": "executif-local"
+        }
+      ],
+      "position": {
+        "economie": 56,
+        "societe": 44,
+        "statut": "estimation",
+        "methode": "parti",
+        "partisReference": ["LR"],
+        "vague": 2024,
+        "ches": {
+          "lrecon": 7.82,
+          "galtan": 7.18
+        },
+        "detail": "Position du parti LR dans l’enquête CHES 2024."
+      },
+      "competence": {
+        "valeur": 0.7,
+        "statut": "estimation",
+        "facteurs": [
+          {
+            "libelle": "Base de l’estimation",
+            "valeur": 0.3
+          },
+          {
+            "libelle": "2 fonctions de ministre",
+            "valeur": 0.2
+          },
+          {
+            "libelle": "2 fonctions de secrétaire d’État ou de ministre délégué",
+            "valeur": 0.1
+          },
+          {
+            "libelle": "Exécutif local",
+            "valeur": 0.05
+          },
+          {
+            "libelle": "Direction d’un parti, d’un groupe, d’une assemblée ou d’une commission",
+            "valeur": 0.05
+          }
+        ]
+      },
+      "notoriete": {
+        "niveau": 2,
+        "motif": "Ministre de l'Enseignement supérieur et de la Recherche"
+      },
+      "photo": {
+        "fichier": "gouvernement/figure-wauquiez.webp",
+        "auteur": "European People's Party",
+        "licence": "CC BY 2.0",
+        "licenceUrl": "https://creativecommons.org/licenses/by/2.0",
+        "source": "https://commons.wikimedia.org/wiki/File:Laurent_Wauquiez_at_the_European_People's_Party_Summit%2C_Brussels_2018.jpg",
+        "modification": "Redimensionnée (240 pixels de large) et convertie en WebP ; métadonnées retirées."
+      },
+      "photoAbsente": null
+    },
+    {
+      "id": "figure-pecresse",
+      "prenom": "Valérie",
+      "nom": "Pécresse",
+      "parti": "Les Républicains",
+      "groupe": "dr",
+      "wikidata": "Q455023",
+      "article": "https://fr.wikipedia.org/w/index.php?title=Val%C3%A9rie_P%C3%A9cresse&oldid=240408505",
+      "fonctions": [
+        {
+          "libelle": "Présidente de Soyons libres",
+          "debut": "2017-09-10",
+          "fin": null,
+          "enCours": true,
+          "nature": "direction"
+        },
+        {
+          "libelle": "Présidente du conseil régional d'Île-de-France",
+          "debut": "2015-12-18",
+          "fin": null,
+          "enCours": true,
+          "nature": "executif-local"
+        },
+        {
+          "libelle": "Conseillère communautaire de Versailles Grand Parc",
+          "debut": "2020-07-07",
+          "fin": null,
+          "enCours": true,
+          "nature": "autre"
+        },
+        {
+          "libelle": "Conseillère municipale de Vélizy-Villacoublay",
+          "debut": "2020-05-25",
+          "fin": null,
+          "enCours": true,
+          "nature": "autre"
+        },
+        {
+          "libelle": "Conseillère régionale d'Île-de-France",
+          "debut": "2004-04-02",
+          "fin": null,
+          "enCours": true,
+          "nature": "autre"
+        },
+        {
+          "libelle": "Ministre du Budget, des Comptes publics et de la Réforme de l'État",
+          "debut": "2011-06-29",
+          "fin": "2012-05-10",
+          "enCours": false,
+          "nature": "ministre"
+        },
+        {
+          "libelle": "Porte-parole du gouvernement",
+          "debut": "2011-06-29",
+          "fin": "2012-05-10",
+          "enCours": false,
+          "nature": "autre"
+        },
+        {
+          "libelle": "Ministre de l'Enseignement supérieur et de la Recherche",
+          "debut": "2007-05-18",
+          "fin": "2011-06-29",
+          "enCours": false,
+          "nature": "ministre"
+        },
+        {
+          "libelle": "Députée française",
+          "debut": "2012-06-20",
+          "fin": "2016-01-20",
+          "enCours": false,
+          "nature": "parlementaire"
+        }
+      ],
+      "position": {
+        "economie": 56,
+        "societe": 44,
+        "statut": "estimation",
+        "methode": "parti",
+        "partisReference": ["LR"],
+        "vague": 2024,
+        "ches": {
+          "lrecon": 7.82,
+          "galtan": 7.18
+        },
+        "detail": "Position du parti LR dans l’enquête CHES 2024."
+      },
+      "competence": {
+        "valeur": 0.6,
+        "statut": "estimation",
+        "facteurs": [
+          {
+            "libelle": "Base de l’estimation",
+            "valeur": 0.3
+          },
+          {
+            "libelle": "2 fonctions de ministre",
+            "valeur": 0.2
+          },
+          {
+            "libelle": "Exécutif local",
+            "valeur": 0.05
+          },
+          {
+            "libelle": "Direction d’un parti, d’un groupe, d’une assemblée ou d’une commission",
+            "valeur": 0.05
+          }
+        ]
+      },
+      "notoriete": {
+        "niveau": 2,
+        "motif": "Ministre du Budget, des Comptes publics et de la Réforme de l'État"
+      },
+      "photo": {
+        "fichier": "gouvernement/figure-pecresse.webp",
+        "auteur": "Gail Leenstra",
+        "licence": "CC BY-SA 4.0",
+        "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+        "source": "https://commons.wikimedia.org/wiki/File:Val%C3%A9rie_P%C3%A9cresse_at_a_2024_Paralympic_Games_media_conference_in_2024_3_(cropped).jpg",
+        "modification": "Redimensionnée (240 pixels de large) et convertie en WebP ; métadonnées retirées."
+      },
+      "photoAbsente": null
+    },
+    {
+      "id": "figure-chatelain",
+      "prenom": "Cyrielle",
+      "nom": "Chatelain",
+      "parti": "Les Écologistes",
+      "groupe": "ecos",
+      "wikidata": "Q112648926",
+      "article": "https://fr.wikipedia.org/w/index.php?title=Cyrielle_Chatelain&oldid=237388032",
+      "fonctions": [
+        {
+          "libelle": "Présidente du groupe écologiste et social à l'Assemblée nationale",
+          "debut": "2022-06-23",
+          "fin": null,
+          "enCours": true,
+          "nature": "direction"
+        },
+        {
+          "libelle": "Députée française",
+          "debut": "2022-06-22",
+          "fin": null,
+          "enCours": true,
+          "nature": "parlementaire"
+        },
+        {
+          "libelle": "Secrétaire fédérale des Jeunes Verts",
+          "debut": "2008-08-24",
+          "fin": "2010-08-25",
+          "enCours": false,
+          "nature": "autre"
+        }
+      ],
+      "position": {
+        "economie": -54,
+        "societe": -66,
+        "statut": "estimation",
+        "methode": "parti",
+        "partisReference": ["LE/EELV"],
+        "vague": 2024,
+        "ches": {
+          "lrecon": 2.3,
+          "galtan": 1.7
+        },
+        "detail": "Position du parti LE/EELV dans l’enquête CHES 2024."
+      },
+      "competence": {
+        "valeur": 0.35,
+        "statut": "estimation",
+        "facteurs": [
+          {
+            "libelle": "Base de l’estimation",
+            "valeur": 0.3
+          },
+          {
+            "libelle": "Direction d’un parti, d’un groupe, d’une assemblée ou d’une commission",
+            "valeur": 0.05
+          }
+        ]
+      },
+      "notoriete": {
+        "niveau": 2,
+        "motif": "Présidente du groupe écologiste et social à l'Assemblée nationale"
+      },
+      "photo": {
+        "fichier": "gouvernement/figure-chatelain.webp",
+        "auteur": "GLaG 38 - Guillaume LAGET",
+        "licence": "CC BY-SA 4.0",
+        "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+        "source": "https://commons.wikimedia.org/wiki/File:Cyrielle_Chatelain_crop.jpg",
+        "modification": "Redimensionnée (240 pixels de large) et convertie en WebP ; métadonnées retirées."
+      },
+      "photoAbsente": null
+    },
+    {
+      "id": "figure-jadot",
+      "prenom": "Yannick",
+      "nom": "Jadot",
+      "parti": "Les Écologistes",
+      "groupe": "ecos",
+      "wikidata": "Q441791",
+      "article": "https://fr.wikipedia.org/w/index.php?title=Yannick_Jadot&oldid=240052469",
+      "fonctions": [
+        {
+          "libelle": "Sénateur français",
+          "debut": "2023-10-02",
+          "fin": "2023-10-02",
+          "enCours": false,
+          "nature": "parlementaire"
+        },
+        {
+          "libelle": "Député européen",
+          "debut": "2009-07-14",
+          "fin": "2023-09-23",
+          "enCours": false,
+          "nature": "parlementaire"
+        },
+        {
+          "libelle": "Vice-président de la Commission du commerce international du Parlement européen",
+          "debut": "2009",
+          "fin": "2019",
+          "enCours": false,
+          "nature": "autre"
+        }
+      ],
+      "position": {
+        "economie": -54,
+        "societe": -66,
+        "statut": "estimation",
+        "methode": "parti",
+        "partisReference": ["LE/EELV"],
+        "vague": 2024,
+        "ches": {
+          "lrecon": 2.3,
+          "galtan": 1.7
+        },
+        "detail": "Position du parti LE/EELV dans l’enquête CHES 2024."
+      },
+      "competence": {
+        "valeur": 0.4,
+        "statut": "estimation",
+        "facteurs": [
+          {
+            "libelle": "Base de l’estimation",
+            "valeur": 0.3
+          },
+          {
+            "libelle": "14 ans de mandats parlementaires cumulés",
+            "valeur": 0.1
+          }
+        ]
+      },
+      "notoriete": {
+        "niveau": 1,
+        "motif": "Aucune fonction retenue pour les niveaux 2 et 3."
+      },
+      "photo": null,
+      "photoAbsente": "Photo non reprise : licence non reconnue comme libre (European Parliament)."
+    },
+    {
+      "id": "figure-bayrou",
+      "prenom": "François",
+      "nom": "Bayrou",
+      "parti": "Mouvement démocrate",
+      "groupe": "dem",
+      "wikidata": "Q12963",
+      "article": "https://fr.wikipedia.org/w/index.php?title=Fran%C3%A7ois_Bayrou&oldid=240230804",
+      "fonctions": [
+        {
+          "libelle": "Président du Mouvement démocrate",
+          "debut": "2007-05-10",
+          "fin": null,
+          "enCours": true,
+          "nature": "direction"
+        },
+        {
+          "libelle": "Président du Parti démocrate européen",
+          "debut": "2004-12-09",
+          "fin": null,
+          "enCours": true,
+          "nature": "direction"
+        },
+        {
+          "libelle": "Président de la communauté d'agglomération Pau Béarn Pyrénées",
+          "debut": "2014-04-14",
+          "fin": "2026-04-17",
+          "enCours": false,
+          "nature": "executif-local"
+        },
+        {
+          "libelle": "Maire de Pau",
+          "debut": "2014-04-04",
+          "fin": "2026-03-27",
+          "enCours": false,
+          "nature": "executif-local"
+        },
+        {
+          "libelle": "Premier ministre français chargé de la Planification écologique et énergétique",
+          "debut": "2024-12-13",
+          "fin": "2025-09-09",
+          "enCours": false,
+          "nature": "premier-ministre"
+        },
+        {
+          "libelle": "Haut-commissaire au plan",
+          "debut": "2020-09-03",
+          "fin": "2025-03-05",
+          "enCours": false,
+          "nature": "autre"
+        },
+        {
+          "libelle": "Ministre d'État Garde des Sceaux, ministre de la Justice",
+          "debut": "2017",
+          "fin": "2017-06-21",
+          "enCours": false,
+          "nature": "ministre"
+        },
+        {
+          "libelle": "Député français",
+          "debut": "2002-06-19",
+          "fin": "2012-06-19",
+          "enCours": false,
+          "nature": "parlementaire"
+        },
+        {
+          "libelle": "Président de l'Union pour la démocratie française",
+          "debut": "1998-09-16",
+          "fin": "2007-11-30",
+          "enCours": false,
+          "nature": "direction"
+        },
+        {
+          "libelle": "Député européen",
+          "debut": "1999-07-20",
+          "fin": "2002-06-16",
+          "enCours": false,
+          "nature": "parlementaire"
+        },
+        {
+          "libelle": "Président du Centre des démocrates sociaux puis de Force démocrate",
+          "debut": "1994-12-10",
+          "fin": "1998-09-16",
+          "enCours": false,
+          "nature": "direction"
+        },
+        {
+          "libelle": "Ministre de l'Éducation nationale",
+          "debut": "1993-03-30",
+          "fin": "1997-06-02",
+          "enCours": false,
+          "nature": "ministre"
+        },
+        {
+          "libelle": "Président du conseil général des Pyrénées-Atlantiques",
+          "debut": "1992-04-02",
+          "fin": "2001-03-23",
+          "enCours": false,
+          "nature": "executif-local"
+        },
+        {
+          "libelle": "Conseiller général des Pyrénées-Atlantiques",
+          "debut": "1982-03-26",
+          "fin": "2008-03-21",
+          "enCours": false,
+          "nature": "autre"
+        }
+      ],
+      "position": {
+        "economie": 14,
+        "societe": -10,
+        "statut": "estimation",
+        "methode": "parti",
+        "partisReference": ["MoDem"],
+        "vague": 2024,
+        "ches": {
+          "lrecon": 5.7,
+          "galtan": 4.5
+        },
+        "detail": "Position du parti MoDem dans l’enquête CHES 2024."
+      },
+      "competence": {
+        "valeur": 0.9,
+        "statut": "estimation",
+        "facteurs": [
+          {
+            "libelle": "Base de l’estimation",
+            "valeur": 0.3
+          },
+          {
+            "libelle": "Premier ministre (en fonction ou ancien)",
+            "valeur": 0.3
+          },
+          {
+            "libelle": "2 fonctions de ministre",
+            "valeur": 0.2
+          },
+          {
+            "libelle": "12 ans de mandats parlementaires cumulés",
+            "valeur": 0.1
+          },
+          {
+            "libelle": "Exécutif local",
+            "valeur": 0.05
+          },
+          {
+            "libelle": "Direction d’un parti, d’un groupe, d’une assemblée ou d’une commission",
+            "valeur": 0.05
+          },
+          {
+            "libelle": "Plafond de l’estimation (0,90)",
+            "valeur": -0.1
+          }
+        ]
+      },
+      "notoriete": {
+        "niveau": 3,
+        "motif": "Premier ministre français chargé de la Planification écologique et énergétique (ancien)"
+      },
+      "photo": {
+        "fichier": "gouvernement/figure-bayrou.webp",
+        "auteur": "Service photographique de Matignon",
+        "licence": "Licence Ouverte",
+        "licenceUrl": "https://www.etalab.gouv.fr/licence-ouverte-open-licence",
+        "source": "https://commons.wikimedia.org/wiki/File:Bayrou_Matignon_(cropped).jpg",
+        "modification": "Redimensionnée (240 pixels de large) et convertie en WebP ; métadonnées retirées."
+      },
+      "photoAbsente": null
+    },
+    {
+      "id": "figure-fesneau",
+      "prenom": "Marc",
+      "nom": "Fesneau",
+      "parti": "Mouvement démocrate",
+      "groupe": "dem",
+      "wikidata": "Q6755549",
+      "article": "https://fr.wikipedia.org/w/index.php?title=Marc_Fesneau&oldid=236197196",
+      "fonctions": [
+        {
+          "libelle": "Président du groupe Les Démocrates à l'Assemblée nationale",
+          "debut": "2024-07-18",
+          "fin": null,
+          "enCours": true,
+          "nature": "direction"
+        },
+        {
+          "libelle": "Député français",
+          "debut": "2024-07-08",
+          "fin": null,
+          "enCours": true,
+          "nature": "parlementaire"
+        },
+        {
+          "libelle": "Conseiller régional du Centre-Val de Loire",
+          "debut": "2021-07-02",
+          "fin": null,
+          "enCours": true,
+          "nature": "autre"
+        },
+        {
+          "libelle": "Ministre de l'Agriculture et de la Souveraineté alimentaire",
+          "debut": "2022-05-20",
+          "fin": "2024",
+          "enCours": false,
+          "nature": "ministre"
+        },
+        {
+          "libelle": "Ministre délégué chargé des Relations avec le Parlement et de la Participation citoyenne",
+          "debut": "2018-10-16",
+          "fin": "2022-05-20",
+          "enCours": false,
+          "nature": "secretaire-etat"
+        },
+        {
+          "libelle": "Maire de Marchenoir",
+          "debut": "2008-03-21",
+          "fin": "2017-08-01",
+          "enCours": false,
+          "nature": "executif-local"
+        }
+      ],
+      "position": {
+        "economie": 14,
+        "societe": -10,
+        "statut": "estimation",
+        "methode": "parti",
+        "partisReference": ["MoDem"],
+        "vague": 2024,
+        "ches": {
+          "lrecon": 5.7,
+          "galtan": 4.5
+        },
+        "detail": "Position du parti MoDem dans l’enquête CHES 2024."
+      },
+      "competence": {
+        "valeur": 0.6,
+        "statut": "estimation",
+        "facteurs": [
+          {
+            "libelle": "Base de l’estimation",
+            "valeur": 0.3
+          },
+          {
+            "libelle": "1 fonction de ministre",
+            "valeur": 0.15
+          },
+          {
+            "libelle": "1 fonction de secrétaire d’État ou de ministre délégué",
+            "valeur": 0.05
+          },
+          {
+            "libelle": "Exécutif local",
+            "valeur": 0.05
+          },
+          {
+            "libelle": "Direction d’un parti, d’un groupe, d’une assemblée ou d’une commission",
+            "valeur": 0.05
+          }
+        ]
+      },
+      "notoriete": {
+        "niveau": 2,
+        "motif": "Ministre de l'Agriculture et de la Souveraineté alimentaire"
+      },
+      "photo": {
+        "fichier": "gouvernement/figure-fesneau.webp",
+        "auteur": "European Commission Audiovisual Center",
+        "licence": "CC BY 4.0",
+        "licenceUrl": "https://creativecommons.org/licenses/by/4.0",
+        "source": "https://commons.wikimedia.org/wiki/File:Marc_Fesneau_2024_(cropped).jpg",
+        "modification": "Redimensionnée (240 pixels de large) et convertie en WebP ; métadonnées retirées."
+      },
+      "photoAbsente": null
+    },
+    {
+      "id": "figure-estrosi",
+      "prenom": "Christian",
+      "nom": "Estrosi",
+      "parti": "Horizons",
+      "groupe": "hor",
+      "wikidata": "Q749029",
+      "article": "https://fr.wikipedia.org/w/index.php?title=Christian_Estrosi&oldid=240310067",
+      "fonctions": [
+        {
+          "libelle": "Président délégué du conseil régional de Provence-Alpes-Côte-d'Azur",
+          "debut": "2017-05-29",
+          "fin": null,
+          "enCours": true,
+          "nature": "autre"
+        },
+        {
+          "libelle": "Maire de Nice",
+          "debut": "2017-05-15",
+          "fin": "2026-03-27",
+          "enCours": false,
+          "nature": "executif-local"
+        },
+        {
+          "libelle": "Président de la métropole Nice Côte d'Azur",
+          "debut": "2012-01-09",
+          "fin": "2026-04-09",
+          "enCours": false,
+          "nature": "executif-local"
+        },
+        {
+          "libelle": "Premier adjoint au maire de Nice",
+          "debut": "2016-06-13",
+          "fin": "2017-05-15",
+          "enCours": false,
+          "nature": "autre"
+        },
+        {
+          "libelle": "Président du conseil régional de Provence-Alpes-Côte d'Azur",
+          "debut": "2015-12-18",
+          "fin": "2017-05-15",
+          "enCours": false,
+          "nature": "executif-local"
+        },
+        {
+          "libelle": "Ministre chargé de l'Industrie",
+          "debut": "2009-06-23",
+          "fin": "2010-11-13",
+          "enCours": false,
+          "nature": "ministre"
+        },
+        {
+          "libelle": "Secrétaire d'État chargé de l'Outre-Mer",
+          "debut": "2007-06-19",
+          "fin": "2008-03-17",
+          "enCours": false,
+          "nature": "secretaire-etat"
+        },
+        {
+          "libelle": "Ministre délégué à l'Aménagement du territoire",
+          "debut": "2005-06-02",
+          "fin": "2007-05-15",
+          "enCours": false,
+          "nature": "secretaire-etat"
+        },
+        {
+          "libelle": "Président du conseil général des Alpes-Maritimes",
+          "debut": "2003-09-18",
+          "fin": "2008-12-14",
+          "enCours": false,
+          "nature": "executif-local"
+        },
+        {
+          "libelle": "Député français",
+          "debut": "2010-12-14",
+          "fin": "2016-03-30",
+          "enCours": false,
+          "nature": "parlementaire"
+        },
+        {
+          "libelle": "Conseiller général des Alpes-Maritimes",
+          "debut": "2001-03-21",
+          "fin": "2008-03-20",
+          "enCours": false,
+          "nature": "autre"
+        }
+      ],
+      "position": {
+        "economie": 36,
+        "societe": 6,
+        "statut": "estimation",
+        "methode": "parti",
+        "partisReference": ["Horizons"],
+        "vague": 2024,
+        "ches": {
+          "lrecon": 6.8,
+          "galtan": 5.3
+        },
+        "detail": "Position du parti Horizons dans l’enquête CHES 2024."
+      },
+      "competence": {
+        "valeur": 0.65,
+        "statut": "estimation",
+        "facteurs": [
+          {
+            "libelle": "Base de l’estimation",
+            "valeur": 0.3
+          },
+          {
+            "libelle": "1 fonction de ministre",
+            "valeur": 0.15
+          },
+          {
+            "libelle": "2 fonctions de secrétaire d’État ou de ministre délégué",
+            "valeur": 0.1
+          },
+          {
+            "libelle": "5 ans de mandats parlementaires cumulés",
+            "valeur": 0.05
+          },
+          {
+            "libelle": "Exécutif local",
+            "valeur": 0.05
+          }
+        ]
+      },
+      "notoriete": {
+        "niveau": 2,
+        "motif": "Ministre chargé de l'Industrie"
+      },
+      "photo": {
+        "fichier": "gouvernement/figure-estrosi.webp",
+        "auteur": "Olivier Ezratty",
+        "licence": "CC BY-SA 3.0",
+        "licenceUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+        "source": "https://commons.wikimedia.org/wiki/File:Christian_Estrosi.jpg",
+        "modification": "Redimensionnée (240 pixels de large) et convertie en WebP ; métadonnées retirées."
+      },
+      "photoAbsente": null
+    },
+    {
+      "id": "figure-brossat",
+      "prenom": "Ian",
+      "nom": "Brossat",
+      "parti": "Parti communiste français",
+      "groupe": "gdr",
+      "wikidata": "Q3147241",
+      "article": "https://fr.wikipedia.org/w/index.php?title=Ian_Brossat&oldid=240072173",
+      "fonctions": [
+        {
+          "libelle": "Sénateur français",
+          "debut": "2023-10-02",
+          "fin": null,
+          "enCours": true,
+          "nature": "parlementaire"
+        },
+        {
+          "libelle": "Président de l'Association nationale des élus communistes et républicains",
+          "debut": "2019-05-05",
+          "fin": "2022-11-05",
+          "enCours": false,
+          "nature": "direction"
+        },
+        {
+          "libelle": "Porte-parole du Parti communiste français",
+          "debut": "2018-12-13",
+          "fin": null,
+          "enCours": true,
+          "nature": "autre"
+        },
+        {
+          "libelle": "Conseiller de la métropole du Grand Paris",
+          "debut": "2016-01-22",
+          "fin": null,
+          "enCours": true,
+          "nature": "autre"
+        },
+        {
+          "libelle": "Conseiller de Paris",
+          "debut": "2008-03-21",
+          "fin": null,
+          "enCours": true,
+          "nature": "autre"
+        },
+        {
+          "libelle": "Adjoint à la maire de Paris",
+          "debut": "2014-04-05",
+          "fin": "2023-10-05",
+          "enCours": false,
+          "nature": "autre"
+        }
+      ],
+      "position": {
+        "economie": -75,
+        "societe": -29,
+        "statut": "estimation",
+        "methode": "parti",
+        "partisReference": ["PCF"],
+        "vague": 2024,
+        "ches": {
+          "lrecon": 1.27,
+          "galtan": 3.55
+        },
+        "detail": "Position du parti PCF dans l’enquête CHES 2024."
+      },
+      "competence": {
+        "valeur": 0.35,
+        "statut": "estimation",
+        "facteurs": [
+          {
+            "libelle": "Base de l’estimation",
+            "valeur": 0.3
+          },
+          {
+            "libelle": "Direction d’un parti, d’un groupe, d’une assemblée ou d’une commission",
+            "valeur": 0.05
+          }
+        ]
+      },
+      "notoriete": {
+        "niveau": 1,
+        "motif": "Aucune fonction retenue pour les niveaux 2 et 3."
+      },
+      "photo": {
+        "fichier": "gouvernement/figure-brossat.webp",
+        "auteur": "Ismaelelhajri",
+        "licence": "CC BY-SA 4.0",
+        "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+        "source": "https://commons.wikimedia.org/wiki/File:Ian_BROSSAT_2017_(cropped)_(cropped).jpg",
+        "modification": "Redimensionnée (240 pixels de large) et convertie en WebP ; métadonnées retirées."
+      },
+      "photoAbsente": null
+    }
+  ],
+  "rattachements": [
+    {
+      "personnaliteId": "reel-attal",
+      "groupe": "epr",
+      "motif": "Parti « Renaissance » (étiquette de la fiche : Renaissance)."
+    },
+    {
+      "personnaliteId": "reel-becht",
+      "groupe": "epr",
+      "motif": "Parti « Renaissance » (étiquette de la fiche : Renaissance / Agir)."
+    },
+    {
+      "personnaliteId": "reel-bertrand",
+      "groupe": "dr",
+      "motif": "Parti « Les Républicains » (étiquette de la fiche : Nous France / Les Républicains)."
+    },
+    {
+      "personnaliteId": "reel-bouamrane",
+      "groupe": "soc",
+      "motif": "Parti « Parti socialiste » (étiquette de la fiche : Parti socialiste)."
+    },
+    {
+      "personnaliteId": "reel-le-pen",
+      "groupe": "rn",
+      "motif": "Parti « Rassemblement national » (étiquette de la fiche : Rassemblement national)."
+    },
+    {
+      "personnaliteId": "reel-melenchon",
+      "groupe": "lfi-nfp",
+      "motif": "Parti « La France insoumise » (étiquette de la fiche : La France insoumise)."
+    },
+    {
+      "personnaliteId": "reel-philippe",
+      "groupe": "hor",
+      "motif": "Parti « Horizons » (étiquette de la fiche : Horizons)."
+    },
+    {
+      "personnaliteId": "reel-retailleau",
+      "groupe": "dr",
+      "motif": "Parti « Les Républicains » (étiquette de la fiche : Les Républicains)."
+    },
+    {
+      "personnaliteId": "reel-roussel",
+      "groupe": "gdr",
+      "motif": "Parti « Parti communiste français » (étiquette de la fiche : Parti communiste français)."
+    },
+    {
+      "personnaliteId": "reel-tondelier",
+      "groupe": "ecos",
+      "motif": "Parti « Les Écologistes » (étiquette de la fiche : Les Écologistes)."
+    }
+  ]
+}

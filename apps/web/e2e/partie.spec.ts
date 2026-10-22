@@ -208,7 +208,7 @@ test('présidentielle complète puis quinquennat : deux tours, résultats, gouve
 
   await openScreen(page, 'Gouvernement');
   await expect(page.getByRole('heading', { name: 'Gouvernement n° 1' })).toBeVisible();
-  await expect(page.getByText('Premier ministre')).toBeVisible();
+  await expect(page.getByText('Premier ministre', { exact: true })).toBeVisible();
   const audit = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
     .analyze();

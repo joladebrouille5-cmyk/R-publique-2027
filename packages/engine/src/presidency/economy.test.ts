@@ -13,6 +13,7 @@ import { EngineInputError } from '../core/errors';
 import { newGame, playToEnd, QUIET, sponsorship } from '../core/testing';
 import { EconomyBook, openEconomy, scheduleEconomy, shareOfGdp } from './economy';
 import { openQuinquennat } from './government';
+import { memberTraits } from './members';
 
 // Phase 6 (P6-05 et P6-06) : économie sourcée, modèle de jeu, crises fictives.
 
@@ -197,19 +198,37 @@ describe('crises fictives', () => {
     expect(() => advanceWeek(state, { actions: [], decisions: [] }, { ruleset: certain })).toThrow(
       EngineInputError,
     );
+    // Les autres décisions de la semaine (ministères régaliens) : options par défaut.
+    const others = state.pendingDecisions
+      .filter((d) => d.id !== decision.id)
+      .map((d) => ({ decisionId: d.id, optionId: d.defaultOptionId }));
     const answered = advanceWeek(
       state,
-      { actions: [], decisions: [{ decisionId: decision.id, optionId: 'bouclier' }] },
+      { actions: [], decisions: [{ decisionId: decision.id, optionId: 'bouclier' }, ...others] },
       { ruleset: withCrises({}) },
     );
     const label = "Flambée des prix de l'énergie — Bouclier tarifaire";
     const deficit = answered.report.economie.find((c) => c.indicateur === 'deficit')!;
     expect(deficit.factors).toContainEqual({ label, value: -30, source: 'decision' });
-    expect(answered.report.decisions[0]).toMatchObject({ optionId: 'bouclier', automatic: false });
+    expect(answered.report.decisions.find((d) => d.decisionId === decision.id)).toMatchObject({
+      optionId: 'bouclier',
+      automatic: false,
+    });
     expect(answered.state.eventHistory['crise-energie']).toEqual({
       count: 1,
       lastWeek: start.meta.week,
     });
+    // Gestion de la crise par le ministre du poste concerné : sa compétence, par le registre.
+    const crisis = RULES.crises.find((c) => c.id === 'crise-energie')!;
+    const government = state.quinquennat!.gouvernement!;
+    const member = government.ministres.find((m) => m.posteId === crisis.poste)!;
+    const competence = memberTraits(state, RULES, member).competence;
+    const expected = Math.round(RULES.quinquennat.equipe.crise * (competence - 0.5));
+    const management = answered.report.changes
+      .find((c) => c.actorId === PLAYER_ACTOR_ID && c.ressource === 'popularite')!
+      .factors.find((f) => f.label.startsWith("Flambée des prix de l'énergie : gestion par"));
+    if (expected === 0) expect(management).toBeUndefined();
+    else expect(management).toMatchObject({ value: expected, source: 'decision' });
   });
 
   it('respecte les conditions et le délai entre deux occurrences', () => {

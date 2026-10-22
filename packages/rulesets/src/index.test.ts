@@ -15,6 +15,7 @@ import { describe, expect, it } from 'vitest';
 import { CURRENT_RULESET_KEY, getRuleset, listRulesetKeys, UnknownRulesetError } from './index';
 import assemblee from './assemblee-2026.json';
 import economieReelle from './economie-2026.json';
+import figures from './gouvernement-2027.json';
 import legislatives2024 from './legislatives-2024.json';
 import mediasReels from './medias-2027.json';
 import personnalites from './personnalites-2027.json';
@@ -26,6 +27,7 @@ const full = () =>
     JSON.stringify({
       ...raw,
       personnalites,
+      figures,
       mediasReels,
       assemblee,
       economieReelle,
@@ -33,6 +35,7 @@ const full = () =>
     }),
   ) as typeof raw & {
     personnalites: typeof personnalites;
+    figures: typeof figures;
     mediasReels: typeof mediasReels;
     assemblee: typeof assemblee;
     economieReelle: typeof economieReelle;
@@ -243,6 +246,127 @@ describe('personnalités réelles (phase 5 bis)', () => {
     const nonFree = full();
     nonFree.personnalites.personnalites.find((p) => p.photo)!.photo!.licence = 'CC BY-NC 4.0';
     expect(RulesetSchema.safeParse(nonFree).success).toBe(false);
+  });
+});
+
+describe('figures nominables au gouvernement (phase 11)', () => {
+  const list = ruleset.figures.figures;
+  const equipe = ruleset.quinquennat.equipe;
+  const PUBLIC = join(dirname(fileURLToPath(import.meta.url)), '../../../apps/web/public');
+
+  it('a l’empreinte déclarée par le jeu de règles : une réimportation impose une nouvelle version', () => {
+    const hash = createHash('sha256').update(JSON.stringify(figures)).digest('hex');
+    expect(equipe.empreinte).toBe(hash);
+    expect(equipe.fichier).toBe('gouvernement-2027.json');
+    expect(equipe.statut).toBe('hypothese');
+  });
+
+  it('propose les figures demandées et d’autres partis, sans doublon avec les candidats', () => {
+    const ids = list.map((f) => f.id);
+    expect(ids).toEqual(expect.arrayContaining(['figure-bardella', 'figure-tanguy']));
+    // Au moins une figure pour chacun des grands partis cités par l'utilisateur.
+    for (const groupe of ['rn', 'lfi-nfp', 'epr', 'soc', 'dr', 'ecos', 'dem'])
+      expect(list.some((f) => f.groupe === groupe)).toBe(true);
+    const candidates = new Set(
+      ruleset.personnalites.personnalites.map((p) => `${p.prenom} ${p.nom}`.toLowerCase()),
+    );
+    for (const f of list) expect(candidates.has(`${f.prenom} ${f.nom}`.toLowerCase())).toBe(false);
+  });
+
+  it('source chaque fiche : révision de l’article, identifiant Wikidata, fonctions datées', () => {
+    for (const f of list) {
+      expect(f.article).toMatch(
+        /^https:\/\/fr\.wikipedia\.org\/w\/index\.php\?title=.+&oldid=\d+$/,
+      );
+      expect(f.wikidata).toMatch(/^Q\d+$/);
+      expect(f.fonctions.length).toBeGreaterThan(0);
+      expect(f.position.detail.length).toBeGreaterThan(10);
+      expect(f.position.statut).toBe(f.position.methode === 'parti' ? 'estimation' : 'hypothese');
+    }
+    expect(ruleset.figures.sources.map((s) => s.id)).toEqual(
+      expect.arrayContaining(['wikipedia-figures', 'wikidata-figures', 'ches-2024']),
+    );
+  });
+
+  it('estime la compétence comme la somme de ses facteurs, étiquetée « estimation »', () => {
+    for (const f of list) {
+      const sum = f.competence.facteurs.reduce((s, x) => s + x.valeur, 0);
+      expect(Math.round(sum * 100) / 100).toBe(f.competence.valeur);
+      expect(f.competence.statut).toBe('estimation');
+      expect(f.competence.valeur).toBeGreaterThanOrEqual(0.3);
+      expect(f.competence.valeur).toBeLessThanOrEqual(0.9);
+    }
+    // Un ancien Premier ministre est au moins aussi compétent que toute autre figure (méthode).
+    const pms = list.filter((f) => f.fonctions.some((x) => x.nature === 'premier-ministre'));
+    expect(pms.length).toBeGreaterThan(0);
+    for (const pm of pms) expect(pm.notoriete.niveau).toBe(3);
+  });
+
+  it('ne prête aucun propos ni aucune citation : seulement des fonctions et des faits', () => {
+    for (const f of list) {
+      expect(Object.keys(f).sort()).toEqual(
+        [
+          'article',
+          'competence',
+          'fonctions',
+          'groupe',
+          'id',
+          'nom',
+          'notoriete',
+          'parti',
+          'photo',
+          'photoAbsente',
+          'position',
+          'prenom',
+          'wikidata',
+        ].sort(),
+      );
+      const texts = [
+        ...f.fonctions.map((x) => x.libelle),
+        f.notoriete.motif,
+        ...f.competence.facteurs.map((x) => x.libelle),
+      ];
+      for (const text of texts) {
+        expect(text).not.toMatch(/[«»“”"]/);
+        expect(text).not.toMatch(
+          /\b(déclare|a déclaré|affirme|estime que|selon lui|selon elle)\b/i,
+        );
+      }
+    }
+  });
+
+  it('ne reprend que des photos sous licence libre, créditées, présentes et sans fichier orphelin', () => {
+    const files = new Set<string>();
+    for (const f of list) {
+      if (f.photo) {
+        expect(f.photo.licence).toMatch(FREE_LICENSES);
+        expect(f.photo.auteur.length).toBeGreaterThan(0);
+        expect(existsSync(join(PUBLIC, f.photo.fichier))).toBe(true);
+        files.add(f.photo.fichier.split('/')[1]!);
+      } else expect(f.photoAbsente).toMatch(/\S/);
+    }
+    expect(new Set(readdirSync(join(PUBLIC, 'gouvernement')))).toEqual(files);
+  });
+
+  it('associe figures et candidats réels à des groupes existants, et chaque crise à un poste', () => {
+    const groups = new Set(ruleset.assemblee.groupes.map((g) => g.id));
+    for (const f of list) if (f.groupe) expect(groups.has(f.groupe)).toBe(true);
+    for (const r of ruleset.figures.rattachements) expect(groups.has(r.groupe)).toBe(true);
+    const posts = new Set(ruleset.quinquennat.postes.map((p) => p.id));
+    for (const id of equipe.postesRegaliens) expect(posts.has(id)).toBe(true);
+    for (const c of ruleset.crises) if (c.poste) expect(posts.has(c.poste)).toBe(true);
+  });
+
+  it('refuse un groupe, un poste régalien ou un poste de crise inconnu', () => {
+    const group = full();
+    group.figures.figures[0]!.groupe = 'inconnu';
+    expect(RulesetSchema.safeParse(group).success).toBe(false);
+    const post = full();
+    post.quinquennat.equipe.postesRegaliens = ['inconnu'];
+    expect(RulesetSchema.safeParse(post).success).toBe(false);
+    const crisis = full();
+    (crisis.crises[0] as { poste: string | null }).poste = 'inconnu';
+    expect(RulesetSchema.safeParse(crisis).success).toBe(false);
   });
 });
 

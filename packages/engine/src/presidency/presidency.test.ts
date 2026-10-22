@@ -1,4 +1,4 @@
-import type { GameState, WeeklyReport } from '@r2027/shared';
+import { MINISTER_DECISION_EVENT, type GameState, type WeeklyReport } from '@r2027/shared';
 import { describe, expect, it } from 'vitest';
 import { proximity } from '../ai/relations';
 import { advanceWeek } from '../core/advanceWeek';
@@ -14,7 +14,8 @@ import {
   sponsorship,
 } from '../core/testing';
 import { addYears, mandateDates, nextCampaignStart, nextCycle } from './dates';
-import { acceptsPost, openQuinquennat, presidentOf } from './government';
+import { acceptsPost, eligibleCandidates, openQuinquennat, presidentOf } from './government';
+import { memberTraits, teamCompetence } from './members';
 
 // Phase 6 (P6-01 à P6-03) : calendrier institutionnel, investiture, gouvernement, président IA.
 
@@ -135,8 +136,20 @@ describe('investiture et gouvernement', () => {
       nature: 'profil',
       ref: profile,
     });
-    expect(named.state.pendingDecisions).toEqual([]);
     expect(named.report.decisions[0]).toMatchObject({ optionId: profile, automatic: false });
+    // Le président pourvoit ensuite les ministères régaliens : une décision par ministère, la
+    // proposition du Premier ministre par défaut.
+    const government = named.state.quinquennat!.gouvernement!;
+    const regalian = RULES.quinquennat.equipe.postesRegaliens;
+    expect(named.state.pendingDecisions.map((d) => d.id)).toEqual(
+      regalian.map((p) => `g-${before.state.meta.week}-${p}`),
+    );
+    for (const d of named.state.pendingDecisions) {
+      const posteId = d.id.replace(/^g-\d+-/, '');
+      expect(d).toMatchObject({ kind: 'gouvernement', eventId: MINISTER_DECISION_EVENT });
+      expect(d.defaultOptionId).toBe(government.ministres.find((m) => m.posteId === posteId)!.ref);
+      expect(d.options[0]!.id).toBe(d.defaultOptionId);
+    }
   });
 
   it('une personnalité éloignée peut refuser Matignon : refus simulé, nouvelle décision', () => {
@@ -175,18 +188,14 @@ describe('investiture et gouvernement', () => {
   });
 });
 
-describe('actions du président', () => {
-  const governed = (() => {
-    const asked = advance(playerElected(), [], [], RULES).state;
-    const decision = asked.pendingDecisions[0]!;
-    return advance(
-      asked,
-      [],
-      [{ decisionId: decision.id, optionId: decision.defaultOptionId }],
-      RULES,
-    ).state;
-  })();
+/** Gouvernement du joueur nommé, ministres régaliens confirmés (options par défaut). */
+const governed = (() => {
+  const asked = advance(playerElected(), [], [], RULES).state;
+  const named = advance(asked, [], defaults(asked), RULES).state;
+  return advance(named, [], defaults(named), RULES).state;
+})();
 
+describe('actions du président', () => {
   it('allocution et déplacement passent par le registre, avec l’usure du pouvoir', () => {
     const { report, state } = advance(
       governed,
@@ -248,7 +257,9 @@ describe('actions du président', () => {
       RULES,
     ).state;
     expect(next.quinquennat!.gouvernement!.numero).toBe(2);
-    expect(advance(next, ['remaniement'], [], RULES).report.actions[0]!.status).toBe('validee');
+    expect(advance(next, ['remaniement'], defaults(next), RULES).report.actions[0]!.status).toBe(
+      'validee',
+    );
   });
 
   it('ne modifie pas l’état reçu', () => {
@@ -293,5 +304,154 @@ describe('quinquennat du président IA', () => {
         expect(change.factors.reduce((sum, f) => sum + f.value, 0)).toBe(
           change.after - change.before,
         );
+  });
+});
+
+describe('figures réelles au gouvernement (phase 11)', () => {
+  const asked = advance(playerElected(), [], [], RULES).state;
+  const pmDecision = asked.pendingDecisions[0]!;
+  const president = presidentOf(asked);
+  const figures = RULES.figures.figures;
+
+  it('propose les figures réelles pour Matignon, sans propos, avec compétence et proximité', () => {
+    const options = new Map(pmDecision.options.map((o) => [o.id, o]));
+    for (const f of figures) {
+      const option = options.get(f.id)!;
+      expect(option.libelle).toBe(`${f.prenom} ${f.nom} — ${f.parti}`);
+      expect(option.description).toMatch(/aucun propos ne lui est attribué/);
+      expect(option.description).toMatch(/Compétence estimée : \d+ %/);
+      expect(option.description).toMatch(/Proximité avec vous : \d+\/100/);
+      expect(option.description).not.toMatch(/[«»“”"]/);
+    }
+  });
+
+  it('nomme une figure proche à Matignon ; la popularité prêtée passe par le registre', () => {
+    const ally = eligibleCandidates(asked, RULES, president).find(
+      (c) => c.member.nature === 'figure' && c.proximite >= proximiteMin,
+    )!;
+    expect(ally).toBeDefined();
+    const named = advance(
+      asked,
+      [],
+      [{ decisionId: pmDecision.id, optionId: ally.member.ref }],
+      RULES,
+    );
+    const government = named.state.quinquennat!.gouvernement!;
+    expect(government.premierMinistre).toEqual(ally.member);
+    const figure = figures.find((f) => f.id === ally.member.ref)!;
+    const reference = RULES.jeu.opinion.popularite.reference;
+    const expected = Math.round(
+      RULES.quinquennat.equipe.nomination.premierMinistre *
+        (RULES.quinquennat.equipe.popularite[figure.notoriete.niveau - 1]! - reference),
+    );
+    const popularity = named.report.changes.find(
+      (c) => c.actorId === PLAYER_ACTOR_ID && c.ressource === 'popularite',
+    )!;
+    const factor = popularity.factors.find((f) => f.label.startsWith('Nomination de'));
+    if (expected === 0) expect(factor).toBeUndefined();
+    else expect(factor).toMatchObject({ value: expected, source: 'decision' });
+    // Action du gouvernement : compétence de l'équipe, chaque semaine, par le registre.
+    const team = teamCompetence(named.state, RULES, government);
+    const action = popularity.factors.find((f) => f.label.startsWith('Action du gouvernement'));
+    const weekly = Math.round(RULES.quinquennat.equipe.actionHebdomadaire * (team - 0.5));
+    if (weekly === 0) expect(action).toBeUndefined();
+    else expect(action!.value).toBe(weekly);
+    for (const change of named.report.changes)
+      expect(change.factors.reduce((sum, f) => sum + f.value, 0)).toBe(
+        change.after - change.before,
+      );
+    // Les ministres proposés comptent des figures proches, dans la limite du jeu de règles.
+    const real = government.ministres.filter((m) => m.nature !== 'profil');
+    expect(real.length).toBeGreaterThan(0);
+    expect(real.length).toBeLessThanOrEqual(ministresActeursMax);
+  });
+
+  it('remplace un ministre régalien ; une figure éloignée peut refuser (refus simulé)', () => {
+    const named = advance(asked, [], defaults(asked), RULES).state;
+    const government = named.quinquennat!.gouvernement!;
+    const decision = named.pendingDecisions.find((d) => d.id.endsWith('-interieur'))!;
+    const members = new Set(
+      [government.premierMinistre, ...government.ministres].map((m) => m.ref),
+    );
+    const candidates = eligibleCandidates(named, RULES, president).filter(
+      (c) => c.member.nature === 'figure' && !members.has(c.member.ref),
+    );
+    const near = candidates.find((c) => c.proximite >= proximiteMin)!;
+    const others = (id: string, optionId: string) =>
+      named.pendingDecisions.map((d) => ({
+        decisionId: d.id,
+        optionId: d.id === id ? optionId : d.defaultOptionId,
+      }));
+    const accepted = advanceWeek(
+      named,
+      { actions: [], decisions: others(decision.id, near.member.ref) },
+      { ruleset: RULES },
+    );
+    const interior = accepted.state.quinquennat!.gouvernement!.ministres.find(
+      (m) => m.posteId === 'interieur',
+    )!;
+    expect(interior).toEqual({ ...near.member, posteId: 'interieur' });
+    expect(
+      accepted.report.events.find((e) => e.id.startsWith('ministre-interieur'))!.label,
+    ).toMatch(/nommé\(e\) au ministère « Intérieur »$/);
+
+    const far = candidates.find(
+      (c) =>
+        c.proximite < proximiteMin &&
+        !acceptsPost(
+          named,
+          RULES,
+          president,
+          {
+            id: c.member.ref,
+            candidate: { positionnement: memberTraits(named, RULES, c.member).position },
+          },
+          'interieur',
+        ),
+    )!;
+    expect(far).toBeDefined();
+    const refused = advanceWeek(
+      named,
+      { actions: [], decisions: others(decision.id, far.member.ref) },
+      { ruleset: RULES },
+    );
+    expect(
+      refused.state.quinquennat!.gouvernement!.ministres.find((m) => m.posteId === 'interieur'),
+    ).toEqual(government.ministres.find((m) => m.posteId === 'interieur'));
+    expect(refused.state.quinquennat!.refus).toContainEqual({
+      acteurId: far.member.ref,
+      semaine: named.meta.week,
+      posteId: 'interieur',
+    });
+    expect(
+      refused.report.events.some((e) =>
+        /décline le ministère « Intérieur » \(refus simulé\)$/.test(e.label),
+      ),
+    ).toBe(true);
+  });
+
+  it('même graine et mêmes choix ⇒ même gouvernement et mêmes effets', () => {
+    const once = advance(asked, [], defaults(asked), RULES);
+    const twice = advance(asked, [], defaults(asked), RULES);
+    expect(once.state).toEqual(twice.state);
+    expect(once.report.changes).toEqual(twice.report.changes);
+  });
+
+  it('le président IA nomme aussi des figures proches, avec les mêmes règles', () => {
+    let state = elected;
+    for (let i = 0; i < 6 && !state.quinquennat!.gouvernement; i++)
+      state = advance(state, [], defaults(state), RULES).state;
+    const government = state.quinquennat!.gouvernement!;
+    const ai = presidentOf(state);
+    for (const m of [government.premierMinistre, ...government.ministres].filter(
+      (x) => x.nature === 'figure',
+    ))
+      expect(
+        proximity(ai, {
+          id: m.ref,
+          candidate: { positionnement: memberTraits(state, RULES, m).position },
+        }),
+      ).toBeGreaterThanOrEqual(proximiteMin);
+    expect(state.pendingDecisions.filter((d) => d.eventId === MINISTER_DECISION_EVENT)).toEqual([]);
   });
 });

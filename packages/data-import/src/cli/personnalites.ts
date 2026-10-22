@@ -14,7 +14,7 @@ import { parseCog } from '../cog/cog';
 import { download, sha256File } from '../download';
 import { GEO_SOURCES } from '../geo/sources';
 import { buildPersonalities, photoFiles, type Sources } from '../personnalites/build';
-import { parseChes } from '../personnalites/ches';
+import { CHES_2024, CHES_LICENCE, CHES_TREND, parseChes } from '../personnalites/ches';
 import {
   commonsPageUrl,
   freeLicense,
@@ -35,17 +35,6 @@ const HEADERS = {
   'user-agent':
     'republique-2027-import/1.0 (https://github.com/joladebrouille5-cmyk/R-publique-2027)',
 };
-
-const CHES_2024 = {
-  url: 'https://github.com/chesdata/chesdata.github.io/releases/download/ches-europe/CHES_2024_final_v2.csv',
-  fichier: 'CHES_2024_final_v2.csv',
-};
-const CHES_TREND = {
-  url: 'https://github.com/chesdata/chesdata.github.io/releases/download/ches-trend/1999-2024_CHES_dataset_meansV2.csv',
-  fichier: '1999-2024_CHES_dataset_meansV2.csv',
-};
-const CHES_LICENCE =
-  'non précisée ; usage avec citation demandé (Rovny et al., « The 2024 Chapel Hill Expert Survey on political party positioning in Europe », 2025)';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const sha256 = (text: string) => createHash('sha256').update(text).digest('hex');

@@ -5,6 +5,18 @@
 import { parseCsv } from '../cog/csv';
 import { ImportError } from '../geometry/coverage';
 
+/** Vague 2024 (fichier final v2) et fichier de tendance 1999-2024, publiés par l'équipe CHES. */
+export const CHES_2024 = {
+  url: 'https://github.com/chesdata/chesdata.github.io/releases/download/ches-europe/CHES_2024_final_v2.csv',
+  fichier: 'CHES_2024_final_v2.csv',
+};
+export const CHES_TREND = {
+  url: 'https://github.com/chesdata/chesdata.github.io/releases/download/ches-trend/1999-2024_CHES_dataset_meansV2.csv',
+  fichier: '1999-2024_CHES_dataset_meansV2.csv',
+};
+export const CHES_LICENCE =
+  'non précisée ; usage avec citation demandé (Rovny et al., « The 2024 Chapel Hill Expert Survey on political party positioning in Europe », 2025)';
+
 /** Code pays de la France dans les fichiers CHES. */
 export const CHES_FRANCE = '6';
 

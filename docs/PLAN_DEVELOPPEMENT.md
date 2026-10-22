@@ -627,6 +627,17 @@ Demandée par l'utilisateur le 22/10/2026 (« Applique ces 9 correctifs et ajout
 | P11-09 | **Réactions variées** : plus de 100 modèles (ironie, langage du web, débat, militants et opposants selon la famille politique), comptes inventés plus nombreux, aucune répétition récente. | au moins 100 modèles (test) ; aucun nom de personne réelle (test) ; pas de texte repris dans les 40 dernières réactions (test). |
 | P11-10 | Format 16 et migration 15 → 16, documentation, e2e, CI, APK 1.3.0. | `pnpm check`, intégration, e2e, test hors ligne ; CI verte ; APK essayé sur émulateur. |
 
+Avancement (22/10/2026, branche `claude/new-session-lmxg1t`) :
+- **P11-04 faite** (3716bd2) — en-tête et HUD sous la barre d'état, navigation basse et bouton « Résoudre la semaine » qui ne masquent plus les cartes d'actions.
+- **P11-01 faite** (774dc01) — horloge de la soirée électorale à la minute, pause, lent, temps réel, ×2, ×5 ; état affiché indépendant de la vitesse.
+- **P11-09 faite** (eebbbd4) — 255 modèles de réactions ; jeu de règles 13.0.0 et format 16 ouverts.
+- **P11-07 faite** (31700f9) — incertitude de l'opinion persistante, vagues lissées, variation décomposée en faits et part d'échantillon.
+- **P11-08 faite** (37dd3b2) — passages dans les médias notés sans aléa (préparation, posture, format, situation) ; raison dans le bilan ; l'IA choisit sa posture.
+- **P11-05 faite** (ede071c) — 40 événements fictifs en quatre familles, déclenchés selon le contexte ; tirage pondéré sans biais d'ordre, fraîcheur.
+- **P11-06 faite** (74f2d03) — débriefing plein écran après « Résoudre la semaine », données du bilan du moteur seulement.
+- **P11-03 faite** (d7c3409) — écran Paramètres (apparence, crédits et mentions légales, à propos) ; aucun lien de source sur les écrans de jeu (e2e sur tous les écrans de la partie).
+- **P11-02 faite** — `pnpm data:gouvernement` : 22 personnalités nominables (dont Jordan Bardella et Jean-Philippe Tanguy ; RN, UDR, LFI, Renaissance, PS, LR, Écologistes, MoDem, Horizons, PCF), fonctions datées tirées de l'infobox de chaque article Wikipédia (révision figée), appartenance au parti vérifiée sur Wikidata, 19 photos sous licence libre, position du parti d'après CHES 2024 ; compétence estimée (somme de facteurs documentés, plafond 0,90) et notoriété déduites des fonctions ([SOURCES §8 nonies](./SOURCES.md)). Moteur : le président (joueur ou IA) peut nommer ces figures à Matignon ; le Premier ministre propose ses ministres (acteurs et figures proches, puis profils fictifs) ; le président joueur pourvoit ensuite chaque ministère régalien (décisions `nomination-ministre`) ; refus simulés selon la proximité (ou accord de la majorité en cohabitation). Effets, tous par le registre : popularité prêtée à la nomination, action hebdomadaire du gouvernement selon la compétence de l'équipe, gestion des crises selon la compétence du ministre concerné (chaque crise a un poste), ouverture (soutien aux textes et censure des groupes non alliés représentés), censure modulée par la compétence du Premier ministre. Interface : fiches et photos sur l'écran Gouvernement, liste des personnalités nominables, options de nomination groupées en lignes compactes, crédits et méthode dans Paramètres.
+
 ---
 
 ## 5. Questions ouvertes

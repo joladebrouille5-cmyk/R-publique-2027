@@ -32,7 +32,12 @@ export function PersonalityPhoto({
 }
 
 /** Crédit de la photo (auteur, licence, fichier d'origine), exigé par sa licence. */
-export function PhotoCreditLine({ personality }: { personality: RealPersonality }) {
+/** Crédit de la photo d'une fiche (personnalité candidate ou figure du gouvernement). */
+export function PhotoCreditLine({
+  personality,
+}: {
+  personality: Pick<RealPersonality, 'photo' | 'photoAbsente'>;
+}) {
   const { photo } = personality;
   if (!photo) {
     return (

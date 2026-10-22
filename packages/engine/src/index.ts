@@ -89,12 +89,21 @@ export {
   acceptsPost,
   aiPrimeMinister,
   composeMinisters,
+  eligibleCandidates,
   GOVERNMENT_DECISION_EVENT,
   memberLabel,
   openQuinquennat,
   presidentOf,
   snapshot,
 } from './presidency/government';
+export {
+  figureById,
+  governmentGroups,
+  memberInCharge,
+  memberName,
+  memberTraits,
+  teamCompetence,
+} from './presidency/members';
 export { openNextCampaign, reviewQuinquennat } from './presidency/cycle';
 export { activeConsequences, addConsequence, crisisMultiplier } from './presidency/consequences';
 export { answerCrisis, drawCrises } from './presidency/crises';

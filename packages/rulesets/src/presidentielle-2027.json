@@ -1,7 +1,7 @@
 {
   "id": "presidentielle-2027",
   "version": "13.0.0",
-  "libelle": "Présidentielle 2027 et quinquennat — campagne, parrainages, financement, médias réels, présidence, gouvernement, Parlement, économie, crises et législatives (phase 6)",
+  "libelle": "Présidentielle 2027 et quinquennat — campagne, parrainages, financement, médias réels, présidence, gouvernement et figures réelles nominables, Parlement, économie, crises et législatives",
   "verifieLe": "2026-10-22",
   "sources": {
     "elysee-cm-2026-07-01": {
@@ -5634,8 +5634,30 @@
       "statut": "hypothese",
       "proximiteMin": 60,
       "probabiliteSousSeuil": 0.25,
-      "ministresActeursMax": 3,
+      "ministresActeursMax": 5,
       "delaiApresRefus": 26
+    },
+    "equipe": {
+      "statut": "hypothese",
+      "note": "Figures réelles nominables au gouvernement (gouvernement-2027.json, pnpm data:gouvernement) : fonctions relevées dans Wikipédia, compétence estimée et notoriété déduites par des règles documentées. Effets de la compétence et de la popularité sur la popularité du président, le soutien des groupes aux textes, la censure et la gestion des crises : paramètres de jeu (hypothèses), sans prétention de mesure. La popularité prêtée à une figure dépend de son niveau de notoriété ; ce n’est jamais un sondage. Nominations, refus et action au gouvernement sont simulés ; aucun propos n’est attribué.",
+      "fichier": "gouvernement-2027.json",
+      "empreinte": "106d11abbdfe96c2419986e062a60a87bdad59c67c545dd2d45263dc972530f0",
+      "postesRegaliens": ["economie", "interieur", "affaires-etrangeres", "armees", "justice"],
+      "popularite": [2700, 3000, 3300],
+      "competenceActeur": 0.5,
+      "poidsPremierMinistre": 0.5,
+      "nomination": {
+        "premierMinistre": 0.25,
+        "ministre": 0.05
+      },
+      "actionHebdomadaire": 16,
+      "ouverture": {
+        "soutienParMembre": 0.15,
+        "censureParMembre": 0.3,
+        "membresMax": 2
+      },
+      "censureCompetence": 0.6,
+      "crise": 80
     },
     "opinion": {
       "statut": "hypothese",
@@ -6078,7 +6100,8 @@
           }
         }
       ],
-      "choixParDefaut": "cheque"
+      "choixParDefaut": "cheque",
+      "poste": "transition-ecologique"
     },
     {
       "id": "crise-financiere",
@@ -6248,7 +6271,8 @@
           "durable": null
         }
       ],
-      "choixParDefaut": "garantie"
+      "choixParDefaut": "garantie",
+      "poste": "economie"
     },
     {
       "id": "crise-greve",
@@ -6382,7 +6406,8 @@
           }
         }
       ],
-      "choixParDefaut": "negocier"
+      "choixParDefaut": "negocier",
+      "poste": "travail"
     },
     {
       "id": "crise-inondations",
@@ -6477,7 +6502,8 @@
           }
         }
       ],
-      "choixParDefaut": "reconstruction"
+      "choixParDefaut": "reconstruction",
+      "poste": "interieur"
     },
     {
       "id": "crise-cyberattaque",
@@ -6561,7 +6587,8 @@
           }
         }
       ],
-      "choixParDefaut": "plan"
+      "choixParDefaut": "plan",
+      "poste": "interieur"
     },
     {
       "id": "crise-epidemie",
@@ -6666,7 +6693,8 @@
           }
         }
       ],
-      "choixParDefaut": "prevention"
+      "choixParDefaut": "prevention",
+      "poste": "sante"
     },
     {
       "id": "crise-taux",
@@ -6791,7 +6819,8 @@
           }
         }
       ],
-      "choixParDefaut": "plan-economies"
+      "choixParDefaut": "plan-economies",
+      "poste": "economie"
     },
     {
       "id": "crise-agricole",
@@ -6908,7 +6937,8 @@
           }
         }
       ],
-      "choixParDefaut": "aides"
+      "choixParDefaut": "aides",
+      "poste": "agriculture"
     },
     {
       "id": "crise-canicule",
@@ -7014,7 +7044,8 @@
           "durable": null
         }
       ],
-      "choixParDefaut": "restrictions-eau"
+      "choixParDefaut": "restrictions-eau",
+      "poste": "transition-ecologique"
     },
     {
       "id": "crise-logement",
@@ -7168,7 +7199,8 @@
           }
         }
       ],
-      "choixParDefaut": "encadrement"
+      "choixParDefaut": "encadrement",
+      "poste": null
     },
     {
       "id": "crise-affaire",
@@ -7270,7 +7302,8 @@
           }
         }
       ],
-      "choixParDefaut": "inspection"
+      "choixParDefaut": "inspection",
+      "poste": null
     },
     {
       "id": "crise-medicaments",
@@ -7393,7 +7426,8 @@
           "durable": null
         }
       ],
-      "choixParDefaut": "stocks"
+      "choixParDefaut": "stocks",
+      "poste": "sante"
     },
     {
       "id": "crise-industrielle",
@@ -7490,7 +7524,8 @@
           }
         }
       ],
-      "choixParDefaut": "indemnisation"
+      "choixParDefaut": "indemnisation",
+      "poste": "interieur"
     },
     {
       "id": "crise-commerciale",
@@ -7628,7 +7663,8 @@
           "durable": null
         }
       ],
-      "choixParDefaut": "negociation"
+      "choixParDefaut": "negociation",
+      "poste": "affaires-etrangeres"
     }
   ],
   "scenarios": [

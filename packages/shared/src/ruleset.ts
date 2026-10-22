@@ -9,6 +9,7 @@ import { EconomicIndicatorSchema } from './economie';
 import { RealEconomySchema } from './economie-reelle';
 import { RealLegislativesSchema } from './legislatives';
 import { RealMediaSchema } from './medias';
+import { GovernmentFiguresSchema } from './figures';
 import { RealPersonalitiesSchema } from './personalities';
 import { MinisterProfileSchema } from './quinquennat';
 import { CampaignStyleSchema, PositionSchema } from './politics';
@@ -230,10 +231,54 @@ export const QuinquennatRulesSchema = z
         proximiteMin: z.number().int().min(0).max(100),
         /** Probabilité d'accepter Matignon en deçà de ce seuil. */
         probabiliteSousSeuil: Probability,
-        /** Nombre maximal d'acteurs de la partie parmi les ministres (le reste : profils fictifs). */
+        /**
+         * Nombre maximal de personnalités (acteurs de la partie ou figures réelles) parmi les
+         * ministres proposés par le Premier ministre (le reste : profils fictifs).
+         */
         ministresActeursMax: z.number().int().min(0),
         /** Semaines pendant lesquelles un acteur qui a refusé n'est plus sollicité. */
         delaiApresRefus: z.number().int().min(1),
+      })
+      .strict(),
+    /**
+     * Équipe gouvernementale (phase 11, P11-02) : figures réelles nominables (`figures`, issues
+     * de `pnpm data:gouvernement`, empreinte vérifiée) et effets de la compétence et de la
+     * popularité des membres. Paramètres de jeu (hypothèses), jamais présentés comme une mesure.
+     */
+    equipe: z
+      .object({
+        statut: z.literal('hypothese'),
+        note: z.string().min(1),
+        fichier: z.string().regex(/^[a-z0-9-]+\.json$/),
+        /** SHA-256 de la sérialisation JSON des fiches (`JSON.stringify`). */
+        empreinte: z.string().regex(/^[0-9a-f]{64}$/),
+        /** Postes que le président pourvoit lui-même après la nomination du Premier ministre. */
+        postesRegaliens: z.array(Id).min(1),
+        /** Popularité prêtée à une figure selon son niveau de notoriété 1, 2, 3 (centièmes). */
+        popularite: z.tuple([Points, Points, Points]),
+        /** Compétence prêtée à un candidat de la partie nommé au gouvernement (aucune estimation). */
+        competenceActeur: Fraction,
+        /** Part du Premier ministre dans la compétence de l'équipe (le reste : postes régaliens). */
+        poidsPremierMinistre: Fraction,
+        /** Effet d'une nomination sur la popularité du président : poids × (popularité − référence). */
+        nomination: z.object({ premierMinistre: Fraction, ministre: Fraction }).strict(),
+        /** Action du gouvernement, chaque semaine : poids × (compétence de l'équipe − 0,5). */
+        actionHebdomadaire: z.number().int().min(0).max(500),
+        /**
+         * Ouverture : un groupe non allié représenté au gouvernement soutient davantage les
+         * textes et censure moins, par membre et au plus `membresMax` membres.
+         */
+        ouverture: z
+          .object({
+            soutienParMembre: z.number().min(0).max(1),
+            censureParMembre: z.number().min(0).max(1),
+            membresMax: z.number().int().min(1),
+          })
+          .strict(),
+        /** Censure : propension réduite de poids × (compétence du Premier ministre − 0,5). */
+        censureCompetence: z.number().min(0).max(2),
+        /** Crise : effet sur la popularité de poids × (compétence du ministre concerné − 0,5). */
+        crise: z.number().int().min(0).max(1_000),
       })
       .strict(),
     /** Usure du pouvoir : perte de popularité hebdomadaire du président (centièmes de point). */
@@ -466,6 +511,11 @@ export const CrisisDefinitionSchema = z
       )
       .min(2),
     choixParDefaut: Id,
+    /**
+     * Poste du gouvernement dont le titulaire gère la crise (phase 11) ; null : le Premier
+     * ministre. Sa compétence module l'effet de la réponse sur la popularité du président.
+     */
+    poste: Id.nullable(),
   })
   .strict();
 export type CrisisDefinition = z.infer<typeof CrisisDefinitionSchema>;
@@ -1202,6 +1252,8 @@ export const RulesetSchema = z
       })
       .strict(),
     personnalites: RealPersonalitiesSchema,
+    /** Figures réelles nominables au gouvernement (`pnpm data:gouvernement`, phase 11). */
+    figures: GovernmentFiguresSchema,
   })
   .strict()
   .superRefine((ruleset, ctx) => {
@@ -1370,6 +1422,7 @@ export const RulesetSchema = z
         if (!crisisIds.has(v.crise))
           issue(`${owner} : vulnérabilité à une crise inconnue ${v.crise}`);
     };
+    const postIds = new Set(ruleset.quinquennat.postes.map((p) => p.id));
     for (const crisis of ruleset.crises) {
       unique(
         `Choix de ${crisis.id}`,
@@ -1379,6 +1432,24 @@ export const RulesetSchema = z
         issue(`${crisis.id} : choix par défaut inconnu ${crisis.choixParDefaut}`);
       checkDurable(crisis.id, crisis.durable);
       for (const choice of crisis.choix) checkDurable(`${crisis.id}/${choice.id}`, choice.durable);
+      if (crisis.poste !== null && !postIds.has(crisis.poste))
+        issue(`${crisis.id} : poste inconnu ${crisis.poste}`);
+    }
+    for (const id of ruleset.quinquennat.equipe.postesRegaliens)
+      if (!postIds.has(id)) issue(`Poste régalien inconnu : ${id}`);
+    const assemblyIds = new Set(ruleset.assemblee.groupes.map((g) => g.id));
+    const realIds = new Set(ruleset.personnalites.personnalites.map((p) => p.id));
+    unique(
+      'Figure du gouvernement',
+      ruleset.figures.figures.map((f) => f.id),
+    );
+    for (const f of ruleset.figures.figures)
+      if (f.groupe !== null && !assemblyIds.has(f.groupe))
+        issue(`${f.id} : groupe inconnu ${f.groupe}`);
+    for (const r of ruleset.figures.rattachements) {
+      if (!assemblyIds.has(r.groupe)) issue(`${r.personnaliteId} : groupe inconnu ${r.groupe}`);
+      if (!realIds.has(r.personnaliteId))
+        issue(`Rattachement d'une personnalité inconnue : ${r.personnaliteId}`);
     }
     unique(
       'Scénario',
