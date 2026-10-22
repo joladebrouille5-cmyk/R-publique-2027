@@ -82,6 +82,8 @@
   --animate-monte: monte 280ms var(--ease-sortie) both;
   --animate-apparait: apparait 200ms ease-out both;
   --animate-revele: revele 520ms var(--ease-sortie) both;
+  --animate-feuille: feuille 420ms var(--ease-sortie) both;
+  --animate-volet: volet 420ms var(--ease-sortie) both;
 
   @keyframes monte {
     from {
@@ -97,6 +99,19 @@
   @keyframes revele {
     from {
       transform: translateY(24px) scale(0.98);
+      opacity: 0;
+    }
+  }
+  /* Feuille qui monte du bas (téléphone) et volet qui glisse de la droite (bureau). */
+  @keyframes feuille {
+    from {
+      transform: translateY(60%);
+      opacity: 0;
+    }
+  }
+  @keyframes volet {
+    from {
+      transform: translateX(48px);
       opacity: 0;
     }
   }

@@ -138,6 +138,9 @@ test('après le premier tour, la carte colore les territoires et donne le détai
     'data-ready',
     'oui',
   );
+  // Filtres repliés par défaut : la carte occupe toute la place.
+  await page.getByRole('button', { name: 'Filtres' }).click();
+  await expect(page.getByLabel('Résultats affichés')).toBeVisible();
   await expect(page.getByLabel('Résultats affichés')).toHaveValue('0');
   await expect(page.getByText('Démonstration fictive').first()).toBeVisible();
   const legend = page.getByRole('region', { name: 'Légende' });
@@ -145,6 +148,8 @@ test('après le premier tour, la carte colore les territoires et donne le détai
   // Motifs (daltonisme, impression) : la carte se redessine, la légende montre les hachures.
   await page.getByLabel('Motifs (daltonisme, impression)').check();
   await expect(legend.locator('[data-motif="hachures"]')).toHaveCount(1);
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('group', { name: 'Filtres de la carte' })).toBeHidden();
   await expect(page.getByRole('region', { name: 'Carte de la métropole' })).toHaveAttribute(
     'data-ready',
     'oui',

@@ -1,6 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
+import { clampInsets } from '../map/ElectionMap';
 import {
   GAME_ID,
   gameFixture,
@@ -116,6 +117,7 @@ describe('carte électorale', () => {
     });
     renderRoute(`/parties/${GAME_ID}/carte`);
     const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Filtres' }));
     await user.selectOptions(await screen.findByLabelText('Couleurs'), 'ecart');
     const legend = screen.getByRole('region', { name: 'Légende' });
     expect(
@@ -153,6 +155,7 @@ describe('carte électorale', () => {
     });
     renderRoute(`/parties/${GAME_ID}/carte`);
     const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Filtres' }));
     const toggle = await screen.findByLabelText('Motifs (daltonisme, impression)');
     const legend = screen.getByRole('region', { name: 'Légende' });
     const motifs = () =>
@@ -162,5 +165,54 @@ describe('carte électorale', () => {
     expect(motifs()).toEqual(['aucun', 'hachures', 'hachures-inverses', 'croisillons']);
     await user.selectOptions(screen.getByLabelText('Couleurs'), 'participation');
     expect(screen.getByText(/Ce dégradé se lit par sa clarté/)).toBeInTheDocument();
+  });
+
+  it('replie les filtres par défaut, les ouvre et les referme au clavier', async () => {
+    mockApi(handlers);
+    renderRoute(`/parties/${GAME_ID}/carte`);
+    const user = userEvent.setup();
+    const toggle = await screen.findByRole('button', { name: 'Filtres' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('group', { name: 'Filtres de la carte' })).toBeNull();
+    // Le niveau reste accessible sur la carte, filtres fermés.
+    expect(screen.getByRole('radio', { name: 'Département' })).toBeChecked();
+
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    const panel = screen.getByRole('group', { name: 'Filtres de la carte' });
+    expect(within(panel).getByLabelText('Résultats affichés')).toBeVisible();
+    await user.click(within(panel).getByLabelText('Résultats affichés'));
+    await user.keyboard('{Escape}');
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(toggle).toHaveFocus();
+  });
+
+  it('ouvre la fiche dans un panneau refermable', async () => {
+    mockApi(handlers);
+    renderRoute(`/parties/${GAME_ID}/carte`);
+    const user = userEvent.setup();
+    await user.type(await screen.findByLabelText(/Rechercher un territoire/), 'Ajaccio');
+    await user.click(await screen.findByRole('button', { name: /Ajaccio \(commune 2A004\)/ }));
+    const sheet = await screen.findByRole('region', { name: 'Fiche : Ajaccio' });
+    await user.click(within(sheet).getByRole('button', { name: 'Fermer la fiche' }));
+    expect(screen.queryByRole('region', { name: 'Fiche : Ajaccio' })).toBeNull();
+  });
+});
+
+describe('cadrage de la carte', () => {
+  it('garde les marges des panneaux quand elles tiennent', () => {
+    expect(clampInsets({ top: 60, right: 380, bottom: 16, left: 16 }, 1000, 600)).toEqual({
+      top: 60,
+      right: 380,
+      bottom: 16,
+      left: 16,
+    });
+  });
+
+  it('réduit proportionnellement des marges trop grandes pour laisser de la carte', () => {
+    const insets = clampInsets({ top: 120, right: 16, bottom: 400, left: 16 }, 400, 500);
+    expect(insets.top + insets.bottom).toBeLessThanOrEqual(500 - 64);
+    expect(insets.bottom).toBeGreaterThan(insets.top);
+    expect(insets.left).toBe(16);
   });
 });
