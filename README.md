@@ -18,7 +18,7 @@ Simulation politique française : présidentielle, campagne et quinquennat. Jeu 
 | 5 ter | Médias réels (presse, télévision, radio), émissions et journalistes politiques | ✅ terminée |
 | 6 | Quinquennat jouable : gouvernement (personnalités réelles possibles), Assemblée nationale réelle et dissolution, législatives, économie, crises, présidentielle 2032 | ✅ terminée |
 | 7 | Contenu approfondi : scénarios de départ, crises et événements supplémentaires, conséquences à long terme | ✅ terminée |
-| 8 | Version publiable : application Android (APK) hors ligne, sécurité, robustesse | APK construit ; essai sur émulateur en cours (CI) |
+| 8 | Version publiable : application Android (APK) hors ligne, sécurité, robustesse | ✅ terminée |
 
 **Ce qui fonctionne aujourd'hui** :
 - créer une partie avec son candidat (prénom, nom, parti, positionnement économique et sociétal, parcours, profil de départ) ou en observateur, avec difficulté, date de départ et graine ;
