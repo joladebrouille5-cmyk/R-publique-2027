@@ -701,7 +701,6 @@ export function MapScreen() {
           {m.effectifs.communes === m.effectifs.communesDuReferentiel
             ? `Les ${formatCount(m.effectifs.communes)} communes de métropole et des DROM (${m.millesime}).`
             : `Jeu de démonstration : ${formatCount(m.effectifs.communes)} communes détaillées (Ain, Corse, Somme, DROM) sur ${formatCount(m.effectifs.communesDuReferentiel)} ; les autres départements apparaissent en entier. Le référentiel complet s’obtient avec « pnpm data:geo ».`}{' '}
-          Contours : IGN ADMIN EXPRESS ; codes : INSEE (Licence Ouverte).
           {history.data && !history.data.disponible && ` ${history.data.raison}`}
         </span>
       </p>

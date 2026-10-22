@@ -153,9 +153,8 @@ export function ElectionMap(props: Props) {
         bounds: asBounds(latest.current.bounds),
         fitBoundsOptions: { padding: paddingFor(container.current, latest.current) },
         ...(latest.current.maxBounds ? { maxBounds: asBounds(latest.current.maxBounds) } : {}),
-        attributionControl: latest.current.compact
-          ? false
-          : { compact: true, customAttribution: 'IGN, INSEE' },
+        // Attributions (IGN, INSEE, MapLibre) : Paramètres → Crédits (phase 11), pas sur la carte.
+        attributionControl: false,
         // Téléphones à haute densité (2,6 sur un Pixel 7) : rendu plafonné à 2, imperceptible
         // pour des aplats et des contours, mais bien moins de pixels à remplir à chaque image.
         pixelRatio: Math.min(window.devicePixelRatio || 1, MAX_PIXEL_RATIO),

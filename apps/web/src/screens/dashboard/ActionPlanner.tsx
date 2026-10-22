@@ -492,7 +492,7 @@ export function ActionPlanner({
       <p className="text-xs text-slate-500 dark:text-slate-400">
         {presidency
           ? 'Coûts, effets et probabilités sont des paramètres de jeu (hypothèses), pas des données officielles. Le serveur revalide chaque action.'
-          : 'Coûts, effets et probabilités sont des paramètres de jeu (hypothèses), pas des données officielles ; le plafond des dépenses et les règles des dons sont, eux, ceux du guide de la CNCCFP. Le serveur revalide chaque action.'}
+          : 'Coûts, effets et probabilités sont des paramètres de jeu (hypothèses), pas des données officielles ; le plafond des dépenses et les règles des dons sont, eux, des règles réelles. Le serveur revalide chaque action.'}
       </p>
     </section>
   );

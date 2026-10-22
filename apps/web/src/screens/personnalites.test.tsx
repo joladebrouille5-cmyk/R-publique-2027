@@ -42,9 +42,6 @@ const handlers = {
 const fiche = (id: string) => RULESET.personnalites.personnalites.find((p) => p.id === id)!;
 
 /** Paragraphe dont le texte complet (liens compris) correspond. */
-const paragraph = (pattern: RegExp) => (_: string, element: Element | null) =>
-  element?.tagName === 'P' && pattern.test(element.textContent ?? '');
-
 describe('personnalités réelles', () => {
   it('rappelle que tout est simulé et présente chaque personnalité avec sa fiche sourcée', async () => {
     mockApi(handlers);
@@ -59,33 +56,22 @@ describe('personnalités réelles', () => {
       await within(lePen).findByRole('img', { name: 'Portrait de Marine Le Pen' }),
     ).toBeInTheDocument();
     expect(within(lePen).getByText(/aucune proposition prêtée par le jeu/)).toBeInTheDocument();
-    await user.click(within(lePen).getByText('Fiche sourcée et crédit photo'));
-    const source = within(lePen).getByRole('link', {
-      name: fiche('reel-le-pen').candidature.source.site!,
-    });
-    expect(source).toHaveAttribute('href', fiche('reel-le-pen').candidature.source.url);
+    await user.click(within(lePen).getByText('Fiche'));
+    expect(within(lePen).getByText(fiche('reel-le-pen').candidature.libelle)).toBeInTheDocument();
     expect(within(lePen).getByText('Estimation')).toBeInTheDocument();
-    expect(
-      within(lePen).getByText(paragraph(/^Photo : Vox España, CC0, via Wikimedia Commons/)),
-    ).toBeInTheDocument();
+    // Phase 11 : sources de la fiche et crédit de la photo dans Paramètres → Crédits.
+    expect(within(lePen).queryAllByRole('link')).toEqual([]);
+    expect(within(lePen).queryByText(/^Photo :/)).not.toBeInTheDocument();
 
-    // Photo de la source non libre : portrait libre choisi sur Commons, choix motivé.
+    // Photo de la source non libre : portrait libre choisi sur Commons (crédit dans Paramètres).
     const glucksmann = screen.getByRole('listitem', { name: 'Raphaël Glucksmann' });
     expect(
       await within(glucksmann).findByRole('img', { name: 'Portrait de Raphaël Glucksmann' }),
     ).toBeInTheDocument();
-    await user.click(within(glucksmann).getByText('Fiche sourcée et crédit photo'));
-    expect(
-      within(glucksmann).getByText(
-        paragraph(
-          /^Photo : Librairie Mollat, CC BY-SA 4\.0, via Wikimedia Commons.+Parlement européen/,
-        ),
-      ),
-    ).toBeInTheDocument();
 
     // Position « hypothèse » signalée comme telle.
     const ruffin = screen.getByRole('listitem', { name: 'François Ruffin' });
-    await user.click(within(ruffin).getByText('Fiche sourcée et crédit photo'));
+    await user.click(within(ruffin).getByText('Fiche'));
     expect(within(ruffin).getByText('Hypothèse')).toBeInTheDocument();
 
     // Le joueur incarne Gabriel Attal : c'est sa campagne (programme à composer).
@@ -93,14 +79,10 @@ describe('personnalités réelles', () => {
     expect(within(attal).getByText('Votre candidat')).toBeInTheDocument();
     expect(within(attal).getByText(/Programme : 0 proposition/)).toBeInTheDocument();
 
-    const sources = screen.getByRole('region', {
-      name: 'Personnalités réelles : sources et méthode',
-    });
     expect(
-      within(sources).getByRole('link', { name: /Chapel Hill Expert Survey 2024/ }),
-    ).toBeInTheDocument();
-    expect(within(sources).getByText(/Candidatures déclarées non intégrées/)).toBeInTheDocument();
-    expect(within(sources).getByText(/Delphine Batho/)).toBeInTheDocument();
+      screen.queryByRole('region', { name: 'Personnalités réelles : sources et méthode' }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('note')).toHaveTextContent(/Sources et méthode : Paramètres → Crédits/);
   });
 
   it('ne prête aucun programme aux personnalités réelles adverses', async () => {

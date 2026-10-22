@@ -1,11 +1,12 @@
 import type { RealPersonality, Ruleset } from '@r2027/shared';
-import { formatGameDate, POSITION_METHOD_LABELS } from '../labels';
+import { POSITION_METHOD_LABELS } from '../labels';
 import { portraitOfPersonality } from '../portraits';
 import { Avatar } from './Avatar';
 import { Badge } from './Badge';
 
-// Personnalités politiques réelles (phase 5 bis) : photo créditée, fiche sourcée et rappel que
-// leur comportement dans la partie est simulé. Aucun propos ne leur est attribué.
+// Personnalités politiques réelles (phase 5 bis) : photo, fiche et rappel que leur comportement
+// dans la partie est simulé. Aucun propos ne leur est attribué. Crédits des photos et sources
+// des fiches : Paramètres → Crédits (phase 11).
 
 export const SIMULATION_NOTICE =
   'Personnalités réelles : leurs actions, stratégies, ralliements, intentions de vote et résultats dans cette partie sont simulés par le jeu ; ils ne décrivent ni ne prédisent rien de réel, et aucun propos ne leur est attribué.';
@@ -60,32 +61,16 @@ export function PhotoCreditLine({ personality }: { personality: RealPersonality 
   );
 }
 
-/** Candidature datée et sa source (média et lien), sans reprendre le titre de l'article. */
+/** Candidature datée (sa source figure dans Paramètres → Crédits). */
 export function CandidacyLine({ personality }: { personality: RealPersonality }) {
-  const { candidature } = personality;
-  return (
-    <p className="text-sm">
-      {candidature.libelle}{' '}
-      <span className="text-slate-600 dark:text-slate-400">
-        Source :{' '}
-        <a href={candidature.source.url} className="underline" target="_blank" rel="noreferrer">
-          {candidature.source.site ?? 'référence de presse'}
-        </a>
-        .
-      </span>
-    </p>
-  );
+  return <p className="text-sm">{personality.candidature.libelle}</p>;
 }
 
-/** Fiche sourcée : fonctions, candidature, position estimée et sa méthode, liens. */
-export function PersonalityFacts({
-  personality,
-  verifieLe,
-}: {
-  personality: RealPersonality;
-  /** Date de l'importation des fiches (jeu de règles). */
-  verifieLe: string;
-}) {
+/**
+ * Fiche : fonctions, candidature, position et son statut (estimation ou hypothèse). Sources,
+ * méthode détaillée et crédit de la photo : Paramètres → Crédits (phase 11).
+ */
+export function PersonalityFacts({ personality }: { personality: RealPersonality }) {
   const { position } = personality;
   return (
     <div className="space-y-2 text-sm">
@@ -101,30 +86,8 @@ export function PersonalityFacts({
         <Badge tone={position.statut === 'estimation' ? 'alerte' : 'danger'}>
           {position.statut === 'estimation' ? 'Estimation' : 'Hypothèse'}
         </Badge>{' '}
-        Position dans le jeu : {POSITION_METHOD_LABELS[position.methode]}. {position.detail}
+        Position dans le jeu : {POSITION_METHOD_LABELS[position.methode]}.
       </p>
-      <p className="text-xs text-slate-500 dark:text-slate-400">
-        Faits relevés le {formatGameDate(verifieLe)} dans l’
-        <a href={personality.article} className="underline" target="_blank" rel="noreferrer">
-          article Wikipédia
-        </a>
-        {personality.wikidata && (
-          <>
-            {' '}
-            et sur{' '}
-            <a
-              href={`https://www.wikidata.org/wiki/${personality.wikidata}`}
-              className="underline"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Wikidata
-            </a>
-          </>
-        )}
-        .
-      </p>
-      <PhotoCreditLine personality={personality} />
     </div>
   );
 }

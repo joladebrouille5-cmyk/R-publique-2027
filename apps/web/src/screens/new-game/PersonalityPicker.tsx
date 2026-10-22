@@ -4,7 +4,6 @@ import { ErrorMessage } from '../../components/ErrorMessage';
 import {
   CandidacyLine,
   PersonalityPhoto,
-  PhotoCreditLine,
   SIMULATION_NOTICE,
 } from '../../components/RealPersonality';
 import { label } from '../../components/ui';
@@ -12,7 +11,7 @@ import { describePosition, formatGameDate, POSITION_METHOD_LABELS } from '../../
 
 /**
  * Choix de la personnalité réelle incarnée (mode « candidat réel ») : candidatures déclarées
- * retenues, fiche sourcée, photo créditée, position estimée et sa méthode.
+ * retenues, photo, position et son statut (sources et crédits : Paramètres → Crédits).
  */
 export function PersonalityPicker({
   value,
@@ -31,8 +30,7 @@ export function PersonalityPicker({
       <legend className={label}>Personnalité incarnée</legend>
       <p className="text-sm text-slate-600 dark:text-slate-400">
         Candidatures déclarées à la présidentielle de 2027, relevées le {formatGameDate(verifieLe)}{' '}
-        et retenues pour le jeu (position d’après l’enquête d’experts Chapel Hill).{' '}
-        {SIMULATION_NOTICE}
+        et retenues pour le jeu. {SIMULATION_NOTICE} Sources et crédits des photos : Paramètres.
       </p>
       <ul className="grid gap-2 sm:grid-cols-2">
         {personnalites.map((p: RealPersonality) => (
@@ -73,28 +71,10 @@ export function PersonalityPicker({
         <div className="space-y-1 rounded-lg bg-slate-50 p-3 dark:bg-slate-900" aria-live="polite">
           {(() => {
             const chosen = personnalites.find((p) => p.id === value);
-            return chosen ? (
-              <>
-                <CandidacyLine personality={chosen} />
-                <PhotoCreditLine personality={chosen} />
-              </>
-            ) : null;
+            return chosen ? <CandidacyLine personality={chosen} /> : null;
           })()}
         </div>
       )}
-      <details className="text-xs text-slate-600 dark:text-slate-400">
-        <summary className="cursor-pointer">Crédits des photos</summary>
-        <ul className="mt-1 space-y-1">
-          {personnalites.map((p) => (
-            <li key={p.id}>
-              <span className="font-medium">
-                {p.prenom} {p.nom} —{' '}
-              </span>
-              <PhotoCreditLine personality={p} />
-            </li>
-          ))}
-        </ul>
-      </details>
       {nonIntegrees.length > 0 && (
         <details className="text-xs text-slate-600 dark:text-slate-400">
           <summary className="cursor-pointer">
@@ -102,7 +82,7 @@ export function PersonalityPicker({
           </summary>
           <p className="mt-1">
             {nonIntegrees.map((n) => `${n.prenom} ${n.nom} (${n.parti})`).join(', ')} : aucun de
-            leurs partis n’est noté par l’enquête d’experts utilisée pour placer les candidats.
+            leurs partis n’a de position estimée pour placer les candidats.
           </p>
         </details>
       )}

@@ -17,6 +17,7 @@ import { Legislatives } from './screens/Legislatives';
 import { Medias } from './screens/Medias';
 import { NewGame } from './screens/NewGame';
 import { NotFound, RouteError } from './screens/NotFound';
+import { Parametres } from './screens/Parametres';
 import { Polls } from './screens/Polls';
 import { Programme } from './screens/Programme';
 import { GAME_SCREENS } from './screens/registry';
@@ -80,6 +81,7 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <Home /> },
       { path: 'nouvelle-partie', element: <NewGame /> },
+      { path: 'parametres', element: <Parametres /> },
       {
         path: 'parties/:gameId',
         element: <GameLayout />,

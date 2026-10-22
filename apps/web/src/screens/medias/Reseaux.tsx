@@ -1,5 +1,6 @@
 import {
   candidateName,
+  isPlateau,
   type DigitalPost,
   type DigitalReception,
   type DigitalTone,
@@ -120,19 +121,7 @@ function FormatTiles({
                 <p className="font-bold leading-tight">{format.libelle}</p>
                 <p className="text-xs text-slate-600 dark:text-slate-400">
                   {format.plateforme} · ex.{' '}
-                  {format.exemples.map((exemple, i) => (
-                    <span key={exemple.nom}>
-                      {i > 0 && ', '}
-                      <a
-                        href={ruleset.sources[exemple.sourceId]?.url ?? undefined}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="underline decoration-slate-300 underline-offset-2 hover:decoration-current"
-                      >
-                        {exemple.nom}
-                      </a>
-                    </span>
-                  ))}
+                  {format.exemples.map((exemple) => exemple.nom).join(', ')}
                 </p>
               </div>
               <InfoPopover label={`Détails : ${action.libelle}`} title={action.libelle}>
@@ -163,15 +152,17 @@ function FormatTiles({
                     <div>
                       <dt className="font-semibold">Risque</dt>
                       <dd>
-                        {Math.round(action.risque.probabilite * 100)} % : {action.risque.libelle}
+                        {isPlateau(ruleset, action)
+                          ? `si le passage est raté (score de ${ruleset.prestations.seuils.incident} ou moins)`
+                          : `${Math.round(action.risque.probabilite * 100)} %`}{' '}
+                        : {action.risque.libelle}
                       </dd>
                     </div>
                   )}
                 </dl>
                 {format.exemples.map((exemple) => (
                   <p key={exemple.nom} className="mt-3 text-xs text-slate-600 dark:text-slate-400">
-                    {exemple.nom} : {exemple.fait} (
-                    {ruleset.sources[exemple.sourceId]?.titre ?? exemple.sourceId}).
+                    {exemple.nom} : {exemple.fait}.
                   </p>
                 ))}
               </InfoPopover>

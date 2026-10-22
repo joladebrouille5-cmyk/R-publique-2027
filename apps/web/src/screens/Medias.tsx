@@ -12,7 +12,6 @@ import { ErrorMessage } from '../components/ErrorMessage';
 import {
   audienceLabel,
   hoursLabel,
-  LogoCreditLine,
   MEDIA_NOTICE,
   MEDIA_TYPE_LABELS,
   OutletLogo,
@@ -60,7 +59,7 @@ function SpeakingTime({
   return (
     <div className="space-y-1 text-xs text-slate-600 dark:text-slate-400">
       <p>
-        Temps de parole des partis relevé par l’Arcom : {hoursLabel(t.partisSecondes)} du{' '}
+        Temps de parole des partis (relevé officiel) : {hoursLabel(t.partisSecondes)} du{' '}
         {formatGameDate(debut)} au {formatGameDate(fin)} (pouvoir exécutif, compté à part :{' '}
         {hoursLabel(t.executifSecondes)}).
       </p>
@@ -165,9 +164,9 @@ function Shows({ state, ruleset }: { state: GameState; ruleset: Ruleset }) {
         Émissions politiques
       </h2>
       <p className="text-sm text-slate-600 dark:text-slate-400">
-        Émissions réelles, avec leur chaîne et leurs présentateurs d’après leur article Wikipédia.
-        Pour y être invité, programmez « Invité d’une émission politique » dans le plan d’actions :
-        l’interview est simulée et rien n’est attribué aux journalistes.
+        Émissions réelles, avec leur chaîne et leurs présentateurs. Pour y être invité, programmez «
+        Invité d’une émission politique » dans le plan d’actions : l’interview est simulée et rien
+        n’est attribué aux journalistes.
       </p>
       <ul className="grid gap-3 md:grid-cols-2">
         {ruleset.mediasReels.emissions.map((show) => {
@@ -193,85 +192,10 @@ function Shows({ state, ruleset }: { state: GameState; ruleset: Ruleset }) {
                   {guests.map((g) => name(g.acteurId)).join(', ')}
                 </p>
               )}
-              <p className="text-xs">
-                <a href={show.article} className="underline" target="_blank" rel="noreferrer">
-                  Article Wikipédia (révision consultée)
-                </a>
-              </p>
             </li>
           );
         })}
       </ul>
-    </section>
-  );
-}
-
-function Sources({ ruleset }: { ruleset: Ruleset }) {
-  const media = ruleset.mediasReels;
-  return (
-    <section aria-labelledby="titre-sources-medias" className={`${card} space-y-3 text-sm`}>
-      <h2 id="titre-sources-medias" className="text-lg font-semibold">
-        Médias réels : sources et méthode
-      </h2>
-      <p>
-        Données relevées le {formatGameDate(media.verifieLe)}. {media.decision}
-      </p>
-      <dl className="space-y-2">
-        {(
-          [
-            ['Organes retenus', media.methode.selection],
-            ['Audiences', media.methode.audience],
-            ['Temps de parole', media.methode.tempsDeParole],
-            ['Exposition relative', media.methode.propension],
-            ['Émissions', media.methode.emissions],
-            ['Logos', media.methode.logos],
-          ] as const
-        ).map(([term, text]) => (
-          <div key={term}>
-            <dt className="font-medium">{term}</dt>
-            <dd className="text-slate-700 dark:text-slate-300">{text}</dd>
-          </div>
-        ))}
-      </dl>
-      <p className="text-slate-600 dark:text-slate-400">
-        <Badge tone="alerte">Hypothèses de jeu</Badge> {ruleset.medias.note}
-      </p>
-      <h3 className="font-semibold">Sources</h3>
-      <ul className="list-inside list-disc space-y-1">
-        {media.sources.map((source) => (
-          <li key={source.id}>
-            <a href={source.url} className="underline" target="_blank" rel="noreferrer">
-              {source.titre}
-            </a>{' '}
-            — {source.version}, consulté le {formatGameDate(source.consulteLe)} ; licence :{' '}
-            {source.licence}.
-          </li>
-        ))}
-      </ul>
-      <h3 className="font-semibold">Mesurés mais non retenus</h3>
-      <ul className="list-inside list-disc space-y-1">
-        {media.exclus.map((e) => (
-          <li key={e.libelle}>
-            {e.libelle} — {e.motif}
-          </li>
-        ))}
-        {media.emissionsNonRetenues.map((e) => (
-          <li key={e.titre}>
-            {e.titre} — {e.motif}
-          </li>
-        ))}
-      </ul>
-      <details>
-        <summary className="cursor-pointer font-semibold">Crédits des logos</summary>
-        <ul className="mt-1 list-inside list-disc space-y-1 text-xs">
-          {media.organes.map((o) => (
-            <li key={o.id}>
-              <span className="font-medium">{o.libelle} — </span>
-              <LogoCreditLine outlet={o} />
-            </li>
-          ))}
-        </ul>
-      </details>
     </section>
   );
 }
@@ -343,8 +267,6 @@ export function Medias() {
           </ul>
         </section>
       ))}
-
-      <Sources ruleset={data} />
     </section>
   );
 }

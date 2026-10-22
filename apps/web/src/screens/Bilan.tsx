@@ -181,9 +181,8 @@ function Review({
       </div>
       <p className="text-xs text-slate-500 dark:text-slate-400">
         Valeurs simulées par le jeu (aucune n’est une prévision) ; seules les valeurs de départ de
-        l’économie sont des données de l’Insee. Pendant la campagne qui suit, l’action du
-        gouvernement sortant, le Parlement et l’économie ne sont pas simulés (simplification du
-        jeu).
+        l’économie sont des données réelles. Pendant la campagne qui suit, l’action du gouvernement
+        sortant, le Parlement et l’économie ne sont pas simulés (simplification du jeu).
       </p>
     </section>
   );

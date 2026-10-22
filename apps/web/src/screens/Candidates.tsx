@@ -1,10 +1,4 @@
-import {
-  candidateName,
-  type Actor,
-  type GameState,
-  type Ruleset,
-  type UtilityFactor,
-} from '@r2027/shared';
+import { candidateName, type Actor, type GameState, type UtilityFactor } from '@r2027/shared';
 import { useRuleset } from '../api/hooks';
 import { presentationSummary } from '../campaign';
 import { Avatar } from '../components/Avatar';
@@ -20,7 +14,6 @@ import {
   CANDIDATE_STATUS_LABELS,
   describePosition,
   formatCount,
-  formatGameDate,
   formatResource,
   OBJECTIVE_LABELS,
   PRIORITY_LABELS,
@@ -86,59 +79,6 @@ function Breakdown({ factors }: { factors: UtilityFactor[] }) {
   );
 }
 
-/** Sources et méthode des fiches de personnalités réelles (phase 5 bis). */
-function RealSources({ ruleset }: { ruleset: Ruleset }) {
-  const { personnalites, personnalitesReelles } = ruleset;
-  return (
-    <section aria-labelledby="titre-sources-reelles" className={`${card} space-y-3 text-sm`}>
-      <h2 id="titre-sources-reelles" className="text-lg font-semibold">
-        Personnalités réelles : sources et méthode
-      </h2>
-      <p>{SIMULATION_NOTICE}</p>
-      <p>
-        Fiches relevées le {formatGameDate(personnalites.verifieLe)}. {personnalites.decision}
-      </p>
-      <dl className="space-y-2">
-        <dt className="font-medium">Position sur les axes</dt>
-        <dd className="text-slate-700 dark:text-slate-300">{personnalites.methode.position}</dd>
-        <dt className="font-medium">Notoriété de départ</dt>
-        <dd className="text-slate-700 dark:text-slate-300">{personnalites.methode.notoriete}</dd>
-        <dt className="font-medium">Organisation de campagne</dt>
-        <dd className="text-slate-700 dark:text-slate-300">{personnalites.methode.organisation}</dd>
-        <dt className="font-medium">Ancrage local</dt>
-        <dd className="text-slate-700 dark:text-slate-300">{personnalites.methode.implantation}</dd>
-      </dl>
-      <p className="text-slate-600 dark:text-slate-400">
-        <Badge tone="alerte">Hypothèses de jeu</Badge> {personnalitesReelles.note}
-      </p>
-      <h3 className="font-semibold">Sources</h3>
-      <ul className="list-inside list-disc space-y-1">
-        {personnalites.sources.map((source) => (
-          <li key={source.id}>
-            <a href={source.url} className="underline" target="_blank" rel="noreferrer">
-              {source.titre}
-            </a>{' '}
-            — {source.version}, consulté le {formatGameDate(source.consulteLe)} ; licence :{' '}
-            {source.licence}.
-          </li>
-        ))}
-      </ul>
-      {personnalites.nonIntegrees.length > 0 && (
-        <>
-          <h3 className="font-semibold">Candidatures déclarées non intégrées</h3>
-          <ul className="list-inside list-disc space-y-1">
-            {personnalites.nonIntegrees.map((n) => (
-              <li key={`${n.prenom} ${n.nom}`}>
-                {n.prenom} {n.nom} ({n.parti}) — {n.motif}
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
-    </section>
-  );
-}
-
 export function Candidates() {
   const game = useCurrentGame();
   const ruleset = useRuleset(game.rulesetVersion, game.state.cycle);
@@ -160,7 +100,7 @@ export function Candidates() {
           role="note"
           className="rounded-lg bg-teal-50 p-3 text-sm text-teal-900 dark:bg-teal-950 dark:text-teal-100"
         >
-          {SIMULATION_NOTICE} Fiches, sources et méthode en bas de page.
+          {SIMULATION_NOTICE} Sources et méthode : Paramètres → Crédits.
         </p>
       )}
       <p className="text-sm text-slate-600 dark:text-slate-400">
@@ -273,14 +213,9 @@ export function Candidates() {
               )}
               {fiche && ruleset.data && (
                 <details>
-                  <summary className="cursor-pointer text-sm font-medium">
-                    Fiche sourcée et crédit photo
-                  </summary>
+                  <summary className="cursor-pointer text-sm font-medium">Fiche</summary>
                   <div className="mt-2">
-                    <PersonalityFacts
-                      personality={fiche}
-                      verifieLe={ruleset.data.personnalites.verifieLe}
-                    />
+                    <PersonalityFacts personality={fiche} />
                   </div>
                 </details>
               )}
@@ -333,7 +268,6 @@ export function Candidates() {
           onPropose={plan.togglePropose}
         />
       )}
-      {ruleset.data && hasReal && <RealSources ruleset={ruleset.data} />}
     </section>
   );
 }

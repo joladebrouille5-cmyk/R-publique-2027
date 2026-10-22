@@ -1,3 +1,4 @@
+import { Settings } from 'lucide-react';
 import { Link, Outlet, useMatch } from 'react-router';
 import { useHealth } from '../api/hooks';
 import { platform } from '../platform';
@@ -35,7 +36,7 @@ function Brand() {
   return (
     <Link
       to="/"
-      className="flex items-center gap-2.5 rounded-full font-display text-lg font-extrabold tracking-tight"
+      className="flex items-center gap-2 rounded-full font-display text-base font-extrabold tracking-tight whitespace-nowrap sm:gap-2.5 sm:text-lg"
     >
       <span aria-hidden="true" className="flex h-5 -skew-x-12 overflow-hidden rounded-[3px]">
         <span className="w-1.5 bg-republique-600" />
@@ -65,9 +66,18 @@ export function AppLayout() {
         className="fixed inset-x-0 top-0 z-40 h-(--sat) bg-slate-50 dark:bg-slate-950"
       />
       <header className="bg-slate-50 pt-(--sat) pr-(--sar) pl-(--sal) dark:bg-slate-950">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 pt-3 pb-2">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 pt-3 pb-2 sm:gap-4">
           <Brand />
-          <ThemeToggle />
+          <div className="flex items-center gap-1 sm:gap-2">
+            <ThemeToggle />
+            <Link
+              to="/parametres"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-full px-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+            >
+              <Settings aria-hidden="true" className="size-5" />
+              <span className="sr-only sm:not-sr-only">Paramètres</span>
+            </Link>
+          </div>
         </div>
       </header>
       <main id="contenu" className="flex-1">

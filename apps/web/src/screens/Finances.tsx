@@ -164,7 +164,6 @@ export function Finances() {
     return <ErrorMessage error={ruleset.error} onRetry={() => void ruleset.refetch()} />;
   if (!ruleset.data) return <p>Chargement du jeu de règles…</p>;
   const rules = ruleset.data;
-  const source = rules.sources[rules.finances.sourceId];
   const candidates = Object.values(state.actors).sort(
     (a, b) => b.finances.depenses - a.finances.depenses,
   );
@@ -258,16 +257,9 @@ export function Finances() {
           </li>
         </ul>
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          Source :{' '}
-          {source?.url ? (
-            <a href={source.url} className="underline" rel="noreferrer" target="_blank">
-              {source.titre}
-            </a>
-          ) : (
-            source?.titre
-          )}
-          . {rules.finances.note} Emprunts bancaires, part d’apport personnel des fonds de départ et
-          montants des collectes : hypothèses de jeu.
+          <Badge tone="reel">Règles réelles</Badge> Emprunts bancaires, part d’apport personnel des
+          fonds de départ et montants des collectes : hypothèses de jeu. Sources : Paramètres →
+          Crédits.
         </p>
       </section>
     </section>

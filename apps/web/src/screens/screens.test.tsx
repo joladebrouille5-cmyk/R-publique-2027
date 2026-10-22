@@ -111,12 +111,11 @@ describe('création de partie', () => {
 
     await user.click(within(group).getByRole('radio', { name: /Marine Tondelier/ }));
     expect(within(group).getByText(/Désignée candidate par Les Écologistes/)).toBeInTheDocument();
+    // Phase 11 : crédits des photos et sources dans Paramètres, pas sur le formulaire.
     expect(
-      within(group).getAllByText(
-        (_, el) =>
-          el?.tagName === 'P' && /^Photo : Greenbox, CC BY-SA 4\.0/.test(el.textContent ?? ''),
-      ).length,
-    ).toBeGreaterThan(0);
+      within(group).getByText(/Sources et crédits des photos : Paramètres/),
+    ).toBeInTheDocument();
+    expect(within(group).queryAllByRole('link')).toEqual([]);
     expect(
       within(group).getByRole('img', { name: 'Portrait de Marine Tondelier' }),
     ).toHaveAttribute('src', '/personnalites/reel-tondelier.webp');

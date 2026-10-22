@@ -9,7 +9,7 @@ import { useJournal, useRuleset } from '../api/hooks';
 import { Badge } from '../components/Badge';
 import { ErrorMessage } from '../components/ErrorMessage';
 import { card, screenTitle } from '../components/ui';
-import { formatIndicator, formatIndicatorDelta, formatGameDate, INDICATOR_LABELS } from '../labels';
+import { formatIndicator, formatIndicatorDelta, INDICATOR_LABELS } from '../labels';
 import { useCurrentGame } from './GameLayout';
 
 const REAL: readonly EconomicIndicator[] = [
@@ -20,7 +20,7 @@ const REAL: readonly EconomicIndicator[] = [
   'dette',
   'confiance',
 ];
-const STATUS = { estimation: 'Donnée Insee', deduit: 'Déduit de séries Insee' } as const;
+const STATUS = { estimation: 'Donnée réelle', deduit: 'Déduite de données réelles' } as const;
 
 function Origin({ ruleset, indicator }: { ruleset: Ruleset; indicator: EconomicIndicator }) {
   if (!REAL.includes(indicator)) {
@@ -34,19 +34,10 @@ function Origin({ ruleset, indicator }: { ruleset: Ruleset; indicator: EconomicI
     ruleset.economieReelle.indicateurs[
       indicator as keyof typeof ruleset.economieReelle.indicateurs
     ];
-  const sources = ruleset.economieReelle.sources.filter((s) => real.sourceIds.includes(s.id));
   return (
     <span>
       <Badge tone="reel">{STATUS[real.statut]}</Badge> {formatIndicator(indicator, real.valeur)} (
-      {real.periode}) —{' '}
-      {sources.map((s, i) => (
-        <span key={s.id}>
-          {i > 0 && ', '}
-          <a href={s.url} className="underline" rel="noreferrer" target="_blank">
-            {s.titre.replace(/^Insee — /, '')}
-          </a>
-        </span>
-      ))}
+      {real.periode})
     </span>
   );
 }
@@ -67,7 +58,7 @@ function Content({
     return (
       <p className={`${card} text-sm`}>
         L’économie est simulée pendant le quinquennat : elle démarre après l’élection
-        présidentielle, avec les dernières valeurs publiées par l’Insee.
+        présidentielle, avec les dernières valeurs réelles publiées.
       </p>
     );
   }
@@ -136,10 +127,8 @@ function Content({
           })}
         </ul>
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          Valeurs de départ : dernières séries publiées par l’Insee (consultées le{' '}
-          {formatGameDate(ruleset.economieReelle.verifieLe)}). Leur évolution est une simulation :
-          modèle de jeu simple (hypothèses du jeu de règles), réformes adoptées et crises fictives.
-          Aucune valeur simulée n’est une prévision.
+          Valeurs de départ réelles ; leur évolution est une simulation (hypothèses du jeu, réformes
+          adoptées, crises fictives), jamais une prévision. Sources : Paramètres → Crédits.
         </p>
       </section>
     </>

@@ -130,3 +130,16 @@ export async function closeDebrief(page: Page, week: number) {
   await debrief.getByRole('button', { name: 'Continuer' }).click();
   await expect(debrief).toBeHidden();
 }
+
+/**
+ * Attend la fin des animations finies (entrées en fondu, montées) : un audit de contraste mené
+ * pendant un fondu mesure des éléments encore transparents. Les animations infinies (voyant
+ * « En direct », bandeau défilant) sont ignorées.
+ */
+export async function settled(page: Page) {
+  await page.waitForFunction(() =>
+    document
+      .getAnimations()
+      .every((a) => a.playState !== 'running' || a.effect?.getTiming().iterations === Infinity),
+  );
+}

@@ -44,9 +44,6 @@ const handlers = (game = state) => ({
 });
 
 /** Paragraphe dont le texte complet (liens compris) correspond. */
-const paragraph = (pattern: RegExp) => (_: string, element: Element | null) =>
-  element?.tagName === 'LI' && pattern.test(element.textContent ?? '');
-
 describe('écran des médias réels', () => {
   it('présente les émissions réelles, leurs présentateurs et l’interview simulée de la semaine', async () => {
     mockApi(handlers());
@@ -60,10 +57,8 @@ describe('écran des médias réels', () => {
     ).toBeInTheDocument();
     expect(within(grandJury).getByText('Interview simulée')).toBeInTheDocument();
     expect(within(grandJury).getByText(/Gabriel Attal \(vous\)/)).toBeInTheDocument();
-    expect(within(grandJury).getByRole('link', { name: /Article Wikipédia/ })).toHaveAttribute(
-      'href',
-      SHOW.article,
-    );
+    // Phase 11 : l'article de référence est dans Paramètres → Crédits, pas sur la fiche.
+    expect(within(grandJury).queryAllByRole('link')).toEqual([]);
   });
 
   it('montre chaque organe par type, avec sa mesure d’audience, ses temps de parole et son logo crédité', async () => {
@@ -78,7 +73,7 @@ describe('écran des médias réels', () => {
       ),
     ).toBeInTheDocument();
     expect(
-      within(tf1).getByText(/Temps de parole des partis relevé par l’Arcom/),
+      within(tf1).getByText(/Temps de parole des partis \(relevé officiel\)/),
     ).toBeInTheDocument();
     // Exposition mesurée des partis des candidats (personnalités réelles rattachées).
     await userEvent
@@ -101,28 +96,16 @@ describe('écran des médias réels', () => {
     expect(within(figaro).queryByRole('img')).not.toBeInTheDocument();
   });
 
-  it('cite les sources, la méthode, les exclusions et les crédits des logos', async () => {
+  it('laisse sources, méthode, exclusions et crédits des logos à la page Paramètres', async () => {
     mockApi(handlers());
     renderRoute(`/parties/${GAME_ID}/medias`);
-    const sources = await screen.findByRole('region', {
-      name: 'Médias réels : sources et méthode',
-    });
-    const arcom = RULESET.mediasReels.sources.find((s) => s.id.startsWith('arcom-'))!;
-    expect(within(sources).getByRole('link', { name: arcom.titre })).toHaveAttribute(
-      'href',
-      arcom.url,
-    );
-    expect(within(sources).getByText('Hypothèses de jeu')).toBeInTheDocument();
-    expect(within(sources).getByText(/^Sud Radio — /)).toBeInTheDocument();
+    await screen.findByRole('region', { name: 'Télévision' });
     expect(
-      within(sources).getByText(/^Questions politiques — diffusion arrêtée/),
-    ).toBeInTheDocument();
+      screen.queryByRole('region', { name: 'Médias réels : sources et méthode' }),
+    ).not.toBeInTheDocument();
     expect(
-      within(sources).getByText(
-        paragraph(/^TF1 — Logo : .+, Public domain, via Wikimedia Commons/),
-      ),
-    ).toBeInTheDocument();
-    expect(within(sources).getByText(paragraph(/^Le Figaro — Sans logo : /))).toBeInTheDocument();
+      screen.getAllByRole('link').filter((a) => a.getAttribute('href')?.startsWith('http')),
+    ).toEqual([]);
   });
 
   it('indique que la couverture n’est pas encore calculée avant la première semaine', async () => {
@@ -193,10 +176,10 @@ describe('réseaux et nouveaux médias (phase 9)', () => {
     expect(within(section).getByTestId('jauge-jeunesse')).toHaveTextContent(
       `${(player.resources.jeunesse / 100).toFixed(2).replace('.', ',')}`,
     );
-    // Chaque format renvoie à son exemple réel, sourcé par une révision figée.
+    // Chaque format cite son exemple réel ; la source (révision figée) est dans Paramètres.
     const formats = within(section).getByRole('list', { name: 'Formats à programmer' });
-    const legend = within(formats).getByRole('link', { name: 'Legend' });
-    expect(legend).toHaveAttribute('href', expect.stringMatching(/oldid=\d+$/));
+    expect(within(formats).getAllByText(/ex\. Legend/).length).toBeGreaterThan(0);
+    expect(within(formats).queryByRole('link', { name: 'Legend' })).not.toBeInTheDocument();
     // Fil : publications du joueur, réactions de comptes fictifs du jeu de règles.
     const feed = within(section).getByRole('list', { name: 'Fil des publications simulées' });
     const mine = within(feed).getByRole('listitem', {

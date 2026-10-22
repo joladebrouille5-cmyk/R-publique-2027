@@ -200,21 +200,20 @@ describe('quinquennat', () => {
     expect(within(group).getByText(/Projection du gouvernement/)).toBeInTheDocument();
   });
 
-  it('l’économie : valeurs de départ de l’Insee, valeurs simulées et facteurs', async () => {
+  it('l’économie : valeurs de départ réelles, valeurs simulées et facteurs', async () => {
     let state = elected;
     for (let i = 0; i < 6; i++) state = step(state);
     mockApi(base(state));
     renderRoute(`/parties/${GAME_ID}/economie`);
     const unemployment = await screen.findByRole('listitem', { name: 'Taux de chômage' });
-    expect(within(unemployment).getByText('Donnée Insee')).toBeInTheDocument();
-    expect(
-      within(unemployment).getByRole('link', { name: /Taux de chômage au sens du BIT/ }),
-    ).toHaveAttribute('href', 'https://www.insee.fr/fr/statistiques/serie/001688527');
+    // Étiquette courte à l'écran ; la série et son lien sont dans Paramètres → Crédits.
+    expect(within(unemployment).getByText('Donnée réelle')).toBeInTheDocument();
+    expect(within(unemployment).queryAllByRole('link')).toEqual([]);
     const tensions = screen.getByRole('listitem', {
       name: 'Tensions sociales (indicateur de jeu, 0 à 100)',
     });
     expect(within(tensions).getByText('Convention du jeu')).toBeInTheDocument();
-    expect(screen.getByText(/Aucune valeur simulée n’est une prévision/)).toBeInTheDocument();
+    expect(screen.getByText(/jamais une prévision/)).toBeInTheDocument();
   });
 
   it('les crises : catalogue fictif et décision en attente', async () => {

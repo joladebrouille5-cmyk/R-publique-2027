@@ -4,7 +4,6 @@ import { Badge, type BadgeTone } from '../components/Badge';
 import { ErrorMessage } from '../components/ErrorMessage';
 import { Hemicycle } from '../components/Hemicycle';
 import { card, screenTitle } from '../components/ui';
-import { formatGameDate } from '../labels';
 import { useCurrentGame } from './GameLayout';
 
 const ALIGNMENT_LABELS: Record<Alignment, { text: string; tone: BadgeTone }> = {
@@ -23,7 +22,7 @@ const STAGE_LABELS: Record<Bill['etape'], string> = {
   retire: 'Retiré',
 };
 
-const STATUS_LABELS = { estimation: 'Position estimée (CHES)', hypothese: 'Position supposée' };
+const STATUS_LABELS = { estimation: 'Position estimée', hypothese: 'Position supposée' };
 
 function BillCard({ bill, state, ruleset }: { bill: Bill; state: GameState; ruleset: Ruleset }) {
   const proposal = ruleset.programme.propositions.find((p) => p.id === bill.propositionId);
@@ -120,7 +119,6 @@ function Content({ state, ruleset }: { state: GameState; ruleset: Ruleset }) {
       .filter((g) => g.alignement === alignment)
       .reduce((sum, g) => sum + g.sieges, 0);
   const assembly = ruleset.assemblee;
-  const source = assembly.sources.find((s) => s.id === 'an-deputes-en-exercice');
   const textes = [...parliament.textes].reverse();
 
   return (
@@ -200,12 +198,9 @@ function Content({ state, ruleset }: { state: GameState; ruleset: Ruleset }) {
           </table>
         </div>
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          Composition réelle d’après la liste ouverte des députés en exercice de l’Assemblée
-          nationale
-          {source ? ` (${source.version}, consultée le ${formatGameDate(source.consulteLe)})` : ''},
-          sans aucun nom de député ; positions des groupes d’après l’enquête d’experts Chapel Hill
-          2024 ou supposées. Les votes et la position à l’égard du président sont simulés par groupe
-          : aucun vote n’est attribué à un député réel.
+          Composition réelle par groupe, sans aucun nom de député ; positions des groupes estimées
+          ou supposées. Les votes et la position à l’égard du président sont simulés par groupe :
+          aucun vote n’est attribué à un député réel.
         </p>
       </section>
 

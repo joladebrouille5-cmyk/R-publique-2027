@@ -7,7 +7,7 @@ const DAY_MS = 86_400_000;
 const days = (from: string, to: string) =>
   Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / DAY_MS);
 
-/** Calendrier officiel du jeu de règles, avec statut et source de chaque date. */
+/** Calendrier du jeu de règles, avec le statut de chaque date (sources : Paramètres). */
 export function CalendarPanel({ ruleset, today }: { ruleset: Ruleset; today: string }) {
   const items = [
     ...ruleset.calendrier.scrutins.map((s) => ({ ...s, heure: null })),
@@ -22,7 +22,6 @@ export function CalendarPanel({ ruleset, today }: { ruleset: Ruleset; today: str
       <ul className="space-y-3 text-sm">
         {items.map((item) => {
           const inDays = days(today, item.date);
-          const source = ruleset.sources[item.sourceId];
           return (
             <li key={item.id} className={inDays < 0 ? 'opacity-60' : ''}>
               <p className="font-medium">{item.libelle}</p>
@@ -36,18 +35,6 @@ export function CalendarPanel({ ruleset, today }: { ruleset: Ruleset; today: str
                   Date {DATA_STATUS_LABELS[item.statut]}
                 </Badge>
               </p>
-              {source && (
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Source :{' '}
-                  {source.url ? (
-                    <a href={source.url} target="_blank" rel="noreferrer" className="underline">
-                      {source.titre}
-                    </a>
-                  ) : (
-                    source.titre
-                  )}
-                </p>
-              )}
             </li>
           );
         })}

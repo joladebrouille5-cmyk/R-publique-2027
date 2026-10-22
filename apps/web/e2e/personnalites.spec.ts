@@ -42,10 +42,12 @@ test('incarner une personnalité réelle face aux adversaires réels', async ({ 
   await expect(tondelier.getByText('Votre candidat')).toBeVisible();
   const philippe = page.getByRole('listitem', { name: 'Édouard Philippe' });
   await expect(philippe.getByText('Personnalité réelle — simulée')).toBeVisible();
-  await philippe.getByText('Fiche sourcée et crédit photo').click();
-  await expect(philippe.getByText(/Photo : Wasasaq8, CC0/)).toBeVisible();
-  await expect(
-    page.getByRole('region', { name: 'Personnalités réelles : sources et méthode' }),
-  ).toContainText('Chapel Hill');
+  await philippe.getByText('Fiche', { exact: true }).click();
+  await expect(philippe.getByText('Estimation')).toBeVisible();
   await audit(page, 'Candidats');
+  // Phase 11 : crédit de la photo et sources des fiches dans Paramètres → Crédits.
+  await page.getByRole('banner').getByRole('link', { name: 'Paramètres' }).click();
+  const credits = page.getByRole('region', { name: 'Crédits et mentions légales' });
+  await expect(credits.getByText(/Photo : Wasasaq8, CC0/)).toBeVisible();
+  await expect(credits).toContainText('Chapel Hill');
 });

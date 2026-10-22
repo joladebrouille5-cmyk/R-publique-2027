@@ -1,12 +1,13 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { advanceAsCandidate, createGame, openScreen } from './helpers';
+import { advanceAsCandidate, createGame, openScreen, settled } from './helpers';
 
 // Débats télévisés (phase 10) : débat de tous les candidats joué sur le plateau (carte, attaque
 // ciblée, fin simulée, sondage flash), puis débat de l'entre-deux-tours revu depuis les
 // résultats ; accessibilité vérifiée dans les deux thèmes.
 
 async function audit(page: Page, label: string) {
+  await settled(page);
   const result = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
     .analyze();

@@ -568,7 +568,7 @@
           }
         ]
       },
-      "note": "Effets et risque : hypothèses du jeu. Le format et ses exemples sont réels ; l’entretien, ses questions et ses réponses sont simulés. Le risque augmente avec les revirements de programme du candidat et avec la répétition de ce format ; l’événement ne décrit aucun contenu.",
+      "note": "Effets et risque : hypothèses du jeu. Le format et ses exemples sont réels ; l’entretien, ses questions et ses réponses sont simulés. Le passage est noté sans tirage (préparation, posture, format, situation, lassitude) ; l’aléa ne survient que si le passage est raté et ne décrit aucun contenu.",
       "format": "interview-longue"
     },
     {
@@ -817,7 +817,7 @@
           }
         ]
       },
-      "note": "Montant agrégé de nombreux dons individuels. Les règles de financement (plafond de 4 600 € par personne, interdiction des personnes morales, compte de campagne) seront appliquées en phase 5.",
+      "note": "Montant agrégé de nombreux dons individuels, soumis aux règles de financement : plafond par personne, interdiction des dons des personnes morales, compte de campagne.",
       "cible": null,
       "campagne": {
         "dons": {
@@ -887,7 +887,7 @@
         }
       ],
       "risque": null,
-      "note": "Les parrainages (promesses, intentions, présentations reçues et validées) arrivent en phase 5.",
+      "note": "La rencontre peut apporter des promesses de parrainage dans le département choisi, puis des présentations validées.",
       "cible": "departement",
       "campagne": {
         "promesses": {

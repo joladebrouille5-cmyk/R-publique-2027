@@ -29,10 +29,10 @@ export const OPPONENT_SET_LABELS: Record<OpponentSet, string> = {
 
 /** Méthode de placement d'une personnalité réelle sur les axes (enquête d'experts CHES). */
 export const POSITION_METHOD_LABELS: Record<PositionMethod, string> = {
-  parti: 'position de son parti selon l’enquête d’experts Chapel Hill',
-  parti_soutien: 'position du parti qui soutient sa candidature (enquête Chapel Hill)',
-  ancien_parti: 'hypothèse : position d’un ancien parti (Wikidata, enquête Chapel Hill)',
-  famille: 'hypothèse : moyenne de sa famille politique (enquête Chapel Hill)',
+  parti: 'position estimée de son parti',
+  parti_soutien: 'position estimée du parti qui soutient sa candidature',
+  ancien_parti: 'hypothèse : position d’un ancien parti',
+  famille: 'hypothèse : moyenne de sa famille politique',
 };
 
 export const DIFFICULTY_LABELS: Record<Difficulty, string> = {

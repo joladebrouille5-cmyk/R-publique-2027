@@ -134,9 +134,9 @@ describe('finances', () => {
     expect(within(refused).getByText(/Semaine 3 — Don d’une personne morale/)).toBeInTheDocument();
     const rules = screen.getByRole('region', { name: 'Règles appliquées' });
     expect(within(rules).getByText('Règles officielles')).toBeInTheDocument();
-    expect(
-      within(rules).getByRole('link', { name: /Guide à l'usage des candidats/ }),
-    ).toHaveAttribute('href', expect.stringContaining('cnccfp.fr'));
+    // Phase 11 : la source (guide de la CNCCFP) est dans Paramètres → Crédits, pas à l'écran.
+    expect(within(rules).getByText(/Sources : Paramètres → Crédits/)).toBeInTheDocument();
+    expect(within(rules).queryAllByRole('link')).toEqual([]);
   });
 });
 

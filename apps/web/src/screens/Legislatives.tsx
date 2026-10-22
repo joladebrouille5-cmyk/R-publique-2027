@@ -300,13 +300,8 @@ function Content({ state, ruleset }: { state: GameState; ruleset: Ruleset }) {
     );
   }
   const { derniere, premierTour } = legislatives;
-  const sources = ruleset.legislatives2024.sources;
-  const realNote = `Résultats officiels de 2024 par circonscription (${sources
-    .map((s) => s.titre.split(' — ')[0])
-    .filter((v, i, a) => a.indexOf(v) === i)
-    .join(
-      ', ',
-    )}, ${sources[0]?.licence ?? ''}, consultés le ${formatGameDate(ruleset.legislatives2024.verifieLe)}) : nuance en tête au premier tour et nuance de l’élu(e), sans aucun nom de candidat.`;
+  const realNote =
+    'Résultats officiels de 2024 par circonscription : nuance en tête au premier tour et nuance de l’élu(e), sans aucun nom de candidat.';
   const simulatedNote =
     'Résultats simulés par bloc (un candidat par bloc) : aucun nom, aucun résultat attribué à une personne réelle.';
   return (

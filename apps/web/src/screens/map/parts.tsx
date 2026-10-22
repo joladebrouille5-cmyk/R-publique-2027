@@ -300,8 +300,7 @@ export function TerritorySheet({
       )}
       {info.population !== null && (
         <p className="text-sm text-slate-700 dark:text-slate-300">
-          Population légale : <strong>{formatCount(info.population)}</strong> habitants (INSEE, via
-          IGN ADMIN EXPRESS)
+          Population légale : <strong>{formatCount(info.population)}</strong> habitants
         </p>
       )}
       {data && info.result ? (
