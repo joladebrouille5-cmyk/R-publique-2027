@@ -1,8 +1,8 @@
 import { communeResults, demoBaselineFromTopologies } from '@r2027/engine';
 import { SOIREE_TRANCHES, type GameState } from '@r2027/shared';
-import { screen, waitFor, within } from '@testing-library/react';
+import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { percent } from './soiree/parts';
 import {
   GAME_ID,
@@ -17,7 +17,7 @@ import {
   rulesetHandler,
 } from '../test/utils';
 
-// Soirée électorale : un vrai premier tour dépouillé par le moteur, restitué tranche par tranche.
+// Soirée électorale : un vrai premier tour dépouillé par le moteur, restitué minute par minute.
 // jsdom n'a pas WebGL (la carte affiche son repli) : on vérifie l'horloge, le classement, le
 // bandeau, le fil des départements, le suivi communal et le passage automatique en direct.
 const FILES = import.meta.glob('../../../../packages/data-import/demo/cog-2026/**/*.json', {
@@ -76,8 +76,25 @@ function reducedMotion() {
   }));
 }
 
+afterEach(() => {
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
+});
+
+/** Chiffres du direct : inscrits dépouillés, départements terminés, entrées du fil. */
+function figures() {
+  const stats = screen.getAllByRole('definition').map((d) => d.textContent);
+  const feed = screen.getByRole('list', { name: 'Départements dépouillés' });
+  return {
+    stats,
+    feed: within(feed)
+      .queryAllByRole('listitem')
+      .map((li) => li.textContent),
+  };
+}
+
 describe('soirée électorale', () => {
-  it('démarre à 20 h, avance tranche par tranche et finit sur le résultat définitif', async () => {
+  it('démarre à 20 h, avance par demi-heure et finit sur le résultat définitif', async () => {
     reducedMotion();
     mockApi(handlers());
     renderRoute(`/parties/${GAME_ID}/soiree/1`);
@@ -90,8 +107,8 @@ describe('soirée électorale', () => {
     const t1 = state.elections.t1!;
     const board = screen.getByRole('region', { name: 'Estimation à 20 h 00' });
     expect(within(board).getAllByRole('listitem')).toHaveLength(Object.keys(t1.voix).length);
-    // En pause (mouvement réduit) : le bouton propose de reprendre.
-    expect(screen.getByRole('button', { name: 'Reprendre le direct' })).toBeInTheDocument();
+    // En pause (mouvement réduit).
+    expect(screen.getByRole('radio', { name: 'Pause' })).toBeChecked();
 
     await user.click(screen.getByRole('button', { name: 'Passer à 20 h 30' }));
     expect(screen.getByTestId('horloge-soiree')).toHaveTextContent('20 h 30');
@@ -134,12 +151,40 @@ describe('soirée électorale', () => {
     expect(screen.getByRole('progressbar', { name: 'Avancement du dépouillement' })).toBeVisible();
   });
 
-  it('lit le direct automatiquement et le met en pause', async () => {
+  it('lit le direct à ×5, puis le met en pause sur l’heure atteinte', async () => {
     mockApi(handlers());
     renderRoute(`/parties/${GAME_ID}/soiree/1`);
     const user = userEvent.setup();
-    await user.click(await screen.findByRole('button', { name: 'Mettre en pause' }));
-    expect(screen.getByRole('button', { name: 'Reprendre le direct' })).toBeInTheDocument();
+    expect(await screen.findByRole('radio', { name: '×5' })).toBeChecked();
+    const clock = screen.getByTestId('horloge-soiree');
+    await waitFor(() => expect(clock).not.toHaveTextContent('20 h 00'), { timeout: 3_000 });
+    await user.click(screen.getByRole('radio', { name: 'Pause' }));
+    const paused = clock.textContent;
+    await new Promise((r) => setTimeout(r, 700));
+    expect(clock.textContent).toBe(paused);
+    expect(screen.getByText(/Dépouillement arrêté/)).toBeInTheDocument();
+  });
+
+  it('montre, à une heure donnée, les mêmes chiffres quelle que soit la vitesse', async () => {
+    // Saut direct à 21 h 00 (deux demi-heures), sans lecture.
+    reducedMotion();
+    mockApi(handlers());
+    renderRoute(`/parties/${GAME_ID}/soiree/1`);
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Passer à 20 h 30' }));
+    await user.click(screen.getByRole('button', { name: 'Passer à 21 h 00' }));
+    expect(screen.getByTestId('horloge-soiree')).toHaveTextContent('21 h 00');
+    const jumped = figures();
+    cleanup();
+
+    // Lecture « Lent » (une minute par seconde) pendant 60 secondes d'horloge simulée.
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+    renderRoute(`/parties/${GAME_ID}/soiree/1`);
+    await user.click(await screen.findByRole('radio', { name: 'Lent' }));
+    vi.advanceTimersByTime(60_000);
+    await waitFor(() => expect(screen.getByTestId('horloge-soiree')).toHaveTextContent('21 h 00'));
+    await user.click(screen.getByRole('radio', { name: 'Pause' }));
+    expect(figures()).toEqual(jumped);
   });
 
   it('suit les communes de la Somme au fil du dépouillement', async () => {

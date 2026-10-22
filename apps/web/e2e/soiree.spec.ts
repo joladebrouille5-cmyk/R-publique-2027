@@ -41,6 +41,13 @@ test('le soir du premier tour, la partie passe en direct jusqu’aux résultats 
   // Lecture automatique : l'horloge avance d'elle-même.
   const clock = page.getByTestId('horloge-soiree');
   await expect(clock).not.toHaveText('20 h 00', { timeout: 10_000 });
+  // Rythme réglable (phase 11) : en pause, l'horloge s'arrête ; à ×5, elle repart.
+  await page.getByRole('radio', { name: 'Pause' }).check({ force: true });
+  const paused = await clock.textContent();
+  await page.waitForTimeout(1_500);
+  await expect(clock).toHaveText(paused!);
+  await page.getByRole('radio', { name: '×5' }).check({ force: true });
+  await expect(clock).not.toHaveText(paused!, { timeout: 5_000 });
 
   // La Somme, commune par commune.
   await page.getByLabel('Suivre les communes d’un département').selectOption('80');

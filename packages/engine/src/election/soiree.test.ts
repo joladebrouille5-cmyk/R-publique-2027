@@ -1,17 +1,21 @@
 import {
   avancement,
   communeDepouillee,
+  heureSoiree,
   rythmeDepartements,
   SOIREE_DERNIERE,
+  SOIREE_MINUTES,
+  SOIREE_PAS,
   SOIREE_TRANCHES,
   soireeElectorale,
+  soireeInstant,
 } from '@r2027/shared';
 import { describe, expect, it } from 'vitest';
 import { newGame, RULESET } from '../core/testing';
 import { demoBaseline } from '../territory/baseline';
 import { resolveRound } from './rounds';
 
-// Soirée électorale (phase 9) : restitution par tranches horaires d'un tour dépouillé par le
+// Soirée électorale (phases 9 et 11) : restitution minute par minute d'un tour dépouillé par le
 // moteur, sur une base de démonstration (communes de Corse et de la Somme, départements entiers).
 
 const BASE = demoBaseline(
@@ -71,7 +75,7 @@ describe('soirée électorale', () => {
     expect(rythme['48']!.fin).toBeLessThanOrEqual(rythme['59']!.fin);
     for (const r of Object.values(rythme)) {
       expect(r.debut).toBeLessThanOrEqual(r.fin);
-      expect(r.fin).toBeLessThanOrEqual(SOIREE_DERNIERE);
+      expect(r.fin).toBeLessThanOrEqual(SOIREE_MINUTES);
     }
   });
 
@@ -95,11 +99,12 @@ describe('soirée électorale', () => {
   });
 
   it('dépouille les communes au fil de l’avancement de leur département', () => {
-    const rythme = { debut: 2, fin: 5 };
-    expect(avancement(rythme, 1)).toBe(0);
-    expect(avancement(rythme, 3)).toBeCloseTo(0.5);
-    expect(avancement(rythme, 5)).toBe(1);
-    expect(avancement(undefined, SOIREE_DERNIERE)).toBe(1);
+    const rythme = { debut: 60, fin: 150 };
+    expect(avancement(rythme, 30)).toBe(0);
+    expect(avancement(rythme, 105)).toBeCloseTo(0.5);
+    expect(avancement(rythme, 150)).toBe(1);
+    expect(avancement(undefined, SOIREE_MINUTES - 1)).toBe(0);
+    expect(avancement(undefined, SOIREE_MINUTES)).toBe(1);
     const codes = Array.from({ length: 200 }, (_, i) => `80${String(i).padStart(3, '0')}`);
     const counted = (part: number) =>
       codes.filter((c) => communeDepouillee('graine-test', 1, c, part)).length;
@@ -111,5 +116,40 @@ describe('soirée électorale', () => {
     for (const c of codes)
       if (communeDepouillee('graine-test', 1, c, 0.3))
         expect(communeDepouillee('graine-test', 1, c, 0.6)).toBe(true);
+  });
+
+  it('avance minute par minute sans jamais reculer, et ne dépend que de l’heure', () => {
+    const rythme = rythmeDepartements(result, 'graine-test');
+    let previous = soireeInstant(result, 'graine-test', 0, rythme);
+    for (let minute = 1; minute <= SOIREE_MINUTES; minute++) {
+      const now = soireeInstant(result, 'graine-test', minute, rythme);
+      expect(now.depouille.inscrits).toBeGreaterThanOrEqual(previous.depouille.inscrits);
+      for (const [k, v] of Object.entries(now.depouille.voix))
+        expect(v).toBeGreaterThanOrEqual(previous.depouille.voix[k] ?? 0);
+      expect(now.departementsTermines).toBeGreaterThanOrEqual(previous.departementsTermines);
+      previous = now;
+    }
+    expect(previous.depouille).toEqual(result);
+    // Même minute ⇒ même état, quelle que soit la façon d'y arriver (vitesse de lecture) ;
+    // une minute fractionnaire compte pour la minute entamée.
+    expect(soireeInstant(result, 'graine-test', 77.9)).toEqual(
+      soireeInstant(result, 'graine-test', 77),
+    );
+    // Les points par demi-heure sont les états à leur minute.
+    for (const t of soiree) {
+      const { nouveaux: _, ...point } = t;
+      expect(point).toEqual(soireeInstant(result, 'graine-test', t.tranche * SOIREE_PAS));
+    }
+    // Les fins de dépouillement s'étalent dans la soirée (pas seulement aux demi-heures).
+    const fins = Object.values(rythme).map((r) => r.fin);
+    expect(fins.some((f) => f % SOIREE_PAS !== 0)).toBe(true);
+  });
+
+  it('affiche l’heure à la minute, de 20 h 00 à 0 h 00', () => {
+    expect(heureSoiree(0)).toBe('20 h 00');
+    expect(heureSoiree(37.6)).toBe('20 h 37');
+    expect(heureSoiree(61)).toBe('21 h 01');
+    expect(heureSoiree(SOIREE_MINUTES)).toBe('0 h 00');
+    expect(heureSoiree(SOIREE_MINUTES + 10)).toBe('0 h 00');
   });
 });

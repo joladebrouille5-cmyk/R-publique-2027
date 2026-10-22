@@ -2,17 +2,20 @@ import {
   avancement,
   candidateName,
   communeDepouillee,
+  departementsTermines,
   DROM_LABELS,
   fraction,
+  heureSoiree,
   rythmeDepartements,
-  SOIREE_DERNIERE,
-  SOIREE_TRANCHES,
+  SOIREE_MINUTES,
+  SOIREE_PAS,
   soireeElectorale,
+  soireeInstant,
   type RoundResult,
   type TerritoryLevel,
 } from '@r2027/shared';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, FastForward, Pause, Play, RotateCcw, SkipForward, X } from 'lucide-react';
+import { ArrowLeft, FastForward, RotateCcw, SkipForward, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { useRuleset } from '../api/hooks';
@@ -53,13 +56,30 @@ import {
   type TickerItem,
 } from './soiree/parts';
 
-// Écran « Soirée électorale » (phase 9) : le soir d'un tour, le dépouillement simulé est
-// restitué tranche horaire par tranche horaire (module `soiree` de @r2027/shared). La carte se
-// colore département par département puis commune par commune aux couleurs du candidat en
-// tête ; rien n'est recalculé ici : chaque chiffre est une part exacte du résultat du moteur.
+// Écran « Soirée électorale » (phases 9 et 11) : le soir d'un tour, le dépouillement simulé est
+// restitué minute par minute (module `soiree` de @r2027/shared), à la vitesse choisie par le
+// joueur. La carte se colore département par département puis commune par commune aux couleurs
+// du candidat en tête ; rien n'est recalculé ici : chaque chiffre est une part exacte du
+// résultat du moteur, et l'état affiché ne dépend que de l'heure de la soirée.
 
-/** Durée d'une tranche horaire en lecture automatique. */
-const TRANCHE_MS = 2_800;
+/** Vitesses de lecture : minutes de soirée par seconde réelle. */
+export const SOIREE_VITESSES = [
+  { id: 'pause', libelle: 'Pause', minutesParSeconde: 0 },
+  { id: 'reel', libelle: 'Temps réel', minutesParSeconde: 1 / 60 },
+  { id: 'lent', libelle: 'Lent', minutesParSeconde: 1 },
+  { id: 'x2', libelle: '×2', minutesParSeconde: 2 },
+  { id: 'x5', libelle: '×5', minutesParSeconde: 5 },
+] as const;
+type Vitesse = (typeof SOIREE_VITESSES)[number]['id'];
+const VITESSE_AIDE: Record<Vitesse, string> = {
+  pause: 'Dépouillement arrêté : explorez la carte et les départements.',
+  reel: 'Une minute de soirée par minute, comme à la télévision.',
+  lent: 'Une minute de soirée par seconde.',
+  x2: 'Deux minutes de soirée par seconde.',
+  x5: 'Cinq minutes de soirée par seconde.',
+};
+/** Pas de l'horloge de lecture, en millisecondes. */
+const TICK_MS = 250;
 const DROM = ['971', '972', '973', '974', '976'] as const;
 const METROPOLE: BBox = [-5.2, 41.3, 9.6, 51.1];
 
@@ -103,21 +123,31 @@ function Night({ result }: { result: RoundResult }) {
   const seed = state.meta.seed;
   const round = result.round;
 
-  // Déroulé : une tranche toutes les TRANCHE_MS en lecture (en pause si le mouvement est réduit).
+  // Déroulé : l'horloge avance à la vitesse choisie (en pause si le mouvement est réduit) ; tout
+  // l'affichage découle de la minute entamée.
   const soiree = useMemo(() => soireeElectorale(result, seed), [result, seed]);
   const rythme = useMemo(() => rythmeDepartements(result, seed), [result, seed]);
-  const [tranche, setTranche] = useState(0);
-  const [playing, setPlaying] = useState(() => !reducedMotion);
-  const done = tranche >= SOIREE_DERNIERE;
+  const [clock, setClock] = useState(0);
+  const [vitesse, setVitesse] = useState<Vitesse>(() => (reducedMotion ? 'pause' : 'x5'));
+  const minute = Math.min(SOIREE_MINUTES, Math.floor(clock));
+  const done = minute >= SOIREE_MINUTES;
+  const rate = SOIREE_VITESSES.find((v) => v.id === vitesse)!.minutesParSeconde;
   useEffect(() => {
-    if (!playing || done) return;
-    const timer = window.setTimeout(
-      () => setTranche((t) => Math.min(SOIREE_DERNIERE, t + 1)),
-      TRANCHE_MS,
+    if (rate === 0 || done) return;
+    const timer = window.setInterval(
+      () => setClock((c) => Math.min(SOIREE_MINUTES, c + (rate * TICK_MS) / 1000)),
+      TICK_MS,
     );
-    return () => window.clearTimeout(timer);
-  }, [playing, done, tranche]);
-  const now = soiree[tranche]!;
+    return () => window.clearInterval(timer);
+  }, [rate, done]);
+  const now = useMemo(
+    () => soireeInstant(result, seed, minute, rythme),
+    [result, seed, minute, rythme],
+  );
+  // Minute précédemment affichée : les territoires terminés depuis brillent un instant.
+  const [shown, setShown] = useState({ minute, previous: -1 });
+  if (shown.minute !== minute) setShown({ minute, previous: shown.minute });
+  const jumpTo = (target: number) => setClock(Math.max(0, Math.min(SOIREE_MINUTES, target)));
 
   // Candidats et couleurs : la couleur suit le candidat (rang national final), jamais son rang local.
   const keys = useMemo(() => result.territoire?.candidats ?? Object.keys(result.voix), [result]);
@@ -158,8 +188,8 @@ function Night({ result }: { result: RoundResult }) {
   }, [m]);
   const depName = (code: string) => departements.get(code)?.nom ?? code;
   const counts = result.territoire?.departements ?? {};
-  const partOf = (code: string, t = tranche) => avancement(rythme[code], t);
-  const depResult = (code: string, t = tranche): TerritoryResult | undefined => {
+  const partOf = (code: string, t = minute) => avancement(rythme[code], t);
+  const depResult = (code: string, t = minute): TerritoryResult | undefined => {
     const c = counts[code];
     const part = partOf(code, t);
     return c && part > 0 ? fromCounts(fraction(c, part), keys) : undefined;
@@ -236,20 +266,20 @@ function Night({ result }: { result: RoundResult }) {
       : `${name} : ${Math.round(part * 100)} % dépouillé, ${leadText(r)}`;
   };
 
-  // Éclat des territoires qui viennent d'être dépouillés.
+  // Éclat des territoires qui viennent d'être dépouillés (depuis la minute affichée avant).
   const flash =
     level === 'commune' && drill
       ? {
-          key: `c-${drill}-${tranche}`,
+          key: `c-${drill}-${minute}`,
           codes: communeFeatures
             .map((f) => f.properties.code)
             .filter(
               (code) =>
                 counted(code, drillPart) &&
-                !(tranche > 0 && counted(code, partOf(drill, tranche - 1))),
+                !(shown.previous >= 0 && counted(code, partOf(drill, shown.previous))),
             ),
         }
-      : { key: `d-${tranche}`, codes: now.nouveaux };
+      : { key: `d-${minute}`, codes: departementsTermines(rythme, shown.previous, minute) };
 
   // Suivi d'un département (clic, liste, outre-mer) et retour à la vue nationale.
   const [selected, setSelected] = useState<MapSelection | null>(null);
@@ -307,9 +337,10 @@ function Night({ result }: { result: RoundResult }) {
     .sort((a, b) => b.estimation - a.estimation || a.name.localeCompare(b.name, 'fr'));
   const participation =
     now.depouille.inscrits > 0 ? percent(now.depouille.votants / now.depouille.inscrits) : '—';
-  const newlyCounted = (t: number) =>
-    soiree[t]!.nouveaux.flatMap((code) => {
-      const r = depResult(code, t);
+  // Départements terminés dans l'intervalle de minutes ]de, a], avec leur candidat en tête.
+  const finishedBetween = (de: number, a: number) =>
+    departementsTermines(rythme, de, a).flatMap((code) => {
+      const r = depResult(code, a);
       const leader = leaderOf(r);
       return r && leader !== null ? [{ code, r, leader }] : [];
     });
@@ -325,36 +356,38 @@ function Night({ result }: { result: RoundResult }) {
       id: 'departements',
       text: `${now.departementsTermines} départements sur ${now.departements} entièrement dépouillés`,
     },
-    ...newlyCounted(tranche).map(({ code, leader }) => ({
-      id: `n-${code}`,
-      text: `${depName(code)} : ${candidats[leader]!.label} en tête`,
-      color: palette.colorOf(leader),
-    })),
-  ];
-  const feed: FeedItem[] = soiree
-    .slice(0, tranche + 1)
-    .flatMap((t) =>
-      newlyCounted(t.tranche).map(({ code, r, leader }) => ({
-        id: `${t.tranche}-${code}`,
-        heure: t.heure,
-        territoire: `${depName(code)} (${code})`,
-        leader: candidats[leader]!.label,
-        part: formatRatio(r.voix[leader]!, r.exprimes),
+    ...finishedBetween(minute < SOIREE_PAS ? -1 : minute - SOIREE_PAS, minute).map(
+      ({ code, leader }) => ({
+        id: `n-${code}`,
+        text: `${depName(code)} : ${candidats[leader]!.label} en tête`,
         color: palette.colorOf(leader),
-      })),
-    )
-    .reverse();
+      }),
+    ),
+  ];
+  const feed: FeedItem[] = finishedBetween(-1, minute)
+    .map((item) => ({ ...item, fin: rythme[item.code]!.fin }))
+    .sort((a, b) => b.fin - a.fin || a.code.localeCompare(b.code))
+    .map(({ code, r, leader, fin }) => ({
+      id: code,
+      heure: heureSoiree(fin),
+      territoire: `${depName(code)} (${code})`,
+      leader: candidats[leader]!.label,
+      part: formatRatio(r.voix[leader]!, r.exprimes),
+      color: palette.colorOf(leader),
+    }));
   const top = standings
     .slice(0, 3)
     .map((s) => `${s.name} ${percent(s.estimation)}`)
     .join(', ');
+  // Annonce polie à chaque nouvelle estimation (toutes les 30 minutes), pas à chaque minute.
+  const point = soiree[now.tranche]!;
   const announcement = done
     ? `Minuit : résultats définitifs. ${outcomeText}`
-    : `${now.heure} : ${percent(now.partInscrits)} des inscrits dépouillés. Estimation simulée : ${top}.`;
+    : `${point.heure} : ${percent(point.partInscrits)} des inscrits dépouillés. Estimation simulée : ${top}.`;
 
   const followable = m?.departements.filter((d) => d.fichier !== null) ?? [];
   const communeCount = communeFeatures.filter((f) => counted(f.properties.code, drillPart)).length;
-  const next = SOIREE_TRANCHES[tranche + 1];
+  const nextEstimate = Math.min(SOIREE_MINUTES, (now.tranche + 1) * SOIREE_PAS);
 
   return (
     <section aria-labelledby="titre-soiree" className="space-y-4">
@@ -474,7 +507,7 @@ function Night({ result }: { result: RoundResult }) {
                   layers={layers}
                   level={level}
                   colorOf={colorOf}
-                  colorKey={`${tranche}|${mode}|${level}|${drill}|${communeResults.dataUpdatedAt}`}
+                  colorKey={`${minute}|${mode}|${level}|${drill}|${communeResults.dataUpdatedAt}`}
                   selected={selected}
                   onSelect={onSelect}
                   describe={describe}
@@ -551,51 +584,70 @@ function Night({ result }: { result: RoundResult }) {
           )}
 
           <div className="flex flex-wrap items-end gap-2">
-            <div role="group" aria-label="Déroulé de la soirée" className="flex flex-wrap gap-2">
-              {done ? (
-                <button
-                  type="button"
-                  className={buttonSecondary}
-                  onClick={() => {
-                    setTranche(0);
-                    setPlaying(!reducedMotion);
-                  }}
-                >
-                  <RotateCcw aria-hidden="true" className="size-4" />
-                  Revoir depuis 20 h
-                </button>
-              ) : (
-                <>
+            <div className="w-full space-y-2">
+              <fieldset className="space-y-1.5">
+                <legend className={label}>Vitesse du dépouillement</legend>
+                <div className="flex flex-wrap gap-1.5">
+                  {SOIREE_VITESSES.map((v) => (
+                    <label
+                      key={v.id}
+                      className={`inline-flex min-h-11 cursor-pointer items-center rounded-full border px-3.5 text-sm font-semibold has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-republique-500 ${
+                        vitesse === v.id
+                          ? 'border-republique-600 bg-republique-600 text-white shadow-neon'
+                          : 'border-slate-200/80 bg-white hover:border-republique-300 dark:border-white/10 dark:bg-white/[0.04]'
+                      } ${done && v.id !== 'pause' ? 'opacity-50' : ''}`}
+                    >
+                      <input
+                        type="radio"
+                        name="vitesse-soiree"
+                        value={v.id}
+                        checked={vitesse === v.id}
+                        disabled={done && v.id !== 'pause'}
+                        onChange={() => setVitesse(v.id)}
+                        className="sr-only"
+                      />
+                      {v.libelle}
+                    </label>
+                  ))}
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-400">
+                  {VITESSE_AIDE[vitesse]}
+                </p>
+              </fieldset>
+              <div role="group" aria-label="Déroulé de la soirée" className="flex flex-wrap gap-2">
+                {done ? (
                   <button
                     type="button"
                     className={buttonSecondary}
-                    onClick={() => setPlaying((p) => !p)}
+                    onClick={() => {
+                      jumpTo(0);
+                      setVitesse(reducedMotion ? 'pause' : 'x5');
+                    }}
                   >
-                    {playing ? (
-                      <Pause aria-hidden="true" className="size-4" />
-                    ) : (
-                      <Play aria-hidden="true" className="size-4" />
-                    )}
-                    {playing ? 'Mettre en pause' : 'Reprendre le direct'}
+                    <RotateCcw aria-hidden="true" className="size-4" />
+                    Revoir depuis 20 h
                   </button>
-                  <button
-                    type="button"
-                    className={buttonSecondary}
-                    onClick={() => setTranche((t) => Math.min(SOIREE_DERNIERE, t + 1))}
-                  >
-                    <SkipForward aria-hidden="true" className="size-4" />
-                    Passer à {next}
-                  </button>
-                  <button
-                    type="button"
-                    className={buttonPrimary}
-                    onClick={() => setTranche(SOIREE_DERNIERE)}
-                  >
-                    <FastForward aria-hidden="true" className="size-4" />
-                    Résultats définitifs
-                  </button>
-                </>
-              )}
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      className={buttonSecondary}
+                      onClick={() => jumpTo(nextEstimate)}
+                    >
+                      <SkipForward aria-hidden="true" className="size-4" />
+                      Passer à {heureSoiree(nextEstimate)}
+                    </button>
+                    <button
+                      type="button"
+                      className={buttonPrimary}
+                      onClick={() => jumpTo(SOIREE_MINUTES)}
+                    >
+                      <FastForward aria-hidden="true" className="size-4" />
+                      Résultats définitifs
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
             <div className="min-w-56 flex-1 space-y-1 sm:max-w-xs">
               <label htmlFor="soiree-communes" className={label}>
@@ -691,7 +743,7 @@ function Night({ result }: { result: RoundResult }) {
         </div>
 
         <div className="space-y-4">
-          <Leaderboard standings={standings} heure={now.heure} final={done} />
+          <Leaderboard standings={standings} heure={point.heure} final={done} />
           <Feed items={feed} />
         </div>
       </div>
