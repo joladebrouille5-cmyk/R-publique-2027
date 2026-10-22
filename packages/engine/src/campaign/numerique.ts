@@ -1,5 +1,7 @@
 import {
   DIGITAL_HISTORY_WEEKS,
+  famillePolitique,
+  PARTI_MARQUE,
   type DigitalPost,
   type DigitalReaction,
   type DigitalReception,
@@ -61,6 +63,12 @@ export function publishDigital(
   const week = state.meta.week;
   const incidents = new Set(risks.map((r) => r.id));
   const posts: DigitalPost[] = [];
+  // Textes des dernières réactions du fil (les plus récentes en dernier) : à ne pas reprendre.
+  const used = new Set(
+    state.numerique.publications
+      .flatMap((p) => p.reactions.map((r) => r.texte))
+      .slice(rules.memoireReactions > 0 ? -rules.memoireReactions : Infinity),
+  );
   for (const { actorId, index, definition } of validated) {
     const format = definition.format ? formats.get(definition.format) : undefined;
     if (!format) continue;
@@ -77,15 +85,30 @@ export function publishDigital(
       ),
     );
     const mood = clamp((popularite - 3_000) / 10_000 + dynamique / 20_000, -0.3, 0.3);
-    // Comptes tirés sans remise, textes tirés parmi les modèles du ton.
+    // Comptes tirés sans remise ; textes tirés parmi les modèles du ton (format et communs) ou,
+    // pour une part des réactions, parmi ceux des militants (soutien) ou des opposants de la
+    // famille politique du candidat ; aucun texte déjà paru dans les réactions récentes du fil.
     const accounts = [...rules.comptes];
     const reactions: DigitalReaction[] = [];
     const count = Math.min(rules.reactionsParPublication, accounts.length);
+    const partisans = rules.reactionsPartisanes[famillePolitique(actor.candidate.positionnement)];
+    const parti = actor.candidate.parti.trim();
     for (let k = 0; k < count; k++) {
       const ton = drawTone(rng, mood, incident);
-      const templates = format.reactions[ton];
+      const partisan = ton !== 'neutre' && parti !== '' && rng.nextFloat() < rules.partPartisane;
+      const general = [...format.reactions[ton], ...rules.reactionsCommunes[ton]];
+      const militant = partisan
+        ? (ton === 'positif' ? partisans.soutien : partisans.opposition).map((t) =>
+            t.replaceAll(PARTI_MARQUE, parti).slice(0, 200),
+          )
+        : [];
+      // Premier jeu de modèles qui offre un texte inédit ; sinon (tout épuisé), le général.
+      const pool =
+        [militant, general].map((l) => l.filter((t) => !used.has(t))).find((l) => l.length > 0) ??
+        general;
       const compte = accounts.splice(rng.nextInt(accounts.length), 1)[0]!;
-      const texte = templates[rng.nextInt(templates.length)]!;
+      const texte = pool[rng.nextInt(pool.length)]!;
+      used.add(texte);
       const jaime = Math.round((vues / 2_000) * (0.2 + rng.nextFloat()));
       reactions.push({ compte, texte, ton, jaime });
     }

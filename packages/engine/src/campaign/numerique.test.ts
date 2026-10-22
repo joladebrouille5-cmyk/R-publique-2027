@@ -16,8 +16,16 @@ import { reception } from './numerique';
 // inventés, jauges Jeunesse et Dynamique inscrites au registre, effet sur le vote.
 
 const rules = RULESET.numerique;
-const templates = (formatId: string) =>
-  Object.values(rules.formats.find((f) => f.id === formatId)!.reactions).flat();
+const partisanTexts = (parti: string) =>
+  Object.values(rules.reactionsPartisanes)
+    .flatMap((p) => [...p.soutien, ...p.opposition])
+    .map((t) => t.replaceAll('{parti}', parti));
+/** Textes possibles sous une publication : modèles du format, communs et partisans. */
+const templates = (formatId: string, parti: string) => [
+  ...Object.values(rules.formats.find((f) => f.id === formatId)!.reactions).flat(),
+  ...Object.values(rules.reactionsCommunes).flat(),
+  ...partisanTexts(parti),
+];
 
 describe('réseaux et nouveaux médias', () => {
   it('publie une interview longue : jauges au registre, vues et réactions de comptes fictifs', () => {
@@ -37,7 +45,9 @@ describe('réseaux et nouveaux médias', () => {
     expect(post!.reactions).toHaveLength(rules.reactionsParPublication);
     for (const r of post!.reactions) {
       expect(rules.comptes).toContain(r.compte);
-      expect(templates('interview-longue')).toContain(r.texte);
+      expect(
+        templates('interview-longue', state.actors[PLAYER_ACTOR_ID]!.candidate.parti),
+      ).toContain(r.texte);
     }
     // Comptes distincts dans une même publication ; fil de l'état à jour.
     expect(new Set(post!.reactions.map((r) => r.compte)).size).toBe(post!.reactions.length);
@@ -91,6 +101,31 @@ describe('réseaux et nouveaux médias', () => {
     const weeks = state.numerique.publications.map((p) => p.semaine);
     expect(weeks).toEqual([...weeks].sort((a, b) => a - b));
     expect(weeks.at(-1)).toBe(6);
+  });
+
+  it('ne reprend aucune réaction parmi les dernières du fil, sur toute une campagne', () => {
+    let state = newGame();
+    const texts: string[] = [];
+    for (let week = 0; week < 16; week++) {
+      const { state: next, report } = advance(state, [
+        'vague-video-courte',
+        'decryptage',
+        'interview-longue',
+        'live-twitch',
+      ]);
+      for (const post of report.numerique) texts.push(...post.reactions.map((r) => r.texte));
+      state = next;
+    }
+    expect(texts.length).toBeGreaterThan(150);
+    texts.forEach((text, i) => {
+      const window = texts.slice(Math.max(0, i - rules.memoireReactions), i);
+      expect(window, `réaction n° ${i + 1} : « ${text} »`).not.toContain(text);
+    });
+    // Militants et opposants : le parti du candidat, jamais la marque brute.
+    const parti = state.actors[PLAYER_ACTOR_ID]!.candidate.parti;
+    expect(texts.some((t) => t.includes(parti))).toBe(true);
+    expect(texts.some((t) => /[{}]/.test(t))).toBe(false);
+    expect(new Set(texts).size).toBeGreaterThan(100);
   });
 
   it('déduit l’accueil des réactions, un incident l’emportant', () => {

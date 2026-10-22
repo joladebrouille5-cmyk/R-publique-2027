@@ -23,6 +23,7 @@ import V11 from './fixtures/v11-phase-6.json' with { type: 'json' };
 import V12 from './fixtures/v12-phase-6.json' with { type: 'json' };
 import V13 from './fixtures/v13-phase-9.json' with { type: 'json' };
 import V14 from './fixtures/v14-phase-9.json' with { type: 'json' };
+import V15 from './fixtures/v15-phase-10.json' with { type: 'json' };
 import { loadStoredState, MIGRATED_CANDIDATE, SaveFormatError, upgradeState } from './versions';
 
 const ruleset = getRuleset(CURRENT_RULESET_KEY);
@@ -656,7 +657,7 @@ describe('migrations de sauvegarde', () => {
     expect(jeunesse!.factors.some((f) => f.source === 'action')).toBe(true);
   });
 
-  it('ajoute les débats télévisés et passe au jeu de règles 12 (format 14)', () => {
+  it('ajoute les débats télévisés et passe au jeu de règles courant (format 14)', () => {
     const { state, migratedFrom } = loadStoredState(V14.state, V14.stateHash, 14);
     expect(migratedFrom).toBe(14);
     expect(state.meta).toMatchObject({
@@ -691,6 +692,36 @@ describe('migrations de sauvegarde', () => {
     expect(current.meta.week).toBe(state.meta.week + 2);
   });
 
+  it('passe au jeu de règles 13 sans rien perdre (format 15, débat déjà tenu)', () => {
+    const { state, migratedFrom } = loadStoredState(V15.state, V15.stateHash, 15);
+    expect(migratedFrom).toBe(15);
+    expect(state.meta).toMatchObject({
+      week: V15.state.meta.week,
+      date: V15.state.meta.date,
+      saveSchemaVersion: SAVE_SCHEMA_VERSION,
+      engineVersion: ENGINE_VERSION,
+      rulesetVersion: CURRENT_RULESET_KEY,
+    });
+    const { meta: _meta, ...rest } = state;
+    const { meta: _m, ...restBefore } = V15.state;
+    expect(rest).toEqual(restBefore);
+    expect(state.debats.seances.some((d) => d.statut === 'termine')).toBe(true);
+    // La campagne continue avec le jeu de règles 13 : interview longue et réactions.
+    const { state: next, report } = advanceWeek(
+      state,
+      {
+        actions: [{ actionId: 'interview-longue' }],
+        decisions: state.pendingDecisions.map((d) => ({
+          decisionId: d.id,
+          optionId: d.defaultOptionId,
+        })),
+      },
+      { ruleset },
+    );
+    expect(next.meta.week).toBe(state.meta.week + 1);
+    expect(report.numerique.some((p) => p.acteurId === state.player.actorId)).toBe(true);
+  });
+
   it('vérifie l’empreinte avant toute migration', () => {
     const altered = { ...V1_STATE, meta: { ...V1_STATE.meta, week: 3 } };
     expect(errorCode(() => loadStoredState(altered, V1_HASH, 1))).toBe('empreinte_incoherente');
@@ -716,6 +747,7 @@ describe('migrations de sauvegarde', () => {
     expect(errorCode(() => upgradeState(V12.state, 13))).toBe('etat_invalide');
     expect(errorCode(() => upgradeState(V13.state, 14))).toBe('etat_invalide');
     expect(errorCode(() => upgradeState(V14.state, 15))).toBe('etat_invalide');
+    expect(errorCode(() => upgradeState(V15.state, 16))).toBe('etat_invalide');
   });
 
   it('refuse un jeu de règles inconnu', () => {

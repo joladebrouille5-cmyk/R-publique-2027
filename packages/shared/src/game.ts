@@ -606,8 +606,17 @@ export const GameStateV14Schema = GameStateV13Schema.extend({
 }).strict();
 export type GameStateV14 = z.infer<typeof GameStateV14Schema>;
 
+/** État au format 15 (phase 10) : débats télévisés, passages récents par format ; figé. */
+export const GameStateV15Schema = GameStateV14Schema.extend({
+  meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(15) }).strict(),
+  numerique: DigitalStateSchema,
+  debats: DebatesStateSchema,
+}).strict();
+export type GameStateV15 = z.infer<typeof GameStateV15Schema>;
+
 /**
- * État complet d'une partie, format de sauvegarde n° 15 (phase 10) : débats télévisés de la
+ * État complet d'une partie, format de sauvegarde n° 16 (phase 11) : mêmes données que le
+ * format 15, jeu de règles 13 (réactions, événements, plateaux, gouvernement) ; débats télévisés de la
  * présidentielle en cours (invités, chaises vides, séquences jouées, approbation, sondage flash),
  * relevé des passages récents de chaque candidat dans les formats numériques ;
  * jauges Jeunesse et Dynamique de chaque candidat, fil des publications simulées sur les réseaux
@@ -618,12 +627,8 @@ export type GameStateV14 = z.infer<typeof GameStateV14Schema>;
  * chaque tirage est dérivé de la graine, de la semaine et de son contexte (module, action,
  * événement, groupe…).
  */
-export const GameStateSchema = GameStateV14Schema.extend({
-  meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(15) }).strict(),
-  /** Réseaux et nouveaux médias : publications simulées et passages récents par candidat. */
-  numerique: DigitalStateSchema,
-  /** Débats télévisés de la présidentielle en cours (phase 10). */
-  debats: DebatesStateSchema,
+export const GameStateSchema = GameStateV15Schema.extend({
+  meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(16) }).strict(),
 }).strict();
 export type GameState = z.infer<typeof GameStateSchema>;
 

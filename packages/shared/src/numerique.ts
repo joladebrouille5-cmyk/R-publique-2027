@@ -10,6 +10,35 @@ export const DIGITAL_TONES = ['positif', 'neutre', 'negatif'] as const;
 export const DigitalToneSchema = z.enum(DIGITAL_TONES);
 export type DigitalTone = z.infer<typeof DigitalToneSchema>;
 
+/**
+ * Familles politiques des réactions partisanes (phase 11) : militants et opposants qui
+ * réagissent selon la position du candidat. Seule la position compte (axes du jeu) ; aucun
+ * nom de personne n'apparaît dans les modèles, seul le parti du candidat (« {parti} »).
+ */
+export const FAMILLES_POLITIQUES = [
+  'gauche-radicale',
+  'gauche',
+  'centre',
+  'droite',
+  'droite-nationale',
+] as const;
+export type FamillePolitique = (typeof FAMILLES_POLITIQUES)[number];
+
+/** Famille d'une position (économie et société de −100 à +100), d'après des seuils du jeu. */
+export function famillePolitique(position: {
+  economie: number;
+  societe: number;
+}): FamillePolitique {
+  if (position.societe >= 45 && position.economie >= -20) return 'droite-nationale';
+  if (position.economie <= -45) return 'gauche-radicale';
+  if (position.economie <= -12) return 'gauche';
+  if (position.economie < 15) return 'centre';
+  return 'droite';
+}
+
+/** Marque du parti dans les modèles de réactions partisanes. */
+export const PARTI_MARQUE = '{parti}';
+
 /** Réaction d'un compte fictif (pseudonyme inventé du jeu de règles). */
 export const DigitalReactionSchema = z
   .object({

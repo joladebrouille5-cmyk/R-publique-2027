@@ -1,6 +1,6 @@
 {
   "id": "presidentielle-2027",
-  "version": "12.0.0",
+  "version": "13.0.0",
   "libelle": "Présidentielle 2027 et quinquennat — campagne, parrainages, financement, médias réels, présidence, gouvernement, Parlement, économie, crises et législatives (phase 6)",
   "verifieLe": "2026-10-22",
   "sources": {
@@ -3528,19 +3528,35 @@
             "Plusieurs heures et pas vu le temps passer.",
             "Enfin un format où on laisse finir les phrases.",
             "J’ai appris plus ici qu’en un mois de journaux télévisés.",
-            "Respect pour avoir répondu à tout, même aux questions qui fâchent."
+            "Respect pour avoir répondu à tout, même aux questions qui fâchent.",
+            "Je ne pensais pas regarder trois heures, et pourtant.",
+            "Le passage sur son parcours m’a vraiment touché.",
+            "Masterclass. Pas d’élément de langage, du vrai.",
+            "On sent quelqu’un qui a vécu, ça change des plateaux.",
+            "Format idéal : on comprend enfin le personnage.",
+            "La séquence sur ses débuts m’a scotché."
           ],
           "neutre": [
             "Format long, je finirai demain.",
             "Intéressant, même si je ne suis pas convaincu.",
             "Quelqu’un a les horodatages des moments clés ?",
-            "J’attends de voir les autres candidats dans le même format."
+            "J’attends de voir les autres candidats dans le même format.",
+            "Intéressant mais trop long pour mon trajet en bus.",
+            "Je découpe en épisodes, on en reparle demain.",
+            "Quelques passages forts, beaucoup de digressions.",
+            "Pas d’accord sur tout, mais au moins on écoute.",
+            "Je reste partagé après ces heures d’entretien."
           ],
           "negatif": [
             "Beaucoup de mots, peu de réponses.",
             "Ça ressemble surtout à de la communication.",
             "J’ai décroché au bout d’une heure.",
-            "Toujours les mêmes éléments de langage."
+            "Toujours les mêmes éléments de langage.",
+            "Trois heures pour ne rien dire de concret.",
+            "Beaucoup d’émotion, peu de propositions.",
+            "Ça sent la séquence calibrée pour les réseaux.",
+            "On attendait des réponses, on a eu une biographie.",
+            "Long, très long, trop long."
           ]
         }
       },
@@ -3565,19 +3581,34 @@
             "Clair et rapide, parfait pour comprendre.",
             "On comprend enfin les enjeux, merci pour le format.",
             "Partagé à toute ma promo.",
-            "Court, précis, ça donne envie d’en savoir plus."
+            "Court, précis, ça donne envie d’en savoir plus.",
+            "Enfin une explication que ma grand-mère comprendrait.",
+            "Dix minutes et j’ai tout compris, chapeau.",
+            "Ça devrait être obligatoire avant de voter.",
+            "Les infographies sont top, on visualise bien.",
+            "Format court, réponses nettes : top."
           ],
           "neutre": [
             "Utile, mais un peu court.",
             "Bon résumé, on verra sur le terrain.",
             "J’aimerais la même chose avec tous les candidats.",
-            "Pas d’avis tranché, mais c’est instructif."
+            "Pas d’avis tranché, mais c’est instructif.",
+            "Bien fait, mais il manque les contre-arguments.",
+            "Je vais vérifier deux ou trois chiffres.",
+            "Format efficace, fond classique.",
+            "On aimerait la même chose sur le financement.",
+            "On aimerait plus de contradiction dans ce format."
           ],
           "negatif": [
             "Trop lisse, on n’apprend rien de neuf.",
             "Des réponses toutes prêtes.",
             "Pas convaincu par les chiffres avancés.",
-            "On sent les fiches apprises par cœur."
+            "On sent les fiches apprises par cœur.",
+            "Simplifier, d’accord ; caricaturer, non.",
+            "Les questions qui fâchent ont été évitées.",
+            "On reste à la surface du sujet.",
+            "Aucune vraie contradiction dans l’échange.",
+            "Ça manque de questions qui piquent."
           ]
         }
       },
@@ -3607,19 +3638,34 @@
             "Je ne m’attendais pas à rire devant une vidéo politique.",
             "Le montage est vraiment réussi.",
             "Ça tourne partout sur mon fil.",
-            "Simple et efficace, j’ai partagé."
+            "Simple et efficace, j’ai partagé.",
+            "Le son va être repris partout, je le sens.",
+            "15 secondes et le message passe, bien vu.",
+            "Bon, j’avoue, j’ai ri. Et j’ai partagé.",
+            "C’est validé ✅",
+            "Le format idéal pour mes potes qui ne suivent pas la politique."
           ],
           "neutre": [
             "Pourquoi tous les politiques font des vidéos maintenant ?",
             "Vu passer trois fois aujourd’hui.",
             "D’accord, mais le programme, il est où ?",
-            "Curieux de voir la suite."
+            "Curieux de voir la suite.",
+            "Ok la vidéo, mais on vote pour un programme, pas un montage.",
+            "Pov : tu cherches les propositions dans la vidéo 👀",
+            "Algorithme, arrête de me montrer de la politique.",
+            "Pas mal, on verra si ça tient la distance.",
+            "Vu, liké… mais pas encore convaincu."
           ],
           "negatif": [
             "Gênant, on dirait une publicité.",
             "Ça sent l’agence de communication.",
             "Les jeunes ne sont pas dupes.",
-            "Trop forcé, je passe."
+            "Trop forcé, je passe.",
+            "Le malaise de la danse en fin de vidéo…",
+            "Ratio assuré dans les commentaires.",
+            "Trend reprise trois semaines trop tard.",
+            "On sent la réunion de com’ derrière chaque plan.",
+            "Gênant de la première à la dernière seconde."
           ]
         }
       },
@@ -3644,19 +3690,34 @@
             "Deux heures à répondre au fil de discussion, respect.",
             "Ambiance détendue, ça change des plateaux.",
             "Je suis resté jusqu’au bout du direct.",
-            "Enfin des réponses aux questions du public."
+            "Enfin des réponses aux questions du public.",
+            "Réponse cash à la question du chat, j’ai apprécié.",
+            "Ambiance bon enfant, on se sent écouté.",
+            "Le passage sur le pouvoir d’achat était très clair.",
+            "Pas de filtre, pas de prompteur : ça fait du bien.",
+            "Du direct sans filet, ça change tout."
           ],
           "neutre": [
             "Le fil allait trop vite pour suivre.",
             "Curieux de voir si ça se refait.",
             "Quelqu’un a un extrait du passage drôle ?",
-            "Sympa, mais un peu long."
+            "Sympa, mais un peu long.",
+            "Le chat partait dans tous les sens.",
+            "Intéressant de voir l’envers du décor.",
+            "On attend la même chose des autres candidats.",
+            "Les questions étaient inégales, les réponses aussi.",
+            "Il faudrait un résumé pour ceux qui ont raté le direct."
           ],
           "negatif": [
             "Questions filtrées, ça se voit.",
             "Le son était catastrophique.",
             "Trop de pauses, on s’ennuie.",
-            "Ça sentait l’opération séduction."
+            "Ça sentait l’opération séduction.",
+            "Trois questions sur cent sélectionnées, pratique.",
+            "La connexion a coupé au pire moment.",
+            "Ça manquait de contradicteurs.",
+            "Beaucoup de blagues, peu de fond.",
+            "Trop de temps perdu à lire des pseudos."
           ]
         }
       }
@@ -3677,10 +3738,230 @@
       "@fan_de_stats",
       "@jardin_partage_59",
       "@lectrice.du.soir",
-      "@sono_du_quartier"
+      "@sono_du_quartier",
+      "@mamie_tricot",
+      "@bricoleur_du_dimanche",
+      "@infirmiere_de_nuit",
+      "@prof_de_maths_77",
+      "@routier_du_nord",
+      "@coloc_a_rennes",
+      "@etudiant_en_droit",
+      "@vigneron_girondin",
+      "@runneuse_du_matin",
+      "@geek_en_pyjama",
+      "@retraite_actif",
+      "@caissiere_sympa",
+      "@paysan_du_cantal",
+      "@dev_en_freelance",
+      "@maman_solo_31",
+      "@lyceenne_engagee",
+      "@pompier_volontaire",
+      "@chauffeur_de_nuit",
+      "@marin_breton",
+      "@citoyen_lambda",
+      "@mordu_de_politique",
+      "@ancien_syndicaliste",
+      "@jeune_agri_47",
+      "@aide_soignante",
+      "@etudiante_en_socio",
+      "@archi_debutant",
+      "@kine_de_quartier",
+      "@facteur_rural",
+      "@nouvelle_electrice",
+      "@papy_militant",
+      "@sceptique_du_canape",
+      "@benevole_du_resto"
     ],
     "publicationsMax": 24,
-    "reactionsParPublication": 3
+    "reactionsParPublication": 3,
+    "reactionsCommunes": {
+      "positif": [
+        "Franchement, belle surprise.",
+        "Ça, c’est une séquence qui va marquer la campagne.",
+        "Je ne votais pas pour cette personne, je réfléchis maintenant.",
+        "Clair, précis, sans détour. Merci.",
+        "Le genre de moment qui réconcilie avec la politique.",
+        "Je l’envoie dans le groupe de la famille.",
+        "Ça parle enfin de notre quotidien.",
+        "On en redemande, de ce format.",
+        "Bonne énergie, bon fond.",
+        "Il y a eu un vrai effort de pédagogie.",
+        "Je n’attendais rien, j’ai été agréablement surpris.",
+        "Vraie sincérité, ça se sent.",
+        "Le moment le plus juste de la semaine.",
+        "On tient peut-être quelque chose, là.",
+        "J’ai envoyé l’extrait à mon père, il a validé.",
+        "Enfin des mots simples sur des sujets compliqués.",
+        "Respect pour la constance du discours.",
+        "Ça donne envie d’aller voter.",
+        "Une campagne qui parle aux gens, enfin.",
+        "Solide sur le fond, détendu sur la forme.",
+        "Je retiens surtout la séquence sur l’école.",
+        "Ça mérite plus de vues que ça."
+      ],
+      "neutre": [
+        "Source ? Je veux voir les chiffres.",
+        "Je réserve mon avis pour le prochain débat.",
+        "Un peu tout et son contraire, non ?",
+        "Intéressant, mais on a déjà entendu ça.",
+        "Je regarde par curiosité, pas par conviction.",
+        "On attend le chiffrage complet.",
+        "À voir sur le terrain, pas sur un écran.",
+        "Ni enthousiaste, ni déçu.",
+        "Qui d’autre regarde ça en mangeant ?",
+        "On en parle du moment à 1 h 12 ?",
+        "On verra dans les sondages de la semaine prochaine.",
+        "J’aimerais un débat contradictoire sur ce point.",
+        "Chacun y verra ce qu’il veut.",
+        "Le fond m’intéresse plus que la forme.",
+        "Je note, je compare, je déciderai en avril.",
+        "Quelqu’un a vu la version longue ?",
+        "Peut-être. Ou peut-être pas.",
+        "Il faudrait un fact-check indépendant.",
+        "Bon. On attend la suite.",
+        "Les commentaires sont plus animés que la vidéo.",
+        "Pas d’avis tranché pour l’instant.",
+        "Je regarde surtout pour comprendre les autres."
+      ],
+      "negatif": [
+        "Promesses, promesses, promesses…",
+        "Encore un exercice de com’ bien rodé.",
+        "Rien sur le logement, rien sur les salaires.",
+        "On a perdu la moitié du public au bout de dix minutes.",
+        "Hors sol, comme d’habitude.",
+        "Le décalage avec la vraie vie est violent.",
+        "Ça tourne en rond depuis le début.",
+        "Bof. Vraiment bof.",
+        "Encore une fois, aucune réponse claire.",
+        "Désolé, mais je décroche.",
+        "On prend les mêmes et on recommence.",
+        "Ça sonne faux du début à la fin.",
+        "Trop de slogans, pas assez de solutions.",
+        "Vous parlez de nous sans nous connaître.",
+        "Toujours aucune réponse sur les retraites.",
+        "Le décalage entre les mots et les actes…",
+        "Communication d’abord, conviction ensuite.",
+        "Je décroche, désolée.",
+        "Ça ne changera rien à mon quotidien.",
+        "Personne ne croit à ces chiffres.",
+        "On a l’impression d’un discours appris par cœur.",
+        "Ça manque cruellement d’humilité."
+      ]
+    },
+    "reactionsPartisanes": {
+      "gauche-radicale": {
+        "soutien": [
+          "Fier de militer chez {parti} ce soir ✊",
+          "Rendez-vous au prochain meeting, on sera encore plus nombreux !",
+          "Enfin un discours qui parle des salaires et pas des actionnaires.",
+          "La jeunesse est là, {parti} aussi.",
+          "Partagez partout, il faut que ça se sache !",
+          "Les camarades du quartier valident à 100 %.",
+          "On lâche rien, {parti} va tout renverser !",
+          "Ce soir, la gauche de combat était là."
+        ],
+        "opposition": [
+          "Et on le finance comment, le programme de {parti} ?",
+          "{parti} promet tout, sauf l’addition.",
+          "La radicalité, ça ne remplit pas le frigo.",
+          "Toujours la même rengaine chez {parti}.",
+          "Beaucoup de colère, peu de solutions.",
+          "On a déjà vu où mènent ces promesses.",
+          "Avec {parti}, c’est toujours la faute des autres.",
+          "Des slogans, encore des slogans."
+        ]
+      },
+      "gauche": {
+        "soutien": [
+          "Fière de voter {parti}, plus que jamais 🌹",
+          "Enfin une gauche crédible et chiffrée.",
+          "Les militants de {parti} sont mobilisés, ça se sent !",
+          "Transition écologique ET justice sociale : enfin.",
+          "Tout le monde au porte-à-porte samedi !",
+          "Le programme tient la route, je suis convaincue.",
+          "{parti} a le meilleur projet pour le pouvoir d’achat.",
+          "Les sympathisants de {parti} sont fiers ce soir."
+        ],
+        "opposition": [
+          "{parti}, c’est l’impôt pour tous et la dépense sans fin.",
+          "On connaît la chanson avec {parti}.",
+          "Beaucoup d’intentions, peu de méthode.",
+          "Le grand écart permanent chez {parti}.",
+          "Et l’économie, dans tout ça ?",
+          "Encore un catalogue de bonnes intentions.",
+          "{parti} découvre le terrain en campagne, comme d’habitude.",
+          "Le projet de {parti} coûte combien, au juste ?"
+        ]
+      },
+      "centre": {
+        "soutien": [
+          "Le bon sens, enfin ! Fier d’être chez {parti}.",
+          "Ni excès ni démagogie : c’est pour ça que je soutiens {parti}.",
+          "Équipe mobilisée, on ne lâche rien jusqu’au bout.",
+          "Une vision claire et réaliste, bravo.",
+          "Réformer sans casser, voilà la ligne.",
+          "Partagez, il faut convaincre les indécis !",
+          "{parti} rassemble au-delà des clivages, c’est sa force.",
+          "Fiers du travail de terrain des équipes de {parti}."
+        ],
+        "opposition": [
+          "{parti} : en même temps tout et son contraire.",
+          "Le centre mou, comme toujours.",
+          "{parti} gouverne pour les mêmes depuis des années.",
+          "Beaucoup de communication chez {parti}, peu de résultats.",
+          "Les promesses d’hier, on attend toujours.",
+          "Trop technocratique pour moi.",
+          "{parti} se dit au centre, mais penche toujours du même côté.",
+          "Le flou artistique de {parti} continue."
+        ]
+      },
+      "droite": {
+        "soutien": [
+          "Travail, mérite, autorité : {parti} a raison.",
+          "Fier de porter les couleurs de {parti} ce soir.",
+          "Enfin quelqu’un qui parle de sécurité sans détour.",
+          "Les adhérents de {parti} sont au rendez-vous !",
+          "Un programme sérieux et chiffré, ça change.",
+          "Mobilisation totale jusqu’au premier tour !",
+          "{parti} remet la valeur travail au centre, enfin.",
+          "Les militants de {parti} distribuent des tracts partout ce week-end !"
+        ],
+        "opposition": [
+          "{parti} veut tout privatiser, non merci.",
+          "Les recettes de {parti} ont déjà échoué.",
+          "Beaucoup de fermeté, peu d’humanité.",
+          "{parti} parle d’économies, mais pour qui ?",
+          "On a déjà donné avec {parti}.",
+          "Le programme oublie les plus fragiles.",
+          "{parti} oublie les services publics dans son programme.",
+          "Les économies de {parti} paieront qui ?"
+        ]
+      },
+      "droite-nationale": {
+        "soutien": [
+          "Le peuple se réveille, {parti} est là !",
+          "Fier de soutenir {parti}, la France d’abord.",
+          "Les militants de {parti} sont chauds pour la suite 🔥",
+          "Enfin quelqu’un qui dit tout haut ce que beaucoup pensent.",
+          "On sera nombreux au meeting, venez !",
+          "Le terrain ne ment pas : ça monte.",
+          "{parti} parle des vrais problèmes des gens.",
+          "Tous mobilisés derrière {parti} !"
+        ],
+        "opposition": [
+          "Les solutions simplistes de {parti}, non merci.",
+          "{parti} divise plus qu’il ne rassemble.",
+          "Et le chiffrage du programme de {parti} ?",
+          "Beaucoup de peurs, peu de solutions.",
+          "{parti} change de discours selon le public.",
+          "Le repli n’a jamais rendu un pays plus fort.",
+          "{parti} promet de tout changer sans dire comment.",
+          "Les comptes ne tombent jamais juste chez {parti}."
+        ]
+      }
+    },
+    "partPartisane": 0.35,
+    "memoireReactions": 40
   },
   "quinquennat": {
     "note": "Règles de la présidence : durée du mandat et limite de deux mandats consécutifs (Constitution, art. 6), dates du mandat déduites de la proclamation de 2022, fenêtre de l'élection suivante (art. 7). Postes, profils fictifs, acceptation d'un poste, usure du pouvoir et actions du président : paramètres de jeu (hypothèses). Le comportement d'une personnalité réelle nommée à un poste est simulé ; aucun propos ne lui est attribué.",
@@ -6463,19 +6744,37 @@
         "Cette réponse-là va tourner toute la soirée 🔥",
         "Enfin du concret sur ce plateau",
         "Clair, net, précis. Ça change.",
-        "Moment fort du débat, sans hésiter"
+        "Moment fort du débat, sans hésiter",
+        "Punchline de la soirée, sans hésiter.",
+        "Ça, c’est une réponse de chef d’État.",
+        "Le plateau est resté sans voix.",
+        "Calme, précis, imperturbable.",
+        "Le meilleur moment du débat, et de loin.",
+        "On sent que ça a été préparé."
       ],
       "neutre": [
         "On attend toujours les chiffres…",
         "Débat très technique jusqu’ici",
         "Pas convaincu, pas déçu non plus",
-        "Je prends des notes, on verra"
+        "Je prends des notes, on verra",
+        "Match nul pour l’instant.",
+        "Beaucoup de chiffres, peu de vision.",
+        "Ça parle fort, mais ça dit quoi ?",
+        "On attend la séquence sur le pouvoir d’achat.",
+        "Trop de temps de parole perdu en polémiques.",
+        "Le débat s’enlise un peu."
       ],
       "negatif": [
         "Mais c’est complètement faux ?!",
         "Ça sonne creux…",
         "Gros malaise sur le plateau",
-        "Attaque gratuite, ça ne passe pas"
+        "Attaque gratuite, ça ne passe pas",
+        "Le fact-checking va avoir du travail demain.",
+        "Esquive totale de la question.",
+        "Ça s’énerve, ça perd des points.",
+        "Le temps de parole n’a pas été respecté…",
+        "Hors sujet complet.",
+        "Réponse à côté, une fois de plus."
       ]
     }
   },

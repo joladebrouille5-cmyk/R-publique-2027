@@ -478,9 +478,16 @@ function playMove(ctx: Context, actorId: string, choice: Choice, rng: Rng): Deba
             : roll < 2 / 3
               ? 'neutre'
               : 'negatif';
+    // Aucune réaction reprise dans le même débat (tant que le jeu de modèles le permet).
+    const used = new Set(
+      [...ctx.session.sequences.flatMap((q) => q.coups), ...ctx.moves].flatMap((m) =>
+        m.reaction ? [m.reaction.texte] : [],
+      ),
+    );
+    const fresh = rules.reactions[ton].filter((t) => !used.has(t));
     reaction = {
       compte: pick(rng, ruleset.numerique.comptes),
-      texte: pick(rng, rules.reactions[ton]),
+      texte: pick(rng, fresh.length > 0 ? fresh : rules.reactions[ton]),
       ton,
     };
   }

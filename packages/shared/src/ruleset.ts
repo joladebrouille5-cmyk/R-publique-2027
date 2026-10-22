@@ -11,7 +11,12 @@ import { RealMediaSchema } from './medias';
 import { RealPersonalitiesSchema } from './personalities';
 import { MinisterProfileSchema } from './quinquennat';
 import { CampaignStyleSchema, PositionSchema } from './politics';
-import { DIGITAL_TONES } from './numerique';
+import {
+  DIGITAL_TONES,
+  FAMILLES_POLITIQUES,
+  PARTI_MARQUE,
+  type FamillePolitique,
+} from './numerique';
 import { ResourceKeySchema, ResourcesV1Schema } from './resources';
 
 // Jeu de règles versionné (§2 : les dates électorales sont des paramètres versionnés vérifiés
@@ -787,6 +792,36 @@ export const DigitalRulesSchema = z
       })
       .strict(),
     formats: z.array(DigitalFormatSchema).min(1),
+    /** Modèles communs à tous les formats, par ton (phase 11). */
+    reactionsCommunes: ReactionTemplates,
+    /**
+     * Réactions de militants (soutien) et d'opposants, par famille politique du candidat
+     * (phase 11) ; « {parti} » est remplacé par le parti du candidat, aucun nom de personne.
+     */
+    reactionsPartisanes: z
+      .object(
+        Object.fromEntries(
+          FAMILLES_POLITIQUES.map((f) => [
+            f,
+            z
+              .object({
+                soutien: z.array(z.string().min(1).max(200)).min(4),
+                opposition: z.array(z.string().min(1).max(200)).min(4),
+              })
+              .strict(),
+          ]),
+        ) as {
+          [K in FamillePolitique]: z.ZodObject<{
+            soutien: z.ZodArray<z.ZodString>;
+            opposition: z.ZodArray<z.ZodString>;
+          }>;
+        },
+      )
+      .strict(),
+    /** Part des réactions écrites par des militants ou des opposants. */
+    partPartisane: Fraction,
+    /** Une réaction ne reprend pas un texte paru dans ce nombre de réactions récentes du fil. */
+    memoireReactions: z.number().int().min(0).max(200),
     /** Pseudonymes inventés des comptes qui réagissent (aucun compte réel). */
     comptes: z.array(z.string().regex(/^@[a-z0-9_.]{3,30}$/)).min(8),
     /** Publications gardées dans le fil (les plus récentes). */
@@ -1161,6 +1196,19 @@ export const RulesetSchema = z
     const formats = new Set(ruleset.numerique.formats.map((f) => f.id));
     unique('Format numérique', [...formats]);
     unique('Compte fictif', ruleset.numerique.comptes);
+    // Réactions (phase 11) : aucune marque hors des réactions partisanes, qui n'ont que « {parti} ».
+    const neutres = [
+      ...ruleset.numerique.formats.flatMap((f) => Object.values(f.reactions).flat()),
+      ...Object.values(ruleset.numerique.reactionsCommunes).flat(),
+    ];
+    for (const text of neutres)
+      if (/[{}]/.test(text)) issue(`Réaction : marque inattendue dans « ${text} »`);
+    for (const text of Object.values(ruleset.numerique.reactionsPartisanes).flatMap((p) => [
+      ...p.soutien,
+      ...p.opposition,
+    ]))
+      if (/[{}]/.test(text.replaceAll(PARTI_MARQUE, '')))
+        issue(`Réaction partisane : seule la marque ${PARTI_MARQUE} est admise (« ${text} »)`);
     for (const action of [...ruleset.actions, ...ruleset.quinquennat.actions]) {
       if (action.format && !formats.has(action.format))
         issue(`${action.id} : format numérique inconnu (${action.format})`);

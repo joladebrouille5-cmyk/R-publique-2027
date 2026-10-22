@@ -29,6 +29,7 @@ import {
   GameStateV12Schema,
   GameStateV13Schema,
   GameStateV14Schema,
+  GameStateV15Schema,
   addDays,
   DIGITAL_HISTORY_WEEKS,
   daysFromCivil,
@@ -52,6 +53,7 @@ import {
   type GameStateV12,
   type GameStateV13,
   type GameStateV14,
+  type GameStateV15,
 } from '@r2027/shared';
 import { z } from 'zod';
 import { hashState, sha256, canonicalStringify } from './canonical';
@@ -94,7 +96,8 @@ const SCHEMAS: Record<number, z.ZodType> = {
   12: GameStateV12Schema,
   13: GameStateV13Schema,
   14: GameStateV14Schema,
-  15: GameStateSchema,
+  15: GameStateV15Schema,
+  16: GameStateSchema,
 };
 
 /** Jeux de règles des parties aux formats 2 (phase 2) et 3 (phase 3). */
@@ -524,7 +527,7 @@ function migrateV13ToV14(v13: GameStateV13): GameStateV14 {
  * liste est vide ; le débat d'entre-deux-tours éventuellement tenu (automatique) reste dans
  * `elections`. Passage au jeu de règles courant (12.0.0 : séances de débat, interview longue).
  */
-function migrateV14ToV15(v14: GameStateV14): GameState {
+function migrateV14ToV15(v14: GameStateV14): GameStateV15 {
   // Passages récents reconstitués d'après le fil conservé (seule trace du format 14).
   const passages: GameState['numerique']['passages'] = {};
   for (const post of v14.numerique.publications) {
@@ -547,6 +550,22 @@ function migrateV14ToV15(v14: GameStateV14): GameState {
   };
 }
 
+/**
+ * 15 → 16 (phase 11) : passage au jeu de règles 13 (réactions plus variées, événements
+ * contextuels, plateaux sans aléa, personnalités du gouvernement) ; l'état est inchangé.
+ */
+function migrateV15ToV16(v15: GameStateV15): GameState {
+  return {
+    ...v15,
+    meta: {
+      ...v15.meta,
+      engineVersion: ENGINE_VERSION,
+      rulesetVersion: CURRENT_RULESET_KEY,
+      saveSchemaVersion: 16,
+    },
+  };
+}
+
 const MIGRATIONS: Record<number, (state: never) => unknown> = {
   1: migrateV1ToV2,
   2: migrateV2ToV3,
@@ -562,6 +581,7 @@ const MIGRATIONS: Record<number, (state: never) => unknown> = {
   12: migrateV12ToV13,
   13: migrateV13ToV14,
   14: migrateV14ToV15,
+  15: migrateV15ToV16,
 };
 
 export type LoadedState = { state: GameState; stateHash: string; migratedFrom: number | null };

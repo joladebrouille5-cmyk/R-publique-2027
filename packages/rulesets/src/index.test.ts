@@ -387,10 +387,41 @@ describe('réseaux et nouveaux médias (phase 9)', () => {
       ...ruleset.candidatsFictifs.map((c) => c.nom),
       ...rules.formats.flatMap((f) => f.exemples.map((e) => e.nom)),
     ].map((n) => n.toLowerCase());
-    const texts = rules.formats.flatMap((f) => Object.values(f.reactions).flat());
+    const partisans = Object.values(rules.reactionsPartisanes).flatMap((p) => [
+      ...p.soutien,
+      ...p.opposition,
+    ]);
+    const texts = [
+      ...rules.formats.flatMap((f) => Object.values(f.reactions).flat()),
+      ...Object.values(rules.reactionsCommunes).flat(),
+      ...partisans,
+    ];
     for (const text of [...texts, ...rules.comptes]) {
       for (const name of names) expect(text.toLowerCase()).not.toContain(name);
     }
+    // Phase 11 : banque massive (plus de 100 modèles), sans doublon ; seul le parti du
+    // candidat est inséré, dans les réactions de militants et d'opposants.
+    expect(texts.length).toBeGreaterThanOrEqual(100);
+    expect(new Set(texts).size).toBe(texts.length);
+    expect(rules.comptes.length).toBeGreaterThanOrEqual(40);
+    for (const text of texts)
+      for (const marker of text.match(/\{[^}]*\}/g) ?? []) expect(marker).toBe('{parti}');
+    expect(partisans.every((t) => t.includes('{parti}') || !/[{}]/.test(t))).toBe(true);
+  });
+
+  it('refuse une marque inconnue dans les réactions (phase 11)', () => {
+    const bad = full();
+    bad.numerique.reactionsCommunes.positif = [
+      ...bad.numerique.reactionsCommunes.positif,
+      'Bravo {candidat} !',
+    ];
+    expect(RulesetSchema.safeParse(bad).success).toBe(false);
+    const badParty = full();
+    badParty.numerique.reactionsPartisanes.centre.soutien = [
+      ...badParty.numerique.reactionsPartisanes.centre.soutien,
+      'Vive {candidat} de {parti}',
+    ];
+    expect(RulesetSchema.safeParse(badParty).success).toBe(false);
   });
 
   it('refuse un format sans action, une action d’un format inconnu ou un groupe non pondéré', () => {
