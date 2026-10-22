@@ -42,10 +42,30 @@ async function activate(page, locator) {
   await page.keyboard.press('Enter');
 }
 
-/** Activité au premier plan (« com.android.intentresolver/.ChooserActivity »…). */
+/**
+ * Composant d'une ligne de `dumpsys` (« topResumedActivity=ActivityRecord{… u0
+ * com.android.intentresolver/.ChooserActivity t12} », « mCurrentFocus=Window{… u0 pkg/.Main} ») ;
+ * chaîne vide si aucune ligne connue n'en donne.
+ */
+function focusedComponent(dump) {
+  for (const key of ['topResumedActivity', 'mResumedActivity', 'mCurrentFocus', 'mFocusedApp']) {
+    const line = dump.split('\n').find((l) => l.trimStart().startsWith(`${key}=`));
+    const component = line && /\s([\w.]+\/[\w.$]+)/.exec(line)?.[1];
+    if (component) return component;
+  }
+  return '';
+}
+
+/**
+ * Activité au premier plan (« com.android.intentresolver/.ChooserActivity »…). Android 14 ne
+ * donne plus le focus dans `dumpsys window windows` : activités reprises d'abord, fenêtres ensuite.
+ */
 async function foreground() {
-  const dump = await shell('dumpsys window windows');
-  return /mCurrentFocus=.*\{[^}]*\s(\S+)\}/.exec(dump)?.[1] ?? '';
+  for (const command of ['dumpsys activity activities', 'dumpsys window']) {
+    const component = focusedComponent(await shell(command));
+    if (component) return component;
+  }
+  return '';
 }
 
 async function waitForeground(test, label) {
