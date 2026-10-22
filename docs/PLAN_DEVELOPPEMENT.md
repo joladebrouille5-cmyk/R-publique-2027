@@ -607,7 +607,7 @@ Décisions :
 - **Partie migrée** : un débat d'entre-deux-tours déjà tenu par l'ancien moteur (format 14) n'est pas rejoué ; il reste visible dans « Entre-deux-tours » (Résultats).
 - Pas de débat aux législatives (décision de cadrage).
 
-### Phase 11 — Finitions : soirée, gouvernement, interface, équilibrage, variété (en cours)
+### Phase 11 — Finitions : soirée, gouvernement, interface, équilibrage, variété (terminée)
 
 Demandée par l'utilisateur le 22/10/2026 (« Applique ces 9 correctifs et ajouts majeurs pour finaliser l'application »). Trois demandes touchent des règles du projet (CLAUDE.md) ; elles sont appliquées dans le respect de ces règles, comme suit (décisions par défaut, révisables) :
 - **Sources à l'écran** (demande 3) : les sources, liens, licences, méthodes et notes de bas de page quittent les écrans de jeu pour l'écran **Paramètres → Crédits et mentions légales** ; restent à l'écran les seules **étiquettes courtes** (« Simulé », « Hypothèse », « Estimation », « Fictif »), qu'exige la règle « ne jamais présenter une donnée inventée comme officielle ».
@@ -638,6 +638,25 @@ Avancement (22/10/2026, branche `claude/new-session-lmxg1t`) :
 - **P11-03 faite** (d7c3409) — écran Paramètres (apparence, crédits et mentions légales, à propos) ; aucun lien de source sur les écrans de jeu (e2e sur tous les écrans de la partie).
 - **P11-02 faite** — `pnpm data:gouvernement` : 22 personnalités nominables (dont Jordan Bardella et Jean-Philippe Tanguy ; RN, UDR, LFI, Renaissance, PS, LR, Écologistes, MoDem, Horizons, PCF), fonctions datées tirées de l'infobox de chaque article Wikipédia (révision figée), appartenance au parti vérifiée sur Wikidata, 19 photos sous licence libre, position du parti d'après CHES 2024 ; compétence estimée (somme de facteurs documentés, plafond 0,90) et notoriété déduites des fonctions ([SOURCES §8 nonies](./SOURCES.md)). Moteur : le président (joueur ou IA) peut nommer ces figures à Matignon ; le Premier ministre propose ses ministres (acteurs et figures proches, puis profils fictifs) ; le président joueur pourvoit ensuite chaque ministère régalien (décisions `nomination-ministre`) ; refus simulés selon la proximité (ou accord de la majorité en cohabitation). Effets, tous par le registre : popularité prêtée à la nomination, action hebdomadaire du gouvernement selon la compétence de l'équipe, gestion des crises selon la compétence du ministre concerné (chaque crise a un poste), ouverture (soutien aux textes et censure des groupes non alliés représentés), censure modulée par la compétence du Premier ministre. Interface : fiches et photos sur l'écran Gouvernement, liste des personnalités nominables, options de nomination groupées en lignes compactes, crédits et méthode dans Paramètres.
 
+- **P11-10** — format 16 et migration 15 → 16 (sondages déjà publiés sans variation, aucune vague de référence ; gouvernements en place inchangés), documentation (SOURCES §8 nonies, modèle de données, architecture, risques R-51, README, application mobile), application **1.3.0** (`versionCode` 4).
+
+**Bilan (22/10/2026)** — les dix tâches sont réalisées ; deux vérifications attendent GitHub Actions.
+
+| Vérification | Résultat |
+|---|---|
+| `pnpm check` (lint, format, types, tests unitaires) | sans erreur ; 552 tests réussis |
+| `pnpm test:integration` (API + PostgreSQL 16 réel) | 94 tests réussis |
+| `pnpm test:e2e` (Playwright, bureau + mobile) | 51 tests réussis (1 ignoré, comme avant) |
+| `pnpm test:mobile` (paquet de l'APK, réseau coupé) | 1 test réussi |
+| APK 1.3.0 de débogage | construit localement (JDK 21, SDK Android 36) : `versionCode` 4, aucune permission réseau, 6,1 Mo |
+| CI GitHub et essai sur émulateur | **non exécutés** : depuis 74f2d03, chaque tâche GitHub Actions se termine en 2 à 3 secondes sans démarrer d'étape (journal indisponible) — blocage du compte (minutes, limite de dépenses ou facturation), signalé sur la PR #2 ; pas d'émulateur dans l'environnement de développement (pas de KVM) |
+
+Écarts et limites :
+- **Calibrage** : effets de l'équipe gouvernementale, des événements, des passages dans les médias et de l'inertie des sondages = hypothèses du jeu de règles 13.0.0, bornées par les tests, non mesurées sur des données réelles.
+- **Figures du gouvernement** : fonctions telles que l'infobox de Wikipédia les donne à la révision importée (peuvent être en retard sur un remaniement) ; compétence estimée par une règle simple (fonctions exercées), pas une évaluation ; trois figures sans photo libre (initiales affichées).
+- **Ministères régaliens** : le président joueur doit confirmer ou remplacer cinq ministres après chaque nomination de Premier ministre (décisions obligatoires, la proposition du Premier ministre par défaut) ; les autres ministères restent composés par le Premier ministre.
+- **Rattachement aux groupes** : par l'étiquette du parti ; une personnalité sans parti de la table (Place publique, Debout !, Reconquête…) n'ouvre le gouvernement à aucun groupe.
+
 ---
 
 ## 5. Questions ouvertes
@@ -656,4 +675,4 @@ Avancement (22/10/2026, branche `claude/new-session-lmxg1t`) :
 
 ## 6. Prochaine étape
 
-Phases 6 à 10 terminées le 22/10/2026 sur la branche `claude/new-session-lmxg1t` (PR #2) : le jeu est jouable dans le navigateur (avec le serveur) et en application Android hors ligne (1.2.0), avec l'identité « soirée électorale », le direct des soirs de scrutin et les débats télévisés. Restent ouverts : l'hébergement de la version web (Q6 : image Docker, déploiement, sauvegardes du serveur, R-45), la licence des résultats 2022 (Q8), une mesure de fluidité sur un téléphone réel (R-47), le calibrage des débats (R-50) et, avant une publication sur un magasin d'applications, la clé de signature et l'identifiant définitif de l'application.
+Phases 6 à 11 terminées le 22/10/2026 sur la branche `claude/new-session-lmxg1t` (PR #2) : le jeu est jouable dans le navigateur (avec le serveur) et en application Android hors ligne (1.3.0), avec la soirée électorale au rythme réglable, les débats télévisés, le gouvernement ouvert aux personnalités réelles et les crédits regroupés dans Paramètres. Restent ouverts : le déblocage de GitHub Actions (CI verte et essai de l'APK 1.3.0 sur émulateur), l'hébergement de la version web (Q6 : image Docker, déploiement, sauvegardes du serveur, R-45), la licence des résultats 2022 (Q8), une mesure de fluidité sur un téléphone réel (R-47), le calibrage des hypothèses de jeu (R-50) et, avant une publication sur un magasin d'applications, la clé de signature et l'identifiant définitif de l'application.
