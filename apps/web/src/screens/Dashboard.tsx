@@ -11,7 +11,8 @@ import { ApiRequestError, newIdempotencyKey } from '../api/client';
 import { spendingCapOf } from '../campaign';
 import { useAdvance, useJournal, useRuleset } from '../api/hooks';
 import { ErrorMessage } from '../components/ErrorMessage';
-import { buttonPrimary, buttonSecondary, card, input } from '../components/ui';
+import { CalendarClock, ChevronRight, Hourglass, TriangleAlert } from 'lucide-react';
+import { buttonPrimary, buttonSecondary, card, input, screenTitle } from '../components/ui';
 import { WeeklyReportView } from '../components/WeeklyReportView';
 import {
   CANDIDATE_STATUS_LABELS,
@@ -179,39 +180,51 @@ export function Dashboard() {
       : []),
   ];
 
+  const link =
+    'inline-flex min-h-11 items-center gap-1 rounded-full px-1 font-semibold text-republique-700 hover:underline dark:text-republique-300';
+
   return (
     <section aria-labelledby="titre-tableau" className="space-y-8">
-      <h1 id="titre-tableau" className="text-2xl font-bold">
-        Tableau de bord
-      </h1>
-
-      <dl className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-        {facts.map((fact) => (
-          <div key={fact.label} className={card}>
-            <dt className="text-xs text-slate-500 dark:text-slate-400">{fact.label}</dt>
-            <dd className="mt-1 font-semibold">{fact.value}</dd>
-          </div>
-        ))}
-      </dl>
+      <div className="space-y-1">
+        <h1 id="titre-tableau" className={screenTitle}>
+          Tableau de bord
+        </h1>
+        <p className="text-slate-600 dark:text-slate-400">
+          {quinquennat
+            ? presiding
+              ? 'Vous gouvernez : fixez l’agenda de la semaine, tranchez, puis avancez.'
+              : 'Le quinquennat suit son cours sans vous : avancez jusqu’à la prochaine campagne.'
+            : campaigning
+              ? 'Votre QG de campagne : tranchez les dossiers, programmez la semaine, puis résolvez-la.'
+              : 'Suivez la campagne semaine après semaine.'}
+        </p>
+      </div>
 
       {blocked && (
         <div
           role="alert"
-          className="space-y-2 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100"
+          className="flex gap-3 rounded-card border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100"
         >
-          <p>
-            {state.calendar.blockedMessage ??
-              'La partie ne peut pas avancer davantage pour l’instant.'}
-          </p>
-          <Link to="../resultats" className="font-semibold underline">
-            Voir les résultats
-          </Link>
+          <TriangleAlert aria-hidden="true" className="mt-0.5 size-5 shrink-0" />
+          <div className="space-y-1">
+            <p>
+              {state.calendar.blockedMessage ??
+                'La partie ne peut pas avancer davantage pour l’instant.'}
+            </p>
+            <Link to="../resultats" className="font-semibold underline">
+              Voir les résultats
+            </Link>
+          </div>
         </div>
+      )}
+
+      {!observer && state.pendingDecisions.length > 0 && (
+        <DecisionsPanel decisions={state.pendingDecisions} answers={answers} onAnswer={answer} />
       )}
 
       {quinquennat && ruleset.data && (
         <section aria-labelledby="titre-quinquennat" className={`${card} space-y-2 text-sm`}>
-          <h2 id="titre-quinquennat" className="text-lg font-semibold">
+          <h2 id="titre-quinquennat" className="text-xl font-bold">
             Quinquennat {quinquennat.mandat.debut.slice(0, 4)}–{quinquennat.mandat.fin.slice(0, 4)}
           </h2>
           <p>
@@ -259,35 +272,20 @@ export function Dashboard() {
               {state.legislatives.derniere.cohabitation ? ' ; cohabitation en cours' : ''}.
             </p>
           )}
-          <p className="flex flex-wrap gap-x-4">
-            <Link
-              to="../gouvernement"
-              className="text-republique-600 underline dark:text-republique-100"
-            >
+          <p className="flex flex-wrap gap-x-3">
+            <Link to="../gouvernement" className={link}>
               Le gouvernement
             </Link>
-            <Link
-              to="../parlement"
-              className="text-republique-600 underline dark:text-republique-100"
-            >
+            <Link to="../parlement" className={link}>
               Le Parlement
             </Link>
-            <Link
-              to="../economie"
-              className="text-republique-600 underline dark:text-republique-100"
-            >
+            <Link to="../economie" className={link}>
               L’économie
             </Link>
-            <Link
-              to="../legislatives"
-              className="text-republique-600 underline dark:text-republique-100"
-            >
+            <Link to="../legislatives" className={link}>
               Les législatives
             </Link>
-            <Link
-              to="../resultats"
-              className="text-republique-600 underline dark:text-republique-100"
-            >
+            <Link to="../resultats" className={link}>
               Résultats de la présidentielle
             </Link>
           </p>
@@ -296,7 +294,7 @@ export function Dashboard() {
 
       {!quinquennat && previousTerm && (
         <section aria-labelledby="titre-nouveau-cycle" className={`${card} space-y-2 text-sm`}>
-          <h2 id="titre-nouveau-cycle" className="text-lg font-semibold">
+          <h2 id="titre-nouveau-cycle" className="text-xl font-bold">
             Présidentielle {state.cycle.annee}
           </h2>
           <p>
@@ -318,7 +316,7 @@ export function Dashboard() {
             simulés (simplification du jeu).
           </p>
           <p>
-            <Link to="../bilan" className="text-republique-600 underline dark:text-republique-100">
+            <Link to="../bilan" className={link}>
               Le bilan du quinquennat
             </Link>
           </p>
@@ -326,20 +324,41 @@ export function Dashboard() {
       )}
 
       {!quinquennat && (latestPoll || state.elections.t1) && (
-        <section aria-labelledby="titre-course" className={`${card} space-y-2 text-sm`}>
-          <h2 id="titre-course" className="text-lg font-semibold">
+        <section
+          aria-labelledby="titre-course"
+          className="relative overflow-hidden rounded-dossier bg-slate-900 p-5 text-white shadow-raised sm:p-7 dark:bg-slate-800"
+        >
+          <span aria-hidden="true" className="absolute inset-x-0 top-0 flex h-1.5">
+            <span className="flex-1 bg-republique-500" />
+            <span className="flex-1 bg-white" />
+            <span className="flex-1 bg-red-500" />
+          </span>
+          <h2 id="titre-course" className="text-xl font-bold">
             La course présidentielle
           </h2>
           {latestPoll && playerPoll && playerRank && (
-            <p>
-              Dernier sondage ({latestPoll.institute}, semaine {latestPoll.week}) : vous êtes{' '}
-              <strong>{playerRank === 1 ? '1er' : `${playerRank}e`}</strong> sur{' '}
-              {latestPoll.results.length} avec <strong>{formatShare(playerPoll.value)}</strong> (±{' '}
-              {formatShare(playerPoll.margin).replace(' %', ' pt')}).
-            </p>
+            <div className="mt-3 flex flex-wrap items-end gap-x-6 gap-y-2">
+              <p className="font-display leading-none font-extrabold">
+                <span className="text-6xl tracking-tight">
+                  {playerRank === 1 ? '1er' : `${playerRank}e`}
+                </span>
+                <span className="ml-2 text-lg font-semibold text-slate-300">
+                  sur {latestPoll.results.length}
+                </span>
+              </p>
+              <p className="text-sm text-slate-300">
+                Dernier sondage ({latestPoll.institute}, semaine {latestPoll.week}) : vous êtes{' '}
+                <strong className="text-white">
+                  {playerRank === 1 ? '1er' : `${playerRank}e`}
+                </strong>{' '}
+                sur {latestPoll.results.length} avec{' '}
+                <strong className="text-white">{formatShare(playerPoll.value)}</strong> (±{' '}
+                {formatShare(playerPoll.margin).replace(' %', ' pt')}).
+              </p>
+            </div>
           )}
           {latestPoll && !playerPoll && (
-            <p>
+            <p className="mt-2 text-sm text-slate-300">
               Dernier sondage ({latestPoll.institute}, semaine {latestPoll.week}) :{' '}
               {[...latestPoll.results]
                 .sort((a, b) => b.value - a.value)
@@ -351,25 +370,28 @@ export function Dashboard() {
                 .join(' · ')}
             </p>
           )}
-          <p className="flex flex-wrap gap-x-4 gap-y-1">
+          <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm">
             <Link
               to="../sondages"
-              className="text-republique-600 underline dark:text-republique-100"
+              className="inline-flex min-h-11 items-center gap-1 font-semibold text-white hover:underline"
             >
               Tous les sondages
+              <ChevronRight aria-hidden="true" className="size-4" />
             </Link>
             <Link
               to="../candidats"
-              className="text-republique-600 underline dark:text-republique-100"
+              className="inline-flex min-h-11 items-center gap-1 font-semibold text-white hover:underline"
             >
               Les candidats
+              <ChevronRight aria-hidden="true" className="size-4" />
             </Link>
             {state.elections.t1 && (
               <Link
                 to="../resultats"
-                className="text-republique-600 underline dark:text-republique-100"
+                className="inline-flex min-h-11 items-center gap-1 font-semibold text-white hover:underline"
               >
                 Résultats
+                <ChevronRight aria-hidden="true" className="size-4" />
               </Link>
             )}
           </p>
@@ -377,7 +399,7 @@ export function Dashboard() {
       )}
 
       {actor && !campaigning && !blocked && !quinquennat && (
-        <p className="rounded-lg border border-slate-300 p-4 text-sm dark:border-slate-700">
+        <p className="rounded-card border border-slate-300 p-4 text-sm dark:border-slate-700">
           Vous n’êtes plus candidat : vous ne programmez plus d’actions de campagne, mais vous
           pouvez suivre la suite de l’élection semaine après semaine.
         </p>
@@ -388,27 +410,20 @@ export function Dashboard() {
       )}
       {ruleset.isPending && <p>Chargement du jeu de règles…</p>}
 
-      {ruleset.data && actor && (
-        <ResourcesPanel resources={actor.resources} ruleset={ruleset.data} />
-      )}
-      {ruleset.data && actor && !quinquennat && (
-        <CampaignPanel state={state} actor={actor} ruleset={ruleset.data} />
-      )}
-      {observer && (
-        <p className="text-sm text-slate-600 dark:text-slate-400">
-          Mode observateur : aucune campagne n’est contrôlée. Les candidats fictifs mènent leur
-          campagne de façon autonome ; les décisions éventuelles prennent l’option par défaut.
-        </p>
-      )}
-
-      {!observer && state.pendingDecisions.length > 0 && (
-        <DecisionsPanel decisions={state.pendingDecisions} answers={answers} onAnswer={answer} />
-      )}
-
       {ruleset.data && actor && campaigning && !blocked && (
         <>
+          <ActionPlanner
+            ruleset={ruleset.data}
+            actor={actor}
+            plan={plan.actions}
+            reservedHours={reservedHours}
+            cap={spendingCapOf(state, actor, ruleset.data)}
+            onAdd={changePlan(plan.addAction)}
+            onRemove={changePlan(plan.removeAction)}
+            onTarget={changePlan(plan.setTarget)}
+          />
           <section aria-labelledby="titre-engagements" className={`${card} space-y-2 text-sm`}>
-            <h2 id="titre-engagements" className="text-lg font-semibold">
+            <h2 id="titre-engagements" className="text-lg font-bold">
               Programme et alliances cette semaine
             </h2>
             {plan.ajouter.length + plan.retirer.length > 0 ? (
@@ -427,31 +442,15 @@ export function Dashboard() {
             {plan.proposer.length > 0 && (
               <p>Propositions de ralliement : {plan.proposer.map(nameOf).join(', ')}.</p>
             )}
-            <p className="flex flex-wrap gap-x-4">
-              <Link
-                to="../programme"
-                className="text-republique-600 underline dark:text-republique-100"
-              >
+            <p className="flex flex-wrap gap-x-3">
+              <Link to="../programme" className={link}>
                 Composer le programme
               </Link>
-              <Link
-                to="../candidats"
-                className="text-republique-600 underline dark:text-republique-100"
-              >
+              <Link to="../candidats" className={link}>
                 Relations et alliances
               </Link>
             </p>
           </section>
-          <ActionPlanner
-            ruleset={ruleset.data}
-            actor={actor}
-            plan={plan.actions}
-            reservedHours={reservedHours}
-            cap={spendingCapOf(state, actor, ruleset.data)}
-            onAdd={changePlan(plan.addAction)}
-            onRemove={changePlan(plan.removeAction)}
-            onTarget={changePlan(plan.setTarget)}
-          />
         </>
       )}
 
@@ -478,75 +477,92 @@ export function Dashboard() {
         />
       )}
 
-      <div className={`${card} space-y-3`}>
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            className={buttonPrimary}
-            disabled={blocked || advance.isPending || unanswered.length > 0 || missingTargets > 0}
-            onClick={() => submit()}
-          >
-            {advance.isPending ? 'Résolution de la semaine…' : `Résoudre la semaine ${game.week}`}
-          </button>
-          {quinquennat && (
-            <span className="flex flex-wrap items-center gap-2">
-              <label htmlFor="avance-rapide" className="text-sm">
-                Avance rapide
-              </label>
-              <select
-                id="avance-rapide"
-                className={`${input} w-auto py-1.5`}
-                value={fastWeeks}
-                onChange={(event) => setFastWeeks(Number(event.target.value))}
-              >
-                {[4, 13, 26, MAX_FAST_FORWARD_WEEKS].map((n) => (
-                  <option key={n} value={n}>
-                    {n} semaines au plus
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                className={buttonSecondary}
-                disabled={
-                  blocked || advance.isPending || unanswered.length > 0 || plan.actions.length > 0
-                }
-                onClick={() => submit(fastWeeks)}
-              >
-                Avancer
-              </button>
-            </span>
+      {/* Barre de résolution : toujours à portée de pouce, au-dessus de la navigation. */}
+      <div className="sticky bottom-[calc(4.25rem+env(safe-area-inset-bottom))] z-20 lg:bottom-4">
+        <div className="space-y-2 rounded-card border border-slate-200/80 bg-white/95 p-3 shadow-raised backdrop-blur-md dark:border-slate-700 dark:bg-slate-900/95">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              className={`${buttonPrimary} flex-1 sm:flex-none`}
+              disabled={blocked || advance.isPending || unanswered.length > 0 || missingTargets > 0}
+              onClick={() => submit()}
+            >
+              {advance.isPending ? (
+                <>
+                  <Hourglass aria-hidden="true" className="size-4 animate-pulse" />
+                  Résolution de la semaine…
+                </>
+              ) : (
+                <>
+                  <CalendarClock aria-hidden="true" className="size-4" />
+                  {`Résoudre la semaine ${game.week}`}
+                </>
+              )}
+            </button>
+            {quinquennat && (
+              <span className="flex flex-wrap items-center gap-2">
+                <label htmlFor="avance-rapide" className="text-sm font-semibold">
+                  Avance rapide
+                </label>
+                <select
+                  id="avance-rapide"
+                  className={`${input} w-auto py-1.5`}
+                  value={fastWeeks}
+                  onChange={(event) => setFastWeeks(Number(event.target.value))}
+                >
+                  {[4, 13, 26, MAX_FAST_FORWARD_WEEKS].map((n) => (
+                    <option key={n} value={n}>
+                      {n} semaines au plus
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  className={buttonSecondary}
+                  disabled={
+                    blocked || advance.isPending || unanswered.length > 0 || plan.actions.length > 0
+                  }
+                  onClick={() => submit(fastWeeks)}
+                >
+                  Avancer
+                </button>
+              </span>
+            )}
+          </div>
+          {quinquennat && plan.actions.length > 0 && (
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              L’avance rapide résout des semaines sans action : videz l’agenda pour l’utiliser.
+            </p>
           )}
+          {advance.data?.avanceRapide && (
+            <p role="status" className="text-sm">
+              Avance rapide : {advance.data.avanceRapide.resolues} semaine(s) résolue(s) sur{' '}
+              {advance.data.avanceRapide.demandees}
+              {advance.data.avanceRapide.arret
+                ? ` — arrêt : ${FAST_FORWARD_STOP_LABELS[advance.data.avanceRapide.arret]}.`
+                : '.'}
+            </p>
+          )}
+          {unanswered.length > 0 && (
+            <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
+              Répondez d’abord aux décisions en attente.
+            </p>
+          )}
+          {missingTargets > 0 && (
+            <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
+              Choisissez la cible (département ou média) de chaque action qui en demande une.
+            </p>
+          )}
+          {advance.isError && <ErrorMessage error={advance.error} />}
         </div>
-        {quinquennat && plan.actions.length > 0 && (
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            L’avance rapide résout des semaines sans action : videz l’agenda pour l’utiliser.
-          </p>
-        )}
-        {advance.data?.avanceRapide && (
-          <p role="status" className="text-sm">
-            Avance rapide : {advance.data.avanceRapide.resolues} semaine(s) résolue(s) sur{' '}
-            {advance.data.avanceRapide.demandees}
-            {advance.data.avanceRapide.arret
-              ? ` — arrêt : ${FAST_FORWARD_STOP_LABELS[advance.data.avanceRapide.arret]}.`
-              : '.'}
-          </p>
-        )}
-        {unanswered.length > 0 && (
-          <p className="text-sm text-amber-800 dark:text-amber-300">
-            Répondez d’abord aux décisions en attente.
-          </p>
-        )}
-        {missingTargets > 0 && (
-          <p className="text-sm text-amber-800 dark:text-amber-300">
-            Choisissez la cible (département ou média) de chaque action qui en demande une.
-          </p>
-        )}
-        {advance.isError && <ErrorMessage error={advance.error} />}
       </div>
 
-      <section aria-labelledby="titre-bilan" className={`${card} space-y-3`}>
-        <h2 id="titre-bilan" className="text-lg font-semibold">
+      <section
+        aria-labelledby="titre-bilan"
+        key={lastReport?.week ?? 'aucun'}
+        className={`${card} animate-revele space-y-3`}
+      >
+        <h2 id="titre-bilan" className="text-xl font-bold">
           {lastReport
             ? `Bilan de la semaine ${lastReport.week} (${formatGameDate(lastReport.date)})`
             : 'Bilan hebdomadaire'}
@@ -567,25 +583,55 @@ export function Dashboard() {
         )}
       </section>
 
+      {ruleset.data && actor && (
+        <ResourcesPanel resources={actor.resources} ruleset={ruleset.data} />
+      )}
+      {ruleset.data && actor && !quinquennat && (
+        <CampaignPanel state={state} actor={actor} ruleset={ruleset.data} />
+      )}
+      {observer && (
+        <p className="text-sm text-slate-600 dark:text-slate-400">
+          Mode observateur : aucune campagne n’est contrôlée. Les candidats fictifs mènent leur
+          campagne de façon autonome ; les décisions éventuelles prennent l’option par défaut.
+        </p>
+      )}
+
       {ruleset.data && <CalendarPanel ruleset={ruleset.data} today={game.date} />}
 
-      <details className={card}>
-        <summary className="cursor-pointer font-semibold">Paramètres techniques</summary>
-        <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-[12rem_1fr]">
-          <dt className="text-slate-500 dark:text-slate-400">Graine</dt>
-          <dd className="font-mono break-all">{game.seed}</dd>
-          <dt className="text-slate-500 dark:text-slate-400">Version du moteur</dt>
-          <dd className="font-mono">{game.engineVersion}</dd>
-          <dt className="text-slate-500 dark:text-slate-400">Jeu de règles</dt>
-          <dd className="font-mono">{game.rulesetVersion}</dd>
-          <dt className="text-slate-500 dark:text-slate-400">Format de sauvegarde</dt>
-          <dd className="font-mono">{game.saveSchemaVersion}</dd>
-          <dt className="text-slate-500 dark:text-slate-400">Empreinte de l’état</dt>
-          <dd className="font-mono break-all" data-testid="empreinte">
-            {game.stateHash}
-          </dd>
+      <section aria-labelledby="titre-partie" className={`${card} space-y-3`}>
+        <h2 id="titre-partie" className="text-lg font-bold">
+          La partie
+        </h2>
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm sm:grid-cols-3">
+          {facts.map((fact) => (
+            <div key={fact.label}>
+              <dt className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                {fact.label}
+              </dt>
+              <dd className="mt-0.5 font-semibold">{fact.value}</dd>
+            </div>
+          ))}
         </dl>
-      </details>
+        <details className="border-t border-slate-200 pt-3 dark:border-slate-800">
+          <summary className="min-h-11 cursor-pointer content-center font-semibold">
+            Paramètres techniques
+          </summary>
+          <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-[12rem_1fr]">
+            <dt className="text-slate-500 dark:text-slate-400">Graine</dt>
+            <dd className="font-mono break-all">{game.seed}</dd>
+            <dt className="text-slate-500 dark:text-slate-400">Version du moteur</dt>
+            <dd className="font-mono">{game.engineVersion}</dd>
+            <dt className="text-slate-500 dark:text-slate-400">Jeu de règles</dt>
+            <dd className="font-mono">{game.rulesetVersion}</dd>
+            <dt className="text-slate-500 dark:text-slate-400">Format de sauvegarde</dt>
+            <dd className="font-mono">{game.saveSchemaVersion}</dd>
+            <dt className="text-slate-500 dark:text-slate-400">Empreinte de l’état</dt>
+            <dd className="font-mono break-all" data-testid="empreinte">
+              {game.stateHash}
+            </dd>
+          </dl>
+        </details>
+      </section>
     </section>
   );
 }

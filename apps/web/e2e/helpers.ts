@@ -50,11 +50,16 @@ export async function advanceViaApi(
   return game;
 }
 
+/**
+ * Ouvre un écran par le menu « Écrans de la partie » : rail sur ordinateur, feuille ouverte
+ * par « Tous les écrans » sur mobile (barre du bas).
+ */
 export async function openScreen(page: Page, label: string) {
-  await page
-    .getByRole('navigation', { name: 'Écrans de la partie' })
-    .getByRole('link', { name: label })
-    .click();
+  const nav = page.getByRole('navigation', { name: 'Écrans de la partie' });
+  const more = page.getByRole('button', { name: 'Tous les écrans' });
+  await expect(nav.or(more).first()).toBeVisible();
+  if (!(await nav.isVisible())) await more.click();
+  await nav.getByRole('link', { name: label }).click();
 }
 
 /** Résout la semaine depuis le tableau de bord (décisions : première option). */

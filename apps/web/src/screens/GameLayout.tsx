@@ -1,13 +1,43 @@
 import type { GameDetail } from '@r2027/shared';
-import { Link, NavLink, Outlet, useOutletContext, useParams } from 'react-router';
+import { Link, Outlet, useOutletContext, useParams } from 'react-router';
 import { ApiRequestError } from '../api/client';
-import { useGame } from '../api/hooks';
+import { useGame, useRuleset } from '../api/hooks';
 import { ErrorMessage } from '../components/ErrorMessage';
-import { formatGameDate } from '../labels';
-import { GAME_SCREENS } from './registry';
+import { GameHud } from './shell/GameHud';
+import { GameNav } from './shell/GameNav';
 
 export function useCurrentGame(): GameDetail {
   return useOutletContext<GameDetail>();
+}
+
+function Game({ game }: { game: GameDetail }) {
+  const ruleset = useRuleset(game.rulesetVersion, game.state.cycle);
+  const withRealPeople = Object.values(game.state.actors).some(
+    (a) => a.candidate.nature === 'reel',
+  );
+  return (
+    <div className="mx-auto max-w-7xl px-4 pb-28 lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-8 lg:pb-10">
+      <GameNav phase={game.phase} />
+      <div className="min-w-0">
+        <GameHud game={game} ruleset={ruleset.data} />
+        <div className="mb-5 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            Partie{' '}
+            <span className="font-semibold text-slate-800 dark:text-slate-200">{game.name}</span>
+          </p>
+          {withRealPeople && (
+            <p className="text-xs text-teal-800 dark:text-teal-200">
+              Partie avec des personnalités réelles : tout ce qu’elles font ici est simulé.{' '}
+              <Link to="candidats" className="underline">
+                Fiches et sources
+              </Link>
+            </p>
+          )}
+        </div>
+        <Outlet context={game} />
+      </div>
+    </div>
+  );
 }
 
 export function GameLayout() {
@@ -33,60 +63,5 @@ export function GameLayout() {
       </div>
     );
   }
-
-  return (
-    <div className="mx-auto max-w-6xl px-4 py-4 md:py-8">
-      <div className="mb-4">
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          Semaine {game.data.week} · {formatGameDate(game.data.date)}
-        </p>
-        <p className="text-lg font-semibold">{game.data.name}</p>
-        {Object.values(game.data.state.actors).some((a) => a.candidate.nature === 'reel') && (
-          <p className="mt-1 text-xs text-teal-800 dark:text-teal-200">
-            Partie avec des personnalités réelles : tout ce qu’elles font ici est simulé.{' '}
-            <Link to="candidats" className="underline">
-              Fiches et sources
-            </Link>
-          </p>
-        )}
-      </div>
-      <div className="md:grid md:grid-cols-[14rem_1fr] md:gap-8">
-        <nav aria-label="Écrans de la partie" className="-mx-4 mb-6 md:mx-0 md:mb-0">
-          <ul className="flex gap-2 overflow-x-auto px-4 pb-2 md:flex-col md:gap-1 md:overflow-visible md:px-0">
-            {GAME_SCREENS.map((screen) => (
-              <li key={screen.path} className="shrink-0">
-                <NavLink
-                  to={screen.path}
-                  className={({ isActive }) =>
-                    `flex items-center justify-between gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm ${
-                      isActive
-                        ? 'bg-republique-600 font-semibold text-white'
-                        : 'bg-white text-slate-700 hover:bg-slate-100 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 md:bg-transparent'
-                    }`
-                  }
-                >
-                  {({ isActive }) => (
-                    <>
-                      <span>{screen.label}</span>
-                      {!screen.available && (
-                        <span
-                          className={`text-xs ${isActive ? 'text-white' : 'text-slate-600 dark:text-slate-400'}`}
-                          aria-label={`prévu en phase ${screen.phase}`}
-                        >
-                          P{screen.phase}
-                        </span>
-                      )}
-                    </>
-                  )}
-                </NavLink>
-              </li>
-            ))}
-          </ul>
-        </nav>
-        <div className="min-w-0">
-          <Outlet context={game.data} />
-        </div>
-      </div>
-    </div>
-  );
+  return <Game game={game.data} />;
 }

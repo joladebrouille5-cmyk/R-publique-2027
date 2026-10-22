@@ -1,5 +1,7 @@
-import type { PhotoCredit, RealPersonality } from '@r2027/shared';
+import type { RealPersonality, Ruleset } from '@r2027/shared';
 import { formatGameDate, POSITION_METHOD_LABELS } from '../labels';
+import { portraitOfPersonality } from '../portraits';
+import { Avatar } from './Avatar';
 import { Badge } from './Badge';
 
 // Personnalités politiques réelles (phase 5 bis) : photo créditée, fiche sourcée et rappel que
@@ -8,34 +10,23 @@ import { Badge } from './Badge';
 export const SIMULATION_NOTICE =
   'Personnalités réelles : leurs actions, stratégies, ralliements, intentions de vote et résultats dans cette partie sont simulés par le jeu ; ils ne décrivent ni ne prédisent rien de réel, et aucun propos ne leur est attribué.';
 
-const photoUrl = (photo: PhotoCredit) => `${import.meta.env.BASE_URL}${photo.fichier}`;
-
-const initials = (p: Pick<RealPersonality, 'prenom' | 'nom'>) =>
-  `${p.prenom.charAt(0)}${p.nom.charAt(0)}`.toUpperCase();
-
-/** Photo sous licence libre, ou initiales si aucune photo libre n'a pu être reprise. */
+/** Photo sous licence libre, ou initiales sur la couleur de la famille politique. */
 export function PersonalityPhoto({
   personality,
+  ruleset,
   size = 'md',
 }: {
   personality: RealPersonality;
+  ruleset: Pick<Ruleset, 'electorat'> | undefined;
   size?: 'sm' | 'md';
 }) {
-  const box = size === 'sm' ? 'h-14 w-11' : 'h-24 w-[4.5rem]';
-  return personality.photo ? (
-    <img
-      src={photoUrl(personality.photo)}
+  return (
+    <Avatar
+      portrait={portraitOfPersonality(personality, ruleset)}
+      size={size === 'sm' ? 'md' : 'xl'}
+      ring
       alt={`Portrait de ${personality.prenom} ${personality.nom}`}
-      className={`${box} shrink-0 rounded-md bg-slate-100 object-cover object-top dark:bg-slate-800`}
-      loading="lazy"
     />
-  ) : (
-    <span
-      aria-hidden="true"
-      className={`${box} flex shrink-0 items-center justify-center rounded-md bg-slate-200 text-lg font-semibold text-slate-700 dark:bg-slate-700 dark:text-slate-100`}
-    >
-      {initials(personality)}
-    </span>
   );
 }
 

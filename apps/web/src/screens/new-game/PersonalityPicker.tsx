@@ -53,7 +53,7 @@ export function PersonalityPicker({
                 className="mt-1 self-start"
                 aria-describedby={`fiche-${p.id}`}
               />
-              <PersonalityPhoto personality={p} size="sm" />
+              <PersonalityPhoto personality={p} ruleset={ruleset.data} size="sm" />
               <span className="min-w-0 space-y-1">
                 <span className="block font-medium">
                   {p.prenom} {p.nom}

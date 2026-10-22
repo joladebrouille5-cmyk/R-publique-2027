@@ -7,6 +7,7 @@ import {
 } from '@r2027/shared';
 import { useRuleset } from '../api/hooks';
 import { presentationSummary } from '../campaign';
+import { Avatar } from '../components/Avatar';
 import { Badge } from '../components/Badge';
 import { PositionMap } from '../components/PositionMap';
 import {
@@ -24,6 +25,7 @@ import {
   OBJECTIVE_LABELS,
   PRIORITY_LABELS,
 } from '../labels';
+import { portraitOf } from '../portraits';
 import { useWeeklyPlan } from '../stores/plan';
 import { Relations } from './candidates/Relations';
 import { useCurrentGame } from './GameLayout';
@@ -209,10 +211,14 @@ export function Candidates() {
               className={`${card} space-y-3`}
               aria-label={candidateName(actor.candidate)}
             >
-              <div className="flex gap-3">
-                {fiche && <PersonalityPhoto personality={fiche} />}
-                <div className="flex flex-wrap items-center gap-2 self-start">
-                  <h2 className="text-lg font-semibold">{candidateName(actor.candidate)}</h2>
+              <div className="flex items-center gap-4">
+                {fiche ? (
+                  <PersonalityPhoto personality={fiche} ruleset={ruleset.data} />
+                ) : (
+                  <Avatar portrait={portraitOf(actor, ruleset.data)} size="xl" ring />
+                )}
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="w-full text-xl font-bold">{candidateName(actor.candidate)}</h2>
                   {player && <Badge tone="simule">Votre candidat</Badge>}
                   {actor.candidate.nature === 'reel' && (
                     <Badge tone="reel">Personnalité réelle — simulée</Badge>

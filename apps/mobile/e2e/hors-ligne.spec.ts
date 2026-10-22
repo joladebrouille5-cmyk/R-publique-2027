@@ -42,10 +42,11 @@ async function createGame(page: Page, name: string) {
 }
 
 async function openScreen(page: Page, label: string) {
-  await page
-    .getByRole('navigation', { name: 'Écrans de la partie' })
-    .getByRole('link', { name: label })
-    .click();
+  const nav = page.getByRole('navigation', { name: 'Écrans de la partie' });
+  const more = page.getByRole('button', { name: 'Tous les écrans' });
+  await expect(nav.or(more).first()).toBeVisible();
+  if (!(await nav.isVisible())) await more.click();
+  await nav.getByRole('link', { name: label }).click();
 }
 
 test('partie complète sans réseau : création, semaine, reprise, carte, export et import', async ({

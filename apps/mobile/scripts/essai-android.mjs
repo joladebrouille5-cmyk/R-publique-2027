@@ -75,8 +75,15 @@ try {
   await writeFile(join(captures, '1-tableau-de-bord.png'), await device.screenshot());
 
   step('Carte électorale (MapLibre dans la WebView)');
-  const nav = page.getByRole('navigation', { name: 'Écrans de la partie' });
-  await nav.getByRole('link', { name: 'Carte électorale' }).click();
+  // Menu complet : feuille « Tous les écrans » de la barre du bas sur téléphone.
+  const openScreen = async (label) => {
+    const nav = page.getByRole('navigation', { name: 'Écrans de la partie' });
+    const more = page.getByRole('button', { name: 'Tous les écrans' });
+    await expect(nav.or(more).first()).toBeVisible();
+    if (!(await nav.isVisible())) await more.click();
+    await nav.getByRole('link', { name: label }).click();
+  };
+  await openScreen('Carte électorale');
   await expect(page.getByRole('region', { name: 'Carte de la métropole' })).toHaveAttribute(
     'data-ready',
     'oui',
@@ -84,7 +91,7 @@ try {
   await writeFile(join(captures, '2-carte.png'), await device.screenshot());
 
   step('Export natif : fichier écrit dans cache/exports puis feuille de partage');
-  await nav.getByRole('link', { name: 'Sauvegardes' }).click();
+  await openScreen('Sauvegardes');
   await page.getByRole('button', { name: 'Exporter la partie (JSON)' }).click();
   let exported = '';
   for (let i = 0; i < 120 && !exported.includes('.json'); i++) {

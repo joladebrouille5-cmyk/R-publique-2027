@@ -1,22 +1,111 @@
 @import 'tailwindcss' source('..');
+/* Polices embarquées (licence SIL OFL 1.1) : l'application fonctionne hors ligne. */
+@import '@fontsource-variable/bricolage-grotesque/opsz.css';
+@import '@fontsource-variable/hanken-grotesk/wght.css';
 
 /* Thème sombre piloté par la classe `dark` sur <html> (choix clair / sombre / système). */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * Design system « République » (phase 9).
+ * - Encre de l'Hémicycle : neutres bleutés (remplacent la gamme slate de Tailwind, donc tous
+ *   les écrans) ; papier froid en clair, bleu nuit en sombre.
+ * - Bleu Marianne vif : actions principales, liens, sélection.
+ * - Rouge tribune : alertes, risques, défaites (remplace la gamme red).
+ * - Or de l'Élysée : moments de prestige (victoire, présidence, décision majeure), avec
+ *   parcimonie.
+ * Titres et grands chiffres : Bricolage Grotesque ; interface : Hanken Grotesk.
+ */
 @theme {
   --font-sans:
-    'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --color-republique-50: #eff4ff;
-  --color-republique-100: #dbe6fe;
-  --color-republique-500: #3b5bdb;
-  --color-republique-600: #2f4ac0;
-  --color-republique-700: #253b9b;
-  --color-republique-900: #172554;
+    'Hanken Grotesk Variable', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue',
+    Arial, sans-serif;
+  --font-display: 'Bricolage Grotesque Variable', 'Hanken Grotesk Variable', system-ui, sans-serif;
+
+  --color-slate-50: #f4f6fb;
+  --color-slate-100: #e9edf6;
+  --color-slate-200: #d5dbea;
+  --color-slate-300: #b4bdd3;
+  --color-slate-400: #8792ae;
+  --color-slate-500: #5d6886;
+  --color-slate-600: #47516e;
+  --color-slate-700: #343d59;
+  --color-slate-800: #212a46;
+  --color-slate-900: #151d38;
+  --color-slate-950: #0b1229;
+
+  --color-republique-50: #eef1ff;
+  --color-republique-100: #dce2ff;
+  --color-republique-200: #b9c5ff;
+  --color-republique-300: #8ea0fa;
+  --color-republique-400: #6077f0;
+  --color-republique-500: #3d57e6;
+  --color-republique-600: #2b46d9;
+  --color-republique-700: #2236b0;
+  --color-republique-800: #1d2e8c;
+  --color-republique-900: #1a2870;
+  --color-republique-950: #111a47;
+
+  --color-red-50: #fff0f2;
+  --color-red-100: #ffdde2;
+  --color-red-200: #ffbfc9;
+  --color-red-300: #ff91a2;
+  --color-red-400: #f65a72;
+  --color-red-500: #e5334b;
+  --color-red-600: #cc2240;
+  --color-red-700: #a81a35;
+  --color-red-800: #8b1a32;
+  --color-red-900: #74192f;
+  --color-red-950: #410814;
+
+  --color-or-50: #fbf6e6;
+  --color-or-100: #f5eac2;
+  --color-or-200: #ebd488;
+  --color-or-300: #dfbc53;
+  --color-or-400: #d2a936;
+  --color-or-500: #c9a227;
+  --color-or-600: #a9831b;
+  --color-or-700: #866618;
+  --color-or-800: #634b14;
+  --color-or-900: #45340f;
+
+  --radius-card: 1.25rem;
+  --radius-dossier: 1.75rem;
+
+  /* Ombres teintées de bleu nuit, jamais grises. */
+  --shadow-card: 0 1px 2px rgb(16 27 59 / 0.06), 0 8px 24px -14px rgb(16 27 59 / 0.22);
+  --shadow-raised: 0 2px 6px rgb(16 27 59 / 0.08), 0 24px 48px -20px rgb(16 27 59 / 0.35);
+  --shadow-hud: 0 1px 0 rgb(16 27 59 / 0.06), 0 10px 30px -18px rgb(16 27 59 / 0.35);
+
+  --ease-sortie: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --animate-monte: monte 280ms var(--ease-sortie) both;
+  --animate-apparait: apparait 200ms ease-out both;
+  --animate-revele: revele 520ms var(--ease-sortie) both;
+
+  @keyframes monte {
+    from {
+      transform: translateY(16px);
+      opacity: 0;
+    }
+  }
+  @keyframes apparait {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes revele {
+    from {
+      transform: translateY(24px) scale(0.98);
+      opacity: 0;
+    }
+  }
 }
 
 @layer base {
   html {
     color-scheme: light;
+    -webkit-tap-highlight-color: transparent;
   }
   html.dark {
     color-scheme: dark;
@@ -24,7 +113,35 @@
   body {
     @apply bg-slate-50 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100;
   }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+  h1 {
+    letter-spacing: -0.025em;
+  }
   :focus-visible {
     @apply outline-2 outline-offset-2 outline-republique-500;
+  }
+  /* Chiffres alignés dans les tableaux et indicateurs. */
+  table,
+  dd,
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Mouvement réduit : aucune animation ni transition décorative. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
   }
 }

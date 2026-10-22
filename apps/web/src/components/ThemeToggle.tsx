@@ -29,7 +29,7 @@ export function ThemeToggle() {
       <select
         value={theme}
         onChange={(event) => setTheme(event.target.value as ThemeChoice)}
-        className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-900"
+        className="min-h-9 rounded-full border border-slate-200 bg-white px-3 py-1 text-sm font-semibold shadow-sm dark:border-slate-700 dark:bg-slate-900"
       >
         {CHOICES.map((choice) => (
           <option key={choice.value} value={choice.value}>
