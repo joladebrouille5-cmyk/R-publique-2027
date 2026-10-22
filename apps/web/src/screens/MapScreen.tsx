@@ -585,7 +585,7 @@ export function MapScreen() {
       {/* Scène : la carte occupe toute la place ; outils, légende et fiche flottent au-dessus. */}
       <div
         ref={stage}
-        className="relative -mx-4 overflow-hidden border-y border-slate-200/80 shadow-raised [--reserve:calc(4rem+env(safe-area-inset-bottom)+0.5rem)] sm:mx-0 sm:rounded-dossier sm:border lg:[--reserve:1.5rem] dark:border-slate-800"
+        className="relative -mx-4 overflow-hidden border-y border-slate-200/80 shadow-raised [--reserve:calc(4rem+var(--sab)+0.5rem)] sm:mx-0 sm:rounded-dossier sm:border lg:[--reserve:1.5rem] dark:border-slate-800"
         style={{
           backgroundColor: MAP_SURFACE[mode],
           height: 'max(24rem, calc(100dvh - var(--haut-scene, 18rem) - var(--reserve)))',
@@ -762,7 +762,7 @@ export function MapScreen() {
           role="dialog"
           aria-modal="true"
           aria-label={`Encart ${DROM_LABELS[openDrom]}`}
-          className="fixed inset-0 z-40 flex animate-apparait flex-col bg-white p-3 pt-[calc(0.75rem+env(safe-area-inset-top))] pb-[calc(0.75rem+env(safe-area-inset-bottom))] dark:bg-slate-950"
+          className="fixed inset-0 z-40 flex animate-apparait flex-col bg-white p-3 pt-[calc(0.75rem+var(--sat))] pb-[calc(0.75rem+var(--sab))] dark:bg-slate-950"
         >
           <div className="mb-2 flex items-center justify-between">
             <h2 className="text-xl font-bold">{DROM_LABELS[openDrom]}</h2>

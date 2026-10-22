@@ -59,7 +59,12 @@ export function AppLayout() {
       >
         Aller au contenu
       </a>
-      <header className="bg-slate-50 dark:bg-slate-950">
+      {/* Fond sous la barre d'état de l'appareil : le contenu qui défile ne passe pas dessous. */}
+      <div
+        aria-hidden="true"
+        className="fixed inset-x-0 top-0 z-40 h-(--sat) bg-slate-50 dark:bg-slate-950"
+      />
+      <header className="bg-slate-50 pt-(--sat) pr-(--sar) pl-(--sal) dark:bg-slate-950">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 pt-3 pb-2">
           <Brand />
           <ThemeToggle />
@@ -69,7 +74,7 @@ export function AppLayout() {
         <Outlet />
       </main>
       <footer
-        className={`border-t border-slate-200 text-xs text-slate-600 dark:border-slate-800 dark:text-slate-400 ${inGame ? 'max-lg:pb-24' : ''}`}
+        className={`border-t border-slate-200 text-xs text-slate-600 dark:border-slate-800 dark:text-slate-400 ${inGame ? 'max-lg:pb-[calc(6rem+var(--sab))]' : ''}`}
       >
         <div className="mx-auto flex max-w-7xl flex-col gap-1 px-4 py-4 sm:flex-row sm:justify-between">
           <ServerStatus />

@@ -136,10 +136,25 @@
 }
 
 @layer base {
+  /*
+   * Marges de sécurité de l'appareil (phase 11) : barre d'état en haut, barre de gestes en bas.
+   * Le navigateur les donne par env() ; sur Android, Capacitor 8 les injecte aussi dans
+   * --safe-area-inset-* quand la WebView ne les fournit pas : on retient la plus grande.
+   */
+  :root {
+    --sat: max(env(safe-area-inset-top, 0px), var(--safe-area-inset-top, 0px));
+    --sab: max(env(safe-area-inset-bottom, 0px), var(--safe-area-inset-bottom, 0px));
+    --sal: max(env(safe-area-inset-left, 0px), var(--safe-area-inset-left, 0px));
+    --sar: max(env(safe-area-inset-right, 0px), var(--safe-area-inset-right, 0px));
+  }
   html {
     color-scheme: light;
     -webkit-tap-highlight-color: transparent;
     background-color: var(--color-slate-50);
+    /* Un élément qui prend le focus défile au-dessus de la navigation et de la barre de
+       résolution, en bas, et sous la barre d'état, en haut. */
+    scroll-padding-top: calc(var(--sat) + 5rem);
+    scroll-padding-bottom: calc(var(--sab) + 8.5rem);
   }
   html.dark {
     color-scheme: dark;

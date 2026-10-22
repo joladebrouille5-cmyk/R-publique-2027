@@ -87,7 +87,7 @@ export function GameHud({ game, ruleset }: { game: GameDetail; ruleset: Ruleset 
   return (
     <section
       aria-label="Situation de la partie"
-      className="sticky top-0 z-30 -mx-4 mb-5 overflow-hidden border-b border-slate-200/80 bg-white/85 px-4 pt-3 pb-2.5 shadow-hud backdrop-blur-md supports-[backdrop-filter]:bg-white/75 lg:mx-0 lg:rounded-b-card lg:border-x dark:border-republique-400/20 dark:bg-slate-950/85 dark:shadow-[0_10px_40px_-18px_rgb(61_87_230/0.6)] dark:supports-[backdrop-filter]:bg-slate-950/70"
+      className="sticky top-(--sat) z-30 -mx-4 mb-5 overflow-hidden border-b border-slate-200/80 bg-white/85 px-4 pt-3 pb-2.5 shadow-hud backdrop-blur-md supports-[backdrop-filter]:bg-white/75 lg:mx-0 lg:rounded-b-card lg:border-x dark:border-republique-400/20 dark:bg-slate-950/85 dark:shadow-[0_10px_40px_-18px_rgb(61_87_230/0.6)] dark:supports-[backdrop-filter]:bg-slate-950/70"
     >
       {/* Liseré tricolore du plateau. */}
       <span

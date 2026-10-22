@@ -90,7 +90,7 @@ export function GameNav({ phase }: { phase: GamePhase }) {
         aria-label={open ? 'Tous les écrans' : undefined}
         className={`${
           open
-            ? 'fixed inset-x-0 bottom-0 z-50 max-h-[80dvh] animate-monte overflow-y-auto rounded-t-dossier bg-white px-4 pt-3 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-raised dark:bg-slate-900'
+            ? 'fixed inset-x-0 bottom-0 z-50 max-h-[80dvh] animate-monte overflow-y-auto rounded-t-dossier bg-white px-4 pt-3 pb-[calc(1.25rem+var(--sab))] shadow-raised dark:bg-slate-900'
             : 'max-lg:hidden'
         } lg:sticky lg:top-4 lg:block lg:self-start`}
       >
@@ -127,7 +127,7 @@ export function GameNav({ phase }: { phase: GamePhase }) {
 
       <nav
         aria-label="Raccourcis"
-        className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200/80 bg-white/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden dark:border-slate-800 dark:bg-slate-950/90"
+        className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200/80 bg-white/90 pb-(--sab) backdrop-blur-md lg:hidden dark:border-slate-800 dark:bg-slate-950/90"
       >
         <ul className="mx-auto grid max-w-xl grid-cols-5">
           {shortcuts.map((screen) => {

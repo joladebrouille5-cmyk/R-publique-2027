@@ -487,8 +487,9 @@ export function Dashboard() {
       )}
 
       {/* Barre de résolution : toujours à portée de pouce, au-dessus de la navigation. */}
-      <div className="sticky bottom-[calc(4.25rem+env(safe-area-inset-bottom))] z-20 lg:bottom-4">
-        <div className="space-y-2 rounded-card border border-slate-200/80 bg-white/95 p-3 shadow-raised backdrop-blur-md dark:border-slate-700 dark:bg-slate-900/95">
+      <div className="sticky bottom-[calc(4.25rem+var(--sab))] z-20 lg:bottom-4">
+        {/* Compacte sur téléphone : elle ne doit pas masquer les cartes d'actions qui défilent. */}
+        <div className="space-y-1.5 rounded-card border border-slate-200/80 bg-white/95 px-2.5 py-2 shadow-raised backdrop-blur-md sm:space-y-2 sm:p-3 dark:border-slate-700 dark:bg-slate-900/95">
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
@@ -539,12 +540,12 @@ export function Dashboard() {
             )}
           </div>
           {quinquennat && plan.actions.length > 0 && (
-            <p className="text-sm text-slate-600 dark:text-slate-400">
+            <p className="text-xs leading-snug sm:text-sm text-slate-600 dark:text-slate-400">
               L’avance rapide résout des semaines sans action : videz l’agenda pour l’utiliser.
             </p>
           )}
           {advance.data?.avanceRapide && (
-            <p role="status" className="text-sm">
+            <p role="status" className="text-xs leading-snug sm:text-sm">
               Avance rapide : {advance.data.avanceRapide.resolues} semaine(s) résolue(s) sur{' '}
               {advance.data.avanceRapide.demandees}
               {advance.data.avanceRapide.arret
@@ -553,12 +554,12 @@ export function Dashboard() {
             </p>
           )}
           {unanswered.length > 0 && (
-            <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
+            <p className="text-xs leading-snug sm:text-sm font-semibold text-amber-800 dark:text-amber-300">
               Répondez d’abord aux décisions en attente.
             </p>
           )}
           {missingTargets > 0 && (
-            <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
+            <p className="text-xs leading-snug sm:text-sm font-semibold text-amber-800 dark:text-amber-300">
               Choisissez la cible (département ou média) de chaque action qui en demande une.
             </p>
           )}

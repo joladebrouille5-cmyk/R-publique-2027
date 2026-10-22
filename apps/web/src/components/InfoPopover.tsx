@@ -33,7 +33,7 @@ export function InfoPopover({
         popover="auto"
         role="dialog"
         aria-label={title}
-        className="m-0 mx-auto mt-auto mb-[calc(5.5rem+env(safe-area-inset-bottom))] w-[min(28rem,calc(100vw-2rem))] rounded-card border border-slate-200 bg-white p-5 text-left text-slate-900 shadow-raised backdrop:bg-slate-950/30 open:animate-monte sm:my-auto dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+        className="m-0 mx-auto mt-auto mb-[calc(5.5rem+var(--sab))] w-[min(28rem,calc(100vw-2rem))] rounded-card border border-slate-200 bg-white p-5 text-left text-slate-900 shadow-raised backdrop:bg-slate-950/30 open:animate-monte sm:my-auto dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
       >
         <div className="mb-3 flex items-start justify-between gap-3">
           <p className="font-display text-lg leading-tight font-bold">{title}</p>
