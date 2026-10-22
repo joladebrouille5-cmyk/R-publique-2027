@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!--
       RÉPUBLIQUE 2027 fonctionne entièrement hors ligne : aucune permission n'est demandée, pas
@@ -31,6 +32,24 @@
             </intent-filter>
 
         </activity>
+
+        <!--
+          Aucune police téléchargée : AppCompat démarre par défaut EmojiCompat (androidx.emoji2),
+          qui demande sa police d'émojis au fournisseur de polices des services Google Play.
+          L'application en devenait cliente, et Android la tuait avec ces services quand ils
+          ne répondaient plus (essai sur émulateur, juste après le démarrage). L'interface est
+          entièrement dans la WebView, qui affiche ses émojis elle-même : on retire cet
+          initialiseur.
+        -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+                tools:node="remove" />
+        </provider>
 
         <!-- Partage d'un export de partie (cache/exports uniquement, voir xml/file_paths.xml). -->
         <provider
