@@ -31,6 +31,31 @@ device.setDefaultTimeout(120_000);
 const shell = async (command) => (await device.shell(command)).toString();
 const step = (text) => console.log(`— ${text}`);
 
+/**
+ * Active un lien ou un bouton au clavier (focus puis Entrée), comme un utilisateur de clavier :
+ * dans la WebView de l'émulateur, la fenêtre visible peut être décalée par rapport à la page et
+ * un clic par coordonnées tomber à côté de sa cible.
+ */
+async function activate(page, locator) {
+  await expect(locator).toBeVisible();
+  await locator.focus();
+  await page.keyboard.press('Enter');
+}
+
+/** Activité au premier plan (« com.android.intentresolver/.ChooserActivity »…). */
+async function foreground() {
+  const dump = await shell('dumpsys window windows');
+  return /mCurrentFocus=.*\{[^}]*\s(\S+)\}/.exec(dump)?.[1] ?? '';
+}
+
+async function waitForeground(test, label) {
+  for (let i = 0; i < 120; i++) {
+    if (test(await foreground())) return;
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  throw new Error(`${label} : premier plan inattendu (${await foreground()})`);
+}
+
 async function launch() {
   await shell(`am start -W -n ${PKG}/.MainActivity`);
   const webview = await device.webView({ pkg: PKG });
@@ -61,16 +86,16 @@ try {
   }
 
   step('Création d’une partie et première semaine');
-  await page.getByRole('link', { name: 'Nouvelle partie' }).click();
+  await activate(page, page.getByRole('link', { name: 'Nouvelle partie' }));
   await page.getByLabel('Nom de la partie').fill('Partie Android');
   await page.getByLabel('Prénom').fill('Camille');
   await page.getByLabel(/^Nom \*/).fill('Émulateur');
   await page.getByLabel(/^Parti ou mouvement/).fill('Mouvement Android');
   await page.getByLabel('Graine (facultative)').fill('android');
-  await page.getByRole('button', { name: 'Créer la partie' }).click();
+  await activate(page, page.getByRole('button', { name: 'Créer la partie' }));
   await expect(page.getByRole('heading', { name: 'Tableau de bord' })).toBeVisible();
-  await page.getByRole('button', { name: 'Ajouter Meeting public' }).click();
-  await page.getByRole('button', { name: 'Résoudre la semaine 0' }).click();
+  await activate(page, page.getByRole('button', { name: 'Ajouter Meeting public' }));
+  await activate(page, page.getByRole('button', { name: 'Résoudre la semaine 0' }));
   await expect(page.getByRole('button', { name: 'Résoudre la semaine 1' })).toBeVisible();
   await writeFile(join(captures, '1-tableau-de-bord.png'), await device.screenshot());
 
@@ -80,8 +105,9 @@ try {
     const nav = page.getByRole('navigation', { name: 'Écrans de la partie' });
     const more = page.getByRole('button', { name: 'Tous les écrans' });
     await expect(nav.or(more).first()).toBeVisible();
-    if (!(await nav.isVisible())) await more.click();
-    await nav.getByRole('link', { name: label }).click();
+    if (!(await nav.isVisible())) await activate(page, more);
+    await activate(page, nav.getByRole('link', { name: label }));
+    await expect(page.getByRole('dialog', { name: 'Tous les écrans' })).toHaveCount(0);
   };
   await openScreen('Carte électorale');
   await expect(page.getByRole('region', { name: 'Carte de la métropole' })).toHaveAttribute(
@@ -92,16 +118,20 @@ try {
 
   step('Export natif : fichier écrit dans cache/exports puis feuille de partage');
   await openScreen('Sauvegardes');
-  await page.getByRole('button', { name: 'Exporter la partie (JSON)' }).click();
+  await activate(page, page.getByRole('button', { name: 'Exporter la partie (JSON)' }));
   let exported = '';
   for (let i = 0; i < 120 && !exported.includes('.json'); i++) {
     exported = await shell(`run-as ${PKG} ls cache/exports`);
     if (!exported.includes('.json')) await new Promise((r) => setTimeout(r, 500));
   }
   if (!exported.includes('.json')) throw new Error(`Export absent : ${exported}`);
+  // Feuille de partage du système au premier plan, puis fermée : « Retour » n'est envoyé qu'une
+  // fois la feuille affichée (sinon il ferait quitter l'écran des sauvegardes).
+  await waitForeground((a) => a !== '' && !a.startsWith(PKG), 'Feuille de partage');
   await writeFile(join(captures, '3-partage.png'), await device.screenshot());
   // Fermer la feuille de partage n'est pas une erreur : le bouton revient, sans alerte.
   await shell('input keyevent KEYCODE_BACK');
+  await waitForeground((activity) => activity.startsWith(PKG), 'Retour à l’application');
   await expect(page.getByRole('button', { name: 'Exporter la partie (JSON)' })).toBeEnabled();
   await expect(page.getByRole('alert')).toHaveCount(0);
 
