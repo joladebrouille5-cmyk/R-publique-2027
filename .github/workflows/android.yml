@@ -97,12 +97,17 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
+      # Image Android 14 sans services Google Play (« default ») : sur l'émulateur de la CI,
+      # sans accélération graphique, ces services cessent souvent de répondre juste après le
+      # démarrage (ANR) ; Android les tue alors avec leurs clients, dont la WebView de toute
+      # application (fournisseur de polices des services Google Play). L'application n'en
+      # dépend pas : elle fonctionne hors ligne, sans compte ni service Google.
       - name: Essai sur émulateur Android 14 (hors réseau)
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
           arch: x86_64
-          target: google_apis
+          target: default
           disable-animations: true
           disk-size: 2048M
           script: node apps/mobile/scripts/essai-android.mjs ${{ runner.temp }}/app-debug.apk essai-android

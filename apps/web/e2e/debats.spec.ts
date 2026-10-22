@@ -68,12 +68,13 @@ test('le débat de tous les candidats se joue carte par carte sur le plateau', a
   await expect(poll.getByText('Sondage flash simulé')).toBeVisible();
   await expect(poll.getByRole('listitem')).toHaveCount(session.invites.length);
   await expect(page.getByRole('list', { name: 'Cartes de la séquence' })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Revoir en accéléré' }).click();
+  // Audits sur le déroulé complet (pendant la relecture, les coups apparaissent en fondu).
   await noOverflow(page);
   await audit(page, 'fin');
   await page.getByLabel('Thème').selectOption('clair');
   await expect(page.locator('html')).not.toHaveClass(/dark/);
   await audit(page, 'clair');
+  await page.getByRole('button', { name: 'Revoir en accéléré' }).click();
 
   // Le débat tenu figure dans les résultats.
   await openScreen(page, 'Résultats');
@@ -115,9 +116,9 @@ test('le débat de l’entre-deux-tours oppose les deux finalistes et se revoit 
   const poll = page.getByRole('region', { name: 'Le plus convaincant' });
   await expect(poll.getByRole('listitem')).toHaveCount(2);
   await expect(page.getByRole('heading', { name: /^Séquence 6 : / })).toBeVisible();
-  await page.getByRole('button', { name: 'Revoir en accéléré' }).click();
   await noOverflow(page);
   await audit(page, 'entre-deux-tours');
+  await page.getByRole('button', { name: 'Revoir en accéléré' }).click();
 
   await openScreen(page, 'Résultats');
   const results = page.getByRole('region', { name: 'Débats télévisés' });

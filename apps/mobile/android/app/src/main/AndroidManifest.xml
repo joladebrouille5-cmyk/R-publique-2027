@@ -34,12 +34,10 @@
         </activity>
 
         <!--
-          Aucune police téléchargée : AppCompat démarre par défaut EmojiCompat (androidx.emoji2),
-          qui demande sa police d'émojis au fournisseur de polices des services Google Play.
-          L'application en devenait cliente, et Android la tuait avec ces services quand ils
-          ne répondaient plus (essai sur émulateur, juste après le démarrage). L'interface est
-          entièrement dans la WebView, qui affiche ses émojis elle-même : on retire cet
-          initialiseur.
+          Aucune police téléchargée par l'application : AppCompat démarre par défaut EmojiCompat
+          (androidx.emoji2), qui demande sa police d'émojis au fournisseur de polices des
+          services Google Play. L'interface est entièrement dans la WebView, qui affiche ses
+          émojis elle-même : cet initialiseur est inutile, on le retire.
         -->
         <provider
             android:name="androidx.startup.InitializationProvider"
