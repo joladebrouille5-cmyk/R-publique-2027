@@ -9,7 +9,7 @@ import {
 import { useRuleset } from '../api/hooks';
 import { Badge } from '../components/Badge';
 import { ErrorMessage } from '../components/ErrorMessage';
-import { card } from '../components/ui';
+import { card, screenTitle } from '../components/ui';
 import {
   formatGameDate,
   formatIndicator,
@@ -245,7 +245,7 @@ export function Bilan() {
   const ruleset = useRuleset(game.rulesetVersion, game.state.cycle);
   return (
     <section aria-labelledby="titre-ecran-bilan" className="space-y-6">
-      <h1 id="titre-ecran-bilan" className="text-2xl font-bold">
+      <h1 id="titre-ecran-bilan" className={screenTitle}>
         Bilan du quinquennat
       </h1>
       {ruleset.isError && (

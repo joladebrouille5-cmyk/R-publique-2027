@@ -3,7 +3,7 @@ import { Link } from 'react-router';
 import { useRuleset } from '../api/hooks';
 import { Badge } from '../components/Badge';
 import { ShareBar } from '../components/ShareBar';
-import { card } from '../components/ui';
+import { card, screenTitle } from '../components/ui';
 import { DATA_STATUS_LABELS, formatCount, formatGameDate, formatRatio } from '../labels';
 import { useCurrentGame } from './GameLayout';
 
@@ -198,7 +198,7 @@ export function Results() {
 
   return (
     <section aria-labelledby="titre-resultats" className="space-y-6">
-      <h1 id="titre-resultats" className="text-2xl font-bold">
+      <h1 id="titre-resultats" className={screenTitle}>
         Résultats
       </h1>
       <p className="text-sm text-slate-600 dark:text-slate-400">

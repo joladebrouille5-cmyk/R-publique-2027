@@ -42,6 +42,7 @@ import { ElectionMap, type BBox, type MapSelection } from '../map/ElectionMap';
 import { useMediaQuery, useMode } from '../map/useMode';
 import { portraitOf } from '../portraits';
 import { useCurrentGame } from './GameLayout';
+import { NatureBadge } from './map/parts';
 import {
   Feed,
   Leaderboard,
@@ -372,9 +373,15 @@ function Night({ result }: { result: RoundResult }) {
           <h1 id="titre-soiree" className={screenTitle}>
             Soirée électorale
           </h1>
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            {round === 1 ? 'Premier' : 'Second'} tour de la présidentielle {state.cycle.annee},{' '}
-            {formatGameDate(result.date)}
+          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-600 dark:text-slate-400">
+            <span>
+              {round === 1 ? 'Premier' : 'Second'} tour de la présidentielle {state.cycle.annee},{' '}
+              {formatGameDate(result.date)}
+            </span>
+            {/* Géographie électorale de démonstration (fictive) ou simulée sur la base importée. */}
+            {result.territoire && (
+              <NatureBadge nature={result.territoire.nature === 'fictif' ? 'fictif' : 'simule'} />
+            )}
           </p>
         </div>
         <p className="text-right">
@@ -489,7 +496,7 @@ function Night({ result }: { result: RoundResult }) {
                 className="pointer-events-none absolute top-3 left-3 z-20 max-w-[calc(100%-5rem)]"
               >
                 {drill ? (
-                  <div className="pointer-events-auto flex animate-monte items-center gap-2 rounded-2xl border border-slate-200/80 bg-white/95 p-1.5 pr-3 shadow-raised backdrop-blur dark:border-slate-700 dark:bg-slate-900/95">
+                  <div className="pointer-events-auto flex animate-monte items-center gap-2 rounded-2xl border border-slate-200/80 bg-white/95 p-1.5 pr-3 shadow-raised dark:border-slate-700 dark:bg-slate-900/95">
                     <button
                       type="button"
                       onClick={backToNation}
@@ -510,13 +517,13 @@ function Night({ result }: { result: RoundResult }) {
                     </p>
                   </div>
                 ) : (
-                  <p className="rounded-2xl bg-slate-950/80 px-3 py-2 text-xs font-medium text-white backdrop-blur">
+                  <p className="rounded-2xl bg-slate-950/90 px-3 py-2 text-xs font-medium text-white">
                     Touchez un département au détail communal pour suivre ses communes.
                   </p>
                 )}
               </div>
               {selected && (
-                <div className="absolute inset-x-3 bottom-3 z-20 flex animate-monte items-start gap-2 rounded-2xl border border-slate-200/80 bg-white/95 p-3 text-sm shadow-raised backdrop-blur sm:right-auto sm:max-w-sm dark:border-slate-700 dark:bg-slate-900/95">
+                <div className="absolute inset-x-3 bottom-3 z-20 flex animate-monte items-start gap-2 rounded-2xl border border-slate-200/80 bg-white/95 p-3 text-sm shadow-raised sm:right-auto sm:max-w-sm dark:border-slate-700 dark:bg-slate-900/95">
                   <p role="status" className="min-w-0 flex-1">
                     {describe(selected.level, selected.code)}
                   </p>

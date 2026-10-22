@@ -64,6 +64,15 @@ test('le soir du premier tour, la partie passe en direct jusqu’aux résultats 
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
     .analyze();
   expect(audit.violations.map((v) => `${v.id} : ${v.help} (${v.nodes.length})`)).toEqual([]);
+  // Thème clair : mêmes exigences de contraste.
+  await page.getByLabel('Thème').selectOption('clair');
+  await expect(page.locator('html')).not.toHaveClass(/dark/);
+  const light = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze();
+  expect(light.violations.map((v) => `clair — ${v.id} : ${v.help} (${v.nodes.length})`)).toEqual(
+    [],
+  );
 
   await page.getByRole('link', { name: 'Voir les résultats complets' }).click();
   await expect(page.getByRole('heading', { name: 'Résultats' })).toBeVisible();

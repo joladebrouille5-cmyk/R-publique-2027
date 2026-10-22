@@ -3,7 +3,7 @@ import { useRuleset } from '../api/hooks';
 import { Badge, type BadgeTone } from '../components/Badge';
 import { ErrorMessage } from '../components/ErrorMessage';
 import { Hemicycle } from '../components/Hemicycle';
-import { card } from '../components/ui';
+import { card, screenTitle } from '../components/ui';
 import { formatGameDate } from '../labels';
 import { useCurrentGame } from './GameLayout';
 
@@ -246,7 +246,7 @@ export function Parliament() {
   const ruleset = useRuleset(game.rulesetVersion, game.state.cycle);
   return (
     <section aria-labelledby="titre-ecran-parlement" className="space-y-6">
-      <h1 id="titre-ecran-parlement" className="text-2xl font-bold">
+      <h1 id="titre-ecran-parlement" className={screenTitle}>
         Parlement
       </h1>
       {ruleset.isError && (

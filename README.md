@@ -19,7 +19,7 @@ Simulation politique française : présidentielle, campagne et quinquennat. Jeu 
 | 6 | Quinquennat jouable : gouvernement (personnalités réelles possibles), Assemblée nationale réelle et dissolution, législatives, économie, crises, présidentielle 2032 | ✅ terminée |
 | 7 | Contenu approfondi : scénarios de départ, crises et événements supplémentaires, conséquences à long terme | ✅ terminée |
 | 8 | Version publiable : application Android (APK) hors ligne, sécurité, robustesse | ✅ terminée |
-| 9 | Refonte de l'interface (identité « soirée électorale », navigation mobile, avatars), réseaux sociaux et nouveaux médias, direct de la soirée électorale | en cours |
+| 9 | Refonte de l'interface (identité « soirée électorale », navigation mobile, avatars), réseaux sociaux et nouveaux médias, direct de la soirée électorale | ✅ terminée |
 
 **Ce qui fonctionne aujourd'hui** :
 - créer une partie avec son candidat (prénom, nom, parti, positionnement économique et sociétal, parcours, profil de départ) ou en observateur, avec difficulté, date de départ et graine ;

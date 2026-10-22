@@ -70,7 +70,7 @@ export function SearchBox({
         <input
           id={id}
           type="search"
-          className="min-h-11 w-full rounded-full border border-slate-200/80 bg-white/95 py-2 pr-4 pl-10 text-sm shadow-raised backdrop-blur placeholder:text-slate-500 dark:border-slate-700 dark:bg-slate-900/95 dark:placeholder:text-slate-400"
+          className="min-h-11 w-full rounded-full border border-slate-200/80 bg-white/95 py-2 pr-4 pl-10 text-sm shadow-raised placeholder:text-slate-500 dark:border-slate-700 dark:bg-slate-900/95 dark:placeholder:text-slate-400"
           value={query}
           onChange={(event) => {
             setQuery(event.target.value);

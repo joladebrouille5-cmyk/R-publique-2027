@@ -2,7 +2,15 @@ import { MAX_SAVE_SLOTS, type SaveSummary } from '@r2027/shared';
 import { useState } from 'react';
 import { useCreateSave, useRestoreSave, useSaves } from '../api/hooks';
 import { ErrorMessage } from '../components/ErrorMessage';
-import { buttonDanger, buttonPrimary, buttonSecondary, card, input, label } from '../components/ui';
+import {
+  buttonDanger,
+  buttonPrimary,
+  buttonSecondary,
+  card,
+  input,
+  label,
+  screenTitle,
+} from '../components/ui';
 import { formatGameDate, formatTimestamp } from '../labels';
 import { useCurrentGame } from './GameLayout';
 import { AutoSaves } from './saves/AutoSaves';
@@ -48,7 +56,7 @@ export function Saves() {
 
   return (
     <section aria-labelledby="titre-sauvegardes" className="space-y-6">
-      <h1 id="titre-sauvegardes" className="text-2xl font-bold">
+      <h1 id="titre-sauvegardes" className={screenTitle}>
         Sauvegardes
       </h1>
       <p className="text-sm text-slate-600 dark:text-slate-400">

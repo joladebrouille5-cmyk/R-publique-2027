@@ -9,7 +9,7 @@ import { useId, useState } from 'react';
 import { useRuleset } from '../api/hooks';
 import { Badge } from '../components/Badge';
 import { ErrorMessage } from '../components/ErrorMessage';
-import { card, input } from '../components/ui';
+import { card, input, screenTitle } from '../components/ui';
 import { DATA_STATUS_LABELS, formatCount, formatGameDate, formatRatio } from '../labels';
 import { useCurrentGame } from './GameLayout';
 
@@ -344,7 +344,7 @@ export function Legislatives() {
   const ruleset = useRuleset(game.rulesetVersion, game.state.cycle);
   return (
     <section aria-labelledby="titre-ecran-legislatives" className="space-y-6">
-      <h1 id="titre-ecran-legislatives" className="text-2xl font-bold">
+      <h1 id="titre-ecran-legislatives" className={screenTitle}>
         Législatives
       </h1>
       {ruleset.isError && (

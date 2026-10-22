@@ -10,7 +10,7 @@ import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router';
 import { useCreateGame } from '../api/hooks';
 import { ErrorMessage } from '../components/ErrorMessage';
-import { buttonPrimary, card, input, label } from '../components/ui';
+import { buttonPrimary, card, input, label, screenTitle } from '../components/ui';
 import { DIFFICULTY_LABELS, MODE_LABELS, OPPONENT_SET_LABELS } from '../labels';
 import { CandidateForm, EMPTY_CANDIDATE, type CandidateDraft } from './new-game/CandidateForm';
 import { PersonalityPicker } from './new-game/PersonalityPicker';
@@ -95,7 +95,7 @@ export function NewGame() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="mb-6 text-2xl font-bold">Nouvelle partie</h1>
+      <h1 className={`${screenTitle} mb-6`}>Nouvelle partie</h1>
       <form onSubmit={onSubmit} className={`${card} space-y-6`} noValidate>
         <div className="space-y-1">
           <label htmlFor="nom" className={label}>

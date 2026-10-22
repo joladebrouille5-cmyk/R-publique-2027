@@ -70,6 +70,7 @@ const asBounds = (b: BBox): LngLatBoundsLike => [
 ];
 /** Durée des vols de caméra ; MapLibre la ramène à zéro si le mouvement réduit est demandé. */
 const FLIGHT_MS = 900;
+const MAX_PIXEL_RATIO = 2;
 /** Fondu de l'éclat des territoires qui viennent d'être dépouillés. */
 const FLASH_MS = 1_600;
 const FLASH = { light: '#2b46d9', dark: '#93aaff' };
@@ -155,6 +156,10 @@ export function ElectionMap(props: Props) {
         attributionControl: latest.current.compact
           ? false
           : { compact: true, customAttribution: 'IGN, INSEE' },
+        // Téléphones à haute densité (2,6 sur un Pixel 7) : rendu plafonné à 2, imperceptible
+        // pour des aplats et des contours, mais bien moins de pixels à remplir à chaque image.
+        pixelRatio: Math.min(window.devicePixelRatio || 1, MAX_PIXEL_RATIO),
+        fadeDuration: 0,
         dragRotate: false,
         pitchWithRotate: false,
         touchPitch: false,
@@ -446,7 +451,7 @@ export function ElectionMap(props: Props) {
         <div
           role="group"
           aria-label="Zoom de la carte"
-          className={`flex flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 shadow-raised backdrop-blur dark:border-slate-700 dark:bg-slate-900/95 ${props.controlsClassName}`}
+          className={`flex flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 shadow-raised dark:border-slate-700 dark:bg-slate-900/95 ${props.controlsClassName}`}
         >
           {CAMERA_BUTTONS.map(({ kind, name, Icon }) => (
             <button

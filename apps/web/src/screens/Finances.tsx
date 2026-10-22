@@ -10,7 +10,7 @@ import { useRuleset } from '../api/hooks';
 import { spendingCapOf } from '../campaign';
 import { Badge } from '../components/Badge';
 import { ErrorMessage } from '../components/ErrorMessage';
-import { card } from '../components/ui';
+import { card, screenTitle } from '../components/ui';
 import { formatCount, formatEuros, RECEIPT_LABELS, REFUSAL_LABELS } from '../labels';
 import { useCurrentGame } from './GameLayout';
 
@@ -171,7 +171,7 @@ export function Finances() {
 
   return (
     <section aria-labelledby="titre-finances" className="space-y-6">
-      <h1 id="titre-finances" className="text-2xl font-bold">
+      <h1 id="titre-finances" className={screenTitle}>
         Finances
       </h1>
       {actor ? (

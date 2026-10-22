@@ -541,7 +541,7 @@ export function MapScreen() {
   );
 
   const levels = (
-    <fieldset className="pointer-events-auto flex rounded-full border border-slate-200/80 bg-white/95 p-1 shadow-raised backdrop-blur dark:border-slate-700 dark:bg-slate-900/95">
+    <fieldset className="pointer-events-auto flex rounded-full border border-slate-200/80 bg-white/95 p-1 shadow-raised dark:border-slate-700 dark:bg-slate-900/95">
       <legend className="sr-only">Niveau</legend>
       {(['region', 'departement', 'commune'] as const).map((lvl) => (
         <label
@@ -618,7 +618,7 @@ export function MapScreen() {
                 aria-expanded={filtersOpen}
                 aria-controls="carte-filtres"
                 onClick={() => setFiltersOpen((o) => !o)}
-                className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border px-4 text-sm font-bold shadow-raised backdrop-blur transition-colors ${
+                className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border px-4 text-sm font-bold shadow-raised transition-colors ${
                   filtersOpen
                     ? 'border-republique-600 bg-republique-600 text-white'
                     : 'border-slate-200/80 bg-white/95 text-slate-800 hover:bg-white dark:border-slate-700 dark:bg-slate-900/95 dark:text-slate-100'
@@ -631,7 +631,7 @@ export function MapScreen() {
             {levels}
           </div>
           {level === 'commune' && (!view || view.zoom < 6.5) && (
-            <p className="pointer-events-auto max-w-sm animate-apparait rounded-2xl bg-slate-950/85 px-3 py-2 text-xs font-medium text-white shadow-raised backdrop-blur dark:bg-white/90 dark:text-slate-900">
+            <p className="pointer-events-auto max-w-sm animate-apparait rounded-2xl bg-slate-950/90 px-3 py-2 text-xs font-medium text-white shadow-raised dark:bg-white/90 dark:text-slate-900">
               Zoomez sur la carte de la métropole (ou recherchez une commune) pour afficher les
               communes.
             </p>
@@ -640,7 +640,7 @@ export function MapScreen() {
         </div>
 
         <div
-          className={`absolute bottom-3 left-3 z-10 max-w-[calc(100%-3.5rem)] rounded-card border border-slate-200/80 bg-white/95 px-3.5 py-2.5 shadow-raised backdrop-blur sm:max-w-sm dark:border-slate-700 dark:bg-slate-900/95 ${
+          className={`absolute bottom-3 left-3 z-10 max-w-[calc(100%-3.5rem)] rounded-card border border-slate-200/80 bg-white/95 px-3.5 py-2.5 shadow-raised sm:max-w-sm dark:border-slate-700 dark:bg-slate-900/95 ${
             sheet ? 'lg:max-w-[calc(100%-26rem)]' : ''
           }`}
         >
@@ -666,7 +666,7 @@ export function MapScreen() {
         </div>
 
         {!sheet && (
-          <p className="pointer-events-none absolute right-3 bottom-10 z-10 hidden animate-apparait items-center gap-2 rounded-full bg-slate-950/80 px-3 py-1.5 text-xs font-medium text-white backdrop-blur lg:right-16 lg:flex dark:bg-white/90 dark:text-slate-900">
+          <p className="pointer-events-none absolute right-3 bottom-10 z-10 hidden animate-apparait items-center gap-2 rounded-full bg-slate-950/90 px-3 py-1.5 text-xs font-medium text-white lg:right-16 lg:flex dark:bg-white/90 dark:text-slate-900">
             <MousePointerClick aria-hidden="true" className="size-4" />
             Touchez un territoire pour ouvrir sa fiche
           </p>

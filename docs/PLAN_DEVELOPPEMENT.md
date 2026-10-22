@@ -522,7 +522,7 @@ Hors périmètre de cette phase (inchangé, lié à l'hébergement de la version
 
 **Bilan (21/10/2026)** — les six tâches sont réalisées. Application Android `apps/mobile` 1.0.0 (Capacitor 8.5.3, Android 7 à 16, `minSdk` 24, `targetSdk` 36), sans aucune permission ; moteur local `@r2027/local-api` (mêmes schémas et codes d'erreur que l'API, base IndexedDB version 2) ; APK de débogage construit par le workflow GitHub « Android (APK) » (artefact `republique-2027-apk-debug`, 5,1 Mo zippé)  et essayé sur un émulateur Android 14 en mode avion (exécution n° 4 du workflow, 21/10/2026) : installation sans aucune permission, démarrage hors ligne avec le pont natif, partie créée et semaine jouée, carte rendue, export écrit puis feuille de partage, relance de l'application avec la partie conservée. Deux premiers essais interrompus par l'environnement d'essai, pas par l'application : espace disque du runner insuffisant pour l'émulateur, puis carte rendue en logiciel plus lente que le délai de 5 s (délais portés à 2 min). Mesure de robustesse : une partie observée de bout en bout (816 semaines, jusqu'au 19 mai 2042) se simule en 62 s sur le moteur local ; son export pèse au plus 568 Ko (limite d'import : 1 Mo) et se réimporte. Revue de sécurité : aucun problème élevé (accès aux parties d'autrui, injection, traversée de chemin, secret commité : rien) ; constats moyens et faibles corrigés et testés (session créée à la première écriture, limite des écritures coûteuses, caractère NUL, configuration de production, proxy de confiance, pagination du journal, CSP du paquet web, signature réservée à `main` et aux étiquettes, clés ignorées par Git, essai Android limité aux émulateurs, rétention des réponses d'idempotence sur l'appareil). Limites : croissance de `game_advance` côté serveur à traiter avant l'hébergement (R-45) ; l'application n'embarque que la carte de démonstration et une base électorale fictive ; pas d'iOS ; l'APK de débogage n'est pas destiné à un magasin d'applications (APK signé dès que les secrets de signature sont configurés).
 
-### Phase 9 — Refonte de l'interface, nouveaux médias et soirée électorale (en cours)
+### Phase 9 — Refonte de l'interface, nouveaux médias et soirée électorale (terminée)
 
 Demandée par l'utilisateur le 22/10/2026 (« carte blanche totale sur l'UI/UX »), puis précisée le même jour (« identité visuelle type plateau TV / soirée électorale », « dépouillement en direct heure par heure », « détail communal de la Somme », « compilation de l'APK finale »). Aucune règle du jeu n'est inventée pour l'habillage : les chiffres affichés restent ceux du moteur, les nouveaux paramètres (médias numériques, rythme de la soirée) sont des hypothèses étiquetées.
 
@@ -541,6 +541,23 @@ Demandée par l'utilisateur le 22/10/2026 (« carte blanche totale sur l'UI/UX �
 **Avancement** :
 - **P9-01 à P9-06, P9-08 et P9-10 faites** (22/10/2026) — jeu de règles `presidentielle-2027@11.0.0`, format de sauvegarde 14, moteur 0.13.0.
 - **P9-09 faite** (22/10/2026) — module pur `soiree` de `@r2027/shared` (aucun aléa ni horloge : tirages par hachage de la graine, du tour et du code INSEE) : 9 tranches de 20 h 00 à 0 h 00 ; outre-mer annoncé à 20 h, départements les moins peuplés plus tôt (hypothèses de présentation) ; chaque chiffre affiché est une fraction exacte (arrondie au plus bas) du résultat du moteur ; Français de l'étranger et collectivités hors carte comptés à minuit. Écran « Soirée électorale » ouvert automatiquement après la semaine d'un scrutin et accessible depuis Résultats (« Revivre la soirée électorale ») : horloge, bandeau défilant (masqué aux lecteurs d'écran, annonce polie à chaque tranche), estimation, fil des départements dépouillés, suivi communal (Ain, Corse, Somme, outre-mer dans la démonstration), éclat lumineux des territoires qui viennent d'être dépouillés. Lecture automatique en pause d'office si le mouvement réduit est demandé.
+- **P9-07 faite** (22/10/2026) — titres de tous les écrans au style de l'identité (titre condensé) ; carte plus fluide sur téléphone (densité de rendu plafonnée à 2, plus de flou d'arrière-plan au-dessus de la carte, une seule instance MapLibre dans la soirée) ; base de démonstration fictive contrastée (composantes régionale, départementale et communale) pour que la carte et la soirée montrent plusieurs candidats en tête ; badge « Démonstration fictive » dans la soirée ; audit axe-core de la soirée en thème sombre et clair ; essai Android corrigé pour Android 14 (activité au premier plan lue dans les activités reprises) ; application 1.1.0 (`versionCode` 2).
+
+**Bilan (22/10/2026)** — les dix tâches sont réalisées.
+
+| Vérification | Résultat |
+|---|---|
+| `pnpm check` (lint, format, types, tests unitaires) | sans erreur ; 463 tests réussis |
+| `pnpm test:integration` (API + PostgreSQL 16 réel) | 92 tests réussis |
+| `pnpm test:e2e` (Playwright, bureau + mobile) | 38 tests réussis, dont la soirée électorale (passage automatique en direct, Somme commune par commune, axe-core en thème sombre et clair, aucun défilement horizontal) |
+| `pnpm test:mobile` (paquet de l'APK, réseau coupé) | 1 test réussi |
+| Workflow « Android (APK) » | APK construit et essayé sur un émulateur Android 14 en mode avion (exécution 39742050582) : installation sans permission, partie, carte, export et feuille de partage, relance |
+
+Écarts et limites :
+- **Soirée électorale** : horaires, rythme et estimations sont des hypothèses de présentation ; les heures réelles de fermeture des bureaux ne sont pas modélisées ; le second tour se rejoue avec le même déroulé ; les législatives n'ont pas de soirée en direct.
+- **Fluidité sur téléphone** non mesurée sur un appareil réel (l'émulateur de la CI rend la carte sans GPU) : à mesurer avant une publication (R-47).
+- **Démonstration** : contrastes territoriaux inventés (R-48) ; l'application Android n'embarque toujours que cette base fictive.
+- **APK** : version de débogage en artefact ; l'APK signé n'est produit que sur `main` ou une étiquette `v…`, une fois les secrets de signature configurés.
 
 ---
 
@@ -560,4 +577,4 @@ Demandée par l'utilisateur le 22/10/2026 (« carte blanche totale sur l'UI/UX �
 
 ## 6. Prochaine étape
 
-Phases 6, 7 et 8 terminées le 21/10/2026 sur la branche `claude/new-session-lmxg1t` (PR #2) : le jeu est jouable dans le navigateur (avec le serveur) et en application Android hors ligne. Restent ouverts : l'hébergement de la version web (Q6 : image Docker, déploiement, sauvegardes du serveur, R-45), la licence des résultats 2022 (Q8) et, avant une publication sur un magasin d'applications, la clé de signature et l'identifiant définitif de l'application.
+Phases 6 à 9 terminées le 22/10/2026 sur la branche `claude/new-session-lmxg1t` (PR #2) : le jeu est jouable dans le navigateur (avec le serveur) et en application Android hors ligne (1.1.0), avec l'identité « soirée électorale » et le direct des soirs de scrutin. Restent ouverts : l'hébergement de la version web (Q6 : image Docker, déploiement, sauvegardes du serveur, R-45), la licence des résultats 2022 (Q8), une mesure de fluidité sur un téléphone réel (R-47) et, avant une publication sur un magasin d'applications, la clé de signature et l'identifiant définitif de l'application.

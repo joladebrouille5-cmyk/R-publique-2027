@@ -19,6 +19,7 @@ WebView Android (Capacitor 8, https://localhost servi depuis l'APK)
 - Au démarrage, l'application demande à Android un stockage **persistant**. S'il n'est pas accordé, le pied de page l'indique : exportez alors régulièrement vos parties (écran Sauvegardes → « Exporter la partie (JSON) », qui ouvre la feuille de partage d'Android : Fichiers, Drive, messagerie…).
 - La base électorale est celle de la **démonstration, fictive** et affichée comme telle ; les résultats réels de 2022 ne sont pas embarqués (licence non précisée, question Q8 du plan).
 - Les liens vers les sources (Wikipédia, Insee…) s'ouvrent dans le navigateur de l'appareil, qui a, lui, accès au réseau.
+- Version **1.1.0** (`versionCode` 2, phase 9) : identité « soirée électorale », navigation basse, réseaux sociaux et nouveaux médias, direct de la soirée électorale (Somme comprise). Les parties de la version 1.0.0 restent sur l'appareil lors d'une mise à jour signée par la même clé, et sont migrées au format de sauvegarde 14 à leur ouverture.
 
 ## Construire l'APK
 

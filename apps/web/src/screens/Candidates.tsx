@@ -15,7 +15,7 @@ import {
   PersonalityPhoto,
   SIMULATION_NOTICE,
 } from '../components/RealPersonality';
-import { card } from '../components/ui';
+import { card, screenTitle } from '../components/ui';
 import {
   CANDIDATE_STATUS_LABELS,
   describePosition,
@@ -152,7 +152,7 @@ export function Candidates() {
 
   return (
     <section aria-labelledby="titre-candidats" className="space-y-6">
-      <h1 id="titre-candidats" className="text-2xl font-bold">
+      <h1 id="titre-candidats" className={screenTitle}>
         Candidats
       </h1>
       {hasReal && (

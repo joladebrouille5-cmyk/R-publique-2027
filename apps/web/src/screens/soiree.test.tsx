@@ -84,6 +84,7 @@ describe('soirée électorale', () => {
     const user = userEvent.setup();
     expect(await screen.findByRole('heading', { name: 'Soirée électorale' })).toBeInTheDocument();
     expect(screen.getByText('En direct')).toBeInTheDocument();
+    expect(screen.getByText('Démonstration fictive')).toBeInTheDocument();
     expect(screen.getByTestId('horloge-soiree')).toHaveTextContent('20 h 00');
     expect(screen.getByRole('heading', { name: 'Estimation à 20 h 00' })).toBeInTheDocument();
     const t1 = state.elections.t1!;

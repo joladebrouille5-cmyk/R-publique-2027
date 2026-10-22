@@ -3,7 +3,7 @@ import { Link } from 'react-router';
 import { useRuleset } from '../api/hooks';
 import { Badge } from '../components/Badge';
 import { ErrorMessage } from '../components/ErrorMessage';
-import { card } from '../components/ui';
+import { card, screenTitle } from '../components/ui';
 import { formatGameDate } from '../labels';
 import { useCurrentGame } from './GameLayout';
 
@@ -200,7 +200,7 @@ export function Government() {
   const ruleset = useRuleset(game.rulesetVersion, game.state.cycle);
   return (
     <section aria-labelledby="titre-ecran-gouvernement" className="space-y-6">
-      <h1 id="titre-ecran-gouvernement" className="text-2xl font-bold">
+      <h1 id="titre-ecran-gouvernement" className={screenTitle}>
         Gouvernement
       </h1>
       {ruleset.isError && (

@@ -1,10 +1,11 @@
 import type { GameScreen } from '../screens/registry';
+import { screenTitle } from './ui';
 
 /** Écran prévu mais non implémenté : on l'annonce, sans aucune donnée factice. */
 export function Unavailable({ screen }: { screen: GameScreen }) {
   return (
     <section aria-labelledby="titre-ecran" className="space-y-4">
-      <h1 id="titre-ecran" className="text-2xl font-bold">
+      <h1 id="titre-ecran" className={screenTitle}>
         {screen.label}
       </h1>
       <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 dark:border-slate-700 dark:bg-slate-900">

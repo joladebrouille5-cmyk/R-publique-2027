@@ -2,7 +2,7 @@ import { candidateName, type GameState, type Poll } from '@r2027/shared';
 import { useState } from 'react';
 import { Badge } from '../components/Badge';
 import { ShareBar } from '../components/ShareBar';
-import { buttonSecondary, card } from '../components/ui';
+import { buttonSecondary, card, screenTitle } from '../components/ui';
 import { formatCount, formatGameDate, formatShare, POLL_KIND_LABELS } from '../labels';
 import { useCurrentGame } from './GameLayout';
 
@@ -111,7 +111,7 @@ export function Polls() {
 
   return (
     <section aria-labelledby="titre-sondages" className="space-y-6">
-      <h1 id="titre-sondages" className="text-2xl font-bold">
+      <h1 id="titre-sondages" className={screenTitle}>
         Sondages
       </h1>
       <p className="text-sm text-slate-600 dark:text-slate-400">

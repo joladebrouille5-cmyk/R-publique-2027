@@ -8,7 +8,7 @@ import {
 import { useJournal, useRuleset } from '../api/hooks';
 import { Badge } from '../components/Badge';
 import { ErrorMessage } from '../components/ErrorMessage';
-import { card } from '../components/ui';
+import { card, screenTitle } from '../components/ui';
 import { formatIndicator, formatIndicatorDelta, formatGameDate, INDICATOR_LABELS } from '../labels';
 import { useCurrentGame } from './GameLayout';
 
@@ -153,7 +153,7 @@ export function Economy() {
   const lastReport = journal.data?.pages[0]?.entries.find((entry) => entry.report)?.report ?? null;
   return (
     <section aria-labelledby="titre-ecran-economie" className="space-y-6">
-      <h1 id="titre-ecran-economie" className="text-2xl font-bold">
+      <h1 id="titre-ecran-economie" className={screenTitle}>
         Économie
       </h1>
       {ruleset.isError && (
