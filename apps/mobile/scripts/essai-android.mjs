@@ -81,11 +81,38 @@ async function launch() {
   const webview = await device.webView({ pkg: PKG });
   const page = await webview.page();
   page.setDefaultTimeout(120_000);
+  // Une page fermée en cours d'essai (hors relance) signale une WebView perdue : on le note.
+  page.on('crash', () => console.log('! Plantage du processus de rendu de la WebView'));
+  page.on('close', () => console.log('! Page de la WebView fermée'));
   return { webview, page };
+}
+
+/**
+ * Diagnostic d'un échec : le journal Android complet va dans les captures, et ses lignes utiles
+ * (plantage ou arrêt du rendu de la WebView, processus tué faute de mémoire, ANR, signal fatal)
+ * dans le journal de la CI, avec l'état de la mémoire de l'appareil.
+ */
+async function diagnose() {
+  const log = await shell('logcat -d -v time');
+  await writeFile(join(captures, 'logcat.txt'), log);
+  const useful = log
+    .split('\n')
+    .filter(
+      (line) =>
+        /chromium|webview|sandboxed_process|renderer|lowmemorykiller|lmkd|has died|died|ANR in|FATAL|Fatal signal|am_kill|Kill|crash|OutOfMemory/i.test(
+          line,
+        ) && !/ColorBuffer/.test(line),
+    );
+  console.log('— Journal Android, lignes utiles (les 150 dernières) :');
+  console.log(useful.slice(-150).join('\n'));
+  console.log('— Mémoire de l’appareil :');
+  console.log((await shell('cat /proc/meminfo')).split('\n').slice(0, 6).join('\n'));
 }
 
 try {
   step(`Appareil : ${device.model()} (${device.serial()})`);
+  // Journal Android vidé : en cas d'échec, seul celui de l'essai est examiné.
+  await shell('logcat -c');
   await shell('cmd connectivity airplane-mode enable');
   await shell(`pm uninstall ${PKG}`);
   await device.installApk(apk);
@@ -164,6 +191,9 @@ try {
   await expect(page.getByRole('link', { name: /Partie Android/ })).toBeVisible();
   await writeFile(join(captures, '4-reprise.png'), await device.screenshot());
   step('Essai réussi');
+} catch (error) {
+  await diagnose().catch((e) => console.log(`Diagnostic impossible : ${e}`));
+  throw error;
 } finally {
   await writeFile(join(captures, 'fin.png'), await device.screenshot()).catch(() => {});
   await device.close();
