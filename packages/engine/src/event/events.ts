@@ -1,11 +1,14 @@
-import type {
-  DecisionAnswer,
-  EventDefinition,
-  GameState,
-  PendingDecision,
-  ReportEvent,
-  Ruleset,
-  WeeklyReport,
+import {
+  daysFromCivil,
+  DEPARTEMENT_MARQUE,
+  parseIsoDate,
+  type DecisionAnswer,
+  type EventDefinition,
+  type GameState,
+  type PendingDecision,
+  type ReportEvent,
+  type Ruleset,
+  type WeeklyReport,
 } from '@r2027/shared';
 import { processDonations, type FinanceBook } from '../campaign/finances';
 import { applyOrSchedule } from '../core/effects';
@@ -100,7 +103,7 @@ export function applyDecisions(
         week,
         step,
         ref: `${decision.id}-${option.id}`,
-        label: `${definition.libelle} — ${option.libelle}`,
+        label: `${decision.label} — ${option.libelle}`,
         source: 'decision' as const,
       };
       option.effets.forEach((effect, i) =>
@@ -111,7 +114,7 @@ export function applyDecisions(
       decisionId: decision.id,
       eventId: definition.id,
       optionId: option.id,
-      label: `${definition.libelle} : ${option.libelle}`,
+      label: `${decision.label} : ${option.libelle}`,
       automatic,
     });
   }
@@ -119,24 +122,130 @@ export function applyDecisions(
   return applied;
 }
 
-function isEligible(state: GameState, event: EventDefinition, actorId: string): boolean {
+/** Rang du joueur dans les dernières intentions (1 = en tête), sinon null. */
+function rankOf(state: GameState, actorId: string): number | null {
+  const intentions = state.opinion?.intentions;
+  const mine = intentions?.[actorId];
+  if (!intentions || mine === undefined) return null;
+  return 1 + Object.values(intentions).filter((v) => v > mine).length;
+}
+
+const within = (value: number, bounds: { min: number | null; max: number | null }) =>
+  (bounds.min === null || value >= bounds.min) && (bounds.max === null || value <= bounds.max);
+
+/** Semaines pleines avant le prochain scrutin du calendrier (null s'il n'y en a plus). */
+function weeksBeforeNextRound(state: GameState, ruleset: Ruleset): number | null {
+  const today = daysFromCivil(parseIsoDate(state.meta.date)!);
+  const next = ruleset.calendrier.scrutins
+    .map((s) => daysFromCivil(parseIsoDate(s.date)!))
+    .find((day) => day >= today);
+  return next === undefined ? null : Math.floor((next - today) / 7);
+}
+
+/** Départements où le candidat a fait campagne (parrainages promis, envisagés ou validés). */
+function campaignedDepartements(state: GameState, actorId: string): string[] {
+  const p = state.actors[actorId]!.parrainages;
+  return [
+    ...new Set([
+      ...Object.keys(p.promesses),
+      ...Object.keys(p.intentions),
+      ...Object.keys(p.validees),
+    ]),
+  ].sort(compareStrings);
+}
+
+function isEligible(
+  state: GameState,
+  ruleset: Ruleset,
+  event: EventDefinition,
+  actorId: string,
+  departements: readonly string[],
+): boolean {
   const resources = state.actors[actorId]!.resources;
   const history = state.eventHistory[event.id];
   const week = state.meta.week;
   if (history && event.occurrencesMax !== null && history.count >= event.occurrencesMax)
     return false;
   if (history && week - history.lastWeek < event.delaiMinEntreOccurrences) return false;
-  return event.conditions.every(
+  const ok = event.conditions.every(
     (c) =>
       (c.min === null || resources[c.ressource] >= c.min) &&
       (c.max === null || resources[c.ressource] <= c.max),
   );
+  if (!ok) return false;
+  // Contexte (phase 11) : phase, calendrier, rang, actions récentes, département de campagne.
+  const { phases, semainesAvantScrutin, rang, actionsRecentes, local } = event.contexte;
+  const phase = state.meta.phase;
+  if (phases && !(phase === 'campagne' || phase === 'entre_deux_tours')) return false;
+  if (phases && !phases.includes(phase as 'campagne' | 'entre_deux_tours')) return false;
+  if (semainesAvantScrutin) {
+    const weeks = weeksBeforeNextRound(state, ruleset);
+    if (weeks === null || !within(weeks, semainesAvantScrutin)) return false;
+  }
+  if (rang) {
+    const rank = rankOf(state, actorId);
+    if (rank === null || !within(rank, rang)) return false;
+  }
+  if (actionsRecentes) {
+    const passages = state.numerique.passages[actorId] ?? {};
+    const since = week - actionsRecentes.semaines;
+    const recent = actionsRecentes.actions.some((id) =>
+      (passages[id] ?? []).some((w) => w > since && w <= week),
+    );
+    if (!recent) return false;
+  }
+  return !local || departements.length > 0;
+}
+
+/** Libellés d'un événement, avec le département d'un événement local. */
+function placed(text: string, departement: string | null, ruleset: Ruleset): string {
+  if (departement === null) return text;
+  const dep = ruleset.parrainages.reservoir.departements[departement];
+  return text.replaceAll(DEPARTEMENT_MARQUE, dep ? `${dep.nom} (${departement})` : departement);
+}
+
+/**
+ * Événements éligibles cette semaine pour le joueur, dans leur contexte, avec leur poids :
+ * probabilité hebdomadaire × fréquence du scénario × fraîcheur (famille vue récemment).
+ */
+export function eventWeights(
+  state: GameState,
+  ruleset: Ruleset,
+  actorId: string,
+): { event: EventDefinition; weight: number }[] {
+  const week = state.meta.week;
+  // Scénario de départ (phase 7) : fréquence des événements de campagne.
+  const frequency =
+    ruleset.scenarios.find((s) => s.id === state.scenario)?.campagne.evenements ?? 1;
+  const { facteur, semaines } = ruleset.jeu.fraicheurEvenements;
+  const families = new Map(ruleset.evenements.map((e) => [e.id, e.famille]));
+  const lastByFamily = new Map<string, number>();
+  for (const [id, h] of Object.entries(state.eventHistory)) {
+    const family = families.get(id);
+    if (family)
+      lastByFamily.set(family, Math.max(lastByFamily.get(family) ?? -Infinity, h.lastWeek));
+  }
+  const departements = campaignedDepartements(state, actorId);
+  return [...ruleset.evenements]
+    .sort((a, b) => compareStrings(a.id, b.id))
+    .filter((event) => isEligible(state, ruleset, event, actorId, departements))
+    .map((event) => {
+      const recent = week - (lastByFamily.get(event.famille) ?? -Infinity) <= semaines;
+      return {
+        event,
+        weight: Math.min(1, event.probabiliteHebdomadaire * frequency * (recent ? facteur : 1)),
+      };
+    })
+    .filter((c) => c.weight > 0);
 }
 
 /**
  * Étape 5 : tirage des événements de la semaine (§8 : conditions, probabilité, fréquence,
- * effets immédiats et différés, choix). Au plus `evenementsMaxParSemaine` événements et une
- * seule nouvelle décision par semaine.
+ * effets immédiats et différés, choix). Phase 11 : parmi les événements éligibles dans leur
+ * contexte, un événement survient avec la probabilité qu'au moins un se produise
+ * (1 − Π(1 − p)), puis est choisi au prorata des probabilités, sans biais d'ordre ; une famille
+ * vue dans les semaines récentes pèse moins (fraîcheur). Au plus `evenementsMaxParSemaine`
+ * événements, de familles différentes, et une seule nouvelle décision par semaine.
  */
 export function drawEvents(
   state: GameState,
@@ -154,24 +263,33 @@ export function drawEvents(
   const triggered: ReportEvent[] = [];
   let decisionCreated = false;
 
-  // Scénario de départ (phase 7) : fréquence des événements de campagne.
-  const frequency =
-    ruleset.scenarios.find((s) => s.id === state.scenario)?.campagne.evenements ?? 1;
-  const candidates = [...ruleset.evenements].sort((a, b) => compareStrings(a.id, b.id));
-  for (const event of candidates) {
-    if (triggered.length >= ruleset.jeu.evenementsMaxParSemaine) break;
-    const hasChoices = event.choix.length > 0;
-    if (hasChoices && decisionCreated) continue;
-    if (!isEligible(state, event, actorId)) continue;
+  const departements = campaignedDepartements(state, actorId);
+  let pool = eventWeights(state, ruleset, actorId);
+  const draw = stream(state.meta.seed, week, 'evenements');
+
+  while (triggered.length < ruleset.jeu.evenementsMaxParSemaine) {
+    const candidates = pool.filter((c) => !(decisionCreated && c.event.choix.length > 0));
+    if (candidates.length === 0) break;
+    const none = candidates.reduce((p, c) => p * (1 - c.weight), 1);
+    if (draw.nextFloat() >= 1 - none) break;
+    const total = candidates.reduce((sum, c) => sum + c.weight, 0);
+    let target = draw.nextFloat() * total;
+    const picked = candidates.find((c) => (target -= c.weight) < 0) ?? candidates.at(-1)!;
+    const event = picked.event;
+    pool = pool.filter((c) => c.event.famille !== event.famille);
+    const departement = event.contexte.local
+      ? departements[draw.nextInt(departements.length)]!
+      : null;
+    const libelle = placed(event.libelle, departement, ruleset);
+    const description = placed(event.description, departement, ruleset);
     const rng = stream(state.meta.seed, week, 'evenement', event.id);
-    if (rng.nextFloat() >= Math.min(1, event.probabiliteHebdomadaire * frequency)) continue;
 
     const previous = state.eventHistory[event.id];
     state.eventHistory[event.id] = { count: (previous?.count ?? 0) + 1, lastWeek: week };
     const id = `e-${week}-${event.id}`;
     let decisionId: string | null = null;
 
-    if (hasChoices) {
+    if (event.choix.length > 0) {
       decisionId = `d-${week}-${event.id}`;
       decisionCreated = true;
       state.pendingDecisions.push({
@@ -180,12 +298,12 @@ export function drawEvents(
         eventId: event.id,
         actorId,
         createdWeek: week,
-        label: event.libelle,
-        description: event.description,
-        options: event.choix.map(({ id: optionId, libelle, description }) => ({
+        label: libelle,
+        description,
+        options: event.choix.map(({ id: optionId, libelle: optionLabel, description: text }) => ({
           id: optionId,
-          libelle,
-          description,
+          libelle: optionLabel,
+          description: text,
         })),
         defaultOptionId: event.choixParDefaut!,
       });
@@ -198,7 +316,7 @@ export function drawEvents(
       week,
       step,
       ref: id,
-      label: event.libelle,
+      label: libelle,
       source: 'evenement' as const,
     };
     event.effets.forEach((effect, i) => applyOrSchedule(context, effect, drawAlea(rng, effect), i));
@@ -209,7 +327,7 @@ export function drawEvents(
         actorId,
         event.campagne.dons,
         rng,
-        event.libelle,
+        libelle,
         'evenement',
         step,
         week,
@@ -220,8 +338,8 @@ export function drawEvents(
       id,
       kind: 'evenement',
       refId: event.id,
-      label: event.libelle,
-      description: event.description,
+      label: libelle,
+      description,
       nature: event.nature,
       majeur: event.majeur,
       decisionId,

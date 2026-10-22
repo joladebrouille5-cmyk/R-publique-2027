@@ -249,7 +249,20 @@ describe('journal', () => {
               type: 'semaine_resolue',
               nature: 'simule',
               createdAt: '2026-10-20T10:10:00.000Z',
-              report: reportFixture(),
+              report: reportFixture({
+                events: [
+                  {
+                    id: 'e-0-fermeture-usine',
+                    kind: 'evenement',
+                    refId: 'fermeture-usine',
+                    label: 'Fermeture d’usine annoncée — Somme (80)',
+                    description: 'Un sous-traitant industriel (fictif) annonce la fermeture.',
+                    nature: 'fictif',
+                    majeur: false,
+                    decisionId: null,
+                  },
+                ],
+              }),
               details: {},
             },
             {
@@ -270,6 +283,11 @@ describe('journal', () => {
     expect(await screen.findByText('Semaine 0 — lundi 28 septembre 2026')).toBeInTheDocument();
     expect(screen.getByText('Partie créée')).toBeInTheDocument();
     expect(screen.getByText(/Graine graine-test/)).toBeInTheDocument();
+    // Événement fictif de la phase 11 : sa famille, lue dans le jeu de règles.
+    await userEvent.setup().click(screen.getByText('Semaine 0 — lundi 28 septembre 2026'));
+    const item = screen.getByText('Fermeture d’usine annoncée — Somme (80)').closest('li')!;
+    expect(within(item).getByText('Événement fictif')).toBeInTheDocument();
+    expect(within(item).getByText('Fait divers')).toBeInTheDocument();
   });
 });
 

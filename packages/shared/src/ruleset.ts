@@ -567,12 +567,53 @@ export const EventChoiceSchema = z
   })
   .strict();
 
+/** Familles d'événements de campagne (phase 11) : une seule par semaine, fraîcheur par famille. */
+export const EVENT_FAMILIES = [
+  'fait-divers',
+  'polemique',
+  'opportunite',
+  'vie-de-campagne',
+] as const;
+export const EventFamilySchema = z.enum(EVENT_FAMILIES);
+export type EventFamily = z.infer<typeof EventFamilySchema>;
+
+/** Marque du département d'un événement local, remplacée par « Nom (code) ». */
+export const DEPARTEMENT_MARQUE = '{departement}';
+
+const Bounds = z
+  .object({ min: z.number().int().nullable(), max: z.number().int().nullable() })
+  .strict();
+
+/**
+ * Contexte d'un événement (phase 11), en plus des seuils de ressources : phase, semaines avant
+ * le prochain scrutin, rang du joueur dans les dernières intentions, actions récentes du joueur,
+ * caractère local (dans un département où il a fait campagne).
+ */
+export const EventContextSchema = z
+  .object({
+    phases: z
+      .array(z.enum(['campagne', 'entre_deux_tours']))
+      .min(1)
+      .optional(),
+    semainesAvantScrutin: Bounds.optional(),
+    rang: Bounds.optional(),
+    actionsRecentes: z
+      .object({ actions: z.array(Id).min(1), semaines: z.number().int().min(1).max(12) })
+      .strict()
+      .optional(),
+    local: z.literal(true).optional(),
+  })
+  .strict();
+export type EventContext = z.infer<typeof EventContextSchema>;
+
 export const EventDefinitionSchema = z
   .object({
     id: Id,
     libelle: z.string().min(1),
     description: z.string().min(1),
     nature: z.literal('fictif'),
+    famille: EventFamilySchema,
+    contexte: EventContextSchema.default({}),
     /** Un événement majeur déclenche une sauvegarde automatique préalable (§12). */
     majeur: z.boolean(),
     probabiliteHebdomadaire: Probability,
@@ -843,6 +884,13 @@ export const RulesetSchema = z
         tempsHebdomadaireHeures: z.number().int().min(1).max(168),
         actionsMaxParSemaine: z.number().int().min(1),
         evenementsMaxParSemaine: z.number().int().min(0),
+        /**
+         * Fraîcheur des événements (phase 11) : le poids d'un événement est multiplié par
+         * `facteur` si un événement de la même famille est survenu dans les `semaines` passées.
+         */
+        fraicheurEvenements: z
+          .object({ facteur: Fraction, semaines: z.number().int().min(1).max(12) })
+          .strict(),
         /** Qualité de l'équipe du candidat du joueur (0 à 1). */
         equipeJoueur: Fraction,
         /** Promesses de parrainage dont dispose le joueur au départ, selon la difficulté. */
@@ -1221,6 +1269,17 @@ export const RulesetSchema = z
     for (const id of formats) {
       if (!ruleset.actions.some((a) => a.format === id))
         issue(`Format numérique sans action : ${id}`);
+    }
+    // Événements (phase 11) : actions récentes connues ; marque du département pour les locaux.
+    const actionIds = new Set(ruleset.actions.map((a) => a.id));
+    for (const event of ruleset.evenements) {
+      for (const id of event.contexte.actionsRecentes?.actions ?? [])
+        if (!actionIds.has(id)) issue(`${event.id} : action récente inconnue (${id})`);
+      const marked = [event.libelle, event.description].some((t) => t.includes(DEPARTEMENT_MARQUE));
+      if (event.contexte.local && !event.libelle.includes(DEPARTEMENT_MARQUE))
+        issue(`${event.id} : événement local sans ${DEPARTEMENT_MARQUE} dans son libellé`);
+      if (!event.contexte.local && marked)
+        issue(`${event.id} : ${DEPARTEMENT_MARQUE} réservé aux événements locaux`);
     }
     // Passages dans les médias (phase 11) : chaque action et chaque format employé est connu.
     const prestations = ruleset.prestations;

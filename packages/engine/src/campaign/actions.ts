@@ -329,13 +329,12 @@ export function resolveActionEffects(
 }
 
 /**
- * Relevé des passages dans les médias de la semaine, par candidat et par action (lassitude du
- * public et de l'IA ; le fil des publications, limité, ne suffit pas à compter).
+ * Relevé des actions récentes de la semaine, par candidat et par action : lassitude du public
+ * et de l'IA, contexte des événements (phase 11) ; le fil des publications ne suffit pas.
  */
 function recordPassages(state: GameState, validated: readonly ValidatedAction[]): void {
   const week = state.meta.week;
-  for (const { actorId, definition, posture } of validated) {
-    if (posture === null) continue;
+  for (const { actorId, definition } of validated) {
     const byAction = (state.numerique.passages[actorId] ??= {});
     byAction[definition.id] = [
       ...(byAction[definition.id] ?? []).filter((w) => w > week - DIGITAL_HISTORY_WEEKS),

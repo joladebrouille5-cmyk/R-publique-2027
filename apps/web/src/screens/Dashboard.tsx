@@ -590,6 +590,7 @@ export function Dashboard() {
             blocLabel={(id) =>
               ruleset.data?.legislatives.blocs.find((b) => b.id === id)?.libelle ?? id
             }
+            eventFamily={(id) => ruleset.data?.evenements.find((e) => e.id === id)?.famille ?? null}
           />
         ) : (
           <p className="text-sm text-slate-500 dark:text-slate-400">

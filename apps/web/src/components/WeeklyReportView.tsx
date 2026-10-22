@@ -1,6 +1,7 @@
 import {
   candidateName,
   type EconomyChange,
+  type EventFamily,
   type GameState,
   type Prestation,
   type ResourceChange,
@@ -8,6 +9,7 @@ import {
 } from '@r2027/shared';
 import {
   DATA_STATUS_LABELS,
+  EVENT_FAMILY_LABELS,
   FACTOR_SOURCE_LABELS,
   formatDelta,
   formatGameDate,
@@ -186,6 +188,7 @@ export function WeeklyReportView({
   state,
   proposalLabel,
   blocLabel = (id) => id,
+  eventFamily = () => null,
 }: {
   report: WeeklyReport;
   state?: GameState;
@@ -193,6 +196,8 @@ export function WeeklyReportView({
   proposalLabel?: (id: string) => string;
   /** Libellé d'un bloc des législatives (jeu de règles chargé), sinon son identifiant. */
   blocLabel?: (id: string) => string;
+  /** Famille d'un événement de campagne (jeu de règles chargé), sinon null. */
+  eventFamily?: (refId: string) => EventFamily | null;
 }) {
   const playerId = state?.player.actorId ?? null;
   const nameOf = (actorId: string) => {
@@ -332,6 +337,9 @@ export function WeeklyReportView({
                     {event.nature === 'fictif' ? 'Événement fictif' : 'Simulé'}
                   </Badge>
                   {event.majeur && <Badge tone="alerte">Majeur</Badge>}
+                  {eventFamily(event.refId) && (
+                    <Badge>{EVENT_FAMILY_LABELS[eventFamily(event.refId)!]}</Badge>
+                  )}
                   <span className="font-medium">{event.label}</span>
                 </span>
                 <span className="block text-slate-600 dark:text-slate-400">

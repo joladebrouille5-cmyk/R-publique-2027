@@ -217,12 +217,19 @@ describe('événements de campagne', () => {
     for (const event of rules.evenements) event.probabiliteHebdomadaire = 0;
     rules.evenements.find((e) => e.id === 'intemperies')!.probabiliteHebdomadaire = 0.2;
     rules.scenarios.find((s) => s.id === 'colere-sociale')!.campagne.evenements = 5;
+    const seeds = ['frequence', 'frequence-2', 'frequence-3', 'frequence-4'];
     const count = (scenarioId: string) =>
-      play(newGame({ seed: 'frequence', scenarioId }, rules), 12, rules).reports.filter((r) =>
-        r.events.some((e) => e.refId === 'intemperies'),
-      ).length;
-    // Probabilité 0,2 × 5 = 1, sous réserve du délai de 8 semaines entre deux occurrences.
-    expect(count('colere-sociale')).toBe(2);
-    expect(count('standard')).toBeLessThan(2);
+      seeds
+        .map(
+          (seed) =>
+            play(newGame({ seed, scenarioId }, rules), 12, rules).reports.filter((r) =>
+              r.events.some((e) => e.refId === 'intemperies'),
+            ).length,
+        )
+        .reduce((a, b) => a + b, 0);
+    // Probabilité 0,2 × 5 = 1, sous réserve du délai de 8 semaines entre deux occurrences :
+    // deux fois en douze semaines, pour chaque graine ; bien moins souvent sans le scénario.
+    expect(count('colere-sociale')).toBe(2 * seeds.length);
+    expect(count('standard')).toBeLessThan(seeds.length + 2);
   });
 });

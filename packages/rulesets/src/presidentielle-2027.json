@@ -177,6 +177,10 @@
     "tempsHebdomadaireHeures": 70,
     "actionsMaxParSemaine": 8,
     "evenementsMaxParSemaine": 2,
+    "fraicheurEvenements": {
+      "facteur": 0.4,
+      "semaines": 3
+    },
     "ressourcesInitiales": {
       "accessible": {
         "budgetCentimes": 600000000,
@@ -941,6 +945,7 @@
       "libelle": "Portrait dans la presse régionale",
       "description": "Un quotidien régional consacre une page à votre parcours.",
       "nature": "fictif",
+      "famille": "opportunite",
       "majeur": false,
       "probabiliteHebdomadaire": 0.08,
       "conditions": [],
@@ -964,6 +969,7 @@
       "libelle": "Élan de dons après une intervention remarquée",
       "description": "De nombreux sympathisants font un petit don en ligne.",
       "nature": "fictif",
+      "famille": "opportunite",
       "majeur": false,
       "probabiliteHebdomadaire": 0.04,
       "conditions": [
@@ -996,6 +1002,7 @@
       "libelle": "Départ d'un groupe de militants",
       "description": "Un groupe local, en désaccord avec la stratégie, quitte la campagne.",
       "nature": "fictif",
+      "famille": "vie-de-campagne",
       "majeur": false,
       "probabiliteHebdomadaire": 0.05,
       "conditions": [
@@ -1025,6 +1032,7 @@
       "libelle": "Grève des transports",
       "description": "Les déplacements de la semaine prochaine seront plus difficiles.",
       "nature": "fictif",
+      "famille": "vie-de-campagne",
       "majeur": false,
       "probabiliteHebdomadaire": 0.03,
       "conditions": [],
@@ -1048,6 +1056,7 @@
       "libelle": "Polémique sur les réseaux sociaux",
       "description": "Une ancienne publication de votre équipe est exhumée et commentée.",
       "nature": "fictif",
+      "famille": "polemique",
       "majeur": false,
       "probabiliteHebdomadaire": 0.06,
       "conditions": [
@@ -1126,6 +1135,7 @@
       "libelle": "Crise au sein de l'équipe de campagne",
       "description": "Deux responsables de la campagne s'opposent publiquement sur la stratégie.",
       "nature": "fictif",
+      "famille": "vie-de-campagne",
       "majeur": true,
       "probabiliteHebdomadaire": 0.025,
       "conditions": [
@@ -1183,6 +1193,7 @@
       "libelle": "Afflux de bénévoles",
       "description": "Après une semaine remarquée, de nombreux sympathisants proposent leur aide.",
       "nature": "fictif",
+      "famille": "opportunite",
       "majeur": false,
       "probabiliteHebdomadaire": 0.05,
       "conditions": [
@@ -1212,6 +1223,7 @@
       "libelle": "Tribune de soutien d'universitaires",
       "description": "Un collectif d'universitaires (fictif) publie une tribune favorable à votre projet.",
       "nature": "fictif",
+      "famille": "opportunite",
       "majeur": false,
       "probabiliteHebdomadaire": 0.04,
       "conditions": [
@@ -1248,6 +1260,7 @@
       "libelle": "Intempéries sur la tournée",
       "description": "Tempête et routes coupées : la tournée de la semaine prochaine est réduite.",
       "nature": "fictif",
+      "famille": "vie-de-campagne",
       "majeur": false,
       "probabiliteHebdomadaire": 0.03,
       "conditions": [],
@@ -1269,10 +1282,11 @@
     {
       "id": "meeting-perturbe",
       "libelle": "Meeting perturbé",
-      "description": "Des opposants interrompent l'un de vos meetings.",
+      "description": "Des opposants interrompent votre meeting de la semaine.",
       "nature": "fictif",
+      "famille": "vie-de-campagne",
       "majeur": false,
-      "probabiliteHebdomadaire": 0.03,
+      "probabiliteHebdomadaire": 0.08,
       "conditions": [
         {
           "ressource": "notoriete",
@@ -1321,13 +1335,20 @@
         }
       ],
       "choixParDefaut": "plainte",
-      "campagne": null
+      "campagne": null,
+      "contexte": {
+        "actionsRecentes": {
+          "actions": ["meeting", "grand-meeting"],
+          "semaines": 1
+        }
+      }
     },
     {
       "id": "fuite-note",
       "libelle": "Fuite d'une note interne",
       "description": "Une note stratégique de votre équipe circule dans la presse.",
       "nature": "fictif",
+      "famille": "polemique",
       "majeur": false,
       "probabiliteHebdomadaire": 0.03,
       "conditions": [
@@ -1406,6 +1427,7 @@
       "libelle": "Soutien d'élus locaux",
       "description": "Des maires sans étiquette annoncent publiquement leur soutien.",
       "nature": "fictif",
+      "famille": "opportunite",
       "majeur": false,
       "probabiliteHebdomadaire": 0.04,
       "conditions": [
@@ -1436,6 +1458,1394 @@
       "choix": [],
       "choixParDefaut": null,
       "campagne": null
+    },
+    {
+      "id": "fermeture-usine",
+      "libelle": "Fermeture d’usine annoncée — {departement}",
+      "description": "Un sous-traitant industriel (fictif) annonce la fermeture de son site : trois cents emplois menacés. Les salariés interpellent les candidats.",
+      "nature": "fictif",
+      "famille": "fait-divers",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.035,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 8,
+      "occurrencesMax": null,
+      "effets": [],
+      "choix": [
+        {
+          "id": "sur-place",
+          "libelle": "Aller à la rencontre des salariés",
+          "description": "Une demi-journée sur place, devant les grilles de l’usine.",
+          "effets": [
+            {
+              "ressource": "tempsHeures",
+              "base": -6,
+              "ecart": 0,
+              "delaiSemaines": 0,
+              "saturation": false
+            },
+            {
+              "ressource": "popularite",
+              "base": 40,
+              "ecart": 20,
+              "delaiSemaines": 0,
+              "saturation": true
+            },
+            {
+              "ressource": "notoriete",
+              "base": 30,
+              "ecart": 15,
+              "delaiSemaines": 0,
+              "saturation": true
+            }
+          ]
+        },
+        {
+          "id": "communique",
+          "libelle": "Publier un communiqué de soutien",
+          "description": "Un soutien de principe, sans déplacement.",
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": 5,
+              "ecart": 5,
+              "delaiSemaines": 0,
+              "saturation": true
+            }
+          ]
+        },
+        {
+          "id": "silence",
+          "libelle": "Ne pas réagir",
+          "description": "Rester sur votre agenda ; la presse locale le relève.",
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -20,
+              "ecart": 10,
+              "delaiSemaines": 1,
+              "saturation": false
+            }
+          ]
+        }
+      ],
+      "choixParDefaut": "communique",
+      "campagne": null,
+      "contexte": {
+        "local": true
+      }
+    },
+    {
+      "id": "crue-departement",
+      "libelle": "Crue après des pluies exceptionnelles — {departement}",
+      "description": "Plusieurs communes sont inondées ; la préfecture déclenche le plan d’urgence.",
+      "nature": "fictif",
+      "famille": "fait-divers",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.03,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 8,
+      "occurrencesMax": null,
+      "effets": [],
+      "choix": [
+        {
+          "id": "visite",
+          "libelle": "Se rendre auprès des sinistrés",
+          "description": "Une visite discrète, sans caméras : on le saura quand même.",
+          "effets": [
+            {
+              "ressource": "tempsHeures",
+              "base": -5,
+              "ecart": 0,
+              "delaiSemaines": 0,
+              "saturation": false
+            },
+            {
+              "ressource": "popularite",
+              "base": 30,
+              "ecart": 15,
+              "delaiSemaines": 0,
+              "saturation": true
+            }
+          ]
+        },
+        {
+          "id": "suspendre",
+          "libelle": "Suspendre la campagne dans le département",
+          "description": "Un geste de retenue, salué par les élus locaux.",
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": 15,
+              "ecart": 10,
+              "delaiSemaines": 0,
+              "saturation": true
+            },
+            {
+              "ressource": "notoriete",
+              "base": -10,
+              "ecart": 5,
+              "delaiSemaines": 0,
+              "saturation": true
+            }
+          ]
+        }
+      ],
+      "choixParDefaut": "suspendre",
+      "campagne": null,
+      "contexte": {
+        "local": true
+      }
+    },
+    {
+      "id": "maternite-menacee",
+      "libelle": "Une maternité menacée de fermeture — {departement}",
+      "description": "Le collectif de défense de la maternité appelle chaque candidat à se prononcer.",
+      "nature": "fictif",
+      "famille": "fait-divers",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.03,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 8,
+      "occurrencesMax": null,
+      "effets": [],
+      "choix": [
+        {
+          "id": "collectif",
+          "libelle": "Signer l’appel du collectif",
+          "description": "Un engagement clair, et une rencontre avec les soignants.",
+          "effets": [
+            {
+              "ressource": "tempsHeures",
+              "base": -3,
+              "ecart": 0,
+              "delaiSemaines": 0,
+              "saturation": false
+            },
+            {
+              "ressource": "popularite",
+              "base": 25,
+              "ecart": 15,
+              "delaiSemaines": 0,
+              "saturation": true
+            }
+          ]
+        },
+        {
+          "id": "programme",
+          "libelle": "Renvoyer à votre programme de santé",
+          "description": "Une réponse prudente, jugée un peu froide.",
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": 5,
+              "ecart": 10,
+              "delaiSemaines": 0,
+              "saturation": true
+            }
+          ]
+        }
+      ],
+      "choixParDefaut": "programme",
+      "campagne": null,
+      "contexte": {
+        "local": true
+      }
+    },
+    {
+      "id": "colere-agricole",
+      "libelle": "Colère des agriculteurs — {departement}",
+      "description": "Des tracteurs bloquent l’entrée de la préfecture ; les syndicats agricoles demandent à être reçus.",
+      "nature": "fictif",
+      "famille": "fait-divers",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.035,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 8,
+      "occurrencesMax": null,
+      "effets": [],
+      "choix": [
+        {
+          "id": "recevoir",
+          "libelle": "Recevoir une délégation",
+          "description": "Deux heures d’échanges, sans promesse intenable.",
+          "effets": [
+            {
+              "ressource": "tempsHeures",
+              "base": -4,
+              "ecart": 0,
+              "delaiSemaines": 0,
+              "saturation": false
+            },
+            {
+              "ressource": "popularite",
+              "base": 20,
+              "ecart": 15,
+              "delaiSemaines": 0,
+              "saturation": true
+            }
+          ]
+        },
+        {
+          "id": "distance",
+          "libelle": "Rester à distance",
+          "description": "Ne pas s’exposer à une colère qui peut déborder.",
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -10,
+              "ecart": 10,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        }
+      ],
+      "choixParDefaut": "distance",
+      "campagne": null,
+      "contexte": {
+        "local": true
+      }
+    },
+    {
+      "id": "maire-agresse",
+      "libelle": "Un maire pris à partie — {departement}",
+      "description": "Le maire d’une petite commune a été bousculé lors d’un conseil municipal ; l’émotion est vive chez les élus.",
+      "nature": "fictif",
+      "famille": "fait-divers",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.03,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 8,
+      "occurrencesMax": null,
+      "effets": [],
+      "choix": [
+        {
+          "id": "appel",
+          "libelle": "Appeler le maire et le faire savoir",
+          "description": "Un geste simple, bien reçu.",
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": 10,
+              "ecart": 5,
+              "delaiSemaines": 0,
+              "saturation": true
+            },
+            {
+              "ressource": "notoriete",
+              "base": 10,
+              "ecart": 5,
+              "delaiSemaines": 0,
+              "saturation": true
+            }
+          ]
+        },
+        {
+          "id": "deplacement",
+          "libelle": "Se rendre dans la commune",
+          "description": "Un déplacement de soutien aux élus locaux.",
+          "effets": [
+            {
+              "ressource": "tempsHeures",
+              "base": -5,
+              "ecart": 0,
+              "delaiSemaines": 0,
+              "saturation": false
+            },
+            {
+              "ressource": "popularite",
+              "base": 20,
+              "ecart": 10,
+              "delaiSemaines": 0,
+              "saturation": true
+            }
+          ]
+        }
+      ],
+      "choixParDefaut": "appel",
+      "campagne": null,
+      "contexte": {
+        "local": true
+      }
+    },
+    {
+      "id": "pollution-riviere",
+      "libelle": "Pollution d’une rivière — {departement}",
+      "description": "Une pollution d’origine industrielle (fictive) tue des poissons sur plusieurs kilomètres ; pêcheurs et associations s’inquiètent.",
+      "nature": "fictif",
+      "famille": "fait-divers",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.025,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 8,
+      "occurrencesMax": null,
+      "effets": [],
+      "choix": [
+        {
+          "id": "enquete",
+          "libelle": "Exiger une enquête publique",
+          "description": "Une prise de position nette, appréciée des plus jeunes.",
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": 15,
+              "ecart": 10,
+              "delaiSemaines": 0,
+              "saturation": true
+            },
+            {
+              "ressource": "jeunesse",
+              "base": 200,
+              "ecart": 100,
+              "delaiSemaines": 0,
+              "saturation": true
+            }
+          ]
+        },
+        {
+          "id": "prudence",
+          "libelle": "Attendre les conclusions des services de l’État",
+          "description": "Prudent, mais peu audible.",
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": 0,
+              "ecart": 10,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        }
+      ],
+      "choixParDefaut": "prudence",
+      "campagne": null,
+      "contexte": {
+        "local": true
+      }
+    },
+    {
+      "id": "debat-marche",
+      "libelle": "Débat improvisé sur un marché — {departement}",
+      "description": "Un échange vif mais courtois avec des commerçants, filmé par un passant, est relayé par la presse locale.",
+      "nature": "fictif",
+      "famille": "opportunite",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.04,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 8,
+      "occurrencesMax": null,
+      "effets": [
+        {
+          "ressource": "popularite",
+          "base": 15,
+          "ecart": 10,
+          "delaiSemaines": 0,
+          "saturation": true
+        },
+        {
+          "ressource": "notoriete",
+          "base": 15,
+          "ecart": 10,
+          "delaiSemaines": 0,
+          "saturation": true
+        }
+      ],
+      "choix": [],
+      "choixParDefaut": null,
+      "campagne": null,
+      "contexte": {
+        "local": true
+      }
+    },
+    {
+      "id": "ralliement-maire",
+      "libelle": "Le maire d’une ville moyenne vous rejoint — {departement}",
+      "description": "Un maire sans étiquette (fictif) annonce son soutien et met ses équipes à disposition.",
+      "nature": "fictif",
+      "famille": "opportunite",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.035,
+      "conditions": [
+        {
+          "ressource": "notoriete",
+          "min": 600,
+          "max": null
+        }
+      ],
+      "delaiMinEntreOccurrences": 10,
+      "occurrencesMax": null,
+      "effets": [
+        {
+          "ressource": "notoriete",
+          "base": 30,
+          "ecart": 15,
+          "delaiSemaines": 0,
+          "saturation": true
+        },
+        {
+          "ressource": "popularite",
+          "base": 15,
+          "ecart": 10,
+          "delaiSemaines": 0,
+          "saturation": true
+        },
+        {
+          "ressource": "militants",
+          "base": 20,
+          "ecart": 10,
+          "delaiSemaines": 0,
+          "saturation": false
+        }
+      ],
+      "choix": [],
+      "choixParDefaut": null,
+      "campagne": null,
+      "contexte": {
+        "local": true
+      }
+    },
+    {
+      "id": "vieux-message",
+      "libelle": "Un vieux message ressurgit",
+      "description": "Un message maladroit publié il y a dix ans est exhumé par des comptes anonymes.",
+      "nature": "fictif",
+      "famille": "polemique",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.03,
+      "conditions": [
+        {
+          "ressource": "notoriete",
+          "min": 1500,
+          "max": null
+        }
+      ],
+      "delaiMinEntreOccurrences": 12,
+      "occurrencesMax": null,
+      "effets": [],
+      "choix": [
+        {
+          "id": "excuses",
+          "libelle": "S’excuser sans détour",
+          "description": "La polémique retombe vite, au prix d’un léger recul.",
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -20,
+              "ecart": 10,
+              "delaiSemaines": 0,
+              "saturation": false
+            },
+            {
+              "ressource": "dynamique",
+              "base": -200,
+              "ecart": 100,
+              "delaiSemaines": 0,
+              "saturation": true
+            }
+          ]
+        },
+        {
+          "id": "assumer",
+          "libelle": "Assumer et contre-attaquer",
+          "description": "Vos soutiens apprécient, les autres beaucoup moins.",
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -50,
+              "ecart": 30,
+              "delaiSemaines": 0,
+              "saturation": false
+            },
+            {
+              "ressource": "militants",
+              "base": 10,
+              "ecart": 5,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        },
+        {
+          "id": "ignorer",
+          "libelle": "Ne rien dire",
+          "description": "Le silence nourrit la rumeur quelques jours.",
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -35,
+              "ecart": 25,
+              "delaiSemaines": 0,
+              "saturation": false
+            },
+            {
+              "ressource": "dynamique",
+              "base": -400,
+              "ecart": 200,
+              "delaiSemaines": 0,
+              "saturation": true
+            }
+          ]
+        }
+      ],
+      "choixParDefaut": "excuses",
+      "campagne": null
+    },
+    {
+      "id": "fact-checking",
+      "libelle": "Fact-checking défavorable",
+      "description": "Un chiffre avancé lors d’un de vos récents passages dans les médias est jugé faux par des rubriques de vérification (fictives).",
+      "nature": "fictif",
+      "famille": "polemique",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.12,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 4,
+      "occurrencesMax": null,
+      "effets": [],
+      "choix": [
+        {
+          "id": "corriger",
+          "libelle": "Corriger le chiffre",
+          "description": "Reconnaître l’erreur : l’incident est clos.",
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -10,
+              "ecart": 5,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        },
+        {
+          "id": "maintenir",
+          "libelle": "Maintenir le chiffre",
+          "description": "Vos soutiens suivent ; la controverse s’installe.",
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -40,
+              "ecart": 20,
+              "delaiSemaines": 0,
+              "saturation": false
+            },
+            {
+              "ressource": "militants",
+              "base": 10,
+              "ecart": 5,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        }
+      ],
+      "choixParDefaut": "corriger",
+      "campagne": null,
+      "contexte": {
+        "actionsRecentes": {
+          "actions": ["interview", "emission-politique", "interview-longue", "decryptage"],
+          "semaines": 2
+        }
+      }
+    },
+    {
+      "id": "depense-contestee",
+      "libelle": "Dépense de campagne contestée",
+      "description": "Un journal (fictif) s’interroge sur une facture de location de salle jugée élevée.",
+      "nature": "fictif",
+      "famille": "polemique",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.025,
+      "conditions": [
+        {
+          "ressource": "notoriete",
+          "min": 800,
+          "max": null
+        }
+      ],
+      "delaiMinEntreOccurrences": 10,
+      "occurrencesMax": null,
+      "effets": [],
+      "choix": [
+        {
+          "id": "factures",
+          "libelle": "Publier les factures",
+          "description": "La transparence désamorce l’affaire.",
+          "effets": [
+            {
+              "ressource": "tempsHeures",
+              "base": -2,
+              "ecart": 0,
+              "delaiSemaines": 0,
+              "saturation": false
+            },
+            {
+              "ressource": "popularite",
+              "base": 10,
+              "ecart": 5,
+              "delaiSemaines": 0,
+              "saturation": true
+            }
+          ]
+        },
+        {
+          "id": "laisser-dire",
+          "libelle": "Laisser dire",
+          "description": "L’affaire traîne quelques jours.",
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -30,
+              "ecart": 15,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        }
+      ],
+      "choixParDefaut": "factures",
+      "campagne": null
+    },
+    {
+      "id": "programme-copie",
+      "libelle": "Accusé de copier un programme adverse",
+      "description": "Des internautes comparent ligne à ligne certaines de vos propositions à celles d’un concurrent.",
+      "nature": "fictif",
+      "famille": "polemique",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.03,
+      "conditions": [
+        {
+          "ressource": "notoriete",
+          "min": 1000,
+          "max": null
+        }
+      ],
+      "delaiMinEntreOccurrences": 12,
+      "occurrencesMax": null,
+      "effets": [
+        {
+          "ressource": "popularite",
+          "base": -20,
+          "ecart": 15,
+          "delaiSemaines": 0,
+          "saturation": false
+        },
+        {
+          "ressource": "dynamique",
+          "base": -200,
+          "ecart": 150,
+          "delaiSemaines": 0,
+          "saturation": true
+        }
+      ],
+      "choix": [],
+      "choixParDefaut": null,
+      "campagne": null
+    },
+    {
+      "id": "soutien-encombrant",
+      "libelle": "Un soutien encombrant",
+      "description": "Un militant local de votre parti tient des propos outranciers lors d’une réunion publique.",
+      "nature": "fictif",
+      "famille": "polemique",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.03,
+      "conditions": [
+        {
+          "ressource": "militants",
+          "min": 200,
+          "max": null
+        }
+      ],
+      "delaiMinEntreOccurrences": 10,
+      "occurrencesMax": null,
+      "effets": [],
+      "choix": [
+        {
+          "id": "exclure",
+          "libelle": "L’écarter de la campagne",
+          "description": "Une sanction rapide ; quelques militants grincent des dents.",
+          "effets": [
+            {
+              "ressource": "militants",
+              "base": -15,
+              "ecart": 10,
+              "delaiSemaines": 0,
+              "saturation": false
+            },
+            {
+              "ressource": "popularite",
+              "base": 10,
+              "ecart": 10,
+              "delaiSemaines": 0,
+              "saturation": true
+            }
+          ]
+        },
+        {
+          "id": "minimiser",
+          "libelle": "Minimiser l’incident",
+          "description": "L’affaire vous colle à la peau.",
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -30,
+              "ecart": 15,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        }
+      ],
+      "choixParDefaut": "exclure",
+      "campagne": null
+    },
+    {
+      "id": "favori-cible",
+      "libelle": "Le favori sous le feu des attaques",
+      "description": "Vos adversaires concentrent leurs critiques sur vous : chaque proposition est disséquée.",
+      "nature": "fictif",
+      "famille": "polemique",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.08,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 4,
+      "occurrencesMax": null,
+      "effets": [
+        {
+          "ressource": "popularite",
+          "base": -30,
+          "ecart": 20,
+          "delaiSemaines": 0,
+          "saturation": false
+        },
+        {
+          "ressource": "notoriete",
+          "base": 40,
+          "ecart": 20,
+          "delaiSemaines": 0,
+          "saturation": true
+        }
+      ],
+      "choix": [],
+      "choixParDefaut": null,
+      "campagne": null,
+      "contexte": {
+        "phases": ["campagne"],
+        "rang": {
+          "min": null,
+          "max": 2
+        }
+      }
+    },
+    {
+      "id": "video-detournee",
+      "libelle": "Une de vos vidéos détournée",
+      "description": "Un extrait de vos vidéos récentes est monté hors contexte et circule largement.",
+      "nature": "fictif",
+      "famille": "polemique",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.08,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 4,
+      "occurrencesMax": null,
+      "effets": [
+        {
+          "ressource": "dynamique",
+          "base": -300,
+          "ecart": 200,
+          "delaiSemaines": 0,
+          "saturation": true
+        },
+        {
+          "ressource": "popularite",
+          "base": -15,
+          "ecart": 10,
+          "delaiSemaines": 0,
+          "saturation": false
+        }
+      ],
+      "choix": [],
+      "choixParDefaut": null,
+      "campagne": null,
+      "contexte": {
+        "actionsRecentes": {
+          "actions": ["vague-video-courte", "live-twitch"],
+          "semaines": 2
+        }
+      }
+    },
+    {
+      "id": "appel-vote-utile",
+      "libelle": "Appel au vote utile contre vous",
+      "description": "Des responsables d’un camp voisin (fictifs) appellent vos électeurs à voter « utile » dès le premier tour.",
+      "nature": "fictif",
+      "famille": "polemique",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.08,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 3,
+      "occurrencesMax": null,
+      "effets": [
+        {
+          "ressource": "popularite",
+          "base": -25,
+          "ecart": 15,
+          "delaiSemaines": 0,
+          "saturation": false
+        },
+        {
+          "ressource": "militants",
+          "base": -15,
+          "ecart": 10,
+          "delaiSemaines": 0,
+          "saturation": false
+        }
+      ],
+      "choix": [],
+      "choixParDefaut": null,
+      "campagne": null,
+      "contexte": {
+        "phases": ["campagne"],
+        "rang": {
+          "min": 5,
+          "max": null
+        },
+        "semainesAvantScrutin": {
+          "min": 0,
+          "max": 6
+        }
+      }
+    },
+    {
+      "id": "grand-oral-etudiant",
+      "libelle": "Invitation à un grand oral étudiant",
+      "description": "Une association étudiante (fictive) vous invite à débattre devant un amphithéâtre comble.",
+      "nature": "fictif",
+      "famille": "opportunite",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.04,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 10,
+      "occurrencesMax": null,
+      "effets": [],
+      "choix": [
+        {
+          "id": "accepter",
+          "libelle": "Accepter l’invitation",
+          "description": "Une soirée de questions sans filtre.",
+          "effets": [
+            {
+              "ressource": "tempsHeures",
+              "base": -4,
+              "ecart": 0,
+              "delaiSemaines": 0,
+              "saturation": false
+            },
+            {
+              "ressource": "jeunesse",
+              "base": 600,
+              "ecart": 300,
+              "delaiSemaines": 0,
+              "saturation": true
+            },
+            {
+              "ressource": "notoriete",
+              "base": 30,
+              "ecart": 15,
+              "delaiSemaines": 0,
+              "saturation": true
+            }
+          ]
+        },
+        {
+          "id": "decliner",
+          "libelle": "Décliner poliment",
+          "description": "Les étudiants le remarquent.",
+          "effets": [
+            {
+              "ressource": "jeunesse",
+              "base": -100,
+              "ecart": 50,
+              "delaiSemaines": 0,
+              "saturation": true
+            }
+          ]
+        }
+      ],
+      "choixParDefaut": "accepter",
+      "campagne": null
+    },
+    {
+      "id": "video-terrain-virale",
+      "libelle": "Une vidéo de terrain fait le tour des réseaux",
+      "description": "Une conversation sincère avec une habitante, lors de votre campagne de terrain, est filmée et partagée.",
+      "nature": "fictif",
+      "famille": "opportunite",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.1,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 4,
+      "occurrencesMax": null,
+      "effets": [
+        {
+          "ressource": "dynamique",
+          "base": 600,
+          "ecart": 300,
+          "delaiSemaines": 0,
+          "saturation": true
+        },
+        {
+          "ressource": "popularite",
+          "base": 20,
+          "ecart": 10,
+          "delaiSemaines": 0,
+          "saturation": true
+        },
+        {
+          "ressource": "jeunesse",
+          "base": 200,
+          "ecart": 100,
+          "delaiSemaines": 0,
+          "saturation": true
+        }
+      ],
+      "choix": [],
+      "choixParDefaut": null,
+      "campagne": null,
+      "contexte": {
+        "actionsRecentes": {
+          "actions": ["porte-a-porte", "tournee"],
+          "semaines": 2
+        }
+      }
+    },
+    {
+      "id": "salle-comble",
+      "libelle": "Salle comble",
+      "description": "Votre meeting de la semaine a dû refuser du monde ; les images des files d’attente circulent.",
+      "nature": "fictif",
+      "famille": "opportunite",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.12,
+      "conditions": [
+        {
+          "ressource": "popularite",
+          "min": 2000,
+          "max": null
+        }
+      ],
+      "delaiMinEntreOccurrences": 4,
+      "occurrencesMax": null,
+      "effets": [
+        {
+          "ressource": "dynamique",
+          "base": 400,
+          "ecart": 200,
+          "delaiSemaines": 0,
+          "saturation": true
+        },
+        {
+          "ressource": "militants",
+          "base": 25,
+          "ecart": 15,
+          "delaiSemaines": 0,
+          "saturation": false
+        }
+      ],
+      "choix": [],
+      "choixParDefaut": null,
+      "campagne": null,
+      "contexte": {
+        "actionsRecentes": {
+          "actions": ["meeting", "grand-meeting"],
+          "semaines": 1
+        }
+      }
+    },
+    {
+      "id": "candidat-qui-monte",
+      "libelle": "Le candidat qui monte",
+      "description": "Les commentateurs (fictifs) remarquent votre progression : les invitations se multiplient.",
+      "nature": "fictif",
+      "famille": "opportunite",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.06,
+      "conditions": [
+        {
+          "ressource": "dynamique",
+          "min": 1500,
+          "max": null
+        }
+      ],
+      "delaiMinEntreOccurrences": 6,
+      "occurrencesMax": null,
+      "effets": [
+        {
+          "ressource": "notoriete",
+          "base": 60,
+          "ecart": 30,
+          "delaiSemaines": 0,
+          "saturation": true
+        },
+        {
+          "ressource": "dynamique",
+          "base": 300,
+          "ecart": 150,
+          "delaiSemaines": 0,
+          "saturation": true
+        }
+      ],
+      "choix": [],
+      "choixParDefaut": null,
+      "campagne": null,
+      "contexte": {
+        "phases": ["campagne"],
+        "rang": {
+          "min": 3,
+          "max": 6
+        }
+      }
+    },
+    {
+      "id": "createur-relais",
+      "libelle": "Un créateur de contenus relaie votre campagne",
+      "description": "Un créateur de contenus (fictif), suivi par les 18-34 ans, partage vos propositions sur le logement.",
+      "nature": "fictif",
+      "famille": "opportunite",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.04,
+      "conditions": [
+        {
+          "ressource": "jeunesse",
+          "min": 1500,
+          "max": null
+        }
+      ],
+      "delaiMinEntreOccurrences": 8,
+      "occurrencesMax": null,
+      "effets": [
+        {
+          "ressource": "jeunesse",
+          "base": 500,
+          "ecart": 250,
+          "delaiSemaines": 0,
+          "saturation": true
+        },
+        {
+          "ressource": "dynamique",
+          "base": 300,
+          "ecart": 200,
+          "delaiSemaines": 0,
+          "saturation": true
+        }
+      ],
+      "choix": [],
+      "choixParDefaut": null,
+      "campagne": null
+    },
+    {
+      "id": "bus-en-panne",
+      "libelle": "Le bus de campagne en panne",
+      "description": "Une demi-journée perdue sur une aire d’autoroute.",
+      "nature": "fictif",
+      "famille": "vie-de-campagne",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.03,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 8,
+      "occurrencesMax": null,
+      "effets": [
+        {
+          "ressource": "tempsHeures",
+          "base": -5,
+          "ecart": 0,
+          "delaiSemaines": 0,
+          "saturation": false
+        }
+      ],
+      "choix": [],
+      "choixParDefaut": null,
+      "campagne": null
+    },
+    {
+      "id": "cyberattaque-site",
+      "libelle": "Cyberattaque contre le site de campagne",
+      "description": "Le site est inaccessible deux jours ; les dons en ligne sont suspendus.",
+      "nature": "fictif",
+      "famille": "vie-de-campagne",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.02,
+      "conditions": [
+        {
+          "ressource": "notoriete",
+          "min": 800,
+          "max": null
+        }
+      ],
+      "delaiMinEntreOccurrences": 12,
+      "occurrencesMax": null,
+      "effets": [],
+      "choix": [
+        {
+          "id": "prestataire",
+          "libelle": "Faire appel à un prestataire",
+          "description": "Le site est rétabli en quelques heures, à grands frais.",
+          "effets": [
+            {
+              "ressource": "budgetCentimes",
+              "base": -1500000,
+              "ecart": 0,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        },
+        {
+          "id": "attendre",
+          "libelle": "Attendre le rétablissement",
+          "description": "Deux jours sans site, et des sympathisants agacés.",
+          "effets": [
+            {
+              "ressource": "dynamique",
+              "base": -300,
+              "ecart": 150,
+              "delaiSemaines": 0,
+              "saturation": true
+            },
+            {
+              "ressource": "notoriete",
+              "base": -10,
+              "ecart": 5,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        }
+      ],
+      "choixParDefaut": "attendre",
+      "campagne": null
+    },
+    {
+      "id": "coup-de-fatigue",
+      "libelle": "Coup de fatigue",
+      "description": "Le rythme de la fin de campagne pèse : votre médecin recommande de lever le pied quelques jours.",
+      "nature": "fictif",
+      "famille": "vie-de-campagne",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.05,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 6,
+      "occurrencesMax": null,
+      "effets": [
+        {
+          "ressource": "tempsHeures",
+          "base": -8,
+          "ecart": 0,
+          "delaiSemaines": 0,
+          "saturation": false
+        }
+      ],
+      "choix": [],
+      "choixParDefaut": null,
+      "campagne": null,
+      "contexte": {
+        "semainesAvantScrutin": {
+          "min": 0,
+          "max": 8
+        }
+      }
+    },
+    {
+      "id": "record-dons-ligne",
+      "libelle": "Record de petits dons en ligne",
+      "description": "Votre intervention de la semaine déclenche une vague de petits dons.",
+      "nature": "fictif",
+      "famille": "opportunite",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.06,
+      "conditions": [
+        {
+          "ressource": "popularite",
+          "min": 2000,
+          "max": null
+        }
+      ],
+      "delaiMinEntreOccurrences": 6,
+      "occurrencesMax": null,
+      "effets": [],
+      "choix": [],
+      "choixParDefaut": null,
+      "campagne": {
+        "dons": {
+          "donateurs": {
+            "base": 600,
+            "ecart": 200
+          },
+          "montantMoyenCentimes": 5000,
+          "probaPersonneMorale": 0.2,
+          "probaDepassement": 0.1,
+          "probaEspeces": 0.05
+        }
+      },
+      "contexte": {
+        "actionsRecentes": {
+          "actions": ["meeting", "grand-meeting", "emission-politique"],
+          "semaines": 1
+        }
+      }
+    },
+    {
+      "id": "tract-errone",
+      "libelle": "Erreur dans un tract",
+      "description": "Un chiffre erroné a été imprimé dans deux cent mille tracts.",
+      "nature": "fictif",
+      "famille": "vie-de-campagne",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.025,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 10,
+      "occurrencesMax": null,
+      "effets": [],
+      "choix": [
+        {
+          "id": "reimprimer",
+          "libelle": "Réimprimer les tracts",
+          "description": "L’erreur disparaît, la facture reste.",
+          "effets": [
+            {
+              "ressource": "budgetCentimes",
+              "base": -2000000,
+              "ecart": 0,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        },
+        {
+          "id": "assumer",
+          "libelle": "Corriger en ligne et assumer",
+          "description": "Quelques moqueries, vite oubliées.",
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -15,
+              "ecart": 10,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        }
+      ],
+      "choixParDefaut": "assumer",
+      "campagne": null
+    },
+    {
+      "id": "bataille-procurations",
+      "libelle": "Bataille des procurations",
+      "description": "Vos équipes organisent la mobilisation des derniers jours : procurations, appels, porte-à-porte.",
+      "nature": "fictif",
+      "famille": "vie-de-campagne",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.2,
+      "conditions": [
+        {
+          "ressource": "militants",
+          "min": 300,
+          "max": null
+        }
+      ],
+      "delaiMinEntreOccurrences": 2,
+      "occurrencesMax": null,
+      "effets": [
+        {
+          "ressource": "dynamique",
+          "base": 400,
+          "ecart": 200,
+          "delaiSemaines": 0,
+          "saturation": true
+        },
+        {
+          "ressource": "militants",
+          "base": -20,
+          "ecart": 10,
+          "delaiSemaines": 0,
+          "saturation": false
+        }
+      ],
+      "choix": [],
+      "choixParDefaut": null,
+      "campagne": null,
+      "contexte": {
+        "semainesAvantScrutin": {
+          "min": 0,
+          "max": 2
+        }
+      }
+    },
+    {
+      "id": "reports-de-voix",
+      "libelle": "Le débat sur les reports de voix",
+      "description": "Les électeurs des candidats éliminés hésitent ; vos équipes multiplient les appels.",
+      "nature": "fictif",
+      "famille": "vie-de-campagne",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.35,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 2,
+      "occurrencesMax": null,
+      "effets": [],
+      "choix": [
+        {
+          "id": "main-tendue",
+          "libelle": "Tendre la main aux électeurs des éliminés",
+          "description": "Élargir, au risque de froisser une partie de votre camp.",
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": 20,
+              "ecart": 10,
+              "delaiSemaines": 0,
+              "saturation": true
+            },
+            {
+              "ressource": "militants",
+              "base": -10,
+              "ecart": 5,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        },
+        {
+          "id": "ligne",
+          "libelle": "Garder votre ligne",
+          "description": "Rassurer votre camp ; peu de nouveaux électeurs.",
+          "effets": [
+            {
+              "ressource": "militants",
+              "base": 15,
+              "ecart": 10,
+              "delaiSemaines": 0,
+              "saturation": false
+            },
+            {
+              "ressource": "popularite",
+              "base": -5,
+              "ecart": 5,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        }
+      ],
+      "choixParDefaut": "ligne",
+      "campagne": null,
+      "contexte": {
+        "phases": ["entre_deux_tours"]
+      }
     }
   ],
   "electorat": {

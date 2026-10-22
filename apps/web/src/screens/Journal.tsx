@@ -29,6 +29,8 @@ export function Journal() {
   const entries = journal.data?.pages.flatMap((page) => page.entries) ?? [];
   const blocLabel = (id: string) =>
     ruleset.data?.legislatives.blocs.find((b) => b.id === id)?.libelle ?? id;
+  const eventFamily = (id: string) =>
+    ruleset.data?.evenements.find((e) => e.id === id)?.famille ?? null;
 
   return (
     <section aria-labelledby="titre-journal" className="space-y-4">
@@ -70,6 +72,7 @@ export function Journal() {
                     report={entry.report}
                     state={game.state}
                     blocLabel={blocLabel}
+                    eventFamily={eventFamily}
                   />
                 </div>
               </details>

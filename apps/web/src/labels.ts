@@ -246,6 +246,14 @@ export function pollFactorLabel(label: string): string {
   return POLL_FACTOR_LABELS[label] ?? label;
 }
 
+/** Familles d'événements de campagne (phase 11). */
+export const EVENT_FAMILY_LABELS = {
+  'fait-divers': 'Fait divers',
+  polemique: 'Polémique',
+  opportunite: 'Opportunité',
+  'vie-de-campagne': 'Vie de campagne',
+} as const;
+
 /** Niveau d'un passage dans les médias (phase 11). */
 export const PRESTATION_LABELS = {
   reussie: 'Passage réussi',
