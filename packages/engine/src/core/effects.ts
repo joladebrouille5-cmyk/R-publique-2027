@@ -9,7 +9,7 @@ import type {
 import type { FinanceBook } from '../campaign/finances';
 import type { Ledger } from './ledger';
 
-const SATURABLE = new Set(['notoriete', 'popularite']);
+const SATURABLE = new Set(['notoriete', 'popularite', 'jeunesse', 'dynamique']);
 
 /** « 12,34 % » à partir d'une valeur en centièmes de point (format indépendant du système). */
 export function formatPercent(centiemes: number): string {

@@ -17,9 +17,10 @@ import {
   MEDIA_TYPE_LABELS,
   OutletLogo,
 } from '../components/RealMedia';
-import { card } from '../components/ui';
+import { card, screenTitle } from '../components/ui';
 import { formatGameDate } from '../labels';
 import { useCurrentGame } from './GameLayout';
+import { Reseaux } from './medias/Reseaux';
 
 const ACTIVE = new Set(['candidat', 'qualifie']);
 const decimal = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 });
@@ -290,7 +291,7 @@ export function Medias() {
 
   return (
     <section aria-labelledby="titre-medias" className="space-y-6">
-      <h1 id="titre-medias" className="text-2xl font-bold">
+      <h1 id="titre-medias" className={screenTitle}>
         Médias
       </h1>
       <p
@@ -304,6 +305,8 @@ export function Medias() {
           ? `Couverture simulée de la semaine ${state.medias.semaine} : exposition (part de l’attention de l’organe) et tonalité (−100 à +100). Elle dépend de la notoriété, des actions de la semaine et, à la télévision et à la radio, de l’exposition mesurée du parti de chaque candidat.`
           : 'La couverture médiatique sera calculée à la résolution de la semaine.'}
       </p>
+
+      <Reseaux state={state} ruleset={data} gameId={game.id} week={game.week} />
 
       <Shows state={state} ruleset={data} />
 

@@ -70,6 +70,8 @@ export const RESOURCE_LABELS: Record<ResourceKey, string> = {
   militants: 'Militants',
   notoriete: 'Notoriété',
   popularite: 'Popularité',
+  jeunesse: 'Jeunesse (18-34 ans)',
+  dynamique: 'Dynamique (buzz)',
 };
 
 const euros = new Intl.NumberFormat('fr-FR', {
@@ -94,6 +96,8 @@ export function formatResource(resource: ResourceKey, value: number): string {
       return integer.format(value);
     case 'notoriete':
     case 'popularite':
+    case 'jeunesse':
+    case 'dynamique':
       return `${twoDecimals.format(value / 100)} %`;
   }
 }
@@ -111,6 +115,8 @@ export function formatDelta(resource: ResourceKey, delta: number): string {
       return `${sign}${integer.format(magnitude)}`;
     case 'notoriete':
     case 'popularite':
+    case 'jeunesse':
+    case 'dynamique':
       return `${sign}${twoDecimals.format(magnitude / 100)} pt`;
   }
 }

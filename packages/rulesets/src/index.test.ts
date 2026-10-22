@@ -351,6 +351,54 @@ describe('médias réels (phase 5 ter)', () => {
   });
 });
 
+describe('réseaux et nouveaux médias (phase 9)', () => {
+  const rules = ruleset.numerique;
+
+  it('relie chaque format réel à une action, à des exemples sourcés et à des paramètres étiquetés', () => {
+    expect(rules.statut).toBe('hypothese');
+    for (const format of rules.formats) {
+      expect(ruleset.actions.filter((a) => a.format === format.id)).toHaveLength(1);
+      for (const exemple of format.exemples) {
+        const source = ruleset.sources[exemple.sourceId]!;
+        expect(source.url).toMatch(/^https:\/\/fr\.wikipedia\.org\/w\/index\.php\?.*oldid=\d+/);
+        expect(source.consulteLe).not.toBeNull();
+      }
+    }
+    // Chaque action numérique agit sur au moins une des deux jauges, et son risque est déclaré.
+    for (const action of ruleset.actions.filter((a) => a.format)) {
+      expect(
+        action.effets.some((e) => e.ressource === 'jeunesse' || e.ressource === 'dynamique'),
+      ).toBe(true);
+      expect(action.risque).not.toBeNull();
+    }
+  });
+
+  it('ne prête aucun propos à une personne réelle : comptes inventés, réactions sans nom', () => {
+    const names = [
+      ...ruleset.personnalites.personnalites.flatMap((p) => [p.nom, `${p.prenom} ${p.nom}`]),
+      ...ruleset.mediasReels.emissions.flatMap((e) => e.presentateurs),
+      ...ruleset.candidatsFictifs.map((c) => c.nom),
+      ...rules.formats.flatMap((f) => f.exemples.map((e) => e.nom)),
+    ].map((n) => n.toLowerCase());
+    const texts = rules.formats.flatMap((f) => Object.values(f.reactions).flat());
+    for (const text of [...texts, ...rules.comptes]) {
+      for (const name of names) expect(text.toLowerCase()).not.toContain(name);
+    }
+  });
+
+  it('refuse un format sans action, une action d’un format inconnu ou un groupe non pondéré', () => {
+    const orphan = full();
+    orphan.actions = orphan.actions.filter((a) => a.id !== 'live-twitch');
+    expect(RulesetSchema.safeParse(orphan).success).toBe(false);
+    const unknown = full();
+    (unknown.actions.find((a) => a.id === 'decryptage') as { format?: string }).format = 'absent';
+    expect(RulesetSchema.safeParse(unknown).success).toBe(false);
+    const weights = full();
+    delete (weights.numerique.modele.jeunesse as Record<string, number>)['eloignes'];
+    expect(RulesetSchema.safeParse(weights).success).toBe(false);
+  });
+});
+
 describe('quinquennat (phase 6)', () => {
   const q = ruleset.quinquennat;
   const days = (a: string, b: string) =>

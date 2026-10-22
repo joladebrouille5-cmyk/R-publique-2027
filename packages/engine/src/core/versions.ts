@@ -1,5 +1,5 @@
 /** Version du moteur, enregistrée dans chaque partie et chaque sauvegarde (§11). */
-export const ENGINE_VERSION = '0.12.0';
+export const ENGINE_VERSION = '0.13.0';
 
 /**
  * Version du format de `GameState` ; toute évolution s'accompagne d'une migration
@@ -11,6 +11,7 @@ export const ENGINE_VERSION = '0.12.0';
  * gouvernement, archives des cycles précédents) ; 9 : phase 6 (Assemblée nationale, textes,
  * votes par groupe, réformes) ; 10 : phase 6 (économie, crises) ; 11 : phase 6 (législatives) ;
  * 12 : phase 6 (bilan du quinquennat, présidentielle suivante, statut « inéligible ») ;
- * 13 : phase 7 (scénario de départ, conséquences durables).
+ * 13 : phase 7 (scénario de départ, conséquences durables) ; 14 : phase 9 (jauges Jeunesse et
+ * Dynamique, publications simulées sur les réseaux et nouveaux médias).
  */
-export const SAVE_SCHEMA_VERSION = 13;
+export const SAVE_SCHEMA_VERSION = 14;

@@ -18,6 +18,7 @@ import { resolveAlliances, updateRelations } from '../ai/relations';
 import { consumeActions, resolveActionEffects, validateActions } from '../campaign/actions';
 import { FinanceBook } from '../campaign/finances';
 import { updateMedia } from '../campaign/medias';
+import { publishDigital } from '../campaign/numerique';
 import {
   ParrainageBook,
   presentationWindow,
@@ -233,11 +234,13 @@ export function advanceWeek(
     allValidated,
     5,
   );
+  const posts = publishDigital(state, ruleset, allValidated, risks);
   const events = drawEvents(state, ruleset, ledger, finances, 5);
   set(
     5,
     true,
     `${plural(events.length, 'événement')}, ${plural(risks.length, 'aléa')} d'action, ${plural(decisions.length, 'décision appliquée')}` +
+      (posts.length ? `, ${plural(posts.length, 'publication')} sur les réseaux` : '') +
       (debate ? ', débat d’entre-deux-tours' : ''),
   );
 
@@ -365,6 +368,7 @@ export function advanceWeek(
       })),
       economie: [],
       legislatives: null,
+      numerique: posts,
     },
   };
 }

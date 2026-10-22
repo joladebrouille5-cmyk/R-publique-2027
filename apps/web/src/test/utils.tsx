@@ -220,6 +220,7 @@ export function reportFixture(overrides: Partial<WeeklyReport> = {}): WeeklyRepo
     strategies: [],
     economie: [],
     legislatives: null,
+    numerique: [],
     ...overrides,
   };
 }

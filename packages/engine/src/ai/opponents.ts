@@ -37,6 +37,8 @@ const SCALE: Record<ResourceKey, number> = {
   militants: 50,
   notoriete: 100,
   popularite: 100,
+  jeunesse: 100,
+  dynamique: 100,
 };
 const PRIORITY_WEIGHT = 1.5;
 
@@ -49,6 +51,9 @@ function needs(actor: Actor): Record<ResourceKey, number> {
     militants: r.militants < 300 ? 0.6 : 0.2,
     notoriete: 1 - r.notoriete / 10_000,
     popularite: 1.2,
+    // Jauges des réseaux (phase 9) : poids modérés, à la mesure de leur effet sur le vote.
+    jeunesse: 0.15 * (1 - r.jeunesse / 10_000),
+    dynamique: 0.1,
   };
 }
 

@@ -27,6 +27,7 @@ import {
   GameStateV10Schema,
   GameStateV11Schema,
   GameStateV12Schema,
+  GameStateV13Schema,
   addDays,
   daysFromCivil,
   parseIsoDate,
@@ -47,6 +48,7 @@ import {
   type GameStateV10,
   type GameStateV11,
   type GameStateV12,
+  type GameStateV13,
 } from '@r2027/shared';
 import { z } from 'zod';
 import { hashState, sha256, canonicalStringify } from './canonical';
@@ -87,7 +89,8 @@ const SCHEMAS: Record<number, z.ZodType> = {
   10: GameStateV10Schema,
   11: GameStateV11Schema,
   12: GameStateV12Schema,
-  13: GameStateSchema,
+  13: GameStateV13Schema,
+  14: GameStateSchema,
 };
 
 /** Jeux de règles des parties aux formats 2 (phase 2) et 3 (phase 3). */
@@ -466,7 +469,7 @@ function migrateV11ToV12(v11: GameStateV11): GameStateV12 {
  * existantes ont commencé sans scénario (« standard », qui ne modifie rien) et sans conséquence
  * durable ; les bilans déjà archivés n'en comptent donc aucune.
  */
-function migrateV12ToV13(v12: GameStateV12): GameState {
+function migrateV12ToV13(v12: GameStateV12): GameStateV13 {
   return {
     ...v12,
     meta: {
@@ -487,6 +490,31 @@ function migrateV12ToV13(v12: GameStateV12): GameState {
   };
 }
 
+/**
+ * Format 13 → 14 (phase 9) : jauges Jeunesse et Dynamique et fil des réseaux. Chaque candidat
+ * reçoit les jauges de départ du jeu de règles courant (identiques pour tous) ; le fil des
+ * publications simulées commence vide.
+ */
+function migrateV13ToV14(v13: GameStateV13): GameState {
+  const initial = getRuleset(CURRENT_RULESET_KEY).numerique.initial;
+  return {
+    ...v13,
+    meta: {
+      ...v13.meta,
+      engineVersion: ENGINE_VERSION,
+      rulesetVersion: CURRENT_RULESET_KEY,
+      saveSchemaVersion: 14,
+    },
+    actors: Object.fromEntries(
+      Object.entries(v13.actors).map(([id, actor]) => [
+        id,
+        { ...actor, resources: { ...actor.resources, ...initial } },
+      ]),
+    ),
+    numerique: { publications: [] },
+  };
+}
+
 const MIGRATIONS: Record<number, (state: never) => unknown> = {
   1: migrateV1ToV2,
   2: migrateV2ToV3,
@@ -500,6 +528,7 @@ const MIGRATIONS: Record<number, (state: never) => unknown> = {
   10: migrateV10ToV11,
   11: migrateV11ToV12,
   12: migrateV12ToV13,
+  13: migrateV13ToV14,
 };
 
 export type LoadedState = { state: GameState; stateHash: string; migratedFrom: number | null };

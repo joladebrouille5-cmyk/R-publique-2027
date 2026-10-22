@@ -10,7 +10,8 @@ import { RealMediaSchema } from './medias';
 import { RealPersonalitiesSchema } from './personalities';
 import { MinisterProfileSchema } from './quinquennat';
 import { CampaignStyleSchema, PositionSchema } from './politics';
-import { ResourceKeySchema, ResourcesSchema } from './resources';
+import { DIGITAL_TONES } from './numerique';
+import { ResourceKeySchema, ResourcesV1Schema } from './resources';
 
 // Jeu de règles versionné (§2 : les dates électorales sont des paramètres versionnés vérifiés
 // auprès des sources officielles, pas des constantes dispersées dans le code).
@@ -157,6 +158,8 @@ export const ActionDefinitionSchema = z
     note: z.string().nullable(),
     /** Acte institutionnel du président (phase 6) : remaniement, dissolution de l'Assemblée. */
     institution: z.enum(['remaniement', 'dissolution']).optional(),
+    /** Format des réseaux et nouveaux médias (phase 9) : l'action produit une publication. */
+    format: Id.optional(),
   })
   .strict();
 export type ActionDefinition = z.infer<typeof ActionDefinitionSchema>;
@@ -573,7 +576,8 @@ export const EventDefinitionSchema = z
   .strict();
 export type EventDefinition = z.infer<typeof EventDefinitionSchema>;
 
-const DifficultyResources = ResourcesSchema.omit({ tempsHeures: true });
+/** Ressources de départ par difficulté ; Jeunesse et Dynamique viennent de `numerique.initial`. */
+const DifficultyResources = ResourcesV1Schema.omit({ tempsHeures: true });
 const Coefficient = z.number().min(0).max(100);
 const ResourceModifiers = z
   .object({
@@ -713,6 +717,70 @@ export const ProposalSchema = z
 export type Proposal = z.infer<typeof ProposalSchema>;
 
 const DepartementCode = z.string().regex(/^(\d{2}|2A|2B|97\d)$/);
+
+/**
+ * Réseaux sociaux et nouveaux médias (phase 9). Les formats et leurs exemples sont réels et
+ * sourcés (révisions figées) ; leurs effets, les vues et les réactions sont des paramètres de
+ * jeu (hypothèses). Les comptes qui réagissent sont inventés ; aucun propos n'est prêté à un
+ * animateur, à une chaîne ni à une personne réelle.
+ */
+const ReactionTemplates = z
+  .object(
+    Object.fromEntries(
+      DIGITAL_TONES.map((t) => [t, z.array(z.string().min(1).max(200)).min(3)]),
+    ) as {
+      [K in (typeof DIGITAL_TONES)[number]]: z.ZodArray<z.ZodString>;
+    },
+  )
+  .strict();
+
+export const DigitalFormatSchema = z
+  .object({
+    id: Id,
+    libelle: z.string().min(1),
+    plateforme: z.string().min(1),
+    description: z.string().min(1),
+    /** Exemples réels du format (chaînes, émissions), avec un fait vérifié dans la source. */
+    exemples: z
+      .array(z.object({ nom: z.string().min(1), fait: z.string().min(1), sourceId: Id }).strict())
+      .min(1),
+    /** Vues d'une publication (simulation) : base × (0,5 + notoriété) × (0,5 + jeunesse) ± écart. */
+    vues: z.object({ base: z.number().int().min(1), ecart: Fraction }).strict(),
+    reactions: ReactionTemplates,
+  })
+  .strict();
+export type DigitalFormat = z.infer<typeof DigitalFormatSchema>;
+
+export const DigitalRulesSchema = z
+  .object({
+    statut: z.literal('hypothese'),
+    sourceId: Id,
+    note: z.string().min(1),
+    /** Jauges de départ de tous les candidats. */
+    initial: z.object({ jeunesse: Points, dynamique: Points }).strict(),
+    /** Part de la jauge Jeunesse perdue chaque semaine. */
+    erosionJeunesse: Fraction,
+    /** Part de la Dynamique (buzz) retombée chaque semaine. */
+    retombeeDynamique: Fraction,
+    modele: z
+      .object({
+        /** Poids de l'écho chez les 18-34 ans dans le score latent, par groupe d'électeurs. */
+        jeunesse: z.record(Id, z.number().min(0).max(5)),
+        /** Jauge Jeunesse neutre (au-dessus : bonus, en dessous : malus). */
+        referenceJeunesse: Points,
+        /** Poids de la Dynamique (buzz) dans le score latent. */
+        elan: z.number().min(0).max(5),
+      })
+      .strict(),
+    formats: z.array(DigitalFormatSchema).min(1),
+    /** Pseudonymes inventés des comptes qui réagissent (aucun compte réel). */
+    comptes: z.array(z.string().regex(/^@[a-z0-9_.]{3,30}$/)).min(8),
+    /** Publications gardées dans le fil (les plus récentes). */
+    publicationsMax: z.number().int().min(1).max(60),
+    reactionsParPublication: z.number().int().min(1).max(6),
+  })
+  .strict();
+export type DigitalRules = z.infer<typeof DigitalRulesSchema>;
 
 export const RulesetSchema = z
   .object({
@@ -968,6 +1036,7 @@ export const RulesetSchema = z
       })
       .strict(),
     mediasReels: RealMediaSchema,
+    numerique: DigitalRulesSchema,
     quinquennat: QuinquennatRulesSchema,
     parlement: ParliamentRulesSchema,
     assemblee: RealAssemblySchema,
@@ -1056,6 +1125,8 @@ export const RulesetSchema = z
       ruleset.electorat.inscrits.sourceId,
       ruleset.personnalitesReelles.sourceId,
       ruleset.medias.sourceId,
+      ruleset.numerique.sourceId,
+      ...ruleset.numerique.formats.flatMap((f) => f.exemples.map((e) => e.sourceId)),
       ruleset.quinquennat.mandat.sourceId,
       ruleset.quinquennat.investiture.sourceId,
       ruleset.quinquennat.finMandat.sourceId,
@@ -1084,6 +1155,22 @@ export const RulesetSchema = z
       'Action',
       [...ruleset.actions, ...ruleset.quinquennat.actions].map((a) => a.id),
     );
+    // Réseaux et nouveaux médias : chaque format est employé, chaque groupe d'électeurs pondéré.
+    const formats = new Set(ruleset.numerique.formats.map((f) => f.id));
+    unique('Format numérique', [...formats]);
+    unique('Compte fictif', ruleset.numerique.comptes);
+    for (const action of [...ruleset.actions, ...ruleset.quinquennat.actions]) {
+      if (action.format && !formats.has(action.format))
+        issue(`${action.id} : format numérique inconnu (${action.format})`);
+    }
+    for (const id of formats) {
+      if (!ruleset.actions.some((a) => a.format === id))
+        issue(`Format numérique sans action : ${id}`);
+    }
+    const groups = ruleset.electorat.groupes.map((g) => g.id).sort();
+    const weighted = Object.keys(ruleset.numerique.modele.jeunesse).sort();
+    if (groups.join() !== weighted.join())
+      issue('Numérique : un poids Jeunesse par groupe d’électeurs, ni plus ni moins');
     unique(
       'Poste du gouvernement',
       ruleset.quinquennat.postes.map((p) => p.id),

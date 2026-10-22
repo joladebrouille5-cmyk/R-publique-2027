@@ -69,11 +69,19 @@ describe('personnalités réelles', () => {
       within(lePen).getByText(paragraph(/^Photo : Vox España, CC0, via Wikimedia Commons/)),
     ).toBeInTheDocument();
 
-    // Pas de photo libre : initiales et motif.
+    // Photo de la source non libre : portrait libre choisi sur Commons, choix motivé.
     const glucksmann = screen.getByRole('listitem', { name: 'Raphaël Glucksmann' });
-    expect(within(glucksmann).queryByRole('img')).not.toBeInTheDocument();
+    expect(
+      await within(glucksmann).findByRole('img', { name: 'Portrait de Raphaël Glucksmann' }),
+    ).toBeInTheDocument();
     await user.click(within(glucksmann).getByText('Fiche sourcée et crédit photo'));
-    expect(within(glucksmann).getByText(/Sans photo : Photo non reprise/)).toBeInTheDocument();
+    expect(
+      within(glucksmann).getByText(
+        paragraph(
+          /^Photo : Librairie Mollat, CC BY-SA 4\.0, via Wikimedia Commons.+Parlement européen/,
+        ),
+      ),
+    ).toBeInTheDocument();
 
     // Position « hypothèse » signalée comme telle.
     const ruffin = screen.getByRole('listitem', { name: 'François Ruffin' });

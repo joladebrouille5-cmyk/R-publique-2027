@@ -30,7 +30,8 @@ import {
   QuinquennatSummaryV8Schema,
   QuinquennatV8Schema,
 } from './quinquennat';
-import { ResourceKeySchema, ResourcesSchema } from './resources';
+import { DigitalStateSchema } from './numerique';
+import { ResourceKeySchema, ResourcesSchema, ResourcesV1Schema } from './resources';
 
 export const GAME_MODES = ['candidat_reel', 'candidat_personnalise', 'observateur'] as const;
 export const GameModeSchema = z.enum(GAME_MODES);
@@ -186,7 +187,7 @@ export const GameStateV2Schema = z
           id: Id,
           kind: z.literal('joueur'),
           label: z.string().min(1),
-          resources: ResourcesSchema,
+          resources: ResourcesV1Schema,
         })
         .strict(),
     ),
@@ -225,7 +226,7 @@ const ActorV4Schema = z
     /** Style et goût du risque de l'IA ; null pour le joueur. */
     style: CampaignStyleSchema.nullable(),
     toleranceRisque: z.number().min(0).max(1).nullable(),
-    resources: ResourcesSchema,
+    resources: ResourcesV1Schema,
     status: z.enum(CANDIDATE_STATUSES_V4),
     /** Popularité des dernières semaines (la plus récente en dernier), pour la dynamique. */
     history: z.object({ popularite: z.array(z.number().int()).max(8) }).strict(),
@@ -260,8 +261,12 @@ export type ActorV5 = z.infer<typeof ActorV5Schema>;
 const ActorV6Schema = ActorV5Schema.extend({ candidate: CandidateIdentitySchema }).strict();
 export type ActorV6 = z.infer<typeof ActorV6Schema>;
 
-/** Candidat et sa campagne (format 12) : statut `ineligible` possible. */
-export const ActorSchema = ActorV6Schema.extend({ status: CandidateStatusSchema }).strict();
+/** Candidat et sa campagne aux formats 12 et 13 (figé) : statut `ineligible` possible. */
+const ActorV13Schema = ActorV6Schema.extend({ status: CandidateStatusSchema }).strict();
+export type ActorV13 = z.infer<typeof ActorV13Schema>;
+
+/** Candidat et sa campagne (format 14) : jauges Jeunesse et Dynamique (phase 9). */
+export const ActorSchema = ActorV13Schema.extend({ resources: ResourcesSchema }).strict();
 export type Actor = z.infer<typeof ActorSchema>;
 
 /** Décision obligatoire aux formats 3 à 7 (événement ou consigne de vote), figée. */
@@ -564,7 +569,7 @@ export type GameStateV11 = z.infer<typeof GameStateV11Schema>;
 /** État au format 12 (phase 6, P6-08), figé pour les migrations. */
 export const GameStateV12Schema = GameStateV11Schema.extend({
   meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(12) }).strict(),
-  actors: z.record(Id, ActorSchema),
+  actors: z.record(Id, ActorV13Schema),
   quinquennat: QuinquennatSchema.nullable(),
   historique: z
     .object({
@@ -575,16 +580,8 @@ export const GameStateV12Schema = GameStateV11Schema.extend({
 }).strict();
 export type GameStateV12 = z.infer<typeof GameStateV12Schema>;
 
-/**
- * État complet d'une partie, format de sauvegarde n° 13 (phase 7) : scénario de départ,
- * conséquences durables (en cours et passées), cycle électoral, présidence et gouvernement,
- * Parlement, économie et crises, législatives, archives des cycles précédents (présidentielles,
- * quinquennats et leur bilan, conséquences comprises) ; statut `ineligible` (art. 6). Toute
- * évolution s'accompagne d'un nouveau numéro de format et d'une migration (packages/save-engine).
- * L'aléa ne figure pas dans l'état : chaque tirage est dérivé de la graine, de la semaine et de
- * son contexte (module, action, événement, groupe…).
- */
-export const GameStateSchema = GameStateV12Schema.extend({
+/** État au format 13 (phase 7) : scénario de départ et conséquences durables ; figé. */
+export const GameStateV13Schema = GameStateV12Schema.extend({
   meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(13) }).strict(),
   /** Scénario de départ (jeu de règles). */
   scenario: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/),
@@ -596,6 +593,24 @@ export const GameStateSchema = GameStateV12Schema.extend({
       quinquennats: z.array(QuinquennatSummarySchema),
     })
     .strict(),
+}).strict();
+export type GameStateV13 = z.infer<typeof GameStateV13Schema>;
+
+/**
+ * État complet d'une partie, format de sauvegarde n° 14 (phase 9) : jauges Jeunesse et
+ * Dynamique de chaque candidat, fil des publications simulées sur les réseaux et nouveaux
+ * médias ; scénario de départ, conséquences durables (en cours et passées), cycle électoral,
+ * présidence et gouvernement, Parlement, économie et crises, législatives, archives des cycles
+ * précédents ; statut `ineligible` (art. 6). Toute évolution s'accompagne d'un nouveau numéro
+ * de format et d'une migration (packages/save-engine). L'aléa ne figure pas dans l'état :
+ * chaque tirage est dérivé de la graine, de la semaine et de son contexte (module, action,
+ * événement, groupe…).
+ */
+export const GameStateSchema = GameStateV13Schema.extend({
+  meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(14) }).strict(),
+  actors: z.record(Id, ActorSchema),
+  /** Réseaux sociaux et nouveaux médias : publications simulées des dernières semaines. */
+  numerique: DigitalStateSchema,
 }).strict();
 export type GameState = z.infer<typeof GameStateSchema>;
 

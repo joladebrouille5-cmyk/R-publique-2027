@@ -85,6 +85,7 @@ function campaignFactors(
         : 0,
     },
     { label: 'Médias', value: model.medias * (state.medias?.indice[contender.id] ?? 0) },
+    ...digitalFactors(ruleset, group, actor.resources),
   ];
   for (const alliance of state.alliances) {
     if (alliance.vers !== contender.id) continue;
@@ -98,6 +99,27 @@ function campaignFactors(
     });
   }
   return factors;
+}
+
+/**
+ * Facteurs des réseaux et nouveaux médias (phase 9, hypothèses du jeu) : écho chez les 18-34 ans,
+ * pondéré par groupe d'électeurs autour d'une valeur neutre, et dynamique de campagne (buzz).
+ */
+export function digitalFactors(
+  ruleset: Ruleset,
+  group: ElectorateGroup,
+  resources: { jeunesse: number; dynamique: number },
+): UtilityFactor[] {
+  const { modele } = ruleset.numerique;
+  return [
+    {
+      label: 'Écho chez les 18-34 ans',
+      value:
+        ((modele.jeunesse[group.id] ?? 0) * (resources.jeunesse - modele.referenceJeunesse)) /
+        10_000,
+    },
+    { label: 'Buzz sur les réseaux', value: (modele.elan * resources.dynamique) / 10_000 },
+  ];
 }
 
 /** Facteurs propres au second tour : consignes de vote partielles et débat (§5.3). */

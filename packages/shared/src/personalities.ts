@@ -67,6 +67,8 @@ export const PhotoCreditSchema = z
     /** Page du fichier sur Wikimedia Commons. */
     source: z.url(),
     modification: z.string().min(1),
+    /** Photo choisie hors de la source (celle de la source n'étant pas libre) : motif consigné. */
+    choix: z.string().min(1).optional(),
   })
   .strict();
 export type PhotoCredit = z.infer<typeof PhotoCreditSchema>;

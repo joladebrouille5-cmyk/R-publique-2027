@@ -294,7 +294,7 @@ Fiches retenues (économie / société sur −100 … +100) :
 | Xavier Bertrand | Nous France / Les Républicains | 2024-02-03 (déclaration) — Ouest-France | 56 / 44 | `estimation` (parti : LR 2024) | CC BY 4.0 — Claudio Centonze / European Union, 2025 / EC - Audiovisual Service |
 | Karim Bouamrane | Parti socialiste | 2026-06-09 (déclaration) — Le Monde | -33 / -45 | `estimation` (parti : PS 2024) | CC BY 4.0 — Oumma |
 | Nicolas Dupont-Aignan | Debout la France | 2026-09-19 (déclaration) — Le Journal du dimanche | 40 / 66 | `estimation` (parti : DLF 2019) | CC BY-SA 4.0 — Debout la France |
-| Raphaël Glucksmann | Place publique | 2026-10-11 (désignation) — Libération | -33 / -45 | `estimation` (parti_soutien : PS 2024) | aucune (licence non reconnue comme libre (European Parliament)) |
+| Raphaël Glucksmann | Place publique | 2026-10-11 (désignation) — Libération | -33 / -45 | `estimation` (parti_soutien : PS 2024) | CC BY-SA 4.0 — Librairie Mollat (photo choisie sur Commons, voir ci-dessous) |
 | Marine Le Pen | Rassemblement national | 2026-07-07 (déclaration) — Euronews | 20 / 67 | `estimation` (parti : RN 2024) | CC0 — Vox España |
 | David Lisnard | Nouvelle Énergie | 2026-03-31 (déclaration) — Franceinfo.fr | 56 / 44 | `hypothese` (ancien_parti : LR 2024) | CC BY-SA 4.0 — Grégor Sauvagère |
 | Jean-Luc Mélenchon | La France insoumise | 2026-05-03 (déclaration) — Le Monde | -82 / -64 | `estimation` (parti : FI 2024) | CC BY 4.0 — jlm2017.fr |
@@ -308,7 +308,7 @@ Fiches retenues (économie / société sur −100 … +100) :
 Remarques :
 - **Statut** : `estimation` = position d'experts du parti de la personnalité (ou du parti qui soutient officiellement sa candidature : Parti socialiste pour Raphaël Glucksmann) ; `hypothese` = rattachement indirect, détaillé dans la fiche.
 - **Source de la candidature de François Asselineau** : les références de la phrase portent sur une procédure judiciaire ou sur une autre personnalité ; l'article lui-même sert de source. L'importeur refuse toute référence de candidature portant sur une procédure judiciaire (relecture humaine imposée).
-- **Photo de Raphaël Glucksmann** : licence « European Parliament » non reconnue comme libre par la règle retenue : initiales affichées.
+- **Photo de Raphaël Glucksmann** (phase 9, jeu de règles 11.0.0) : la photo de l'article, diffusée par le Parlement européen, n'est pas sous licence libre ; la sélection de l'importeur désigne à la place le portrait « Raphaël_Glucksmann.jpg » de Wikimedia Commons (CC BY-SA 4.0, Librairie Mollat), dont la licence est vérifiée comme les autres. Le motif est consigné dans la fiche (`photo.choix`) et affiché avec le crédit. Réimport sur la même révision de l'article : `pnpm data:personnalites -- --revision 240556510`. À défaut de photo, l'interface affiche les initiales sur la couleur de la famille politique.
 - **Candidatures non intégrées** (aucun parti noté par CHES) : Delphine Batho, Bernard Cazeneuve, Sylvain Durif, Anasse Kazib, Selma Labib, Francis Lalanne, Mira Markovic, Benoît Mathieu, Antoine Mikolajczak, Manolo Mlekuz, Florian Philippot, Gilles Platret, Natacha Polony (liste affichée dans le jeu).
 - **Moyens de départ** : niveaux de notoriété et d'organisation établis par des règles écrites à partir des faits ci-dessus ; leur conversion en ressources est une hypothèse du jeu de règles 4.0.0. Aucun sondage réel n'est utilisé.
 
@@ -375,6 +375,20 @@ Règles et remarques :
 - **Exposition relative d'un parti** (`estimation`) : part du parti sur le service ÷ part sur l'ensemble des services retenus, bornée à [0,5 ; 2] dans le jeu ; partis suivis : au moins dix heures cumulées. Décrit l'exposition observée sur la période, **pas une ligne éditoriale**. Personnalités sans parti suivi (exposition moyenne) : Nathalie Arthaud (Lutte ouvrière, 4,6 h), François Asselineau (UPR, 2 min), David Lisnard (Nouvelle Énergie, 6,8 h) ; candidats fictifs et personnalisés : exposition moyenne.
 - **Crédibilité** identique pour tous les organes (0,7) ; tonalité de la couverture tirée des seuls facteurs du jeu (popularité, crédibilité du programme, aléa, incidents).
 - Une réimportation (nouveau mois Arcom, nouvelle vague, nouvelle révision) impose une nouvelle version du jeu de règles (empreinte vérifiée par les tests).
+
+## 8 sexies. Réseaux sociaux et nouveaux médias (phase 9)
+
+Formats réels repris comme exemples, chacun avec un fait vérifié dans une révision figée de Wikipédia (consultée le 22/10/2026), reformulé sans propos ni citation d'un animateur :
+
+| Format du jeu | Exemple | Fait retenu | Source |
+|---|---|---|---|
+| Interview longue sur YouTube | Legend | émission d'entretiens longs avec des personnalités, diffusée en podcast et sur YouTube depuis 2022 | [Wikipédia, « Guillaume Pley », rév. 240531960](https://fr.wikipedia.org/w/index.php?title=Guillaume_Pley&oldid=240531960) |
+| Format décryptage | HugoDécrypte | média en ligne français fondé en 2015, qui traite l'actualité dans de courtes vidéos et se veut ouvert aux jeunes | [Wikipédia, « HugoDécrypte (média) », rév. 238305935](https://fr.wikipedia.org/w/index.php?title=HugoD%C3%A9crypte_%28m%C3%A9dia%29&oldid=238305935) |
+| Vidéos courtes verticales | TikTok | réseau social lancé en 2016 où des créateurs publient des vidéos très courtes au format vertical | [Wikipédia, « TikTok », rév. 240352054](https://fr.wikipedia.org/w/index.php?title=TikTok&oldid=240352054) |
+| Vidéos courtes verticales | YouTube Shorts | vidéos courtes au format vertical publiées sur YouTube (trois minutes au plus), déployées en Europe en juillet 2021 | [Wikipédia, « YouTube Shorts », rév. 238801749](https://fr.wikipedia.org/w/index.php?title=YouTube_Shorts&oldid=238801749) |
+| Direct sur Twitch | Twitch | plateforme de diffusion en direct sur Internet lancée en juin 2011, filiale du groupe Amazon | [Wikipédia, « Twitch », rév. 240180491](https://fr.wikipedia.org/w/index.php?title=Twitch&oldid=240180491) |
+
+Tout le reste est **simulé** et étiqueté `hypothese` dans le jeu de règles (`numerique`) : effets des formats sur les jauges Jeunesse (écho chez les 18-34 ans) et Dynamique (buzz), usure (4 % par semaine) et retombée (35 % par semaine), poids dans le score latent (un poids plus fort pour les électeurs éloignés de la politique, hypothèse non calibrée), vues des publications, réactions. Les comptes qui réagissent sont **inventés** (pseudonymes du jeu de règles) ; leurs textes sont des modèles du jeu, sans nom de personne et sans propos prêté à un animateur, à une chaîne ni à une personne réelle (contrôlé par les tests du jeu de règles). Aucune audience réelle d'une plateforme n'est reprise.
 
 ## 9. Points restant non vérifiés
 

@@ -44,7 +44,11 @@ export function assemblyGroups(ruleset: Ruleset): readonly AssemblyGroup[] {
 }
 
 /** Position d'un groupe à l'égard du président, d'après la proximité de leurs positions. */
-export function alignmentOf(ruleset: Ruleset, group: AssemblyGroup, president: Actor): Alignment {
+export function alignmentOf(
+  ruleset: Ruleset,
+  group: AssemblyGroup,
+  president: Pick<Actor, 'id' | 'candidate'>,
+): Alignment {
   const p = proximity(president, positioned(group));
   const { seuilSoutien, seuilOpposition } = ruleset.parlement.vote;
   return p >= seuilSoutien ? 'soutien' : p < seuilOpposition ? 'opposition' : 'independant';
@@ -56,7 +60,7 @@ export function alignmentOf(ruleset: Ruleset, group: AssemblyGroup, president: A
  */
 export function openParliament(
   ruleset: Ruleset,
-  president: Actor,
+  president: Pick<Actor, 'id' | 'candidate'>,
   previous: Parliament | null,
 ): Parliament {
   return {

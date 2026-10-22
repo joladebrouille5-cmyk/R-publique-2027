@@ -70,10 +70,17 @@ async function main() {
   mkdirSync(RAW, { recursive: true });
   const consulteLe = today();
 
-  // 1. Article Wikipédia, à une révision figée.
+  // 1. Article Wikipédia, à une révision figée : la révision courante, ou celle donnée par
+  // `--revision <oldid>` (réimport sans changer de source, par exemple pour une photo).
   const title = ARTICLE.replace(/ /g, '_');
-  const html = await fetchText(`https://fr.wikipedia.org/wiki/${encodeURIComponent(title)}`);
-  const revid = /"wgRevisionId":(\d+)/.exec(html)?.[1];
+  const flag = process.argv.indexOf('--revision');
+  let revid = flag >= 0 ? process.argv[flag + 1] : undefined;
+  if (flag >= 0 && !/^\d+$/.test(revid ?? ''))
+    throw new Error('--revision attend un numéro de révision.');
+  if (!revid) {
+    const html = await fetchText(`https://fr.wikipedia.org/wiki/${encodeURIComponent(title)}`);
+    revid = /"wgRevisionId":(\d+)/.exec(html)?.[1];
+  }
   if (!revid) throw new Error('Révision de l’article introuvable.');
   const rawUrl = `https://fr.wikipedia.org/w/index.php?title=${encodeURIComponent(title)}&action=raw&oldid=${revid}`;
   console.log(`Source : ${rawUrl}`);

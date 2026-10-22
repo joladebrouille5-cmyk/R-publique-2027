@@ -69,7 +69,11 @@ describe('createGame', () => {
     expect(resources).toEqual({
       ...ruleset.jeu.ressourcesInitiales.standard,
       tempsHeures: ruleset.jeu.tempsHebdomadaireHeures,
+      // Jauges des réseaux : mêmes valeurs de départ pour tous les candidats (phase 9).
+      ...ruleset.numerique.initial,
     });
+    for (const actor of Object.values(createGame(base, ruleset).actors))
+      expect(actor.resources).toMatchObject(ruleset.numerique.initial);
     const civil = createGame(
       { ...base, candidate: { ...candidate, profilId: 'societe-civile' } },
       ruleset,

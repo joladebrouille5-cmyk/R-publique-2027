@@ -57,7 +57,7 @@ export type BuildInput = {
 /** Fichier photo de chaque personnalité retenue (à télécharger avant l'assemblage). */
 export function photoFiles(article: string, selection = SELECTION): Map<string, string | null> {
   const rows = selectedRows(article, selection);
-  return new Map(selection.map((s) => [s.id, photoFile(rows.get(s.id)!)]));
+  return new Map(selection.map((s) => [s.id, s.photo?.fichier ?? photoFile(rows.get(s.id)!)]));
 }
 
 function allRows(article: string): { principale: TableRow[]; primaire: TableRow[] } {
@@ -266,7 +266,7 @@ export function buildPersonalities(input: BuildInput): RealPersonalities {
     }
     if (s.notoriete.fait) assertFact(row, s.notoriete.fait);
     if (s.organisation.fait) assertFact(row, s.organisation.fait);
-    const file = photoFile(row);
+    const file = s.photo?.fichier ?? photoFile(row);
     const license = file ? input.photos.get(file) : undefined;
     const photo =
       file && license && !('refus' in license)
@@ -278,6 +278,7 @@ export function buildPersonalities(input: BuildInput): RealPersonalities {
             source: `https://commons.wikimedia.org/wiki/File:${encodeURIComponent(file)}`,
             modification:
               'Redimensionnée (240 pixels de large) et convertie en WebP ; métadonnées retirées.',
+            ...(s.photo ? { choix: s.photo.motif } : {}),
           }
         : null;
     const photoAbsente = photo

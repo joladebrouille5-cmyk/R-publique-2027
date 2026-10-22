@@ -7,6 +7,7 @@ import {
 } from './campaign';
 import { EconomyChangeSchema } from './economie';
 import { GamePhaseSchema, IsoDateSchema, PollSchema, RoundResultSchema } from './game';
+import { DigitalPostSchema } from './numerique';
 import { ResourceKeySchema } from './resources';
 import { DataStatusSchema } from './ruleset';
 
@@ -215,6 +216,8 @@ export const WeeklyReportSchema = z
       .strict()
       .nullable()
       .default(null),
+    // Ajout de la phase 9 : publications simulées de la semaine (réseaux et nouveaux médias).
+    numerique: z.array(DigitalPostSchema).default([]),
   })
   .strict();
 export type WeeklyReport = z.infer<typeof WeeklyReportSchema>;

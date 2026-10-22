@@ -21,6 +21,7 @@ import V9 from './fixtures/v9-phase-6.json' with { type: 'json' };
 import V10 from './fixtures/v10-phase-6.json' with { type: 'json' };
 import V11 from './fixtures/v11-phase-6.json' with { type: 'json' };
 import V12 from './fixtures/v12-phase-6.json' with { type: 'json' };
+import V13 from './fixtures/v13-phase-9.json' with { type: 'json' };
 import { loadStoredState, MIGRATED_CANDIDATE, SaveFormatError, upgradeState } from './versions';
 
 const ruleset = getRuleset(CURRENT_RULESET_KEY);
@@ -45,19 +46,41 @@ const V1_STATE = {
 };
 const V1_HASH = sha256(canonicalStringify(V1_STATE));
 
+/** Ressources sans les jauges du format 14 (Jeunesse, Dynamique). */
+const v1Resources = ({
+  jeunesse: _j,
+  dynamique: _d,
+  ...rest
+}: GameState['actors'][string]['resources']) => rest;
+
 /**
- * État migré sans les ajouts des formats 12 (relevé de départ du quinquennat) et 13 (scénario,
- * conséquences durables) : le reste doit être identique à l'état d'origine.
+ * État migré sans les ajouts des formats 12 (relevé de départ du quinquennat), 13 (scénario,
+ * conséquences durables) et 14 (jauges Jeunesse et Dynamique, fil des réseaux) : le reste doit
+ * être identique à l'état d'origine.
  */
 const withoutDepart = <T extends object>(state: T) => {
-  const { quinquennat } = state as { quinquennat?: GameState['quinquennat'] };
+  const { quinquennat, actors } = state as {
+    quinquennat?: GameState['quinquennat'];
+    actors?: GameState['actors'];
+  };
   return {
     ...state,
     ...(quinquennat !== undefined
       ? { quinquennat: quinquennat ? { ...quinquennat, depart: undefined } : null }
       : {}),
+    ...(actors
+      ? {
+          actors: Object.fromEntries(
+            Object.entries(actors).map(([id, a]) => [
+              id,
+              { ...a, resources: v1Resources(a.resources) },
+            ]),
+          ),
+        }
+      : {}),
     scenario: undefined,
     consequences: undefined,
+    numerique: undefined,
   };
 };
 
@@ -111,7 +134,7 @@ describe('migrations de sauvegarde', () => {
       saveSchemaVersion: SAVE_SCHEMA_VERSION,
     });
     const player = state.actors[PLAYER_ACTOR_ID]!;
-    expect(player.resources).toEqual(v2.actors.joueur.resources);
+    expect(v1Resources(player.resources)).toEqual(v2.actors.joueur.resources);
     expect(player).toMatchObject({
       label: 'Votre campagne',
       status: 'candidat',
@@ -201,7 +224,7 @@ describe('migrations de sauvegarde', () => {
     for (const [id, actor] of Object.entries(state.actors)) {
       const before = V4.state.actors[id as keyof typeof V4.state.actors];
       expect(actor.status).toBe(before.status);
-      expect(actor.resources).toEqual(before.resources);
+      expect(v1Resources(actor.resources)).toEqual(before.resources);
       expect(actor.resources.budgetCentimes).toBe(
         actor.finances.recettes.parti + actor.finances.recettes.apportPersonnel,
       );
@@ -236,7 +259,7 @@ describe('migrations de sauvegarde', () => {
     expect(state.player).toEqual({ ...V5.state.player, adversaires: 'fictifs' });
     for (const [id, actor] of Object.entries(state.actors)) {
       const before = V5.state.actors[id as keyof typeof V5.state.actors];
-      expect(actor).toEqual({
+      expect({ ...actor, resources: v1Resources(actor.resources) }).toEqual({
         ...before,
         candidate: { ...before.candidate, personnaliteId: null },
       });
@@ -592,6 +615,45 @@ describe('migrations de sauvegarde', () => {
     expect(current.cycle.annee).toBe(2032);
   });
 
+  it('ajoute les jauges Jeunesse et Dynamique et le fil des réseaux (format 13)', () => {
+    const { state, migratedFrom } = loadStoredState(V13.state, V13.stateHash, 13);
+    expect(migratedFrom).toBe(13);
+    expect(state.meta).toMatchObject({
+      week: V13.state.meta.week,
+      phase: 'campagne',
+      saveSchemaVersion: SAVE_SCHEMA_VERSION,
+      engineVersion: ENGINE_VERSION,
+      rulesetVersion: CURRENT_RULESET_KEY,
+    });
+    // Jauges de départ du jeu de règles pour chaque candidat ; tout le reste est inchangé.
+    const before = V13.state.actors as Record<string, { resources: object }>;
+    for (const [id, actor] of Object.entries(state.actors)) {
+      expect(actor.resources).toEqual({ ...before[id]!.resources, ...ruleset.numerique.initial });
+      expect({ ...actor, resources: before[id]!.resources }).toEqual(before[id]);
+    }
+    expect(state.numerique).toEqual({ publications: [] });
+    const { meta: _meta, actors: _a, numerique: _n, ...rest } = state;
+    const { meta: _m, actors: _ab, ...restBefore } = V13.state;
+    expect(rest).toEqual(restBefore);
+    // La campagne continue avec une interview longue : publication simulée et jauges en hausse.
+    const { state: next, report } = advanceWeek(
+      state,
+      {
+        actions: [{ actionId: 'interview-longue' }],
+        decisions: state.pendingDecisions.map((d) => ({
+          decisionId: d.id,
+          optionId: d.defaultOptionId,
+        })),
+      },
+      { ruleset },
+    );
+    const player = state.player.actorId!;
+    expect(report.numerique.filter((p) => p.acteurId === player)).toHaveLength(1);
+    expect(next.numerique.publications.some((p) => p.acteurId === player)).toBe(true);
+    const jeunesse = report.changes.find((c) => c.actorId === player && c.ressource === 'jeunesse');
+    expect(jeunesse!.factors.some((f) => f.source === 'action')).toBe(true);
+  });
+
   it('vérifie l’empreinte avant toute migration', () => {
     const altered = { ...V1_STATE, meta: { ...V1_STATE.meta, week: 3 } };
     expect(errorCode(() => loadStoredState(altered, V1_HASH, 1))).toBe('empreinte_incoherente');
@@ -615,6 +677,7 @@ describe('migrations de sauvegarde', () => {
     expect(errorCode(() => upgradeState(V10.state, 11))).toBe('etat_invalide');
     expect(errorCode(() => upgradeState(V11.state, 12))).toBe('etat_invalide');
     expect(errorCode(() => upgradeState(V12.state, 13))).toBe('etat_invalide');
+    expect(errorCode(() => upgradeState(V13.state, 14))).toBe('etat_invalide');
   });
 
   it('refuse un jeu de règles inconnu', () => {

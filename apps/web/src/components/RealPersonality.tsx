@@ -55,7 +55,7 @@ export function PhotoCreditLine({ personality }: { personality: RealPersonality 
         Wikimedia Commons
       </a>{' '}
       ({photo.modification.charAt(0).toLowerCase()}
-      {photo.modification.slice(1, -1)}).
+      {photo.modification.slice(1, -1)}).{photo.choix && ` ${photo.choix}`}
     </p>
   );
 }

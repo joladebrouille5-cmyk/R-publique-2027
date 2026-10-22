@@ -171,3 +171,63 @@ describe('plan d’actions : interview dans une émission politique', () => {
     expect(within(select).getByRole('option', { name: 'France Inter' })).toBeInTheDocument();
   });
 });
+
+describe('réseaux et nouveaux médias (phase 9)', () => {
+  // Une semaine avec une interview longue et une vague de vidéos courtes du joueur.
+  const posted = advanceWeek(
+    fresh,
+    {
+      actions: [{ actionId: 'interview-longue' }, { actionId: 'vague-video-courte' }],
+      decisions: [],
+    },
+    { ruleset: RULESET },
+  ).state;
+  const rules = RULESET.numerique;
+
+  it('montre les jauges, les formats réels sourcés et le fil des publications simulées', async () => {
+    mockApi(handlers(posted));
+    renderRoute(`/parties/${GAME_ID}/medias`);
+    const section = await screen.findByRole('region', { name: 'Réseaux et nouveaux médias' });
+    expect(within(section).getByText(/aucun propos n’est prêté/)).toBeInTheDocument();
+    const player = posted.actors[posted.player.actorId!]!;
+    expect(within(section).getByTestId('jauge-jeunesse')).toHaveTextContent(
+      `${(player.resources.jeunesse / 100).toFixed(2).replace('.', ',')}`,
+    );
+    // Chaque format renvoie à son exemple réel, sourcé par une révision figée.
+    const formats = within(section).getByRole('list', { name: 'Formats à programmer' });
+    const legend = within(formats).getByRole('link', { name: 'Legend' });
+    expect(legend).toHaveAttribute('href', expect.stringMatching(/oldid=\d+$/));
+    // Fil : publications du joueur, réactions de comptes fictifs du jeu de règles.
+    const feed = within(section).getByRole('list', { name: 'Fil des publications simulées' });
+    const mine = within(feed).getByRole('listitem', {
+      name: /^Gabriel Attal — Interview longue sur YouTube, semaine 0$/,
+    });
+    expect(within(mine).getByText(/vues simulées/)).toBeInTheDocument();
+    const reactions = within(mine).getByRole('list', { name: 'Réactions de comptes fictifs' });
+    const accounts = within(reactions)
+      .getAllByRole('listitem')
+      .map((li) => li.textContent!.split(' ')[0]!);
+    expect(accounts).toHaveLength(rules.reactionsParPublication);
+    for (const account of accounts) expect(rules.comptes).toContain(account);
+  });
+
+  it('programme un format en un geste dans le plan de la semaine du QG', async () => {
+    const calls = mockApi(handlers(fresh));
+    renderRoute(`/parties/${GAME_ID}/medias`);
+    const user = userEvent.setup();
+    const section = await screen.findByRole('region', { name: 'Réseaux et nouveaux médias' });
+    await user.click(
+      within(section).getByRole('button', { name: 'Programmer : Direct sur Twitch' }),
+    );
+    expect(screen.getByText(/au plan ×1/)).toBeInTheDocument();
+    await user.click(screen.getByRole('link', { name: 'Voir le plan de la semaine' }));
+    expect(await screen.findByRole('list', { name: 'Actions programmées' })).toHaveTextContent(
+      'Direct sur Twitch',
+    );
+    await user.click(screen.getByRole('button', { name: 'Résoudre la semaine 0' }));
+    await waitFor(() => expect(calls.some((c) => c.method === 'POST')).toBe(true));
+    expect(calls.find((c) => c.method === 'POST')!.body).toMatchObject({
+      actions: [{ actionId: 'live-twitch' }],
+    });
+  });
+});

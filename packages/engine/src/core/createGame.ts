@@ -15,6 +15,7 @@ import {
   type OpponentSet,
   type RealPersonality,
   type Resources,
+  type ResourcesV1,
   type Ruleset,
 } from '@r2027/shared';
 import { initialRelations } from '../ai/relations';
@@ -57,8 +58,15 @@ export class GameCreationError extends Error {
   }
 }
 
-const bounded = (resources: Resources): Resources => {
-  const result = { ...resources };
+/**
+ * Ressources de départ bornées. Jauges Jeunesse et Dynamique (phase 9) : valeurs de départ du
+ * jeu de règles, identiques pour tous les candidats, sauf si elles sont déjà fixées.
+ */
+const bounded = (
+  ruleset: Ruleset,
+  resources: ResourcesV1 & Partial<Pick<Resources, 'jeunesse' | 'dynamique'>>,
+): Resources => {
+  const result: Resources = { ...ruleset.numerique.initial, ...resources };
   for (const key of Object.keys(result) as (keyof Resources)[]) {
     const { min, max } = RESOURCE_BOUNDS[key];
     result[key] = Math.min(max, Math.max(min, result[key]));
@@ -86,7 +94,7 @@ export function createPlayerActor(
   }
   const base = ruleset.jeu.ressourcesInitiales[difficulty];
   const modifiers = profile?.modificateurs ?? {};
-  const resources = bounded({
+  const resources = bounded(ruleset, {
     budgetCentimes: base.budgetCentimes + (modifiers.budgetCentimes ?? 0),
     militants: base.militants + (modifiers.militants ?? 0),
     notoriete: base.notoriete + (modifiers.notoriete ?? 0),
@@ -129,7 +137,7 @@ export function createOpponents(difficulty: Difficulty, ruleset: Ruleset): Recor
   const level = ruleset.ia[difficulty];
   const opponents: Record<string, Actor> = {};
   for (const c of ruleset.candidatsFictifs) {
-    const resources = bounded({
+    const resources = bounded(ruleset, {
       ...c.ressources,
       budgetCentimes: Math.round(c.ressources.budgetCentimes * level.multiplicateurBudget),
       tempsHeures: ruleset.jeu.tempsHebdomadaireHeures,
@@ -205,7 +213,7 @@ export function createRealActor(
   const scale = asPlayer
     ? playerScale(ruleset, difficulty)
     : { budget: ruleset.ia[difficulty].multiplicateurBudget, militants: 1, promesses: 1 };
-  const resources = bounded({
+  const resources = bounded(ruleset, {
     budgetCentimes: Math.round(means.budgetCentimes * scale.budget),
     militants: Math.round(means.militants * scale.militants),
     notoriete: params.notoriete[personality.moyens.notoriete - 1]!,
@@ -359,7 +367,7 @@ export function createGame(input: CreateGameInput, ruleset: Ruleset): GameState 
     const modifiers =
       actor.kind === 'joueur' ? scenario.campagne.joueur : scenario.campagne.adversaires;
     if (Object.keys(modifiers).length === 0) continue;
-    actor.resources = bounded({
+    actor.resources = bounded(ruleset, {
       ...actor.resources,
       budgetCentimes: actor.resources.budgetCentimes + (modifiers.budgetCentimes ?? 0),
       militants: actor.resources.militants + (modifiers.militants ?? 0),
@@ -406,6 +414,7 @@ export function createGame(input: CreateGameInput, ruleset: Ruleset): GameState 
     legislatives: null,
     scenario: scenario.id,
     consequences: [],
+    numerique: { publications: [] },
   };
   distributeInitialPromises(state, ruleset);
   return state;

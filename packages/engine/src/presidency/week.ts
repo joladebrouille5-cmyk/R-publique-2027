@@ -353,6 +353,7 @@ export function advancePresidencyWeek(
       strategies: [],
       economie: economy?.list() ?? [],
       legislatives: legislatives.report,
+      numerique: [],
     },
   };
 }

@@ -572,7 +572,11 @@ describe('migration des parties des phases 1 et 2', () => {
       saveSchemaVersion: SAVE_SCHEMA_VERSION,
       rulesetVersion: CURRENT_RULESET_KEY,
     });
-    expect(migrated.state.actors.joueur!.resources).toEqual(V2.state.actors.joueur.resources);
+    // Ressources conservées ; jauges Jeunesse et Dynamique de départ ajoutées (format 14).
+    expect(migrated.state.actors.joueur!.resources).toEqual({
+      ...V2.state.actors.joueur.resources,
+      ...getRuleset(CURRENT_RULESET_KEY).numerique.initial,
+    });
     const { report } = await advanceDefault(client, migrated);
     expect(report.decisions).toHaveLength(1);
     expect(report.intentions).not.toBeNull();

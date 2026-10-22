@@ -1,8 +1,8 @@
 {
   "id": "presidentielle-2027",
-  "version": "10.0.0",
+  "version": "11.0.0",
   "libelle": "Présidentielle 2027 et quinquennat — campagne, parrainages, financement, médias réels, présidence, gouvernement, Parlement, économie, crises et législatives (phase 6)",
-  "verifieLe": "2026-10-21",
+  "verifieLe": "2026-10-22",
   "sources": {
     "elysee-cm-2026-07-01": {
       "titre": "Compte rendu du Conseil des ministres du mercredi 1er juillet 2026 — communication relative au calendrier électoral 2027",
@@ -68,6 +68,31 @@
       "titre": "Article Wikipédia « Élections législatives en France » (révision 239629789 du 19/09/2026) : 577 circonscriptions, élu au premier tour à la majorité absolue des exprimés représentant au moins 25 % des inscrits, second tour ouvert aux candidats ayant réuni 12,5 % des inscrits (sinon les deux premiers), fin des pouvoirs de l'Assemblée le troisième mardi de juin, cinq ans après son élection (loi organique n° 2001-419) ; code électoral non relu sur Légifrance (accès refusé)",
       "url": "https://fr.wikipedia.org/w/index.php?title=%C3%89lections_l%C3%A9gislatives_en_France&oldid=239629789",
       "consulteLe": "2026-10-21"
+    },
+    "wikipedia-legend": {
+      "titre": "Wikipédia — « Guillaume Pley » (émission Legend), révision 240531960",
+      "url": "https://fr.wikipedia.org/w/index.php?title=Guillaume_Pley&oldid=240531960",
+      "consulteLe": "2026-10-22"
+    },
+    "wikipedia-hugodecrypte": {
+      "titre": "Wikipédia — « HugoDécrypte (média) », révision 238305935",
+      "url": "https://fr.wikipedia.org/w/index.php?title=HugoD%C3%A9crypte_%28m%C3%A9dia%29&oldid=238305935",
+      "consulteLe": "2026-10-22"
+    },
+    "wikipedia-tiktok": {
+      "titre": "Wikipédia — « TikTok », révision 240352054",
+      "url": "https://fr.wikipedia.org/w/index.php?title=TikTok&oldid=240352054",
+      "consulteLe": "2026-10-22"
+    },
+    "wikipedia-youtube-shorts": {
+      "titre": "Wikipédia — « YouTube Shorts », révision 238801749",
+      "url": "https://fr.wikipedia.org/w/index.php?title=YouTube_Shorts&oldid=238801749",
+      "consulteLe": "2026-10-22"
+    },
+    "wikipedia-twitch": {
+      "titre": "Wikipédia — « Twitch », révision 240180491",
+      "url": "https://fr.wikipedia.org/w/index.php?title=Twitch&oldid=240180491",
+      "consulteLe": "2026-10-22"
     }
   },
   "calendrier": {
@@ -426,6 +451,267 @@
       "note": null,
       "cible": null,
       "campagne": null
+    },
+    {
+      "id": "interview-longue",
+      "libelle": "Interview longue sur YouTube",
+      "description": "Un entretien de plusieurs heures sur une chaîne d’interviews au long cours : forte audience chez les 18-34 ans, buzz durable si la séquence circule.",
+      "portee": "nationale",
+      "cible": null,
+      "cout": {
+        "budgetCentimes": 0,
+        "tempsHeures": 5
+      },
+      "prerequis": {
+        "militantsMin": 0
+      },
+      "effets": [
+        {
+          "ressource": "jeunesse",
+          "base": 900,
+          "ecart": 400,
+          "delaiSemaines": 0,
+          "saturation": true
+        },
+        {
+          "ressource": "dynamique",
+          "base": 1000,
+          "ecart": 600,
+          "delaiSemaines": 0,
+          "saturation": true
+        },
+        {
+          "ressource": "notoriete",
+          "base": 180,
+          "ecart": 80,
+          "delaiSemaines": 0,
+          "saturation": true
+        },
+        {
+          "ressource": "popularite",
+          "base": 30,
+          "ecart": 60,
+          "delaiSemaines": 0,
+          "saturation": true
+        }
+      ],
+      "campagne": null,
+      "risque": {
+        "probabilite": 0.12,
+        "libelle": "Un extrait sorti de son contexte tourne en boucle",
+        "effets": [
+          {
+            "ressource": "popularite",
+            "base": -120,
+            "ecart": 60,
+            "delaiSemaines": 0,
+            "saturation": false
+          },
+          {
+            "ressource": "dynamique",
+            "base": -700,
+            "ecart": 300,
+            "delaiSemaines": 0,
+            "saturation": false
+          }
+        ]
+      },
+      "note": "Effets et risque : hypothèses du jeu. Le format et ses exemples sont réels ; l’entretien, ses questions et ses réponses sont simulés.",
+      "format": "interview-longue"
+    },
+    {
+      "id": "decryptage",
+      "libelle": "Passage dans un format décryptage",
+      "description": "Des réponses courtes et pédagogiques dans un média d’explication de l’actualité suivi par les jeunes adultes.",
+      "portee": "nationale",
+      "cible": null,
+      "cout": {
+        "budgetCentimes": 0,
+        "tempsHeures": 3
+      },
+      "prerequis": {
+        "militantsMin": 0
+      },
+      "effets": [
+        {
+          "ressource": "jeunesse",
+          "base": 700,
+          "ecart": 300,
+          "delaiSemaines": 0,
+          "saturation": true
+        },
+        {
+          "ressource": "dynamique",
+          "base": 500,
+          "ecart": 300,
+          "delaiSemaines": 0,
+          "saturation": true
+        },
+        {
+          "ressource": "notoriete",
+          "base": 120,
+          "ecart": 60,
+          "delaiSemaines": 0,
+          "saturation": true
+        },
+        {
+          "ressource": "popularite",
+          "base": 20,
+          "ecart": 40,
+          "delaiSemaines": 0,
+          "saturation": true
+        }
+      ],
+      "campagne": null,
+      "risque": {
+        "probabilite": 0.06,
+        "libelle": "Une erreur factuelle est relevée en commentaire",
+        "effets": [
+          {
+            "ressource": "popularite",
+            "base": -80,
+            "ecart": 40,
+            "delaiSemaines": 0,
+            "saturation": false
+          },
+          {
+            "ressource": "dynamique",
+            "base": -400,
+            "ecart": 200,
+            "delaiSemaines": 0,
+            "saturation": false
+          }
+        ]
+      },
+      "note": "Effets et risque : hypothèses du jeu. Le format et ses exemples sont réels ; le passage est simulé.",
+      "format": "decryptage"
+    },
+    {
+      "id": "vague-video-courte",
+      "libelle": "Vague de vidéos courtes (TikTok, Shorts)",
+      "description": "Une série de vidéos verticales montées pour les plateformes : buzz rapide et très incertain, parfois détourné.",
+      "portee": "nationale",
+      "cible": null,
+      "cout": {
+        "budgetCentimes": 3000000,
+        "tempsHeures": 2
+      },
+      "prerequis": {
+        "militantsMin": 0
+      },
+      "effets": [
+        {
+          "ressource": "dynamique",
+          "base": 1400,
+          "ecart": 1000,
+          "delaiSemaines": 0,
+          "saturation": true
+        },
+        {
+          "ressource": "jeunesse",
+          "base": 600,
+          "ecart": 400,
+          "delaiSemaines": 0,
+          "saturation": true
+        },
+        {
+          "ressource": "notoriete",
+          "base": 80,
+          "ecart": 60,
+          "delaiSemaines": 0,
+          "saturation": true
+        }
+      ],
+      "campagne": null,
+      "risque": {
+        "probabilite": 0.18,
+        "libelle": "Bad buzz : une vidéo est détournée et moquée",
+        "effets": [
+          {
+            "ressource": "popularite",
+            "base": -150,
+            "ecart": 80,
+            "delaiSemaines": 0,
+            "saturation": false
+          },
+          {
+            "ressource": "dynamique",
+            "base": -1000,
+            "ecart": 400,
+            "delaiSemaines": 0,
+            "saturation": false
+          }
+        ]
+      },
+      "note": "Effets, coût de production et risque : hypothèses du jeu. Les vidéos et leurs réactions sont simulées.",
+      "format": "video-courte"
+    },
+    {
+      "id": "live-twitch",
+      "libelle": "Direct sur Twitch",
+      "description": "Plusieurs heures de direct à répondre au fil de discussion : écho chez les jeunes et quelques nouveaux militants.",
+      "portee": "nationale",
+      "cible": null,
+      "cout": {
+        "budgetCentimes": 500000,
+        "tempsHeures": 6
+      },
+      "prerequis": {
+        "militantsMin": 0
+      },
+      "effets": [
+        {
+          "ressource": "jeunesse",
+          "base": 800,
+          "ecart": 300,
+          "delaiSemaines": 0,
+          "saturation": true
+        },
+        {
+          "ressource": "dynamique",
+          "base": 600,
+          "ecart": 400,
+          "delaiSemaines": 0,
+          "saturation": true
+        },
+        {
+          "ressource": "notoriete",
+          "base": 60,
+          "ecart": 40,
+          "delaiSemaines": 0,
+          "saturation": true
+        },
+        {
+          "ressource": "militants",
+          "base": 40,
+          "ecart": 25,
+          "delaiSemaines": 0,
+          "saturation": false
+        }
+      ],
+      "campagne": null,
+      "risque": {
+        "probabilite": 0.1,
+        "libelle": "Un moment gênant en direct circule",
+        "effets": [
+          {
+            "ressource": "popularite",
+            "base": -100,
+            "ecart": 50,
+            "delaiSemaines": 0,
+            "saturation": false
+          },
+          {
+            "ressource": "dynamique",
+            "base": -500,
+            "ecart": 250,
+            "delaiSemaines": 0,
+            "saturation": false
+          }
+        ]
+      },
+      "note": "Effets et risque : hypothèses du jeu. Le direct et ses échanges sont simulés.",
+      "format": "direct"
     },
     {
       "id": "recrutement",
@@ -3141,6 +3427,207 @@
     "partCodiffusion": 0.5,
     "notorieteParExposition": 0.02
   },
+  "numerique": {
+    "statut": "hypothese",
+    "sourceId": "conception-du-jeu",
+    "note": "Réseaux sociaux et nouveaux médias (phase 9). Les formats et leurs exemples sont réels et sourcés ; leurs effets, les vues et les réactions sont des paramètres de jeu, non mesurés. Jauge Jeunesse : écho du candidat chez les 18-34 ans ; jauge Dynamique : buzz de campagne, qui retombe vite. Hypothèse : les jeunes adultes, plus abstentionnistes, pèsent davantage dans le groupe des électeurs éloignés de la politique (poids plus fort), sans calibration. Les comptes qui réagissent sont inventés ; aucun propos n’est prêté à un animateur, à une chaîne ni à une personne réelle.",
+    "initial": {
+      "jeunesse": 1000,
+      "dynamique": 0
+    },
+    "erosionJeunesse": 0.04,
+    "retombeeDynamique": 0.35,
+    "modele": {
+      "jeunesse": {
+        "gauche-radicale": 0.35,
+        "gauche-sociale": 0.35,
+        "ecologistes": 0.35,
+        "centre-gauche": 0.35,
+        "centre-liberal": 0.35,
+        "droite-moderee": 0.35,
+        "droite-conservatrice": 0.35,
+        "droite-nationale": 0.35,
+        "eloignes": 0.8
+      },
+      "referenceJeunesse": 1000,
+      "elan": 0.6
+    },
+    "formats": [
+      {
+        "id": "interview-longue",
+        "libelle": "Interview longue sur YouTube",
+        "plateforme": "YouTube",
+        "description": "Entretiens de plusieurs heures diffusés sur YouTube, sans coupure ni minutage serré.",
+        "exemples": [
+          {
+            "nom": "Legend",
+            "fait": "émission d’entretiens longs avec des personnalités, diffusée en podcast et sur YouTube depuis 2022",
+            "sourceId": "wikipedia-legend"
+          }
+        ],
+        "vues": {
+          "base": 600000,
+          "ecart": 0.5
+        },
+        "reactions": {
+          "positif": [
+            "Plusieurs heures et pas vu le temps passer.",
+            "Enfin un format où on laisse finir les phrases.",
+            "J’ai appris plus ici qu’en un mois de journaux télévisés.",
+            "Respect pour avoir répondu à tout, même aux questions qui fâchent."
+          ],
+          "neutre": [
+            "Format long, je finirai demain.",
+            "Intéressant, même si je ne suis pas convaincu.",
+            "Quelqu’un a les horodatages des moments clés ?",
+            "J’attends de voir les autres candidats dans le même format."
+          ],
+          "negatif": [
+            "Beaucoup de mots, peu de réponses.",
+            "Ça ressemble surtout à de la communication.",
+            "J’ai décroché au bout d’une heure.",
+            "Toujours les mêmes éléments de langage."
+          ]
+        }
+      },
+      {
+        "id": "decryptage",
+        "libelle": "Format décryptage",
+        "plateforme": "YouTube, Instagram, TikTok",
+        "description": "Explications courtes et pédagogiques de l’actualité, très suivies par les jeunes adultes.",
+        "exemples": [
+          {
+            "nom": "HugoDécrypte",
+            "fait": "média en ligne français fondé en 2015, qui traite l’actualité dans de courtes vidéos et se veut ouvert aux jeunes",
+            "sourceId": "wikipedia-hugodecrypte"
+          }
+        ],
+        "vues": {
+          "base": 900000,
+          "ecart": 0.4
+        },
+        "reactions": {
+          "positif": [
+            "Clair et rapide, parfait pour comprendre.",
+            "On comprend enfin les enjeux, merci pour le format.",
+            "Partagé à toute ma promo.",
+            "Court, précis, ça donne envie d’en savoir plus."
+          ],
+          "neutre": [
+            "Utile, mais un peu court.",
+            "Bon résumé, on verra sur le terrain.",
+            "J’aimerais la même chose avec tous les candidats.",
+            "Pas d’avis tranché, mais c’est instructif."
+          ],
+          "negatif": [
+            "Trop lisse, on n’apprend rien de neuf.",
+            "Des réponses toutes prêtes.",
+            "Pas convaincu par les chiffres avancés.",
+            "On sent les fiches apprises par cœur."
+          ]
+        }
+      },
+      {
+        "id": "video-courte",
+        "libelle": "Vidéos courtes verticales",
+        "plateforme": "TikTok, YouTube Shorts",
+        "description": "Vidéos de quelques dizaines de secondes, diffusées par les algorithmes de recommandation.",
+        "exemples": [
+          {
+            "nom": "TikTok",
+            "fait": "réseau social lancé en 2016 où des créateurs publient des vidéos très courtes au format vertical",
+            "sourceId": "wikipedia-tiktok"
+          },
+          {
+            "nom": "YouTube Shorts",
+            "fait": "vidéos courtes au format vertical publiées sur YouTube (trois minutes au plus), déployées en Europe en juillet 2021",
+            "sourceId": "wikipedia-youtube-shorts"
+          }
+        ],
+        "vues": {
+          "base": 1500000,
+          "ecart": 0.8
+        },
+        "reactions": {
+          "positif": [
+            "Je ne m’attendais pas à rire devant une vidéo politique.",
+            "Le montage est vraiment réussi.",
+            "Ça tourne partout sur mon fil.",
+            "Simple et efficace, j’ai partagé."
+          ],
+          "neutre": [
+            "Pourquoi tous les politiques font des vidéos maintenant ?",
+            "Vu passer trois fois aujourd’hui.",
+            "D’accord, mais le programme, il est où ?",
+            "Curieux de voir la suite."
+          ],
+          "negatif": [
+            "Gênant, on dirait une publicité.",
+            "Ça sent l’agence de communication.",
+            "Les jeunes ne sont pas dupes.",
+            "Trop forcé, je passe."
+          ]
+        }
+      },
+      {
+        "id": "direct",
+        "libelle": "Direct sur Twitch",
+        "plateforme": "Twitch",
+        "description": "Diffusion en direct de plusieurs heures, avec un fil de discussion ouvert au public.",
+        "exemples": [
+          {
+            "nom": "Twitch",
+            "fait": "plateforme de diffusion en direct sur Internet lancée en juin 2011, filiale du groupe Amazon",
+            "sourceId": "wikipedia-twitch"
+          }
+        ],
+        "vues": {
+          "base": 60000,
+          "ecart": 0.5
+        },
+        "reactions": {
+          "positif": [
+            "Deux heures à répondre au fil de discussion, respect.",
+            "Ambiance détendue, ça change des plateaux.",
+            "Je suis resté jusqu’au bout du direct.",
+            "Enfin des réponses aux questions du public."
+          ],
+          "neutre": [
+            "Le fil allait trop vite pour suivre.",
+            "Curieux de voir si ça se refait.",
+            "Quelqu’un a un extrait du passage drôle ?",
+            "Sympa, mais un peu long."
+          ],
+          "negatif": [
+            "Questions filtrées, ça se voit.",
+            "Le son était catastrophique.",
+            "Trop de pauses, on s’ennuie.",
+            "Ça sentait l’opération séduction."
+          ]
+        }
+      }
+    ],
+    "comptes": [
+      "@plume_rouge93",
+      "@velo.et.cafe",
+      "@etudiante_lyon2",
+      "@le_vieux_prof",
+      "@mamie_connectee",
+      "@nuit_blanche_38",
+      "@cafe_creme75",
+      "@ptit_dej_bzh",
+      "@rando.vosges",
+      "@codeuse_nantes",
+      "@apprenti_boulanger",
+      "@bus_de_7h12",
+      "@fan_de_stats",
+      "@jardin_partage_59",
+      "@lectrice.du.soir",
+      "@sono_du_quartier"
+    ],
+    "publicationsMax": 24,
+    "reactionsParPublication": 3
+  },
   "quinquennat": {
     "note": "Règles de la présidence : durée du mandat et limite de deux mandats consécutifs (Constitution, art. 6), dates du mandat déduites de la proclamation de 2022, fenêtre de l'élection suivante (art. 7). Postes, profils fictifs, acceptation d'un poste, usure du pouvoir et actions du président : paramètres de jeu (hypothèses). Le comportement d'une personnalité réelle nommée à un poste est simulé ; aucun propos ne lui est attribué.",
     "mandat": {
@@ -5730,7 +6217,7 @@
     "sourceId": "conception-du-jeu",
     "note": "Moyens de départ des personnalités réelles selon leurs niveaux de notoriété (1 à 3) et d’organisation (grande, moyenne, petite, aucune), établis par des règles documentées à partir de faits sourcés (personnalites-2027.json). Valeurs de jeu, sans prétention de mesure : popularité de départ identique pour toutes ; aucun programme attribué par le jeu ; comportement simulé, style et goût du risque identiques pour toutes.",
     "fichier": "personnalites-2027.json",
-    "empreinte": "086e1b62774e9f8a4f3ea3177bfe59dc808fa9e4189c02a0a9d4934f5ac67a73",
+    "empreinte": "2b961950de4da934e692358371cd42c1befc0b77e46797a3c04a0c9e0854eded",
     "notoriete": [2500, 4500, 7000],
     "popularite": 3000,
     "organisation": {

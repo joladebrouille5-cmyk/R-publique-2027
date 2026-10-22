@@ -1,5 +1,14 @@
 import { RESOURCE_KEYS, type ResourceKey, type Resources, type Ruleset } from '@r2027/shared';
-import { Clock, Heart, Megaphone, Users, Wallet, type LucideIcon } from 'lucide-react';
+import {
+  Clock,
+  Flame,
+  Heart,
+  Megaphone,
+  Sprout,
+  Users,
+  Wallet,
+  type LucideIcon,
+} from 'lucide-react';
 import { Badge } from '../../components/Badge';
 import { formatResource, RESOURCE_LABELS } from '../../labels';
 
@@ -9,11 +18,14 @@ const ICONS: Record<ResourceKey, LucideIcon> = {
   militants: Users,
   notoriete: Megaphone,
   popularite: Heart,
+  jeunesse: Sprout,
+  dynamique: Flame,
 };
 
 /** Jauge des ressources exprimées en pourcentage (et du temps restant de la semaine). */
 function gauge(key: ResourceKey, resources: Resources, ruleset: Ruleset): number | null {
-  if (key === 'notoriete' || key === 'popularite') return resources[key] / 10_000;
+  if (key === 'notoriete' || key === 'popularite' || key === 'jeunesse' || key === 'dynamique')
+    return resources[key] / 10_000;
   if (key === 'tempsHeures') return resources.tempsHeures / ruleset.jeu.tempsHebdomadaireHeures;
   return null;
 }
@@ -27,7 +39,7 @@ export function ResourcesPanel({ resources, ruleset }: { resources: Resources; r
         </h2>
         <Badge tone="simule">Valeurs simulées</Badge>
       </div>
-      <dl className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
+      <dl className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
         {RESOURCE_KEYS.map((key) => {
           const Icon = ICONS[key];
           const ratio = gauge(key, resources, ruleset);
