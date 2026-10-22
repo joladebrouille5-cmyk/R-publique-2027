@@ -1,5 +1,4 @@
 import {
-  DIGITAL_HISTORY_WEEKS,
   famillePolitique,
   PARTI_MARQUE,
   type DigitalPost,
@@ -7,12 +6,13 @@ import {
   type DigitalReception,
   type DigitalTone,
   type GameState,
+  type Prestation,
   type ReportEvent,
   type Ruleset,
 } from '@r2027/shared';
 import type { Rng } from '../core/rng';
 import { stream } from '../core/random';
-import type { ValidatedAction } from './actions';
+import { actionKey, type ValidatedAction } from './actions';
 
 // Réseaux sociaux et nouveaux médias (phase 9). Chaque action d'un format numérique (interview
 // longue sur YouTube, décryptage, vidéos courtes, direct sur Twitch) produit une publication
@@ -21,6 +21,21 @@ import type { ValidatedAction } from './actions';
 // ici, rien ne modifie une ressource. Aucun propos n'est prêté à une personne réelle.
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+
+/**
+ * Tons des réactions à un passage dans les médias (phase 11) : aucun tirage, la part des
+ * réactions positives croît avec le score du passage, celle des négatives décroît.
+ */
+export function scoredTones(count: number, score: number, incident: boolean): DigitalTone[] {
+  const s = score / 100;
+  const positive = incident ? 0.15 : clamp(0.45 + 0.45 * s, 0.05, 0.9);
+  const negative = incident ? 0.6 : clamp(0.2 - 0.35 * s, 0.05, 0.9);
+  const plus = Math.round(count * positive);
+  const minus = Math.min(count - plus, Math.round(count * negative));
+  return Array.from({ length: count }, (_, k) =>
+    k < plus ? 'positif' : k < plus + minus ? 'negatif' : 'neutre',
+  );
+}
 
 /** Tire un ton : l'humeur (−0,3 à +0,3) dépend de la popularité et du buzz du candidat. */
 function drawTone(rng: Rng, mood: number, incident: boolean): DigitalTone {
@@ -50,13 +65,15 @@ export function reception(
 
 /**
  * Étape 5 (après les effets des actions) : publications simulées de la semaine, pour le joueur
- * comme pour les adversaires. Le fil de l'état garde les plus récentes.
+ * comme pour les adversaires. Le fil de l'état garde les plus récentes. Pour un passage noté
+ * (phase 11), vues et tons des réactions suivent le score ; comptes et textes restent tirés.
  */
 export function publishDigital(
   state: GameState,
   ruleset: Ruleset,
   validated: readonly ValidatedAction[],
   risks: readonly ReportEvent[],
+  prestations: ReadonlyMap<string, Prestation> = new Map(),
 ): DigitalPost[] {
   const rules = ruleset.numerique;
   const formats = new Map(rules.formats.map((f) => [f.id, f]));
@@ -77,7 +94,9 @@ export function publishDigital(
     const id = `a-${week}-${actorId}-${index}`;
     const incident = incidents.has(`${id}-risque`);
     const { notoriete, jeunesse, popularite, dynamique } = actor.resources;
-    const spread = 1 + (rng.nextFloat() * 2 - 1) * format.vues.ecart;
+    const prestation = prestations.get(actionKey(actorId, index));
+    const spread =
+      1 + (prestation ? prestation.score / 100 : rng.nextFloat() * 2 - 1) * format.vues.ecart;
     const vues = Math.max(
       0,
       Math.round(
@@ -91,10 +110,11 @@ export function publishDigital(
     const accounts = [...rules.comptes];
     const reactions: DigitalReaction[] = [];
     const count = Math.min(rules.reactionsParPublication, accounts.length);
+    const tones = prestation ? scoredTones(count, prestation.score, incident) : null;
     const partisans = rules.reactionsPartisanes[famillePolitique(actor.candidate.positionnement)];
     const parti = actor.candidate.parti.trim();
     for (let k = 0; k < count; k++) {
-      const ton = drawTone(rng, mood, incident);
+      const ton = tones ? tones[k]! : drawTone(rng, mood, incident);
       const partisan = ton !== 'neutre' && parti !== '' && rng.nextFloat() < rules.partPartisane;
       const general = [...format.reactions[ton], ...rules.reactionsCommunes[ton]];
       const militant = partisan
@@ -128,13 +148,5 @@ export function publishDigital(
   state.numerique.publications = [...state.numerique.publications, ...posts].slice(
     -rules.publicationsMax,
   );
-  // Relevé des passages récents de chaque candidat (le fil, limité, ne suffit pas à compter).
-  for (const post of posts) {
-    const byAction = (state.numerique.passages[post.acteurId] ??= {});
-    byAction[post.actionId] = [
-      ...(byAction[post.actionId] ?? []).filter((w) => w > week - DIGITAL_HISTORY_WEEKS),
-      week,
-    ].slice(-DIGITAL_HISTORY_WEEKS);
-  }
   return posts;
 }

@@ -8,6 +8,7 @@ import {
 import { EconomyChangeSchema } from './economie';
 import { GamePhaseSchema, IsoDateSchema, PollSchema, RoundResultSchema } from './game';
 import { DigitalPostSchema } from './numerique';
+import { PrestationSchema } from './prestations';
 import { ResourceKeySchema } from './resources';
 import { DataStatusSchema } from './ruleset';
 
@@ -63,6 +64,8 @@ export const ActionOutcomeSchema = z
     /** Cible choisie (département, organe de presse), avec son libellé. Phase 5. */
     cible: z.string().nullable().default(null),
     cost: z.object({ budgetCentimes: z.number().int(), tempsHeures: z.number().int() }).strict(),
+    /** Passage dans les médias (phase 11) : posture, format, score et ses raisons. */
+    prestation: PrestationSchema.nullable().default(null),
   })
   .strict();
 export type ActionOutcome = z.infer<typeof ActionOutcomeSchema>;

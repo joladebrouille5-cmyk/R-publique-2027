@@ -1,10 +1,14 @@
-import type {
-  ActionDefinition,
-  ActionOutcome,
-  GameState,
-  PlannedAction,
-  ReportEvent,
-  Ruleset,
+import {
+  DIGITAL_HISTORY_WEEKS,
+  type ActionDefinition,
+  type ActionOutcome,
+  type Effect,
+  type GameState,
+  type PlannedAction,
+  type Posture,
+  type Prestation,
+  type ReportEvent,
+  type Ruleset,
 } from '@r2027/shared';
 import { applyOrSchedule } from '../core/effects';
 import type { Ledger } from '../core/ledger';
@@ -17,6 +21,7 @@ import {
   type FinanceBook,
 } from './finances';
 import { gainPromises, type ParrainageBook } from './parrainages';
+import { isPlateau, scoredAlea, scorePrestation } from './prestations';
 
 export type ValidatedAction = {
   actorId: string;
@@ -24,7 +29,15 @@ export type ValidatedAction = {
   definition: ActionDefinition;
   /** Département, organe de presse ou émission choisi, si l'action en demande un. */
   cible: string | null;
+  /** Posture d'un passage dans les médias (phase 11), sinon null. */
+  posture: Posture | null;
+  /** Posture choisie dans le plan (sinon : posture par défaut du jeu de règles). */
+  postureChoisie: boolean;
 };
+
+/** Motif de rejet d'une posture demandée pour une action qui n'est pas un passage. */
+export const POSTURE_WITHOUT_PLATEAU =
+  'Cette action n’est pas un passage dans les médias : aucune posture à choisir.';
 
 /** Libellé lisible d'une cible : « Ain (01) », « France Inter », « C politique (France 5) ». */
 export function targetLabel(ruleset: Ruleset, action: ActionDefinition, cible: string): string {
@@ -91,7 +104,9 @@ export function validateActions(
     else {
       const { cout, prerequis } = definition;
       reason = targetError(ruleset, definition, action.cible);
-      if (!reason && resources.militants < prerequis.militantsMin) {
+      if (!reason && action.posture !== undefined && !isPlateau(ruleset, definition)) {
+        reason = POSTURE_WITHOUT_PLATEAU;
+      } else if (!reason && resources.militants < prerequis.militantsMin) {
         reason = `Il faut au moins ${prerequis.militantsMin} militants (vous en avez ${resources.militants}).`;
       } else if (!reason && cout.budgetCentimes > budget) {
         reason = `Budget insuffisant : ${formatEuros(cout.budgetCentimes)} nécessaires, ${formatEuros(budget)} restants.`;
@@ -112,6 +127,7 @@ export function validateActions(
         reason,
         cost: { budgetCentimes: 0, tempsHeures: 0 },
         cible: null,
+        prestation: null,
       });
       return;
     }
@@ -119,7 +135,15 @@ export function validateActions(
     budget -= cout.budgetCentimes;
     time -= cout.tempsHeures;
     spent += cout.budgetCentimes;
-    validated.push({ actorId, index, definition, cible });
+    const plateau = isPlateau(ruleset, definition);
+    validated.push({
+      actorId,
+      index,
+      definition,
+      cible,
+      posture: plateau ? (action.posture ?? ruleset.prestations.postureParDefaut) : null,
+      postureChoisie: plateau && action.posture !== undefined,
+    });
     outcomes.push({
       actorId,
       index,
@@ -129,6 +153,7 @@ export function validateActions(
       reason: null,
       cost: { ...cout },
       cible: cible === null ? null : targetLabel(ruleset, definition, cible),
+      prestation: null,
     });
   });
   return { outcomes, validated };
@@ -150,36 +175,55 @@ export function consumeActions(
   }
 }
 
-/**
- * Probabilité d'un aléa d'action, majorée le cas échéant (phase 10, interview longue) par les
- * revirements de programme du candidat et par ses passages récents dans le même format.
- */
-export function riskProbability(
-  state: GameState,
-  actorId: string,
-  definition: ActionDefinition,
-  risk: NonNullable<ActionDefinition['risque']>,
-): number {
-  const extra = risk.majoration;
-  if (!extra) return risk.probabilite;
-  const actor = state.actors[actorId]!;
-  const since = state.meta.week - extra.semainesRepetition;
-  const repeats = (state.numerique.passages[actorId]?.[definition.id] ?? []).filter(
-    (w) => w >= since && w < state.meta.week,
-  ).length;
-  return Math.min(
-    extra.max,
-    risk.probabilite +
-      extra.parRevirement * actor.programme.revirements +
-      extra.parRepetition * repeats,
-  );
-}
-
 export type CampaignBooks = { finances: FinanceBook; parrainages: ParrainageBook };
+
+/** Clé d'une action de la semaine (acteur et rang dans son plan). */
+export const actionKey = (actorId: string, index: number) => `${actorId}#${index}`;
+
+/**
+ * Passages dans les médias de la semaine (phase 11), notés avant tout effet : préparation
+ * acquise plus celle de la semaine (quel que soit l'ordre du plan), passages antérieurs dans
+ * la même action, situation et programme en début d'étape.
+ */
+export function scorePlateaux(
+  state: GameState,
+  ruleset: Ruleset,
+  validated: readonly ValidatedAction[],
+): Map<string, Prestation> {
+  const preparation = new Map<string, number>();
+  for (const v of validated)
+    if (v.definition.campagne?.preparationDebat)
+      preparation.set(
+        v.actorId,
+        (preparation.get(v.actorId) ?? 0) + v.definition.campagne.preparationDebat,
+      );
+  const prestations = new Map<string, Prestation>();
+  for (const v of validated) {
+    if (v.posture === null) continue;
+    const passagesSemaine = validated.filter(
+      (o) => o.actorId === v.actorId && o.definition.id === v.definition.id && o.index < v.index,
+    ).length;
+    prestations.set(
+      actionKey(v.actorId, v.index),
+      scorePrestation(state, ruleset, {
+        actorId: v.actorId,
+        definition: v.definition,
+        cible: v.cible,
+        posture: v.posture,
+        choisie: v.postureChoisie,
+        preparationSemaine: preparation.get(v.actorId) ?? 0,
+        passagesSemaine,
+      }),
+    );
+  }
+  return prestations;
+}
 
 /**
  * Étape 5 : effets des actions (immédiats ou programmés), effets de campagne (promesses de
- * parrainage, dons, prêt, préparation des débats) et tirage de leur risque éventuel.
+ * parrainage, dons, prêt, préparation des débats) et tirage de leur risque éventuel. Pour un
+ * passage dans les médias, rien n'est tiré : la part variable des effets suit le score du
+ * passage et l'aléa ne survient que sous le seuil d'incident (phase 11).
  */
 export function resolveActionEffects(
   state: GameState,
@@ -188,19 +232,23 @@ export function resolveActionEffects(
   books: CampaignBooks,
   validated: readonly ValidatedAction[],
   step: number,
-): { risks: ReportEvent[]; incidents: Set<string> } {
+): { risks: ReportEvent[]; incidents: Set<string>; prestations: Map<string, Prestation> } {
   const week = state.meta.week;
   const risks: ReportEvent[] = [];
   const incidents = new Set<string>();
+  const prestations = scorePlateaux(state, ruleset, validated);
   for (const { actorId, index, definition, cible } of validated) {
     const rng = stream(state.meta.seed, week, 'action', actorId, index, definition.id);
+    const prestation = prestations.get(actionKey(actorId, index));
+    const variable = (effect: Effect) =>
+      prestation ? scoredAlea(effect.ecart, prestation.score) : drawAlea(rng, effect);
     const ref = `a-${week}-${actorId}-${index}`;
     const base = { state, ledger, book: books.finances, actorId, week, step, ref };
     definition.effets.forEach((effect, i) =>
       applyOrSchedule(
         { ...base, label: definition.libelle, source: 'action' },
         effect,
-        drawAlea(rng, effect),
+        variable(effect),
         i,
       ),
     );
@@ -245,8 +293,8 @@ export function resolveActionEffects(
       state.actors[actorId]!.preparationDebat += campagne.preparationDebat;
     }
     const risk = definition.risque;
-    const probability = risk ? riskProbability(state, actorId, definition, risk) : 0;
-    if (risk && rng.nextFloat() < probability) {
+    const happens = prestation ? prestation.incident : !!risk && rng.nextFloat() < risk.probabilite;
+    if (risk && happens) {
       const riskRef = `${ref}-risque`;
       risk.effets.forEach((effect, i) =>
         applyOrSchedule(
@@ -257,7 +305,7 @@ export function resolveActionEffects(
             source: 'risque',
           },
           effect,
-          drawAlea(rng, effect),
+          variable(effect),
           i,
         ),
       );
@@ -267,12 +315,31 @@ export function resolveActionEffects(
         kind: 'risque',
         refId: definition.id,
         label: risk.libelle,
-        description: `Aléa de l'action « ${definition.libelle} » de ${state.actors[actorId]!.label} (probabilité ${Math.round(probability * 100)} %).`,
+        description: prestation
+          ? `Passage raté de ${state.actors[actorId]!.label} (« ${definition.libelle} », score ${prestation.score} : seuil d'incident ${ruleset.prestations.seuils.incident}).`
+          : `Aléa de l'action « ${definition.libelle} » de ${state.actors[actorId]!.label} (probabilité ${Math.round(risk.probabilite * 100)} %).`,
         nature: 'simule',
         majeur: false,
         decisionId: null,
       });
     }
   }
-  return { risks, incidents };
+  recordPassages(state, validated);
+  return { risks, incidents, prestations };
+}
+
+/**
+ * Relevé des passages dans les médias de la semaine, par candidat et par action (lassitude du
+ * public et de l'IA ; le fil des publications, limité, ne suffit pas à compter).
+ */
+function recordPassages(state: GameState, validated: readonly ValidatedAction[]): void {
+  const week = state.meta.week;
+  for (const { actorId, definition, posture } of validated) {
+    if (posture === null) continue;
+    const byAction = (state.numerique.passages[actorId] ??= {});
+    byAction[definition.id] = [
+      ...(byAction[definition.id] ?? []).filter((w) => w > week - DIGITAL_HISTORY_WEEKS),
+      week,
+    ].slice(-DIGITAL_HISTORY_WEEKS);
+  }
 }

@@ -1,6 +1,5 @@
 import type { GameState } from '@r2027/shared';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { riskProbability } from '../campaign/actions';
 import { advanceWeek } from '../core/advanceWeek';
 import { PLAYER_ACTOR_ID } from '../core/createGame';
 import { deepFreeze, newGame, playUntil, RULESET, sponsorship } from '../core/testing';
@@ -273,19 +272,6 @@ describe('débats télévisés (phase 10)', () => {
       { ruleset: RULESET },
     );
     expect(next.actors[PLAYER_ACTOR_ID]!.preparationDebat).toBe(36);
-  });
-
-  it('majore le risque de l’interview longue (revirements, répétition), dans la limite', () => {
-    const state = JSON.parse(JSON.stringify(allCandidates)) as GameState;
-    const legend = RULESET.actions.find((a) => a.id === 'interview-longue')!;
-    const risk = legend.risque!;
-    expect(riskProbability(state, PLAYER_ACTOR_ID, legend, risk)).toBe(risk.probabilite);
-    state.actors[PLAYER_ACTOR_ID]!.programme.revirements = 2;
-    expect(riskProbability(state, PLAYER_ACTOR_ID, legend, risk)).toBeCloseTo(
-      risk.probabilite + 2 * risk.majoration!.parRevirement,
-    );
-    state.actors[PLAYER_ACTOR_ID]!.programme.revirements = 50;
-    expect(riskProbability(state, PLAYER_ACTOR_ID, legend, risk)).toBe(risk.majoration!.max);
   });
 });
 

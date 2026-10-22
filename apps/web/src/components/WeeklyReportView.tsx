@@ -2,6 +2,7 @@ import {
   candidateName,
   type EconomyChange,
   type GameState,
+  type Prestation,
   type ResourceChange,
   type WeeklyReport,
 } from '@r2027/shared';
@@ -12,16 +13,51 @@ import {
   formatGameDate,
   formatIndicator,
   formatIndicatorDelta,
+  formatPoints,
   formatRatio,
   formatResource,
   INDICATOR_LABELS,
   PHASE_LABELS,
+  POSTURE_LABELS,
+  PRESTATION_LABELS,
   RESOURCE_LABELS,
 } from '../labels';
 import { Badge } from './Badge';
 import { CampaignReport } from './CampaignReport';
 
 const sum = (values: number[]) => values.reduce((total, value) => total + value, 0);
+
+const PRESTATION_TONES = { reussie: 'succes', correcte: 'neutre', ratee: 'danger' } as const;
+
+/**
+ * Passage dans les médias (phase 11) : niveau, posture, format et raisons du score, sans tirage
+ * au sort ; la somme des raisons donne le score (borné entre −100 et +100).
+ */
+export function PrestationDetail({ prestation }: { prestation: Prestation }) {
+  return (
+    <div className="w-full basis-full space-y-1 rounded-lg bg-slate-50 p-2 pl-3 dark:bg-slate-800/60">
+      <p className="flex flex-wrap items-center gap-2">
+        <Badge tone={PRESTATION_TONES[prestation.niveau]}>
+          {PRESTATION_LABELS[prestation.niveau]}
+        </Badge>
+        <span>
+          Posture {POSTURE_LABELS[prestation.posture]}
+          {prestation.choisie ? '' : ' (par défaut)'}, {prestation.format.toLowerCase()} : score{' '}
+          <strong className="tabular-nums">{formatPoints(prestation.score)}</strong> sur 100
+          {prestation.incident && ', incident'}.
+        </span>
+      </p>
+      <ul className="text-xs text-slate-600 dark:text-slate-400" aria-label="Raisons du score">
+        {prestation.raisons.map((r) => (
+          <li key={r.label} className="flex justify-between gap-3">
+            <span>{r.label}</span>
+            <span className="shrink-0 tabular-nums">{formatPoints(r.valeur)}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 function ChangesList({
   changes,
@@ -245,6 +281,7 @@ export function WeeklyReportView({
                 {action.reason && (
                   <span className="text-slate-600 dark:text-slate-400">— {action.reason}</span>
                 )}
+                {action.prestation && <PrestationDetail prestation={action.prestation} />}
               </li>
             ))}
           </ul>
@@ -262,6 +299,8 @@ export function WeeklyReportView({
                   <li key={`${action.actorId}-${action.index}`}>
                     <span className="font-medium">{nameOf(action.actorId)}</span> : {action.label}
                     {action.cible && ` — ${action.cible}`}
+                    {action.prestation &&
+                      ` — ${PRESTATION_LABELS[action.prestation.niveau].toLowerCase()} (posture ${POSTURE_LABELS[action.prestation.posture]}, score ${formatPoints(action.prestation.score)})`}
                   </li>
                 ))}
             </ul>

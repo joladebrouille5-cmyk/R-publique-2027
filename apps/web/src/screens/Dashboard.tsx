@@ -434,6 +434,7 @@ export function Dashboard() {
             onAdd={changePlan(plan.addAction)}
             onRemove={changePlan(plan.removeAction)}
             onTarget={changePlan(plan.setTarget)}
+            onPosture={changePlan(plan.setPosture)}
           />
           <section aria-labelledby="titre-engagements" className={`${card} space-y-2 text-sm`}>
             <h2 id="titre-engagements" className="text-lg font-bold">

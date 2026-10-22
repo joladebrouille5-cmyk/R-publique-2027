@@ -15,7 +15,12 @@ import {
 } from '@r2027/shared';
 import { planOpponentActions } from '../ai/opponents';
 import { resolveAlliances, updateRelations } from '../ai/relations';
-import { consumeActions, resolveActionEffects, validateActions } from '../campaign/actions';
+import {
+  actionKey,
+  consumeActions,
+  resolveActionEffects,
+  validateActions,
+} from '../campaign/actions';
 import { FinanceBook } from '../campaign/finances';
 import { updateMedia } from '../campaign/medias';
 import { publishDigital } from '../campaign/numerique';
@@ -227,7 +232,7 @@ export function advanceWeek(
   const decisions = applyDecisions(state, ruleset, ledger, finances, answers, 5);
   const debates = resolveWeekDebates(state, ruleset, ledger, 5);
   const allValidated = [...own.validated, ...opponentValidated];
-  const { risks, incidents } = resolveActionEffects(
+  const { risks, incidents, prestations } = resolveActionEffects(
     state,
     ruleset,
     ledger,
@@ -235,7 +240,7 @@ export function advanceWeek(
     allValidated,
     5,
   );
-  const posts = publishDigital(state, ruleset, allValidated, risks);
+  const posts = publishDigital(state, ruleset, allValidated, risks, prestations);
   const events = drawEvents(state, ruleset, ledger, finances, 5);
   set(
     5,
@@ -246,7 +251,8 @@ export function advanceWeek(
   );
 
   // 6. Médias, puis dynamique de l'opinion et historique de popularité.
-  state.medias = updateMedia(state, ruleset, ledger, allValidated, incidents, 6) ?? state.medias;
+  state.medias =
+    updateMedia(state, ruleset, ledger, allValidated, incidents, 6, prestations) ?? state.medias;
   weeklyDrift(state, ruleset, ledger, 6);
   for (const actor of Object.values(state.actors)) {
     actor.history.popularite = [...actor.history.popularite, actor.resources.popularite].slice(
@@ -342,9 +348,10 @@ export function advanceWeek(
   ];
   // Actions du joueur d'abord, puis celles des adversaires par identifiant, dans l'ordre du plan.
   const rank = (actorId: string) => (actorId === playerId ? '' : actorId);
-  const actions = [...own.outcomes, ...opponents.flatMap((o) => o.outcomes)].sort(
-    (a, b) => compareStrings(rank(a.actorId), rank(b.actorId)) || a.index - b.index,
-  );
+  // Passages dans les médias : posture, format, score et ses raisons (phase 11).
+  const actions = [...own.outcomes, ...opponents.flatMap((o) => o.outcomes)]
+    .map((o) => ({ ...o, prestation: prestations.get(actionKey(o.actorId, o.index)) ?? null }))
+    .sort((a, b) => compareStrings(rank(a.actorId), rank(b.actorId)) || a.index - b.index);
   return {
     state,
     majorEvent: allEvents.some((e) => e.majeur) || election !== null,

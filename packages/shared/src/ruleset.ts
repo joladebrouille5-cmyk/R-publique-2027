@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { DEBATE_ANGLES, DebateRulesSchema } from './debats';
+import { PrestationRulesSchema } from './prestations';
 import { LongTermEffectSchema } from './consequences';
 import { IsoDateSchema } from './game';
 import { AiObjectiveSchema } from './campaign';
@@ -153,24 +154,15 @@ export const ActionDefinitionSchema = z
     prerequis: z.object({ militantsMin: z.number().int().min(0) }).strict(),
     effets: z.array(EffectSchema),
     campagne: CampaignEffectSchema.nullable(),
+    /**
+     * Aléa de l'action : tiré avec sa probabilité ; pour un passage dans les médias (phase 11),
+     * survient sous le seuil d'incident du score, sans tirage (`prestations`).
+     */
     risque: z
       .object({
         probabilite: Probability,
         libelle: z.string().min(1),
         effets: z.array(EffectSchema).min(1),
-        /**
-         * Majoration de la probabilité (phase 10, interview longue) : par revirement de
-         * programme du candidat et par passage du même format dans les dernières semaines.
-         */
-        majoration: z
-          .object({
-            parRevirement: Probability,
-            parRepetition: Probability,
-            semainesRepetition: z.number().int().min(1),
-            max: Probability,
-          })
-          .strict()
-          .optional(),
       })
       .strict()
       .nullable(),
@@ -1107,6 +1099,8 @@ export const RulesetSchema = z
     legislatives2024: RealLegislativesSchema,
     /** Débats télévisés (phase 10) : séances, cartes, angles, effets, répliques. */
     debats: DebateRulesSchema,
+    /** Passages dans les médias sans aléa (phase 11) : postures, formats, score. */
+    prestations: PrestationRulesSchema,
     alliances: z
       .object({
         statut: z.literal('hypothese'),
@@ -1173,6 +1167,7 @@ export const RulesetSchema = z
       ruleset.personnalitesReelles.sourceId,
       ruleset.medias.sourceId,
       ruleset.numerique.sourceId,
+      ruleset.prestations.sourceId,
       ...ruleset.numerique.formats.flatMap((f) => f.exemples.map((e) => e.sourceId)),
       ruleset.quinquennat.mandat.sourceId,
       ruleset.quinquennat.investiture.sourceId,
@@ -1227,6 +1222,31 @@ export const RulesetSchema = z
       if (!ruleset.actions.some((a) => a.format === id))
         issue(`Format numérique sans action : ${id}`);
     }
+    // Passages dans les médias (phase 11) : chaque action et chaque format employé est connu.
+    const prestations = ruleset.prestations;
+    const plateaux = new Set(prestations.formats.map((f) => f.id));
+    unique('Format de passage', [...plateaux]);
+    unique(
+      'Posture',
+      prestations.postures.map((p) => p.id),
+    );
+    const employed = new Set<string>();
+    for (const id of prestations.actions) {
+      const action = ruleset.actions.find((a) => a.id === id);
+      if (!action) issue(`Passage dans les médias : action inconnue (${id})`);
+      else if (action.cible === 'media')
+        Object.values(prestations.formatParTypeOrgane).forEach((f) => employed.add(f));
+      else if (action.cible === 'emission') employed.add(prestations.formatEmission);
+      else if (action.format) employed.add(action.format);
+      else issue(`Passage dans les médias : ${id} n'a ni cible média ni format`);
+    }
+    for (const id of employed)
+      if (!plateaux.has(id)) issue(`Passage dans les médias : format sans affinités (${id})`);
+    for (const id of plateaux)
+      if (!employed.has(id)) issue(`Passage dans les médias : format inemployé (${id})`);
+    const { reussie, ratee, incident } = prestations.seuils;
+    if (!(incident < ratee && ratee < reussie))
+      issue('Passage dans les médias : seuils attendus incident < raté < réussi');
     const groups = ruleset.electorat.groupes.map((g) => g.id).sort();
     const weighted = Object.keys(ruleset.numerique.modele.jeunesse).sort();
     if (groups.join() !== weighted.join())

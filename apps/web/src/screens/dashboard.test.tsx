@@ -74,6 +74,66 @@ describe('tableau de bord', () => {
     expect(screen.getByRole('list', { name: 'Catalogue des actions' })).toBeInTheDocument();
   });
 
+  it('choisit la posture d’un passage dans les médias et en montre la raison au bilan', async () => {
+    const report = reportFixture({
+      actions: [
+        {
+          actorId: 'joueur',
+          index: 0,
+          actionId: 'decryptage',
+          label: 'Passage dans un format décryptage',
+          status: 'validee',
+          reason: null,
+          cible: null,
+          cost: { budgetCentimes: 0, tempsHeures: 3 },
+          prestation: {
+            posture: 'offensive',
+            choisie: true,
+            formatId: 'decryptage',
+            format: 'Décryptage',
+            score: -12,
+            niveau: 'ratee',
+            incident: false,
+            raisons: [
+              { label: 'Préparation (0 h sur 20 h utiles)', valeur: 0 },
+              { label: 'Posture offensive, format « Décryptage »', valeur: -20 },
+              { label: 'Popularité (34 %)', valeur: 8 },
+            ],
+          },
+        },
+      ],
+    });
+    const calls = mockApi({
+      ...base(),
+      [`POST /api/games/${GAME_ID}/advance`]: () => ({
+        body: { game: gameFixture({ week: 1, date: '2026-10-05', version: 4 }), report },
+      }),
+    });
+    renderRoute(`/parties/${GAME_ID}/tableau-de-bord`);
+    const user = userEvent.setup();
+    await user.click(
+      await screen.findByRole('button', { name: 'Ajouter Passage dans un format décryptage' }),
+    );
+    const posture = screen.getByRole('group', {
+      name: /Posture du passage n° 1 — Décryptage/,
+    });
+    // Posture par défaut cochée, adéquation au format lue dans le jeu de règles.
+    expect(within(posture).getByRole('radio', { name: 'Pédagogique' })).toBeChecked();
+    expect(within(posture).getByText('Posture adaptée au format.')).toBeInTheDocument();
+    await user.click(within(posture).getByRole('radio', { name: 'Offensive' }));
+    expect(within(posture).getByText('Posture peu adaptée au format.')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Résoudre la semaine 0' }));
+
+    await waitFor(() => expect(calls.some((c) => c.method === 'POST')).toBe(true));
+    expect(calls.find((c) => c.method === 'POST')!.body).toMatchObject({
+      actions: [{ actionId: 'decryptage', posture: 'offensive' }],
+    });
+    expect(await screen.findByText('Passage raté')).toBeInTheDocument();
+    const reasons = screen.getByRole('list', { name: 'Raisons du score' });
+    expect(within(reasons).getByText('Posture offensive, format « Décryptage »'));
+    expect(within(reasons).getByText('−20')).toBeInTheDocument();
+  });
+
   it('désactive une action dont le prérequis n’est pas rempli', async () => {
     const game = gameFixture();
     game.state.actors.joueur!.resources.militants = 10;

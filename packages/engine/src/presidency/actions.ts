@@ -1,5 +1,5 @@
 import type { ActionOutcome, GameState, PlannedAction, Ruleset } from '@r2027/shared';
-import { targetLabel, type ValidatedAction } from '../campaign/actions';
+import { POSTURE_WITHOUT_PLATEAU, targetLabel, type ValidatedAction } from '../campaign/actions';
 import { formatFrenchDate } from '../core/calendar';
 import { compareStrings } from '../core/ledger';
 import { daysBetween, weekReaches } from './dates';
@@ -36,6 +36,7 @@ export function validatePresidencyActions(
       reason = `Le mandat commence le ${formatFrenchDate(quinquennat.mandat.debut)}.`;
     else if (definition.cible === null && action.cible !== undefined)
       reason = 'Cette action ne se dirige pas vers une cible.';
+    else if (action.posture !== undefined) reason = POSTURE_WITHOUT_PLATEAU;
     else if (definition.cible === 'departement' && action.cible === undefined)
       reason = 'Choisissez le département du déplacement.';
     else if (
@@ -63,6 +64,7 @@ export function validatePresidencyActions(
         reason,
         cost: { budgetCentimes: 0, tempsHeures: 0 },
         cible: null,
+        prestation: null,
       });
       return;
     }
@@ -70,7 +72,7 @@ export function validatePresidencyActions(
     if (definition.institution === 'dissolution') dissolution = true;
     time -= definition.cout.tempsHeures;
     const cible = action.cible ?? null;
-    validated.push({ actorId, index, definition, cible });
+    validated.push({ actorId, index, definition, cible, posture: null, postureChoisie: false });
     outcomes.push({
       actorId,
       index,
@@ -80,6 +82,7 @@ export function validatePresidencyActions(
       reason: null,
       cost: { ...definition.cout },
       cible: cible === null ? null : targetLabel(ruleset, definition, cible),
+      prestation: null,
     });
   });
   return { outcomes, validated };

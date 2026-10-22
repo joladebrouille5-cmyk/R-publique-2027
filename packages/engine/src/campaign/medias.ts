@@ -5,12 +5,13 @@ import type {
   Interview,
   MediaState,
   PoliticalShow,
+  Prestation,
   RealOutlet,
   Ruleset,
 } from '@r2027/shared';
 import { compareStrings, type Ledger } from '../core/ledger';
 import { stream } from '../core/random';
-import type { ValidatedAction } from './actions';
+import { actionKey, type ValidatedAction } from './actions';
 import { credibility } from './programme';
 
 // Médias réels (§8, phase 5 ter) : chaînes de télévision et de radio suivies par l'Arcom,
@@ -82,9 +83,21 @@ function actionExposure(
 }
 
 /**
+ * Organes d'un passage dans les médias : l'organe de l'interview, ou celui de l'émission et ses
+ * autres diffuseurs.
+ */
+function plateauOutlets(shows: ReadonlyMap<string, PoliticalShow>, action: ValidatedAction) {
+  if (action.cible === null) return [];
+  if (action.definition.cible === 'media') return [action.cible];
+  const show = action.definition.cible === 'emission' ? shows.get(action.cible) : undefined;
+  return show ? [show.organeId, ...show.autresOrganes] : [];
+}
+
+/**
  * Étape 6 : couverture de la semaine par chaque organe réel, indice médiatique de chaque
  * candidat (−1 à +1), interviews tenues dans les émissions politiques et gain de notoriété
- * proportionnel à l'audience touchée (inscrit au registre avec son facteur).
+ * proportionnel à l'audience touchée (inscrit au registre avec son facteur). Sur l'organe d'un
+ * passage noté (phase 11), la part variable de la tonalité suit le score du passage, sans tirage.
  */
 export function updateMedia(
   state: GameState,
@@ -93,6 +106,7 @@ export function updateMedia(
   actions: readonly ValidatedAction[],
   incidents: ReadonlySet<string>,
   step: number,
+  prestations: ReadonlyMap<string, Prestation> = new Map(),
 ): MediaState | null {
   const actors = Object.values(state.actors)
     .filter((a) => ACTIVE.has(a.status))
@@ -116,6 +130,23 @@ export function updateMedia(
     ),
   );
 
+  // Tonalité des passages notés, par organe et par candidat (moyenne des scores de la semaine).
+  const scored = new Map<string, number[]>();
+  for (const action of actions) {
+    const prestation = prestations.get(actionKey(action.actorId, action.index));
+    if (!prestation) continue;
+    for (const outletId of plateauOutlets(shows, action)) {
+      const key = `${outletId}#${action.actorId}`;
+      scored.set(key, [...(scored.get(key) ?? []), prestation.score]);
+    }
+  }
+  const scoredTone = (outletId: string, actorId: string) => {
+    const scores = scored.get(`${outletId}#${actorId}`);
+    if (!scores) return undefined;
+    const mean = scores.reduce((sum, v) => sum + v, 0) / scores.length;
+    return (ruleset.prestations.tonalite * mean) / 100;
+  };
+
   const couverture: MediaState['couverture'] = {};
   const weighted = new Map<string, number>(actors.map((a) => [a.id, 0]));
   const reach = new Map<string, number>(actors.map((a) => [a.id, 0]));
@@ -136,7 +167,9 @@ export function updateMedia(
         if (action.actorId === actor.id) exposure += actionExposure(ruleset, shows, outlet, action);
       exposure = clamp(exposure, 0, 10_000);
       const alea = rng.nextFloat() * 50 - 25;
-      const tone = Math.round(clamp(tones[i]! + alea, -100, 100));
+      const tone = Math.round(
+        clamp(tones[i]! + (scoredTone(outlet.id, actor.id) ?? alea), -100, 100),
+      );
       const coverage: Coverage = { exposition: exposure, tonalite: tone + 0 };
       couverture[outlet.id]![actor.id] = coverage;
       weighted.set(actor.id, weighted.get(actor.id)! + (weight * exposure * tone) / 1_000_000);

@@ -1,4 +1,4 @@
-import type { PlannedAction } from '@r2027/shared';
+import type { PlannedAction, Posture } from '@r2027/shared';
 import { create } from 'zustand';
 
 // Plan de la semaine en cours (état d'interface, jamais l'état de partie) : actions et leurs
@@ -49,9 +49,16 @@ export function useWeeklyPlan(gameId: string, week: number) {
       update((p) => ({ actions: p.actions.filter((_, i) => i !== index) })),
     setTarget: (index: number, cible: string) =>
       update((p) => ({
-        actions: p.actions.map((a, i) =>
-          i !== index ? a : cible ? { actionId: a.actionId, cible } : { actionId: a.actionId },
-        ),
+        actions: p.actions.map((a, i) => {
+          if (i !== index) return a;
+          const { cible: _old, ...rest } = a;
+          return cible ? { ...rest, cible } : rest;
+        }),
+      })),
+    /** Posture d'un passage dans les médias (phase 11). */
+    setPosture: (index: number, posture: Posture) =>
+      update((p) => ({
+        actions: p.actions.map((a, i) => (i !== index ? a : { ...a, posture })),
       })),
     toggleAnnounce: (id: string) =>
       update((p) => ({

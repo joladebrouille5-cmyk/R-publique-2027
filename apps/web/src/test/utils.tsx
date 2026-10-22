@@ -196,6 +196,7 @@ export function reportFixture(overrides: Partial<WeeklyReport> = {}): WeeklyRepo
         reason: null,
         cible: null,
         cost: { budgetCentimes: 12_000_000, tempsHeures: 8 },
+        prestation: null,
       },
     ],
     changes: [

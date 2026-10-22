@@ -246,6 +246,24 @@ export function pollFactorLabel(label: string): string {
   return POLL_FACTOR_LABELS[label] ?? label;
 }
 
+/** Niveau d'un passage dans les médias (phase 11). */
+export const PRESTATION_LABELS = {
+  reussie: 'Passage réussi',
+  correcte: 'Passage correct',
+  ratee: 'Passage raté',
+} as const;
+
+export const POSTURE_LABELS = {
+  offensive: 'offensive',
+  pedagogique: 'pédagogique',
+  rassembleuse: 'rassembleuse',
+} as const;
+
+/** Score ou raison d'un passage : « +12 », « −8 », « 0 ». */
+export function formatPoints(value: number): string {
+  return value > 0 ? `+${value}` : value < 0 ? `−${-value}` : '0';
+}
+
 /** Variation d'un sondage à l'autre, en centièmes de point → « +1,20 pt », « stable », « — ». */
 export function formatPollDelta(variation: number | null): string {
   if (variation === null) return '—';

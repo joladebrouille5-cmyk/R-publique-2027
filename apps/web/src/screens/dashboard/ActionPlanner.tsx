@@ -5,6 +5,7 @@ import {
   type CampaignEffect,
   type Effect,
   type PlannedAction,
+  type Posture,
   type Ruleset,
 } from '@r2027/shared';
 import { Clock, Crosshair, Plus, Users, Wallet, X } from 'lucide-react';
@@ -22,6 +23,7 @@ import {
   RESOURCE_LABELS,
 } from '../../labels';
 import { actionIcon } from './actionIcons';
+import { PostureSelect, isPlateau } from './PostureSelect';
 
 type Props = {
   ruleset: Ruleset;
@@ -41,6 +43,8 @@ type Props = {
   onAdd: (actionId: string) => void;
   onRemove: (index: number) => void;
   onTarget: (index: number, cible: string) => void;
+  /** Posture d'un passage dans les médias (campagne, phase 11). */
+  onPosture?: (index: number, posture: Posture) => void;
 };
 
 const TARGET_LABELS = { departement: 'Département', media: 'Média', emission: 'Émission' } as const;
@@ -283,6 +287,7 @@ export function ActionPlanner({
   onAdd,
   onRemove,
   onTarget,
+  onPosture,
 }: Props) {
   const presidency = mode === 'presidence';
   const catalog = presidency ? ruleset.quinquennat.actions : ruleset.actions;
@@ -332,10 +337,11 @@ export function ActionPlanner({
             {plan.map((planned, index) => {
               const action = catalog.find((a) => a.id === planned.actionId);
               const Icon = actionIcon(planned.actionId);
+              const plateau = !presidency && action && onPosture && isPlateau(ruleset, action);
               return (
                 <li
                   key={`${planned.actionId}-${index}`}
-                  className="flex animate-monte flex-col gap-2 rounded-2xl bg-slate-50 p-2 pl-3 text-sm sm:flex-row sm:items-center dark:bg-slate-800/60"
+                  className="flex animate-monte flex-wrap items-center gap-2 rounded-2xl bg-slate-50 p-2 pl-3 text-sm dark:bg-slate-800/60"
                 >
                   <span className="flex min-w-0 flex-1 items-center gap-2.5 font-semibold">
                     <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-republique-600 text-white">
@@ -343,7 +349,9 @@ export function ActionPlanner({
                     </span>
                     <span className="truncate">{action?.libelle ?? planned.actionId}</span>
                   </span>
-                  <div className="flex items-center gap-2">
+                  <div
+                    className={`flex items-center gap-2 ${action?.cible ? 'max-sm:w-full' : ''}`}
+                  >
                     {action?.cible && (
                       <TargetSelect
                         ruleset={ruleset}
@@ -364,6 +372,15 @@ export function ActionPlanner({
                       <X aria-hidden="true" className="size-5" />
                     </button>
                   </div>
+                  {plateau && (
+                    <PostureSelect
+                      ruleset={ruleset}
+                      action={action}
+                      planned={planned}
+                      index={index}
+                      onChange={(posture) => onPosture(index, posture)}
+                    />
+                  )}
                 </li>
               );
             })}
@@ -452,16 +469,20 @@ export function ActionPlanner({
                   <dd>{effectLines(action).join(' ; ') || 'aucun effet direct'}</dd>
                   <dt className="text-slate-500 dark:text-slate-400">Risque</dt>
                   <dd>
-                    {action.risque
-                      ? `${Math.round(action.risque.probabilite * 100)} % : ${action.risque.libelle} (${action.risque.effets.map(describeEffect).join(' ; ')})`
-                      : 'aucun'}
+                    {!action.risque
+                      ? 'aucun'
+                      : !presidency && isPlateau(ruleset, action)
+                        ? `si le passage est raté (score de ${ruleset.prestations.seuils.incident} ou moins) : ${action.risque.libelle} (${action.risque.effets.map(describeEffect).join(' ; ')})`
+                        : `${Math.round(action.risque.probabilite * 100)} % : ${action.risque.libelle} (${action.risque.effets.map(describeEffect).join(' ; ')})`}
                   </dd>
                 </dl>
                 {action.note && (
                   <p className="text-xs text-slate-500 dark:text-slate-400">{action.note}</p>
                 )}
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Valeurs de jeu (hypothèses) ; l’effet réel est tiré au sort dans l’écart indiqué.
+                  {!presidency && isPlateau(ruleset, action)
+                    ? 'Passage dans les médias, sans tirage au sort : l’effet se place dans l’écart indiqué selon la préparation, la posture choisie, le format et votre situation (valeurs de jeu, hypothèses).'
+                    : 'Valeurs de jeu (hypothèses) ; l’effet réel est tiré au sort dans l’écart indiqué.'}
                 </p>
               </InfoPopover>
             </li>

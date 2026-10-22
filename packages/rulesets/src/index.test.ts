@@ -747,7 +747,7 @@ describe('contenu approfondi (phase 7)', () => {
       expect(RulesetSchema.safeParse(twice).success).toBe(false);
     });
 
-    it('fait de l’interview longue un fort levier de sympathie, avec un risque majoré', () => {
+    it('fait de l’interview longue un fort levier de sympathie, noté comme un passage', () => {
       const legend = ruleset.actions.find((a) => a.id === 'interview-longue')!;
       const gain = (r: string) =>
         legend.effets.filter((e) => e.ressource === r).reduce((s, e) => s + e.base, 0);
@@ -762,7 +762,8 @@ describe('contenu approfondi (phase 7)', () => {
       expect(gain('popularite')).toBeGreaterThan(best);
       expect(gain('notoriete')).toBeGreaterThan(0);
       expect(gain('jeunesse')).toBeGreaterThan(0);
-      expect(legend.risque?.majoration).toBeDefined();
+      // Phase 11 : passage noté (posture, préparation, lassitude), sans risque tiré au sort.
+      expect(ruleset.prestations.actions).toContain(legend.id);
       expect(legend.risque!.libelle).toMatch(/simulé/);
       // L'effet du risque s'étale sur plusieurs semaines.
       expect(new Set(legend.risque!.effets.map((e) => e.delaiSemaines)).size).toBeGreaterThan(1);

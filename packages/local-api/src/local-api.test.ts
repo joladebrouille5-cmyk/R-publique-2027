@@ -150,6 +150,43 @@ describe('serveur local : parties et progression', () => {
     expect(after.version).toBe(game.version + 1);
   });
 
+  it('note les passages dans les médias selon la posture choisie, sans tirage (phase 11)', async () => {
+    const api = server();
+    const game = await newGame(api);
+    const body = {
+      actions: [
+        { actionId: 'emission-politique', cible: 'emi-le-grand-jury', posture: 'offensive' },
+        { actionId: 'decryptage' },
+        { actionId: 'meeting', posture: 'rassembleuse' },
+      ],
+    };
+    const { report } = await advance(api, game, body);
+    const [show, decryptage, meeting] = report.actions.filter(
+      (a) => a.actorId === game.state.player.actorId,
+    );
+    expect(show!.prestation).toMatchObject({
+      posture: 'offensive',
+      choisie: true,
+      formatId: 'emission-politique',
+    });
+    expect(show!.prestation!.raisons.length).toBeGreaterThan(1);
+    expect(decryptage!.prestation).toMatchObject({ posture: 'pedagogique', choisie: false });
+    expect(meeting).toMatchObject({
+      status: 'rejetee',
+      reason: 'Cette action n’est pas un passage dans les médias : aucune posture à choisir.',
+      prestation: null,
+    });
+    // Posture inconnue : requête refusée par le schéma partagé.
+    const bad = await call(
+      api,
+      'POST',
+      `/api/games/${game.id}/advance`,
+      { expectedWeek: 0, actions: [{ actionId: 'decryptage', posture: 'agressive' }] },
+      'cle-posture',
+    );
+    expect(bad.status).toBe(400);
+  });
+
   it('mène une présidentielle hors ligne jusqu’au quinquennat, avance rapide comprise', async () => {
     const api = server();
     let game = await newGame(api, {

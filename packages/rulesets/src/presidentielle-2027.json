@@ -362,7 +362,7 @@
     {
       "id": "interview",
       "libelle": "Interview dans un média",
-      "description": "Entretien dans un média réel choisi (télévision, radio ou presse) : exposition forte dans cet organe, effet incertain sur l’image.",
+      "description": "Entretien dans un média réel choisi (télévision, radio ou presse) : exposition forte dans cet organe ; l’effet sur l’image dépend de la préparation, de la posture et du format.",
       "portee": "nationale",
       "cout": {
         "budgetCentimes": 0,
@@ -409,7 +409,7 @@
     {
       "id": "emission-politique",
       "libelle": "Invité d’une émission politique",
-      "description": "Passage dans une émission politique réelle choisie : exposition forte sur sa chaîne ou sa station (et, en partie, sur ses autres diffuseurs), effet incertain sur l’image.",
+      "description": "Passage dans une émission politique réelle choisie : exposition forte sur sa chaîne ou sa station (et, en partie, sur ses autres diffuseurs) ; l’effet sur l’image dépend de la préparation, de la posture et du format.",
       "portee": "nationale",
       "cout": {
         "budgetCentimes": 0,
@@ -562,13 +562,7 @@
             "delaiSemaines": 1,
             "saturation": false
           }
-        ],
-        "majoration": {
-          "parRevirement": 0.05,
-          "parRepetition": 0.04,
-          "semainesRepetition": 12,
-          "max": 0.35
-        }
+        ]
       },
       "note": "Effets et risque : hypothèses du jeu. Le format et ses exemples sont réels ; l’entretien, ses questions et ses réponses sont simulés. Le risque augmente avec les revirements de programme du candidat et avec la répétition de ce format ; l’événement ne décrit aucun contenu.",
       "format": "interview-longue"
@@ -922,8 +916,8 @@
     },
     {
       "id": "preparation-debat",
-      "libelle": "Préparation des débats",
-      "description": "Séances de travail avec l’équipe : dossiers, réponses, mises en situation. Les heures servent à tous les débats et s’usent de 10 % par semaine.",
+      "libelle": "Préparation des débats et des plateaux",
+      "description": "Séances de travail avec l’équipe : dossiers, réponses, mises en situation. Les heures servent aux débats comme aux passages dans les médias et s’usent de 10 % par semaine.",
       "portee": "nationale",
       "cible": null,
       "cout": {
@@ -6779,6 +6773,136 @@
         "Réponse à côté, une fois de plus."
       ]
     }
+  },
+  "prestations": {
+    "statut": "hypothese",
+    "sourceId": "conception-du-jeu",
+    "note": "Passages dans les médias sans aléa (phase 11). Le score d’un passage (−100 à +100) est la somme de raisons explicites : préparation (heures de préparation des débats et plateaux, plafonnées), adéquation de la posture au format de l’exercice, crédibilité du programme pondérée selon la posture, situation (rang dans les intentions : l’offensive sert le challenger et dessert le favori ; le rassemblement sert qui peut l’emporter), popularité et lassitude du public (passages répétés dans la même action). Les effets de l’action valent base + écart × score ; l’aléa de l’action ne se produit que sous le seuil d’incident. Affinités, poids et seuils : hypothèses du jeu sur les formats, non calibrées ; aucune ligne éditoriale n’est prêtée à une chaîne, une station, un journal ou une émission.",
+    "postures": [
+      {
+        "id": "offensive",
+        "libelle": "Offensive",
+        "description": "Attaquer le bilan et les propositions des adversaires, chercher la formule qui marque. Payant en challenger, risqué pour un favori."
+      },
+      {
+        "id": "pedagogique",
+        "libelle": "Pédagogique",
+        "description": "Expliquer le programme, chiffres à l’appui, sans hausser le ton. Vaut ce que vaut la crédibilité du programme."
+      },
+      {
+        "id": "rassembleuse",
+        "libelle": "Rassembleuse",
+        "description": "Parler au-delà de son camp, apaiser, chercher les points d’accord. Convient à qui peut l’emporter."
+      }
+    ],
+    "postureParDefaut": "pedagogique",
+    "actions": [
+      "interview",
+      "emission-politique",
+      "interview-longue",
+      "decryptage",
+      "vague-video-courte",
+      "live-twitch"
+    ],
+    "formatParTypeOrgane": {
+      "television": "interview-television",
+      "radio": "interview-radio",
+      "presse": "entretien-presse"
+    },
+    "formatEmission": "emission-politique",
+    "formats": [
+      {
+        "id": "interview-television",
+        "libelle": "Interview télévisée",
+        "affinites": {
+          "offensive": 10,
+          "pedagogique": 25,
+          "rassembleuse": 15
+        }
+      },
+      {
+        "id": "interview-radio",
+        "libelle": "Interview à la radio",
+        "affinites": {
+          "offensive": 5,
+          "pedagogique": 30,
+          "rassembleuse": 10
+        }
+      },
+      {
+        "id": "entretien-presse",
+        "libelle": "Entretien dans la presse écrite",
+        "affinites": {
+          "offensive": -10,
+          "pedagogique": 35,
+          "rassembleuse": 10
+        }
+      },
+      {
+        "id": "emission-politique",
+        "libelle": "Émission politique (plateau et contradicteurs)",
+        "affinites": {
+          "offensive": 25,
+          "pedagogique": 15,
+          "rassembleuse": 0
+        }
+      },
+      {
+        "id": "interview-longue",
+        "libelle": "Entretien long (plusieurs heures)",
+        "affinites": {
+          "offensive": -25,
+          "pedagogique": 25,
+          "rassembleuse": 30
+        }
+      },
+      {
+        "id": "decryptage",
+        "libelle": "Décryptage",
+        "affinites": {
+          "offensive": -20,
+          "pedagogique": 40,
+          "rassembleuse": 10
+        }
+      },
+      {
+        "id": "video-courte",
+        "libelle": "Vidéos courtes",
+        "affinites": {
+          "offensive": 30,
+          "pedagogique": -20,
+          "rassembleuse": 5
+        }
+      },
+      {
+        "id": "direct",
+        "libelle": "Direct sur une plateforme de streaming",
+        "affinites": {
+          "offensive": -10,
+          "pedagogique": 10,
+          "rassembleuse": 30
+        }
+      }
+    ],
+    "preparation": 35,
+    "preparationHeures": 20,
+    "credibilite": {
+      "offensive": 10,
+      "pedagogique": 40,
+      "rassembleuse": 15
+    },
+    "situation": 20,
+    "popularite": 20,
+    "repetition": {
+      "parPassage": 15,
+      "semaines": 4
+    },
+    "seuils": {
+      "reussie": 30,
+      "ratee": -10,
+      "incident": -35
+    },
+    "tonalite": 40
   },
   "alliances": {
     "statut": "hypothese",

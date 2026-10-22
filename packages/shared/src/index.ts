@@ -13,6 +13,7 @@ export * from './medias';
 export * from './numerique';
 export * from './soiree';
 export * from './debats';
+export * from './prestations';
 export * from './quinquennat';
 export * from './consequences';
 export * from './cycle';

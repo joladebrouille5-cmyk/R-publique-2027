@@ -31,6 +31,7 @@ import {
   QuinquennatV8Schema,
 } from './quinquennat';
 import { DebatesStateSchema } from './debats';
+import { PostureSchema } from './prestations';
 import { DigitalStateSchema, DigitalStateV14Schema } from './numerique';
 import { ResourceKeySchema, ResourcesSchema, ResourcesV1Schema } from './resources';
 
@@ -681,10 +682,15 @@ export type GameState = z.infer<typeof GameStateSchema>;
 
 /**
  * Action programmée pour la semaine en cours, avec sa cible si l'action en demande une
- * (département pour les élus locaux, organe de presse ou émission politique pour une interview).
+ * (département pour les élus locaux, organe de presse ou émission politique pour une interview)
+ * et, pour un passage dans les médias, sa posture (phase 11 ; absente : posture par défaut).
  */
 export const PlannedActionSchema = z
-  .object({ actionId: Id, cible: z.string().min(1).max(60).optional() })
+  .object({
+    actionId: Id,
+    cible: z.string().min(1).max(60).optional(),
+    posture: PostureSchema.optional(),
+  })
   .strict();
 export type PlannedAction = z.infer<typeof PlannedActionSchema>;
 

@@ -79,13 +79,14 @@ export const DigitalStateV14Schema = z
   .object({ publications: z.array(DigitalPostSchema).max(60) })
   .strict();
 
-/** Semaines des passages récents (douze au plus) d'un candidat, par action numérique. */
+/** Semaines des passages récents (douze au plus) d'un candidat, par action de passage. */
 export const DIGITAL_HISTORY_WEEKS = 12;
 
 /**
  * Fil des dernières publications simulées (la plus récente en dernier) et, depuis le format 15,
- * relevé des passages récents de chaque candidat dans chaque format : le fil, limité, ne suffit
- * pas à compter les répétitions (risque majoré de l'interview longue, lassitude de l'IA).
+ * relevé des passages récents de chaque candidat par action : formats numériques, puis (phase
+ * 11) tous les passages dans les médias, interviews et émissions comprises. Le fil, limité, ne
+ * suffit pas à compter les répétitions (lassitude du public et de l'IA).
  */
 export const DigitalStateSchema = DigitalStateV14Schema.extend({
   passages: z.record(
