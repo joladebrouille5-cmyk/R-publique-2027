@@ -26,11 +26,11 @@ import {
   weeklyParrainages,
 } from '../campaign/parrainages';
 import { applyProgramme, programmeReport, validateProgrammeChange } from '../campaign/programme';
-import { distribute, summarize } from '../election/distribution';
+import { distribute, groupShares, summarize } from '../election/distribution';
 import { resolveWeekDebates, scheduleDebates } from '../election/debats';
 import { concludeRound, scrutinOfWeek } from '../election/flow';
 import { weeklyDrift } from '../election/opinion';
-import { publishPolls } from '../election/polls';
+import { archivePolls, publishPolls } from '../election/polls';
 import { resolveRound } from '../election/rounds';
 import { applyDecisions, drawEvents, validateDecisionAnswers } from '../event/events';
 import { requestGovernment } from '../presidency/government';
@@ -268,12 +268,15 @@ export function advanceWeek(
   const phase = state.meta.phase;
   if (phase === 'campagne' || phase === 'entre_deux_tours') {
     const round = phase === 'campagne' ? 1 : 2;
-    const opinion = summarize(distribute(state, ruleset, round, 'opinion'), week, round);
+    const distributions = distribute(state, ruleset, round, 'opinion');
+    const opinion = summarize(distributions, week, round);
     state.opinion = opinion;
     if (opinion) {
       intentions = { round, participation: opinion.participation, values: opinion.intentions };
-      polls = publishPolls(state, ruleset, round, opinion.intentions);
-      state.polls.push(...polls);
+      const published = publishPolls(state, ruleset, round, opinion, groupShares(distributions));
+      polls = published.polls;
+      state.polls = [...archivePolls(state.polls, polls), ...polls];
+      state.sondagesBase = { ...state.sondagesBase, ...published.bases };
     }
   }
   set(

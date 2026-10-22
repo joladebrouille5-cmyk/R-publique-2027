@@ -117,6 +117,7 @@ export function openNextCampaign(
   state.pendingDecisions = [];
   state.opinion = null;
   state.polls = [];
+  state.sondagesBase = {};
   state.elections = { t1: null, t2: null, consignes: [], debate: null, debateDetail: null };
   state.debats = { seances: [] };
   state.medias = null;

@@ -929,6 +929,11 @@ export const RulesetSchema = z
         medias: Coefficient,
         alliances: Coefficient,
         alea: Coefficient,
+        /**
+         * Persistance de la part d'incertitude d'une semaine à l'autre (phase 11) : moyenne
+         * pondérée des chocs des semaines passées (0 : tirage indépendant chaque semaine).
+         */
+        persistanceIncertitude: Fraction,
         participation: z
           .object({ effetProximite: Fraction, min: Fraction, max: Fraction })
           .strict(),
@@ -956,6 +961,11 @@ export const RulesetSchema = z
         statut: z.literal('hypothese'),
         instituts: z.array(InstituteSchema).min(1),
         biaisMaxCentiemes: z.number().int().min(0).max(1_000),
+        /**
+         * Part de l'écart d'échantillonnage conservée après redressement par quotas (phase 11,
+         * hypothèse) : 1 = tirage brut, plus bas = vagues plus stables.
+         */
+        redressement: Fraction,
         limites: z.string().min(1),
       })
       .strict(),

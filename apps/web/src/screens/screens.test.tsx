@@ -259,6 +259,25 @@ describe('élection présidentielle', () => {
     expect(screen.getByRole('heading', { name: /Tous les sondages publiés/ })).toBeInTheDocument();
   });
 
+  it('explique l’écart de chaque candidat depuis la vague précédente de l’institut', async () => {
+    const state = playedState((s) => s.meta.week >= 4);
+    mockApi(withState(state));
+    renderRoute(`/parties/${GAME_ID}/sondages`);
+    const latest = await screen.findByRole('region', { name: /Dernier sondage/ });
+    expect(within(latest).getByRole('columnheader', { name: 'Écart' })).toBeInTheDocument();
+    const why = within(latest).getByRole('region', { name: 'Pourquoi ça bouge ?' });
+    // Votre décomposition est ouverte : chaque fait, puis le total, égal à l'écart affiché.
+    const poll = [...state.polls].reverse().find((p) => p.kind === 'intentions_t1')!;
+    const mine = poll.results.find((r) => r.actorId === state.player.actorId)!;
+    expect(mine.variation).not.toBeNull();
+    expect(mine.explication.reduce((sum, c) => sum + c.valeur, 0)).toBe(mine.variation);
+    expect(within(why).getByText('Camille Test (vous)')).toBeInTheDocument();
+    // Les autres candidats se déplient, chacun avec sa décomposition et son total.
+    const explained = poll.results.filter((r) => r.explication.length > 0);
+    expect(within(why).getAllByText('Total')).toHaveLength(explained.length);
+    expect(within(why).getAllByRole('group')).toHaveLength(explained.length - 1);
+  });
+
   it('annonce l’absence de sondage avant la première semaine', async () => {
     mockApi(withState());
     renderRoute(`/parties/${GAME_ID}/sondages`);

@@ -317,8 +317,8 @@ export type Opinion = z.infer<typeof OpinionSchema>;
 
 export const POLL_KINDS = ['intentions_t1', 'intentions_t2', 'popularite'] as const;
 
-/** Sondage simulé (§5.2) : terrain, publication, échantillon, méthode, marge, limites. */
-export const PollSchema = z
+/** Sondage simulé (§5.2) : terrain, publication, échantillon, méthode, marge, limites ; figé au format 15. */
+export const PollV15Schema = z
   .object({
     id: Id,
     kind: z.enum(POLL_KINDS),
@@ -345,7 +345,50 @@ export const PollSchema = z
     nature: z.literal('sondage'),
   })
   .strict();
+export type PollV15 = z.infer<typeof PollV15Schema>;
+
+/** Part d'une variation de sondage attribuée à un facteur, en centièmes de point. */
+export const PollContributionSchema = z
+  .object({ label: z.string().min(1).max(120), valeur: z.number().int() })
+  .strict();
+export type PollContribution = z.infer<typeof PollContributionSchema>;
+
+/**
+ * Sondage simulé (format 16, phase 11) : chaque résultat porte sa variation depuis la vague
+ * précédente du même institut et, pour les intentions de vote, la décomposition de cette
+ * variation par facteur (programme, médias, popularité…) dont la somme est la variation exacte
+ * (le reste : écart d'échantillon et arrondis).
+ */
+export const PollSchema = PollV15Schema.extend({
+  results: z
+    .array(
+      z
+        .object({
+          actorId: Id,
+          value: z.number().int().min(0).max(10_000),
+          margin: z.number().int().min(0),
+          variation: z.number().int().nullable().default(null),
+          explication: z.array(PollContributionSchema).max(12).default([]),
+        })
+        .strict(),
+    )
+    .min(1),
+}).strict();
 export type Poll = z.infer<typeof PollSchema>;
+
+/**
+ * Point de comparaison de chaque institut (format 16) : intentions attendues et facteurs moyens
+ * de chaque candidat à sa dernière vague, pour expliquer la variation de la vague suivante.
+ */
+export const PollBaseSchema = z
+  .object({
+    semaine: z.number().int().min(0),
+    tour: z.union([z.literal(1), z.literal(2)]),
+    intentions: z.record(Id, z.number().int().min(0).max(10_000)),
+    facteurs: z.record(Id, z.record(z.string().min(1).max(120), z.number())),
+  })
+  .strict();
+export type PollBase = z.infer<typeof PollBaseSchema>;
 
 const VoteCountsSchema = {
   inscrits: z.number().int().min(0),
@@ -426,7 +469,7 @@ export const GameStateV3Schema = z
     pendingDecisions: z.array(PendingDecisionV7Schema),
     eventHistory: EventHistorySchema,
     opinion: OpinionSchema.nullable(),
-    polls: z.array(PollSchema),
+    polls: z.array(PollV15Schema),
     elections: z
       .object({
         t1: RoundResultV3Schema.nullable(),
@@ -467,7 +510,7 @@ export const GameStateV4Schema = z
     pendingDecisions: z.array(PendingDecisionV7Schema),
     eventHistory: EventHistorySchema,
     opinion: OpinionSchema.nullable(),
-    polls: z.array(PollSchema),
+    polls: z.array(PollV15Schema),
     elections: ElectionsV4Schema,
     calendar: CalendarSchema,
   })
@@ -484,7 +527,7 @@ export const GameStateV5Schema = z
     pendingDecisions: z.array(PendingDecisionV7Schema),
     eventHistory: EventHistorySchema,
     opinion: OpinionSchema.nullable(),
-    polls: z.array(PollSchema),
+    polls: z.array(PollV15Schema),
     elections: ElectionsV4Schema.extend({
       /** Composantes de la prestation de chaque finaliste au débat (§8), une fois tenu. */
       debateDetail: z.record(Id, DebateDetailSchema).nullable(),
@@ -629,6 +672,10 @@ export type GameStateV15 = z.infer<typeof GameStateV15Schema>;
  */
 export const GameStateSchema = GameStateV15Schema.extend({
   meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(16) }).strict(),
+  /** Sondages publiés, avec variation et explication (phase 11). */
+  polls: z.array(PollSchema),
+  /** Dernière vague de chaque institut, pour expliquer la suivante (phase 11). */
+  sondagesBase: z.record(Id, PollBaseSchema).default({}),
 }).strict();
 export type GameState = z.infer<typeof GameStateSchema>;
 

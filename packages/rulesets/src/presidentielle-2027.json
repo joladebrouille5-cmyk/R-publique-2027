@@ -1618,12 +1618,13 @@
   },
   "modele": {
     "statut": "hypothese",
-    "note": "Coefficients du score latent fixés par conception du jeu. Participation des groupes, blancs et nuls calés pour retrouver l'ordre de grandeur des résultats proclamés en 2022 (décisions n° 2022-195 et 2022-197 PDR : participation 73,69 % puis 71,99 % des inscrits ; blancs 1,51 % puis 6,37 % des votants ; nuls 0,69 % puis 2,29 %). Le jeu simule environ 74,8 % puis 72,1 %, 1,5 % puis 6,1 % de blancs, 0,7 % puis 2,3 % de nuls. À recalibrer sur les données communales en phase 4. Phase 5 : facteurs programme, crédibilité, médias et alliances ajoutés (hypothèses, non calibrées).",
+    "note": "Coefficients du score latent fixés par conception du jeu. Participation des groupes, blancs et nuls calés pour retrouver l'ordre de grandeur des résultats proclamés en 2022 (décisions n° 2022-195 et 2022-197 PDR : participation 73,69 % puis 71,99 % des inscrits ; blancs 1,51 % puis 6,37 % des votants ; nuls 0,69 % puis 2,29 %). Le jeu simule environ 74,8 % puis 72,1 %, 1,5 % puis 6,1 % de blancs, 0,7 % puis 2,3 % de nuls. À recalibrer sur les données communales en phase 4. Phase 5 : facteurs programme, crédibilité, médias et alliances ajoutés (hypothèses, non calibrées). Phase 11 : la part d'incertitude persiste d'une semaine à l'autre (moyenne pondérée des chocs des semaines passées, persistance 0,85), pour des intentions stables sans fait nouveau ; la dynamique de campagne est la pente de la popularité (moyenne des trois dernières semaines contre celle des trois précédentes).",
     "proximite": 3,
     "notoriete": 1,
     "popularite": 3,
     "dynamique": 8,
     "alea": 0.15,
+    "persistanceIncertitude": 0.85,
     "participation": {
       "effetProximite": 0.1,
       "min": 0.2,
@@ -1668,7 +1669,8 @@
       }
     ],
     "biaisMaxCentiemes": 150,
-    "limites": "Sondage simulé par le jeu. Intentions mesurées parmi les personnes certaines d'aller voter et exprimant un choix. Marge d'erreur indicative, calculée comme pour un échantillon aléatoire de même taille (méthode des quotas). Un sondage décrit l'opinion à la date du terrain : ce n'est pas une prédiction du résultat."
+    "redressement": 0.25,
+    "limites": "Sondage simulé par le jeu. Intentions mesurées parmi les personnes certaines d'aller voter et exprimant un choix. Marge d'erreur indicative, calculée comme pour un échantillon aléatoire de même taille (méthode des quotas). Échantillon redressé : seul un quart de l'écart d'échantillonnage est conservé (hypothèse du jeu), d'où des vagues stables sans fait nouveau. Un sondage décrit l'opinion à la date du terrain : ce n'est pas une prédiction du résultat."
   },
   "candidatsFictifs": [
     {

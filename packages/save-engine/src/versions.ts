@@ -552,7 +552,9 @@ function migrateV14ToV15(v14: GameStateV14): GameStateV15 {
 
 /**
  * 15 → 16 (phase 11) : passage au jeu de règles 13 (réactions plus variées, événements
- * contextuels, plateaux sans aléa, personnalités du gouvernement) ; l'état est inchangé.
+ * contextuels, plateaux sans aléa, personnalités du gouvernement, sondages stables et
+ * expliqués) ; résultats des sondages déjà publiés sans variation ni explication, aucun point
+ * de comparaison d'institut (la prochaine vague en fixe un).
  */
 function migrateV15ToV16(v15: GameStateV15): GameState {
   return {
@@ -563,6 +565,12 @@ function migrateV15ToV16(v15: GameStateV15): GameState {
       rulesetVersion: CURRENT_RULESET_KEY,
       saveSchemaVersion: 16,
     },
+    // Sondages déjà publiés : sans variation ni explication (calculées dès la vague suivante).
+    polls: v15.polls.map((poll) => ({
+      ...poll,
+      results: poll.results.map((r) => ({ ...r, variation: null, explication: [] })),
+    })),
+    sondagesBase: {},
   };
 }
 

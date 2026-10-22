@@ -3,7 +3,14 @@ import { useState } from 'react';
 import { Badge } from '../components/Badge';
 import { ShareBar } from '../components/ShareBar';
 import { buttonSecondary, card, screenTitle } from '../components/ui';
-import { formatCount, formatGameDate, formatShare, POLL_KIND_LABELS } from '../labels';
+import {
+  formatCount,
+  formatGameDate,
+  formatPollDelta,
+  formatShare,
+  POLL_KIND_LABELS,
+  pollFactorLabel,
+} from '../labels';
 import { useCurrentGame } from './GameLayout';
 
 const PAGE = 8;
@@ -13,7 +20,29 @@ function nameOf(state: GameState, actorId: string): string {
   return actor ? candidateName(actor.candidate) : actorId;
 }
 
-/** Résultats d'un sondage : valeur, marge d'erreur et barre (la valeur écrite fait foi). */
+type PollResult = Poll['results'][number];
+
+/** Écart depuis la vague précédente de l'institut, avec une flèche (le texte fait foi). */
+function Variation({ value }: { value: number | null }) {
+  const tone =
+    value === null || value === 0
+      ? 'text-slate-600 dark:text-slate-400'
+      : value > 0
+        ? 'text-emerald-700 dark:text-emerald-400'
+        : 'text-red-700 dark:text-red-400';
+  return (
+    <span className={tone}>
+      {value !== null && value !== 0 && (
+        <span aria-hidden="true" className="mr-0.5 text-[0.7em]">
+          {value > 0 ? '▲' : '▼'}
+        </span>
+      )}
+      {formatPollDelta(value)}
+    </span>
+  );
+}
+
+/** Résultats d'un sondage : valeur, écart, marge d'erreur et barre (la valeur écrite fait foi). */
 export function PollResults({ poll, state }: { poll: Poll; state: GameState }) {
   const results = [...poll.results].sort((a, b) => b.value - a.value);
   const max = Math.max(...results.map((r) => r.value + r.margin));
@@ -29,9 +58,12 @@ export function PollResults({ poll, state }: { poll: Poll; state: GameState }) {
             {poll.kind === 'popularite' ? 'Opinions favorables' : 'Intentions'}
           </th>
           <th scope="col" className="py-1 text-right font-medium">
+            Écart
+          </th>
+          <th scope="col" className="py-1 text-right font-medium">
             Marge
           </th>
-          <th scope="col" className="w-1/3 py-1 font-medium">
+          <th scope="col" className="w-1/4 py-1 font-medium">
             <span className="sr-only">Barre</span>
           </th>
         </tr>
@@ -48,6 +80,9 @@ export function PollResults({ poll, state }: { poll: Poll; state: GameState }) {
               <td className="py-1 pr-2 text-right whitespace-nowrap tabular-nums">
                 {formatShare(result.value)}
               </td>
+              <td className="py-1 pr-2 text-right text-xs whitespace-nowrap tabular-nums">
+                <Variation value={result.variation} />
+              </td>
               <td className="py-1 pr-2 text-right whitespace-nowrap tabular-nums text-slate-600 dark:text-slate-400">
                 ± {formatShare(result.margin).replace(' %', ' pt')}
               </td>
@@ -59,6 +94,70 @@ export function PollResults({ poll, state }: { poll: Poll; state: GameState }) {
         })}
       </tbody>
     </table>
+  );
+}
+
+/** Décomposition d'une variation : chaque fait et sa part, jusqu'au total (somme exacte). */
+function Contributions({ result }: { result: PollResult }) {
+  return (
+    <ul className="space-y-0.5 text-sm">
+      {result.explication.map((c) => (
+        <li key={c.label} className="flex justify-between gap-3">
+          <span>{pollFactorLabel(c.label)}</span>
+          <span className="shrink-0 tabular-nums">
+            <Variation value={c.valeur} />
+          </span>
+        </li>
+      ))}
+      <li className="flex justify-between gap-3 border-t border-slate-200 pt-0.5 font-semibold dark:border-slate-700">
+        <span>Total</span>
+        <span className="shrink-0 tabular-nums">
+          <Variation value={result.variation} />
+        </span>
+      </li>
+    </ul>
+  );
+}
+
+/**
+ * « Pourquoi ça bouge ? » (phase 11) : l'écart de chaque candidat depuis la vague précédente du
+ * même institut, décomposé par facteur du modèle d'opinion. Le vôtre est ouvert ; les autres se
+ * déplient.
+ */
+export function PollExplanation({ poll, state }: { poll: Poll; state: GameState }) {
+  const explained = [...poll.results]
+    .filter((r) => r.variation !== null && r.explication.length > 0)
+    .sort((a, b) => b.value - a.value);
+  if (explained.length === 0) return null;
+  const mine = explained.find((r) => r.actorId === state.player.actorId);
+  const others = explained.filter((r) => r !== mine);
+  return (
+    <section aria-labelledby={`pourquoi-${poll.id}`} className="space-y-2">
+      <h3 id={`pourquoi-${poll.id}`} className="font-semibold">
+        Pourquoi ça bouge ?
+      </h3>
+      <p className="text-xs text-slate-600 dark:text-slate-400">
+        Écart depuis la vague précédente de {poll.institute}, en points, décomposé par facteur du
+        modèle d’opinion simulé. L’échantillon est redressé : sans fait nouveau, les intentions
+        bougent peu.
+      </p>
+      {mine && (
+        <div>
+          <p className="text-sm font-semibold">{nameOf(state, mine.actorId)} (vous)</p>
+          <Contributions result={mine} />
+        </div>
+      )}
+      {others.map((result) => (
+        <details key={result.actorId}>
+          <summary className="cursor-pointer text-sm">
+            {nameOf(state, result.actorId)} : <Variation value={result.variation} />
+          </summary>
+          <div className="mt-1 pl-4">
+            <Contributions result={result} />
+          </div>
+        </details>
+      ))}
+    </section>
   );
 }
 
@@ -117,7 +216,8 @@ export function Polls() {
       <p className="text-sm text-slate-600 dark:text-slate-400">
         <Badge tone="simule">Sondage simulé</Badge> Les instituts sont fictifs. Chaque sondage
         interroge un échantillon tiré de l’opinion simulée : il comporte une marge d’erreur et un
-        biais propre à l’institut. Ce n’est jamais une prédiction du résultat.
+        biais propre à l’institut, atténués par le redressement. Ce n’est jamais une prédiction du
+        résultat.
       </p>
 
       {polls.length === 0 && (
@@ -137,6 +237,7 @@ export function Polls() {
             noir indique la marge d’erreur à 95 %.
           </p>
           <PollResults poll={latest} state={state} />
+          <PollExplanation poll={latest} state={state} />
         </section>
       )}
 
@@ -210,6 +311,7 @@ export function Polls() {
                   </summary>
                   <div className="mt-3 space-y-3">
                     <PollResults poll={poll} state={state} />
+                    <PollExplanation poll={poll} state={state} />
                     <PollSheet poll={poll} />
                   </div>
                 </details>

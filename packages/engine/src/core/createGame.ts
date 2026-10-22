@@ -400,6 +400,7 @@ export function createGame(input: CreateGameInput, ruleset: Ruleset): GameState 
     eventHistory: {},
     opinion: null,
     polls: [],
+    sondagesBase: {},
     elections: { t1: null, t2: null, consignes: [], debate: null, debateDetail: null },
     calendar: { blockedBy: null, blockedMessage: null },
     campagne: { parrainages: 'modelise', finances: 'complet' },

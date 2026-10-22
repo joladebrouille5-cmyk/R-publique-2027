@@ -19,6 +19,7 @@ import {
   DIFFICULTY_LABELS,
   formatGameDate,
   formatIndicator,
+  formatPollDelta,
   formatShare,
   MODE_LABELS,
   PHASE_LABELS,
@@ -362,7 +363,10 @@ export function Dashboard() {
                 </strong>{' '}
                 sur {latestPoll.results.length} avec{' '}
                 <strong className="text-white">{formatShare(playerPoll.value)}</strong> (±{' '}
-                {formatShare(playerPoll.margin).replace(' %', ' pt')}).
+                {formatShare(playerPoll.margin).replace(' %', ' pt')})
+                {playerPoll.variation !== null &&
+                  `, ${formatPollDelta(playerPoll.variation)} depuis sa vague précédente`}
+                .
               </p>
             </div>
           )}

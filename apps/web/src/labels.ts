@@ -226,6 +226,32 @@ export const POLL_KIND_LABELS: Record<Poll['kind'], string> = {
   popularite: 'Cote de popularité',
 };
 
+/**
+ * Facteurs du modèle d'opinion, tels qu'expliqués au joueur (phase 11) : chaque libellé du
+ * moteur renvoie aux faits qui le font bouger. Les libellés absents (ralliements, consignes,
+ * débats, reste de la décomposition) s'affichent tels quels.
+ */
+export const POLL_FACTOR_LABELS: Record<string, string> = {
+  Popularité: 'Popularité (actions, événements, crises)',
+  Notoriété: 'Notoriété (déplacements, médias, meetings)',
+  'Dynamique de campagne': 'Dynamique (pente de la popularité sur trois semaines)',
+  Médias: 'Couverture médiatique de la semaine',
+  Programme: 'Programme publié',
+  Crédibilité: 'Crédibilité du chiffrage',
+  'Proximité idéologique': 'Proximité idéologique',
+  Incertitude: 'Aléa de l’opinion (simulé, amorti sur 12 semaines)',
+};
+
+export function pollFactorLabel(label: string): string {
+  return POLL_FACTOR_LABELS[label] ?? label;
+}
+
+/** Variation d'un sondage à l'autre, en centièmes de point → « +1,20 pt », « stable », « — ». */
+export function formatPollDelta(variation: number | null): string {
+  if (variation === null) return '—';
+  return variation === 0 ? 'stable' : formatDelta('popularite', variation);
+}
+
 /** Part en centièmes de point (0 à 10 000) → « 23,45 % ». */
 export function formatShare(value: number): string {
   return `${twoDecimals.format(value / 100)} %`;
