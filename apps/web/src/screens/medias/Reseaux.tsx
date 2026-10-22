@@ -69,7 +69,7 @@ function Gauge({
       </dd>
       <dd aria-hidden="true" className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
         <span
-          className={`block h-full rounded-full ${bar} transition-[width] duration-700 ease-sortie`}
+          className={`block h-full rounded-full ${bar} shadow-lueur transition-[width] duration-700 ease-sortie`}
           style={{ width: `${Math.min(100, value / 100)}%` }}
         />
       </dd>
@@ -107,7 +107,7 @@ function FormatTiles({
           <li
             key={format.id}
             aria-label={format.libelle}
-            className="flex flex-col gap-3 rounded-card bg-white p-4 text-slate-900 shadow-card dark:bg-slate-900 dark:text-slate-100"
+            className="flex flex-col gap-3 rounded-card border border-transparent bg-white p-4 text-slate-900 shadow-card transition-[border-color,box-shadow] duration-200 hover:border-republique-300 hover:shadow-raised dark:bg-slate-900 dark:text-slate-100 dark:hover:border-republique-400/60 dark:hover:shadow-neon"
           >
             <div className="flex items-start gap-3">
               <span

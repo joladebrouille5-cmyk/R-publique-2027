@@ -1,44 +1,45 @@
 @import 'tailwindcss' source('..');
 /* Polices embarquées (licence SIL OFL 1.1) : l'application fonctionne hors ligne. */
-@import '@fontsource-variable/bricolage-grotesque/opsz.css';
+@import '@fontsource-variable/archivo/wdth.css';
 @import '@fontsource-variable/hanken-grotesk/wght.css';
 
-/* Thème sombre piloté par la classe `dark` sur <html> (choix clair / sombre / système). */
+/* Thème sombre piloté par la classe `dark` sur <html> (soirée électorale / clair / système). */
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
- * Design system « République » (phase 9).
- * - Encre de l'Hémicycle : neutres bleutés (remplacent la gamme slate de Tailwind, donc tous
- *   les écrans) ; papier froid en clair, bleu nuit en sombre.
- * - Bleu Marianne vif : actions principales, liens, sélection.
- * - Rouge tribune : alertes, risques, défaites (remplace la gamme red).
- * - Or de l'Élysée : moments de prestige (victoire, présidence, décision majeure), avec
- *   parcimonie.
- * Titres et grands chiffres : Bricolage Grotesque ; interface : Hanken Grotesk.
+ * Design system « Soirée électorale » (phase 9) : un plateau de télévision un soir de scrutin.
+ * - Nuit de plateau : neutres bleutés (remplacent la gamme slate de Tailwind, donc tous les
+ *   écrans) ; bleu nuit très sombre par défaut, papier froid pour le thème clair.
+ * - Néons tricolores, avec parcimonie : bleu Marianne vif (actions, sélection, halos), blanc
+ *   lumière (chiffres), rouge tribune (alertes, risques, défaites) ; or de l'Élysée pour les
+ *   moments de prestige (victoire, présidence).
+ * - Titres et chiffres : Archivo condensé (axe de largeur), comme les bandeaux de résultats ;
+ *   interface : Hanken Grotesk.
  */
 @theme {
   --font-sans:
     'Hanken Grotesk Variable', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue',
     Arial, sans-serif;
-  --font-display: 'Bricolage Grotesque Variable', 'Hanken Grotesk Variable', system-ui, sans-serif;
+  --font-display: 'Archivo Variable', 'Hanken Grotesk Variable', system-ui, sans-serif;
+  --font-display--font-variation-settings: 'wdth' 78;
 
-  --color-slate-50: #f4f6fb;
-  --color-slate-100: #e9edf6;
-  --color-slate-200: #d5dbea;
-  --color-slate-300: #b4bdd3;
-  --color-slate-400: #8792ae;
-  --color-slate-500: #5d6886;
-  --color-slate-600: #47516e;
-  --color-slate-700: #343d59;
-  --color-slate-800: #212a46;
-  --color-slate-900: #151d38;
-  --color-slate-950: #0b1229;
+  --color-slate-50: #f3f5fb;
+  --color-slate-100: #e7ebf5;
+  --color-slate-200: #d2d9ea;
+  --color-slate-300: #aeb9d2;
+  --color-slate-400: #8794b4;
+  --color-slate-500: #5b6788;
+  --color-slate-600: #46506f;
+  --color-slate-700: #303a5a;
+  --color-slate-800: #1b2549;
+  --color-slate-900: #0d1634;
+  --color-slate-950: #050a1c;
 
   --color-republique-50: #eef1ff;
   --color-republique-100: #dce2ff;
   --color-republique-200: #b9c5ff;
-  --color-republique-300: #8ea0fa;
-  --color-republique-400: #6077f0;
+  --color-republique-300: #93aaff;
+  --color-republique-400: #6286ff;
   --color-republique-500: #3d57e6;
   --color-republique-600: #2b46d9;
   --color-republique-700: #2236b0;
@@ -50,7 +51,7 @@
   --color-red-100: #ffdde2;
   --color-red-200: #ffbfc9;
   --color-red-300: #ff91a2;
-  --color-red-400: #f65a72;
+  --color-red-400: #ff4d6a;
   --color-red-500: #e5334b;
   --color-red-600: #cc2240;
   --color-red-700: #a81a35;
@@ -72,10 +73,13 @@
   --radius-card: 1.25rem;
   --radius-dossier: 1.75rem;
 
-  /* Ombres teintées de bleu nuit, jamais grises. */
+  /* Ombres teintées de bleu nuit, jamais grises ; halos néon pour ce qui est actif. */
   --shadow-card: 0 1px 2px rgb(16 27 59 / 0.06), 0 8px 24px -14px rgb(16 27 59 / 0.22);
   --shadow-raised: 0 2px 6px rgb(16 27 59 / 0.08), 0 24px 48px -20px rgb(16 27 59 / 0.35);
   --shadow-hud: 0 1px 0 rgb(16 27 59 / 0.06), 0 10px 30px -18px rgb(16 27 59 / 0.35);
+  --shadow-neon: 0 0 0 1px rgb(98 134 255 / 0.55), 0 0 28px -6px rgb(98 134 255 / 0.65);
+  --shadow-neon-rouge: 0 0 0 1px rgb(255 77 106 / 0.55), 0 0 28px -6px rgb(255 77 106 / 0.6);
+  --shadow-lueur: 0 0 14px rgb(98 134 255 / 0.75);
 
   --ease-sortie: cubic-bezier(0.16, 1, 0.3, 1);
 
@@ -84,6 +88,8 @@
   --animate-revele: revele 520ms var(--ease-sortie) both;
   --animate-feuille: feuille 420ms var(--ease-sortie) both;
   --animate-volet: volet 420ms var(--ease-sortie) both;
+  --animate-defile: defile 45s linear infinite;
+  --animate-direct: direct 1.6s ease-in-out infinite;
 
   @keyframes monte {
     from {
@@ -115,31 +121,59 @@
       opacity: 0;
     }
   }
+  /* Bandeau défilant des estimations (contenu doublé : un demi-défilement boucle). */
+  @keyframes defile {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  /* Voyant « En direct ». */
+  @keyframes direct {
+    50% {
+      opacity: 0.3;
+    }
+  }
 }
 
 @layer base {
   html {
     color-scheme: light;
     -webkit-tap-highlight-color: transparent;
+    background-color: var(--color-slate-50);
   }
   html.dark {
     color-scheme: dark;
+    background-color: var(--color-slate-950);
   }
   body {
-    @apply bg-slate-50 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100;
+    @apply bg-slate-50 text-slate-900 antialiased dark:bg-transparent dark:text-slate-100;
+  }
+  /* Projecteurs du plateau : halos bleu et rouge, fixes, derrière le contenu. */
+  html.dark body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(70rem 40rem at 0% -10%, rgb(61 87 230 / 0.3), transparent 60%),
+      radial-gradient(50rem 32rem at 105% 0%, rgb(229 51 75 / 0.15), transparent 60%),
+      radial-gradient(60rem 40rem at 50% 120%, rgb(61 87 230 / 0.14), transparent 60%);
   }
   h1,
   h2,
   h3 {
     font-family: var(--font-display);
-    letter-spacing: -0.015em;
+    font-variation-settings: 'wdth' 80;
+    font-weight: 800;
+    letter-spacing: -0.005em;
     text-wrap: balance;
   }
-  h1 {
-    letter-spacing: -0.025em;
-  }
   :focus-visible {
-    @apply outline-2 outline-offset-2 outline-republique-500;
+    @apply outline-2 outline-offset-2 outline-republique-500 dark:outline-republique-400;
+  }
+  ::selection {
+    @apply bg-republique-500 text-white;
   }
   /* Chiffres alignés dans les tableaux et indicateurs. */
   table,
@@ -149,7 +183,7 @@
   }
 }
 
-/* Mouvement réduit : aucune animation ni transition décorative. */
+/* Mouvement réduit : aucune animation ni transition décorative (le bandeau ne défile plus). */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

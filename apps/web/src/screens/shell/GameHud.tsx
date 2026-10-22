@@ -63,13 +63,13 @@ function Stat({
   testId: string;
 }) {
   return (
-    <div className="min-w-0 rounded-2xl bg-slate-100/80 px-2.5 py-1.5 dark:bg-slate-800/70">
+    <div className="min-w-0 rounded-2xl bg-slate-100/80 px-2.5 py-1.5 dark:bg-white/[0.04] dark:ring-1 dark:ring-white/10">
       <dt className="flex items-center gap-1 text-[0.7rem] font-semibold text-slate-600 dark:text-slate-400">
         <Icon aria-hidden="true" className="hidden size-3.5 shrink-0 sm:block" strokeWidth={2.25} />
         <span className="truncate">{label}</span>
       </dt>
       <dd
-        className="truncate font-display text-[1.05rem] font-bold leading-tight tracking-tight"
+        className="truncate font-display text-xl leading-tight font-extrabold dark:text-white dark:[text-shadow:0_0_18px_rgb(98_134_255/0.45)]"
         data-testid={testId}
       >
         {value}
@@ -87,8 +87,17 @@ export function GameHud({ game, ruleset }: { game: GameDetail; ruleset: Ruleset 
   return (
     <section
       aria-label="Situation de la partie"
-      className="sticky top-0 z-30 -mx-4 mb-5 border-b border-slate-200/80 bg-white/85 px-4 py-2.5 shadow-hud backdrop-blur-md supports-[backdrop-filter]:bg-white/75 lg:mx-0 lg:rounded-b-card lg:border-x dark:border-slate-800 dark:bg-slate-950/85 dark:supports-[backdrop-filter]:bg-slate-950/70"
+      className="sticky top-0 z-30 -mx-4 mb-5 overflow-hidden border-b border-slate-200/80 bg-white/85 px-4 pt-3 pb-2.5 shadow-hud backdrop-blur-md supports-[backdrop-filter]:bg-white/75 lg:mx-0 lg:rounded-b-card lg:border-x dark:border-republique-400/20 dark:bg-slate-950/85 dark:shadow-[0_10px_40px_-18px_rgb(61_87_230/0.6)] dark:supports-[backdrop-filter]:bg-slate-950/70"
     >
+      {/* Liseré tricolore du plateau. */}
+      <span
+        aria-hidden="true"
+        className="absolute inset-x-0 top-0 flex h-[3px] dark:shadow-[0_0_12px_rgb(98_134_255/0.8)]"
+      >
+        <span className="flex-1 bg-republique-500" />
+        <span className="flex-1 bg-slate-100" />
+        <span className="flex-1 bg-red-500" />
+      </span>
       <div className="flex items-center gap-3">
         {player ? (
           <Avatar portrait={portraitOf(player, ruleset)} size="sm" ring />
@@ -113,10 +122,10 @@ export function GameHud({ game, ruleset }: { game: GameDetail; ruleset: Ruleset 
             <span>{shortDate.format(new Date(`${game.date}T00:00:00Z`))}</span>
           </p>
         </div>
-        <p className="shrink-0 rounded-full bg-republique-50 px-3 py-1 text-right text-xs font-semibold text-republique-800 dark:bg-republique-950 dark:text-republique-200">
+        <p className="shrink-0 rounded-full bg-republique-50 px-3 py-1 text-right text-xs font-semibold text-republique-800 dark:bg-republique-500/15 dark:text-republique-200 dark:ring-1 dark:ring-republique-400/40">
           {ballot ? (
             <>
-              <span className="block font-display text-sm font-bold leading-tight">
+              <span className="block font-display text-base leading-tight font-extrabold">
                 {ballot.jours === 0 ? 'Aujourd’hui' : `J−${ballot.jours}`}
               </span>
               <span className="block font-normal" title={ballot.libelle}>

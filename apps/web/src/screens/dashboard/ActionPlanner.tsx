@@ -394,7 +394,7 @@ export function ActionPlanner({
                 disabled={reason !== null}
                 onClick={() => onAdd(action.id)}
                 aria-label={`Ajouter ${action.libelle}`}
-                className="group flex h-full min-h-32 w-full flex-col items-start gap-2 rounded-card border border-slate-200/80 bg-white p-3.5 pr-11 text-left shadow-card transition duration-150 hover:-translate-y-0.5 hover:border-republique-300 hover:shadow-raised active:translate-y-0 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-55 disabled:shadow-none disabled:hover:translate-y-0 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-republique-700"
+                className="group flex h-full min-h-32 w-full flex-col items-start gap-2 rounded-card border border-slate-200/80 bg-white p-3.5 pr-11 text-left shadow-card transition duration-150 hover:-translate-y-0.5 hover:border-republique-300 hover:shadow-raised active:translate-y-0 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-55 disabled:shadow-none disabled:hover:translate-y-0 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-republique-400/60 dark:hover:shadow-neon"
               >
                 <span className="inline-flex size-10 items-center justify-center rounded-2xl bg-republique-50 text-republique-700 transition-colors group-enabled:group-hover:bg-republique-600 group-enabled:group-hover:text-white dark:bg-republique-950 dark:text-republique-300">
                   <Icon aria-hidden="true" className="size-5" strokeWidth={2} />

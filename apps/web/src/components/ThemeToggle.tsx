@@ -2,8 +2,8 @@ import { useEffect } from 'react';
 import { isDark, useThemeStore, type ThemeChoice } from '../stores/theme';
 
 const CHOICES: { value: ThemeChoice; label: string }[] = [
+  { value: 'sombre', label: 'Soirée électorale' },
   { value: 'clair', label: 'Clair' },
-  { value: 'sombre', label: 'Sombre' },
   { value: 'systeme', label: 'Système' },
 ];
 

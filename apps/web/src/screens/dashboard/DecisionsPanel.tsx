@@ -53,8 +53,8 @@ export function DecisionsPanel({ decisions, answers, onAnswer }: Props) {
                     key={option.id}
                     className={`relative flex min-h-24 cursor-pointer flex-col gap-1 rounded-card border-2 p-4 pr-12 transition duration-150 active:scale-[0.99] ${
                       checked
-                        ? 'border-republique-600 bg-republique-50 dark:border-republique-400 dark:bg-republique-950'
-                        : 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-slate-600'
+                        ? 'border-republique-600 bg-republique-50 dark:border-republique-400 dark:bg-republique-950 dark:shadow-neon'
+                        : 'border-slate-200 bg-white hover:border-republique-300 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-republique-400/60'
                     } has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-republique-500`}
                   >
                     <input

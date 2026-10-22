@@ -64,7 +64,7 @@ export function ResourcesPanel({ resources, ruleset }: { resources: Resources; r
                   className="mt-2 h-1.5 rounded-full bg-slate-100 dark:bg-slate-800"
                 >
                   <span
-                    className="block h-full rounded-full bg-republique-500"
+                    className="block h-full rounded-full bg-republique-500 transition-[width] duration-700 ease-sortie dark:bg-republique-400 dark:shadow-lueur"
                     style={{ width: `${Math.max(0, Math.min(1, ratio)) * 100}%` }}
                   />
                 </dd>
