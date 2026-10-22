@@ -34,6 +34,15 @@ function MapScreen() {
     </Suspense>
   );
 }
+// Débat télévisé en direct (phase 10) : hors du menu, ouvert depuis le tableau de bord.
+const LazyDebat = lazy(() => import('./screens/Debat').then((m) => ({ default: m.Debat })));
+function Debat() {
+  return (
+    <Suspense fallback={<p>Ouverture du plateau…</p>}>
+      <LazyDebat />
+    </Suspense>
+  );
+}
 // Soirée électorale (direct du dépouillement) : hors du menu, ouverte après chaque tour.
 const LazySoiree = lazy(() => import('./screens/Soiree').then((m) => ({ default: m.Soiree })));
 function Soiree() {
@@ -84,6 +93,7 @@ export const routes: RouteObject[] = [
             };
           }),
           { path: 'soiree/:tour', element: <Soiree /> },
+          { path: 'debat/:debatId', element: <Debat /> },
         ],
       },
       { path: '*', element: <NotFound /> },

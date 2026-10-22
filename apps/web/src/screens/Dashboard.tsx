@@ -29,6 +29,7 @@ import { ActionPlanner } from './dashboard/ActionPlanner';
 import { CampaignPanel } from './dashboard/CampaignPanel';
 import { CalendarPanel } from './dashboard/CalendarPanel';
 import { DecisionsPanel } from './dashboard/DecisionsPanel';
+import { DebatesPanel } from './dashboard/DebatesPanel';
 import { ResourcesPanel } from './dashboard/ResourcesPanel';
 import { useCurrentGame } from './GameLayout';
 
@@ -224,6 +225,10 @@ export function Dashboard() {
 
       {!observer && state.pendingDecisions.length > 0 && (
         <DecisionsPanel decisions={state.pendingDecisions} answers={answers} onAnswer={answer} />
+      )}
+
+      {!quinquennat && ruleset.data && (
+        <DebatesPanel gameId={game.id} state={state} ruleset={ruleset.data} />
       )}
 
       {quinquennat && ruleset.data && (

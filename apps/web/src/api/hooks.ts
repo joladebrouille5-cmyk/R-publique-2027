@@ -12,6 +12,7 @@ import {
   type CreateGameRequest,
   type CreateSaveRequest,
   type Cycle,
+  type DebateRequest,
   type Ruleset,
 } from '@r2027/shared';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -158,6 +159,22 @@ export function useAdvance(gameId: string) {
       void queryClient.invalidateQueries({ queryKey: queryKeys.games, exact: true });
       void queryClient.invalidateQueries({ queryKey: queryKeys.saves(gameId) });
       void queryClient.invalidateQueries({ queryKey: queryKeys.journal(gameId) });
+    },
+  });
+}
+
+/**
+ * Débat télévisé de la semaine (phase 10) : ouvrir, refuser, jouer une carte, simuler la fin.
+ * Le serveur (ou le moteur local) joue la demande ; l'interface ne calcule rien.
+ */
+export function useDebate(gameId: string, debatId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: DebateRequest) =>
+      api.post(`/api/games/${gameId}/debats/${debatId}`, GameDetailSchema, body),
+    onSuccess: (game) => {
+      queryClient.setQueryData(queryKeys.game(gameId), game);
+      void queryClient.invalidateQueries({ queryKey: queryKeys.games, exact: true });
     },
   });
 }

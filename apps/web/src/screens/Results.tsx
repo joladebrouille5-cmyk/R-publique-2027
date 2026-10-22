@@ -4,7 +4,13 @@ import { useRuleset } from '../api/hooks';
 import { Badge } from '../components/Badge';
 import { ShareBar } from '../components/ShareBar';
 import { card, screenTitle } from '../components/ui';
-import { DATA_STATUS_LABELS, formatCount, formatGameDate, formatRatio } from '../labels';
+import {
+  DATA_STATUS_LABELS,
+  formatCount,
+  formatGameDate,
+  formatRatio,
+  formatShare,
+} from '../labels';
 import { useCurrentGame } from './GameLayout';
 
 const nameOf = (state: GameState, id: string) => {
@@ -219,6 +225,39 @@ export function Results() {
             </span>
           ))}
         </p>
+      )}
+
+      {state.debats.seances.some((d) => d.resultat) && (
+        <section aria-labelledby="titre-debats-resultats" className={`${card} space-y-2 text-sm`}>
+          <h2 id="titre-debats-resultats" className="text-lg font-semibold">
+            Débats télévisés
+          </h2>
+          <ul className="space-y-1">
+            {state.debats.seances
+              .filter((d) => d.resultat)
+              .map((d) => {
+                const [winner, share] = Object.entries(d.resultat!.convaincant).sort(
+                  (a, b) => b[1] - a[1],
+                )[0] ?? ['', 0];
+                return (
+                  <li key={d.id} className="flex flex-wrap items-center gap-x-2">
+                    <span className="font-semibold">{d.libelle}</span> ({formatGameDate(d.date)}) :{' '}
+                    {winner
+                      ? `${nameOf(state, winner)} jugé(e) le plus convaincant (${formatShare(share)}, sondage flash simulé)`
+                      : 'aucun participant'}
+                    {d.refus.length > 0 &&
+                      ` ; chaise vide : ${d.refus.map((id) => nameOf(state, id)).join(', ')}`}
+                    <Link
+                      to={`../debat/${d.id}`}
+                      className="rounded-full px-2 py-1 font-semibold text-republique-700 underline-offset-2 hover:underline dark:text-republique-300"
+                    >
+                      Revoir
+                    </Link>
+                  </li>
+                );
+              })}
+          </ul>
+        </section>
       )}
 
       {t2 && <RoundCard result={t2} state={state} ruleset={ruleset.data} />}
