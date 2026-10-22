@@ -254,11 +254,14 @@ export const EVENT_FAMILY_LABELS = {
   'vie-de-campagne': 'Vie de campagne',
 } as const;
 
-/** Niveau d'un passage dans les médias (phase 11). */
+/**
+ * Niveau d'un passage dans les médias (phase 11) : un passage décevant rapporte moins que
+ * l'effet attendu ; sous le seuil d'incident, l'aléa de l'action se produit en plus.
+ */
 export const PRESTATION_LABELS = {
   reussie: 'Passage réussi',
   correcte: 'Passage correct',
-  ratee: 'Passage raté',
+  ratee: 'Passage décevant',
 } as const;
 
 export const POSTURE_LABELS = {

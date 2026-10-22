@@ -116,8 +116,17 @@ export async function resolveWeek(page: Page, week: number) {
     }
   }
   await page.getByRole('button', { name: `Résoudre la semaine ${week}` }).click();
+  await closeDebrief(page, week);
   await expect(
     page.getByRole('heading', { name: `Bilan de la semaine ${week}`, exact: false }),
   ).toBeVisible();
   await expect(page.getByRole('button', { name: `Résoudre la semaine ${week + 1}` })).toBeVisible();
+}
+
+/** Débriefing de la semaine (phase 11), ouvert après la résolution : le lire, puis continuer. */
+export async function closeDebrief(page: Page, week: number) {
+  const debrief = page.getByRole('dialog', { name: `Débriefing de la semaine ${week}` });
+  await expect(debrief).toBeVisible();
+  await debrief.getByRole('button', { name: 'Continuer' }).click();
+  await expect(debrief).toBeHidden();
 }

@@ -143,6 +143,12 @@ try {
   await expect(page.getByRole('heading', { name: 'Tableau de bord' })).toBeVisible();
   await activate(page, page.getByRole('button', { name: 'Ajouter Meeting public' }));
   await activate(page, page.getByRole('button', { name: 'Résoudre la semaine 0' }));
+  // Débriefing de la semaine (phase 11) : plein écran, au-dessus de la navigation basse.
+  const debrief = page.getByRole('dialog', { name: 'Débriefing de la semaine 0' });
+  await expect(debrief).toBeVisible();
+  await writeFile(join(captures, '1-debriefing.png'), await device.screenshot());
+  await activate(page, debrief.getByRole('button', { name: 'Continuer' }));
+  await expect(debrief).toBeHidden();
   await expect(page.getByRole('button', { name: 'Résoudre la semaine 1' })).toBeVisible();
   await writeFile(join(captures, '1-tableau-de-bord.png'), await device.screenshot());
 

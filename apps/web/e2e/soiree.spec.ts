@@ -33,9 +33,11 @@ test('le soir du premier tour, la partie passe en direct jusqu’aux résultats 
   await expect(page.getByRole('heading', { name: 'Soirée électorale' })).toBeVisible();
   await expect(page).toHaveURL(/\/soiree\/1$/);
   await expect(page.getByText('En direct', { exact: true })).toBeVisible();
+  // Chargement de la carte (MapLibre) : plus long quand la machine est chargée.
   await expect(page.getByRole('region', { name: 'Carte du dépouillement' })).toHaveAttribute(
     'data-ready',
     'oui',
+    { timeout: 20_000 },
   );
   await expect(page.getByTestId('bandeau-soiree')).toContainText('Estimations');
   // Lecture automatique : l'horloge avance d'elle-même.
@@ -55,6 +57,7 @@ test('le soir du premier tour, la partie passe en direct jusqu’aux résultats 
   await expect(page.getByRole('region', { name: 'Carte du dépouillement' })).toHaveAttribute(
     'data-territoires',
     '771',
+    { timeout: 20_000 },
   );
 
   await page.getByRole('button', { name: 'Résultats définitifs' }).click();

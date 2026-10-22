@@ -173,6 +173,19 @@ describe('passages dans les médias sans aléa (phase 11)', () => {
     expect(meeting!.prestation).toBeNull();
   });
 
+  it('au registre, la part variable d’un passage est nommée d’après son score, pas « aléa »', () => {
+    const { report } = week(started, [plan('decryptage', 'pedagogique')]);
+    const p = report.actions.find((o) => o.actorId === PLAYER_ACTOR_ID)!.prestation!;
+    const factors = report.changes
+      .filter((c) => c.actorId === PLAYER_ACTOR_ID)
+      .flatMap((c) => c.factors)
+      .filter((f) => f.label.startsWith('Passage dans un format décryptage : '));
+    expect(factors.some((f) => f.label.endsWith(`selon le passage (score ${p.score})`))).toBe(
+      p.score !== 0,
+    );
+    expect(factors.some((f) => f.label.endsWith(' : aléa'))).toBe(false);
+  });
+
   it('la tonalité de l’organe du passage suit le score, sans tirage', () => {
     const other = { ...started, meta: { ...started.meta, seed: 'autre-graine' } };
     const a = week(started, [plan('interview', 'pedagogique')]).state.medias!.couverture;

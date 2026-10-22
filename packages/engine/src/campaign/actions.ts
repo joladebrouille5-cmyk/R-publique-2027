@@ -243,7 +243,16 @@ export function resolveActionEffects(
     const variable = (effect: Effect) =>
       prestation ? scoredAlea(effect.ecart, prestation.score) : drawAlea(rng, effect);
     const ref = `a-${week}-${actorId}-${index}`;
-    const base = { state, ledger, book: books.finances, actorId, week, step, ref };
+    const base = {
+      state,
+      ledger,
+      book: books.finances,
+      actorId,
+      week,
+      step,
+      ref,
+      ...(prestation ? { variable: `selon le passage (score ${prestation.score})` } : {}),
+    };
     definition.effets.forEach((effect, i) =>
       applyOrSchedule(
         { ...base, label: definition.libelle, source: 'action' },

@@ -46,7 +46,7 @@ export function PrestationDetail({ prestation }: { prestation: Prestation }) {
           Posture {POSTURE_LABELS[prestation.posture]}
           {prestation.choisie ? '' : ' (par défaut)'}, {prestation.format.toLowerCase()} : score{' '}
           <strong className="tabular-nums">{formatPoints(prestation.score)}</strong> sur 100
-          {prestation.incident && ', incident'}.
+          {prestation.incident && ' : passage raté, l’aléa de l’action se produit'}.
         </span>
       </p>
       <ul className="text-xs text-slate-600 dark:text-slate-400" aria-label="Raisons du score">

@@ -111,7 +111,7 @@ export function enterNextWeek(
       book,
       effect.actorId,
       effect.ressource,
-      effectFactors(effect, current, label, 'differe', step),
+      effectFactors(effect, current, label, 'differe', step, effect.origin.variable),
     );
   }
   return { notices: upcomingNotices(state.meta.date, ruleset), appliedScheduled: due.length };

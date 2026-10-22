@@ -18,19 +18,23 @@ export function formatPercent(centiemes: number): string {
 
 type Drawn = Pick<ScheduledEffect, 'ressource' | 'base' | 'alea' | 'saturation'>;
 
-/** Facteurs d'un effet : attendu, aléa, puis saturation calculée sur le niveau actuel. */
+/**
+ * Facteurs d'un effet : attendu, part variable (aléa, ou score d'un passage noté), puis
+ * saturation calculée sur le niveau actuel.
+ */
 export function effectFactors(
   effect: Drawn,
   current: number,
   label: string,
   source: FactorSource,
   step: number,
+  variable = 'aléa',
 ): Factor[] {
   const factors: Factor[] = [
     { label: `${label} : effet attendu`, value: effect.base, source, step },
   ];
   if (effect.alea !== 0)
-    factors.push({ label: `${label} : aléa`, value: effect.alea, source, step });
+    factors.push({ label: `${label} : ${variable}`, value: effect.alea, source, step });
   const total = effect.base + effect.alea;
   if (effect.saturation && SATURABLE.has(effect.ressource) && total > 0) {
     const reduction = Math.round((total * current) / 10_000);
@@ -72,6 +76,8 @@ export type EffectContext = {
   source: Extract<FactorSource, 'action' | 'risque' | 'evenement' | 'decision'>;
   /** Identifiant stable de l'origine (sert aussi à nommer l'effet programmé). */
   ref: string;
+  /** Libellé de la part variable (phase 11, passage noté) ; par défaut « aléa ». */
+  variable?: string;
 };
 
 /** Applique un effet tout de suite (délai 0) ou le programme pour une semaine ultérieure. */
@@ -94,7 +100,7 @@ export function applyOrSchedule(
       context.book,
       context.actorId,
       effect.ressource,
-      effectFactors(drawn, current, context.label, context.source, context.step),
+      effectFactors(drawn, current, context.label, context.source, context.step, context.variable),
     );
     return;
   }
@@ -103,6 +109,12 @@ export function applyOrSchedule(
     dueWeek: context.week + effect.delaiSemaines,
     actorId: context.actorId,
     ...drawn,
-    origin: { kind: context.source, ref: context.ref, label: context.label, week: context.week },
+    origin: {
+      kind: context.source,
+      ref: context.ref,
+      label: context.label,
+      week: context.week,
+      ...(context.variable ? { variable: context.variable } : {}),
+    },
   });
 }

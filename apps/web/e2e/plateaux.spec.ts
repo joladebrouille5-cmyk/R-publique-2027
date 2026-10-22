@@ -20,9 +20,26 @@ test('la posture d’un passage se choisit au plan et s’explique au bilan', as
   expect(audit.violations.map((v) => `${v.id} : ${v.help} (${v.nodes.length})`)).toEqual([]);
 
   await page.getByRole('button', { name: 'Résoudre la semaine 0' }).click();
+  // Débriefing plein écran : le passage, son niveau et ses raisons ; audit d'accessibilité.
+  const debrief = page.getByRole('dialog', { name: 'Débriefing de la semaine 0' });
+  await expect(debrief.getByRole('list', { name: 'Raisons du score' })).toContainText(
+    'Posture offensive, format « Décryptage »',
+  );
+  await expect(debrief.getByRole('region', { name: 'Sondages de la semaine' })).toBeVisible();
+  const overlay = await new AxeBuilder({ page })
+    .include('[role="dialog"]')
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze();
+  expect(overlay.violations.map((v) => `${v.id} : ${v.help} (${v.nodes.length})`)).toEqual([]);
+  // Sur téléphone, le bouton « Continuer » reste au-dessus de la barre de gestes.
+  const proceed = debrief.getByRole('button', { name: 'Continuer' });
+  const box = (await proceed.boundingBox())!;
+  expect(box.y + box.height).toBeLessThanOrEqual(page.viewportSize()!.height);
+  await page.keyboard.press('Escape');
+  await expect(debrief).toBeHidden();
   await expect(page.getByRole('heading', { name: /Bilan de la semaine 0/ })).toBeVisible();
   const reasons = page.getByRole('list', { name: 'Raisons du score' });
   await expect(reasons).toContainText('Posture offensive, format « Décryptage »');
   await expect(reasons).toContainText(/Préparation \(0 h sur \d+ h utiles\)/);
-  await expect(page.getByText(/^Passage (réussi|correct|raté)$/)).toBeVisible();
+  await expect(page.getByText(/^Passage (réussi|correct|décevant)$/)).toBeVisible();
 });

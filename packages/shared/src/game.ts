@@ -151,6 +151,8 @@ export const ScheduledEffectSchema = z
         ref: Id,
         label: z.string().min(1),
         week: z.number().int().min(0),
+        /** Libellé de la part variable (phase 11, passage noté) ; absent : « aléa ». */
+        variable: z.string().min(1).max(120).optional(),
       })
       .strict(),
   })

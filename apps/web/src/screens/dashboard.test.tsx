@@ -128,7 +128,15 @@ describe('tableau de bord', () => {
     expect(calls.find((c) => c.method === 'POST')!.body).toMatchObject({
       actions: [{ actionId: 'decryptage', posture: 'offensive' }],
     });
-    expect(await screen.findByText('Passage raté')).toBeInTheDocument();
+    // Débriefing plein écran : le passage, sa posture et ses raisons ; « Continuer » le ferme.
+    const debrief = await screen.findByRole('dialog', { name: 'Débriefing de la semaine 0' });
+    expect(within(debrief).getByText('Passage décevant')).toBeInTheDocument();
+    expect(within(debrief).getByRole('list', { name: 'Raisons du score' })).toHaveTextContent(
+      'Posture offensive, format « Décryptage »',
+    );
+    expect(debrief).toHaveFocus();
+    await user.click(within(debrief).getByRole('button', { name: 'Continuer' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     const reasons = screen.getByRole('list', { name: 'Raisons du score' });
     expect(within(reasons).getByText('Posture offensive, format « Décryptage »'));
     expect(within(reasons).getByText('−20')).toBeInTheDocument();

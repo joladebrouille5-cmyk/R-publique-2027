@@ -4,6 +4,7 @@ import {
   MAX_FAST_FORWARD_WEEKS,
   type GameState,
   type Ruleset,
+  type WeeklyReport,
 } from '@r2027/shared';
 import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
@@ -13,6 +14,7 @@ import { useAdvance, useJournal, useRuleset } from '../api/hooks';
 import { ErrorMessage } from '../components/ErrorMessage';
 import { CalendarClock, ChevronRight, Hourglass, TriangleAlert } from 'lucide-react';
 import { buttonPrimary, buttonSecondary, card, input, screenTitle } from '../components/ui';
+import { WeeklyDebrief } from '../components/WeeklyDebrief';
 import { WeeklyReportView } from '../components/WeeklyReportView';
 import {
   CANDIDATE_STATUS_LABELS,
@@ -68,6 +70,8 @@ export function Dashboard() {
   const plan = useWeeklyPlan(game.id, game.week);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [fastWeeks, setFastWeeks] = useState(13);
+  // Débriefing de la semaine résolue (phase 11), en plein écran jusqu'à « Continuer ».
+  const [debrief, setDebrief] = useState<WeeklyReport | null>(null);
   // Une clé par tentative ; conservée si le réseau coupe, pour qu'un renvoi ne rejoue rien.
   const attemptKey = useRef<string | null>(null);
 
@@ -152,9 +156,11 @@ export function Dashboard() {
           attemptKey.current = null;
           plan.clear();
           setAnswers({});
-          // Soir de scrutin : la partie passe en direct de la soirée électorale.
+          // Soir de scrutin : la partie passe en direct de la soirée électorale ; sinon, une
+          // semaine résolue (hors avance rapide) ouvre son débriefing.
           if (response.report.election)
             void navigate(`../soiree/${response.report.election.round}`);
+          else if (semaines === undefined) setDebrief(response.report);
         },
         onError: (error) => {
           if (!(error instanceof ApiRequestError && error.code === 'serveur_injoignable')) {
@@ -191,6 +197,15 @@ export function Dashboard() {
 
   return (
     <section aria-labelledby="titre-tableau" className="space-y-8">
+      {debrief && (
+        <WeeklyDebrief
+          report={debrief}
+          state={state}
+          gameId={game.id}
+          eventFamily={(id) => ruleset.data?.evenements.find((e) => e.id === id)?.famille ?? null}
+          onClose={() => setDebrief(null)}
+        />
+      )}
       <div className="space-y-1">
         <h1 id="titre-tableau" className={screenTitle}>
           Tableau de bord

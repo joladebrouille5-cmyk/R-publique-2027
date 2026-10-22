@@ -58,6 +58,11 @@ test('partie complète sans réseau : création, semaine, reprise, carte, export
 
   await page.getByRole('button', { name: 'Ajouter Meeting public' }).click();
   await page.getByRole('button', { name: 'Résoudre la semaine 0' }).click();
+  // Débriefing de la semaine (phase 11), plein écran, calculé hors ligne par le moteur local.
+  const debrief = page.getByRole('dialog', { name: 'Débriefing de la semaine 0' });
+  await expect(debrief.getByText('Meeting public')).toBeVisible();
+  await debrief.getByRole('button', { name: 'Continuer' }).click();
+  await expect(debrief).toBeHidden();
   await expect(page.getByRole('heading', { name: /Bilan de la semaine 0/ })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Résoudre la semaine 1' })).toBeVisible();
 
