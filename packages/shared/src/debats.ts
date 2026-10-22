@@ -314,6 +314,12 @@ export const DebatesStateSchema = z
   .strict();
 export type DebatesState = z.infer<typeof DebatesStateSchema>;
 
+/** Identifiant d'un débat dans une route d'API. */
+export const DebateIdSchema = z
+  .string()
+  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+  .max(60);
+
 /** Demande du joueur pour un débat de la semaine (API). */
 export const DebateRequestSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('ouvrir') }).strict(),

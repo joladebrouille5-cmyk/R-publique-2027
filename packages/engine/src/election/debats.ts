@@ -1,6 +1,7 @@
 import {
   addDays,
   candidateName,
+  cycleRuleset,
   type Actor,
   type DebateAngle,
   type DebateCard,
@@ -644,10 +645,12 @@ function completeDebate(state: GameState, ruleset: Ruleset, session: DebateSessi
  */
 export function playDebate(
   input: GameState,
-  ruleset: Ruleset,
+  baseRuleset: Ruleset,
   debatId: string,
   request: DebateRequest,
 ): { state: GameState; session: DebateSession } {
+  // Calendrier du cycle en cours (2027, puis transposé pour 2032, 2037…), comme advanceWeek.
+  const ruleset = cycleRuleset(baseRuleset, input.cycle);
   const state = JSON.parse(JSON.stringify(input)) as GameState;
   scheduleDebates(state, ruleset);
   const session = state.debats.seances.find(

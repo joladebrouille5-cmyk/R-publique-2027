@@ -6,6 +6,8 @@ import {
   ENGINE_VERSION,
   EngineInputError,
   GameCreationError,
+  inputErrorStatus,
+  playDebate,
   SAVE_SCHEMA_VERSION,
   type AdvanceResult,
 } from '@r2027/engine';
@@ -25,6 +27,8 @@ import {
   AdvanceResponseSchema,
   CreateGameRequestSchema,
   CreateSaveRequestSchema,
+  DebateIdSchema,
+  DebateRequestSchema,
   FAST_FORWARD_STOPS,
   IDEMPOTENCY_HEADER,
   IdempotencyKeySchema,
@@ -260,6 +264,14 @@ export class LocalApi {
       const outcome = await this.advance(GameId.parse(m[1]), key.data, request.body);
       return ok(outcome.response, 200, outcome.replayed ? { 'idempotent-replay': 'true' } : {});
     }
+    if (method === 'POST' && (m = match(/^\/api\/games\/([^/]+)\/debats\/([^/]+)$/)))
+      return ok(
+        await this.playDebate(
+          GameId.parse(m[1]),
+          DebateIdSchema.parse(decodeSegment(m[2]!)),
+          request.body,
+        ),
+      );
     if (method === 'GET' && (m = match(/^\/api\/games\/([^/]+)\/journal$/)))
       return ok(await this.journal(GameId.parse(m[1]), JournalQuery.parse(query)));
     if (method === 'GET' && (m = match(/^\/api\/games\/([^/]+)\/export$/))) {
@@ -647,6 +659,32 @@ export class LocalApi {
   }
 
   /** Sauvegarde automatique hebdomadaire, en ne gardant que les plus récentes. */
+  // --- Débats télévisés (phase 10) ---
+
+  /** Même contrat que l'API : le moteur joue la demande, l'état est réenregistré s'il change. */
+  private async playDebate(gameId: string, debatId: string, raw: unknown): Promise<GameDetail> {
+    const body = DebateRequestSchema.parse(raw);
+    const { row, state, stateHash } = await this.load(gameId);
+    let next: GameState;
+    try {
+      next = playDebate(state, getRuleset(state.meta.rulesetVersion), debatId, body).state;
+    } catch (error) {
+      if (error instanceof EngineInputError)
+        throw new HttpError(inputErrorStatus(error.code), error.code, error.message);
+      throw error;
+    }
+    const snapshot = snapshotState(next);
+    if (snapshot.stateHash === stateHash) return this.detail(row, state, stateHash);
+    const updated: GameRow = {
+      ...row,
+      ...this.columns(snapshot.state, snapshot.stateHash),
+      version: row.version + 1,
+      updatedAt: this.timestamp(),
+    };
+    await this.store.commit([{ kind: 'put', table: 'games', value: updated }]);
+    return this.detail(updated, snapshot.state, snapshot.stateHash);
+  }
+
   private async autoSave(gameId: string, state: GameState, stateHash: string) {
     const save = this.saveRow(gameId, 'auto', null, null, state, stateHash);
     const autos = (await this.store.saves(gameId))

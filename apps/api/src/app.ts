@@ -7,6 +7,8 @@ import {
   AdvanceRequestSchema,
   CreateGameRequestSchema,
   CreateSaveRequestSchema,
+  DebateIdSchema,
+  DebateRequestSchema,
   IDEMPOTENCY_HEADER,
   IdempotencyKeySchema,
   JournalCursorSchema,
@@ -21,6 +23,7 @@ import type { Config } from './config';
 import type { Database } from './db';
 import { HttpError } from './errors';
 import { advanceGame } from './services/advance';
+import { playGameDebate } from './services/debates';
 import { exportGame, importGame } from './services/exchange';
 import { ElectoralRepository, resultsDirectory } from './services/electoral';
 import { geoDirectories, GeoRepository } from './services/geo';
@@ -50,6 +53,7 @@ const HistoryParams = z.object({
 
 const GameParams = z.object({ gameId: z.uuid() });
 const SaveParams = z.object({ gameId: z.uuid(), saveId: z.uuid() });
+const DebateParams = z.object({ gameId: z.uuid(), debatId: DebateIdSchema });
 const JournalQuery = z.object({
   before: JournalCursorSchema.optional(),
   limit: z.coerce.number().int().min(1).max(50).default(20),
@@ -214,6 +218,13 @@ export async function buildApp({ config, db, geo }: AppOptions): Promise<Fastify
     );
     if (outcome.replayed) reply.header('idempotent-replay', 'true');
     return outcome.response;
+  });
+
+  // Débats télévisés de la semaine (phase 10) : ouvrir, refuser, jouer une carte, simuler la fin.
+  app.post('/api/games/:gameId/debats/:debatId', writeLimit, async (request, reply) => {
+    const { gameId, debatId } = DebateParams.parse(request.params);
+    const body = DebateRequestSchema.parse(request.body);
+    return playGameDebate(db, await userOf(request, reply), gameId, debatId, body);
   });
 
   app.get('/api/games/:gameId/journal', async (request) => {

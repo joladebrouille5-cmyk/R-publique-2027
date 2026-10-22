@@ -22,3 +22,11 @@ export class EngineInputError extends Error {
     this.name = 'EngineInputError';
   }
 }
+
+/** Statut HTTP d'une entrée refusée (API et moteur local de l'application, même contrat). */
+export function inputErrorStatus(code: EngineInputErrorCode): number {
+  if (code === 'debat_introuvable') return 404;
+  if (code === 'progression_bloquee' || code === 'debat_termine' || code === 'sequence_perimee')
+    return 409;
+  return 422;
+}

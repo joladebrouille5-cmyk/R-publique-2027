@@ -171,6 +171,75 @@ describe('serveur local : parties et progression', () => {
   });
 });
 
+describe('serveur local : débats télévisés (phase 10)', () => {
+  it('ouvre, joue une carte, simule la fin et persiste ; mêmes erreurs que l’API', async () => {
+    const api = server();
+    const rules = (await call(api, 'GET', '/api/rulesets/courant')).body as {
+      parrainages: { reservoir: { departements: Record<string, unknown> } };
+      calendrier: { echeances: { id: string; date: string }[] };
+    };
+    const deps = Object.keys(rules.parrainages.reservoir.departements).sort();
+    const closing = rules.calendrier.echeances.find((e) => e.id === 'presentation-candidatures')!;
+    let game = await newGame(api, { seed: 'debat-local' });
+    for (let i = 0; i < 40; i++) {
+      if (
+        game.state.debats.seances.some((d) => d.id === 'debat-t1-tous' && d.semaine === game.week)
+      )
+        break;
+      const actions =
+        game.date < closing.date
+          ? [0, 1].map((k) => ({
+              actionId: 'elus-locaux',
+              cible: deps[(game.week * 2 + k) % deps.length]!,
+            }))
+          : [];
+      game = (await advance(api, game, { actions })).game;
+    }
+    const debate = game.state.debats.seances.find((d) => d.id === 'debat-t1-tous')!;
+    expect(debate.invites).toContain(game.state.player.actorId);
+    const url = `/api/games/${game.id}/debats/debat-t1-tous`;
+
+    const opened = await call(api, 'POST', url, { action: 'ouvrir' });
+    expect(opened.status).toBe(200);
+    expect(GameDetailSchema.parse(opened.body).version).toBe(game.version);
+
+    const unknown = await call(api, 'POST', `/api/games/${game.id}/debats/debat-inexistant`, {
+      action: 'ouvrir',
+    });
+    expect([unknown.status, error(unknown)]).toEqual([404, 'debat_introuvable']);
+    const stale = await call(api, 'POST', url, { action: 'jouer', sequence: 4, carte: 'defendre' });
+    expect([stale.status, error(stale)]).toEqual([409, 'sequence_perimee']);
+    const offered = new Set<string>(debate.enCours!.cartes.map((c) => c.carte));
+    const missing = ['defendre', 'repondre', 'hauteur', 'petite-phrase'].find(
+      (c) => !offered.has(c),
+    )!;
+    const invalid = await call(api, 'POST', url, { action: 'jouer', sequence: 0, carte: missing });
+    expect([invalid.status, error(invalid)]).toEqual([422, 'carte_invalide']);
+    const malformed = await call(api, 'POST', url, { action: 'danser' });
+    expect([malformed.status, error(malformed)]).toEqual([400, 'requete_invalide']);
+
+    const played = await call(api, 'POST', url, {
+      action: 'jouer',
+      sequence: 0,
+      carte: debate.enCours!.cartes[0]!.carte,
+    });
+    expect(played.status).toBe(200);
+    const afterOne = GameDetailSchema.parse(played.body);
+    expect(afterOne.version).toBe(game.version + 1);
+    expect(
+      afterOne.state.debats.seances.find((d) => d.id === 'debat-t1-tous')!.sequences,
+    ).toHaveLength(1);
+    const done = GameDetailSchema.parse(
+      (await call(api, 'POST', url, { action: 'finir', sequence: 1 })).body,
+    );
+    expect(done.state.debats.seances.find((d) => d.id === 'debat-t1-tous')!.statut).toBe('termine');
+    const replay = await call(api, 'POST', url, { action: 'finir', sequence: 1 });
+    expect([replay.status, error(replay)]).toEqual([409, 'debat_termine']);
+    const reread = GameDetailSchema.parse((await call(api, 'GET', `/api/games/${game.id}`)).body);
+    expect(reread.stateHash).toBe(done.stateHash);
+  });
+});
+
 describe('serveur local : journal, sauvegardes, export', () => {
   it('pagine le journal sans doublon ni événement résumé dans le bilan', async () => {
     const api = server();

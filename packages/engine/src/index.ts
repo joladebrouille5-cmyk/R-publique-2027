@@ -39,7 +39,7 @@ export {
   PLAYER_ACTOR_ID,
   type CreateGameInput,
 } from './core/createGame';
-export { EngineInputError, type EngineInputErrorCode } from './core/errors';
+export { EngineInputError, inputErrorStatus, type EngineInputErrorCode } from './core/errors';
 export { createRng, deriveRngState, seedSfc32, type Rng } from './core/rng';
 export { sha256Hex } from './core/sha256';
 export { ENGINE_VERSION, SAVE_SCHEMA_VERSION } from './core/versions';
