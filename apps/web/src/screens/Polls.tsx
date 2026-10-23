@@ -2,7 +2,7 @@ import { candidateName, type GameState, type Poll } from '@r2027/shared';
 import { useState } from 'react';
 import { Badge } from '../components/Badge';
 import { ShareBar } from '../components/ShareBar';
-import { buttonSecondary, card, screenTitle } from '../components/ui';
+import { buttonSecondary, card } from '../components/ui';
 import {
   formatCount,
   formatGameDate,
@@ -12,6 +12,7 @@ import {
   pollFactorLabel,
 } from '../labels';
 import { useCurrentGame } from './GameLayout';
+import { ScreenHeading } from '../components/Disclosure';
 
 const PAGE = 8;
 
@@ -210,9 +211,7 @@ export function Polls() {
 
   return (
     <section aria-labelledby="titre-sondages" className="space-y-6">
-      <h1 id="titre-sondages" className={screenTitle}>
-        Sondages
-      </h1>
+      <ScreenHeading id="titre-sondages">Sondages</ScreenHeading>
       <p className="text-sm text-slate-600 dark:text-slate-400">
         <Badge tone="simule">Sondage simulé</Badge> Les instituts sont fictifs. Chaque sondage
         interroge un échantillon tiré de l’opinion simulée : il comporte une marge d’erreur et un

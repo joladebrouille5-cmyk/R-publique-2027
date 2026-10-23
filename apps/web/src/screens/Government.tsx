@@ -10,10 +10,11 @@ import { useRuleset } from '../api/hooks';
 import { Avatar } from '../components/Avatar';
 import { Badge, type BadgeTone } from '../components/Badge';
 import { ErrorMessage } from '../components/ErrorMessage';
-import { card, screenTitle } from '../components/ui';
+import { card } from '../components/ui';
 import { formatGameDate } from '../labels';
 import { portraitOf, portraitOfPersonality, type Portrait } from '../portraits';
 import { useCurrentGame } from './GameLayout';
+import { ScreenHeading } from '../components/Disclosure';
 
 const pct = (value: number) => `${Math.round(value * 100)} %`;
 
@@ -336,9 +337,7 @@ export function Government() {
   const ruleset = useRuleset(game.rulesetVersion, game.state.cycle);
   return (
     <section aria-labelledby="titre-ecran-gouvernement" className="space-y-6">
-      <h1 id="titre-ecran-gouvernement" className={screenTitle}>
-        Gouvernement
-      </h1>
+      <ScreenHeading id="titre-ecran-gouvernement">Gouvernement</ScreenHeading>
       {ruleset.isError && (
         <ErrorMessage error={ruleset.error} onRetry={() => void ruleset.refetch()} />
       )}

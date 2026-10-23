@@ -48,7 +48,7 @@ describe('personnalités réelles', () => {
     renderRoute(`/parties/${GAME_ID}/candidats`);
     const user = userEvent.setup();
     expect(await screen.findByText(/Partie avec des personnalités réelles/)).toBeInTheDocument();
-    expect(screen.getByRole('note')).toHaveTextContent(/sont simulés par le jeu/);
+    expect(await screen.findByRole('note')).toHaveTextContent(/sont simulés par le jeu/);
 
     const lePen = screen.getByRole('listitem', { name: 'Marine Le Pen' });
     expect(within(lePen).getByText('Personnalité réelle — simulée')).toBeInTheDocument();

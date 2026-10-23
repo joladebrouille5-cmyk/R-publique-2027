@@ -657,6 +657,47 @@ Avancement (22/10/2026, branche `claude/new-session-lmxg1t`) :
 - **Ministères régaliens** : le président joueur doit confirmer ou remplacer cinq ministres après chaque nomination de Premier ministre (décisions obligatoires, la proposition du Premier ministre par défaut) ; les autres ministères restent composés par le Premier ministre.
 - **Rattachement aux groupes** : par l'étiquette du parti ; une personnalité sans parti de la table (Place publique, Debout !, Reconquête…) n'ouvre le gouvernement à aucun groupe.
 
+
+### Phase 12 — Ergonomie : navigation à plat, QG en un coup d'œil, tiroirs (terminée)
+
+Demandée par l'utilisateur le 23/10/2026 (retour de test : « Focus sur l'ergonomie, la simplification de la navigation et l'immersion »). Aucune règle du jeu ne change : ni moteur, ni jeu de règles, ni format de sauvegarde ; l'interface n'affiche que des données servies par l'API (ou `@r2027/local-api`).
+
+Décisions de conception (révisables) :
+- **Cinq espaces** au lieu de seize écrans répartis en trois groupes et d'une feuille « Tous les écrans » : **QG** (vue d'ensemble, plan de la semaine, décisions, journal, sauvegardes), **Carte** (inchangée, plein écran), **Campagne** (programme, candidats et alliances, médias et réseaux, finances), **Opinion** (sondages, résultats), **Pouvoir** (gouvernement, Parlement, économie, crises, législatives, bilan). Même barre sur ordinateur (rail) et sur téléphone (barre du bas, cinq onglets) : aucun menu dans un menu.
+- Dans un espace, chaque écran devient une **section dépliable** (accordéon) avec une ligne d'état ; son contenu n'est chargé qu'à l'ouverture. Les anciennes adresses (`…/programme`, `…/sondages`…) restent valides : elles ouvrent l'espace avec la section dépliée.
+- Les **détails** (fiche d'une action, compte de campagne, sondages, calendrier, membres du gouvernement…) s'ouvrent dans un **tiroir** — panneau coulissant à droite sur ordinateur, depuis le bas sur téléphone — sans quitter le QG.
+
+| # | Tâche | Critère d'acceptation |
+|---|---|---|
+| P12-01 | **Navigation à plat** : cinq espaces, rail et barre du bas identiques, plus de feuille « Tous les écrans » ; redirection des anciennes adresses vers l'espace et la section. | aucun menu imbriqué ; chaque écran du cahier des charges atteint en deux gestes au plus (onglet, section) (test) ; anciennes adresses redirigées (test) ; axe-core. |
+| P12-02 | **Sections dépliables** : écrans secondaires en accordéons dans les espaces Campagne, Opinion et Pouvoir (et Journal, Sauvegardes dans le QG), chacun avec une ligne d'état. | un seul titre de niveau 1 par page ; section fermée = contenu non rendu ; ouverture au clavier et par l'adresse (test) ; e2e bureau et mobile. |
+| P12-03 | **QG en un coup d'œil** : vue d'ensemble en tête — budget, notoriété, popularité, temps, actions programmées, sondage clé (rang, part, variation), décisions en attente, prochaine échéance ; présidence : gouvernement, Parlement, économie, législatives. Panneaux secondaires (bilan de la semaine, parrainages et compte, calendrier, la partie) repliés. | la vue d'ensemble tient dans le premier écran d'un téléphone 390 × 844 sous le bandeau (test) ; données du moteur seulement ; tests de composants. |
+| P12-04 | **Tiroirs de détail** : fiche d'une action (avec « Ajouter au plan ») et détails des chiffres du QG dans un panneau coulissant. | l'adresse ne change pas à l'ouverture d'un détail (test) ; dialogue accessible (titre, focus piégé puis rendu, Échap) ; marges de sécurité ; axe-core. |
+| P12-05 | Tests responsive (bureau, 360 et 390 px), e2e et essai hors ligne mis à jour, documentation, APK 1.4.0. | `pnpm check`, intégration, e2e, test hors ligne ; aucun défilement horizontal dans chaque espace (test) ; APK construit. |
+
+Avancement (23/10/2026, branche `claude/new-session-lmxg1t`) :
+- **P12-01 faite** — barre `Espaces de la partie` à cinq onglets (rail sur ordinateur, barre du bas sur téléphone), plus de feuille « Tous les écrans » ni de groupe « Raccourcis » ; chaque écran du registre est un espace ou une section d'un espace (test : deux gestes au plus) ; les anciennes adresses redirigent vers `espace#section` (test).
+- **P12-02 faite** — `Disclosure` : titre de niveau 2 contenant le bouton (`aria-expanded`, `aria-controls`), ligne d'état lue dans l'état servi (`sections.tsx`), région nommée par le bouton exposée seulement une fois dépliée, contenu non rendu tant que la section est repliée ; l'ancre de l'adresse déplie la section et l'amène à l'écran ; un écran intégré garde sa région nommée sans second titre visible (`ScreenHeading`, contexte `Embedded`) ; un seul titre de niveau 1 par page, toutes sections dépliées (e2e).
+- **P12-03 faite** — vue d'ensemble « En un coup d'œil » sous le titre du QG : actions programmées (n/max, budget et temps restants après le plan), décisions, sondage clé (rang, part, institut, variation), parrainages, compte de campagne, programme, élan ; en présidence gouvernement (Matignon vacant signalé), Parlement, économie (simulée), crises, législatives ; prochaine échéance et résultats. Budget, popularité, notoriété et militants restent dans le bandeau. Le reste du QG est replié en bas de page : bilan de la semaine, toutes les ressources, parrainages et compte, calendrier, journal, sauvegardes, la partie (scénario dans la ligne d'état). Test e2e : sur un téléphone de 390 × 844, toutes les tuiles tiennent au-dessus de la barre « Résoudre la semaine », sans défiler.
+- **P12-04 faite** — `Drawer` (portail, dialogue modal nommé, focus piégé puis rendu, Échap, clic sur le fond, feuille par le bas sur téléphone sous la barre d'état, panneau à droite sur ordinateur, pied au-dessus de la barre de gestes) ; `useModal` partagé avec le débriefing de la semaine. Les tuiles ouvrent sondages, parrainages, finances, programme, gouvernement, Parlement, économie, crises, législatives, calendrier ou résultats en tiroir ; la fiche d'une action du plan (coût, effets, risque, raison d'indisponibilité) s'ouvre en tiroir avec « Ajouter au plan ». L'adresse ne change pas (tests unitaires et e2e) ; axe-core sur le tiroir.
+- **P12-05 faite** — tests unitaires (navigation, redirection, sections, tuiles, tiroirs), e2e réécrits pour les espaces (aide `openScreen` : onglet puis section), nouveaux essais mobiles (premier écran 390 × 844, tiroir dans les marges de sécurité, aucun débordement à 360 et 390 px toutes sections dépliées), essai hors ligne et essai Android adaptés ; application **1.4.0** (`versionCode` 5).
+
+**Bilan (23/10/2026)** — les cinq tâches sont réalisées ; aucune règle du jeu, aucune donnée ni aucun format de sauvegarde ne change.
+
+| Vérification | Résultat |
+|---|---|
+| `pnpm check` (lint, format, types, tests unitaires) | sans erreur ; 560 tests réussis |
+| `pnpm test:integration` (API + PostgreSQL 16 réel) | 94 tests réussis |
+| `pnpm test:e2e` (Playwright, bureau + mobile Pixel 7) | 53 tests réussis, 3 ignorés (essais propres au téléphone, sautés sur le projet bureau) |
+| `pnpm test:mobile` (paquet de l'APK, réseau coupé) | 1 test réussi |
+| APK 1.4.0 de débogage | construit localement (JDK 21, SDK Android 36) : `versionCode` 5, aucune permission réseau, 6,1 Mo |
+| CI GitHub et essai sur émulateur | **non exécutés** : GitHub Actions reste bloqué au niveau du compte, et l'utilisateur ne souhaite pas modifier son budget ; pas d'émulateur dans l'environnement de développement (pas de KVM) |
+
+Écarts et limites :
+- **Essai sur appareil** : la mise en page du téléphone est vérifiée dans Chromium (Pixel 7, 390 × 844, 360 px, marges de sécurité simulées), pas sur un téléphone ni un émulateur Android.
+- **Sections du QG** : le bilan détaillé de la semaine est replié (le débriefing plein écran le présente déjà après chaque résolution) ; son ouverture reste à un geste.
+- **Tuiles** : leur choix et leur ordre sont des décisions de conception (révisables) ; sur un écran étroit, le détail d'une tuile est tronqué sur une ligne (texte complet dans le nom accessible et dans le tiroir).
+- **Carte** : inchangée (déjà plein écran avec ses panneaux escamotables depuis la phase 9).
 ---
 
 ## 5. Questions ouvertes
@@ -675,4 +716,4 @@ Avancement (22/10/2026, branche `claude/new-session-lmxg1t`) :
 
 ## 6. Prochaine étape
 
-Phases 6 à 11 terminées le 22/10/2026 sur la branche `claude/new-session-lmxg1t` (PR #2) : le jeu est jouable dans le navigateur (avec le serveur) et en application Android hors ligne (1.3.0), avec la soirée électorale au rythme réglable, les débats télévisés, le gouvernement ouvert aux personnalités réelles et les crédits regroupés dans Paramètres. Restent ouverts : le déblocage de GitHub Actions (CI verte et essai de l'APK 1.3.0 sur émulateur), l'hébergement de la version web (Q6 : image Docker, déploiement, sauvegardes du serveur, R-45), la licence des résultats 2022 (Q8), une mesure de fluidité sur un téléphone réel (R-47), le calibrage des hypothèses de jeu (R-50) et, avant une publication sur un magasin d'applications, la clé de signature et l'identifiant définitif de l'application.
+Phases 6 à 12 terminées le 23/10/2026 sur la branche `claude/new-session-lmxg1t` (PR #2) : le jeu est jouable dans le navigateur (avec le serveur) et en application Android hors ligne (1.4.0), avec une navigation à plat en cinq espaces, un QG lisible en un coup d'œil et les détails en tiroir, la soirée électorale au rythme réglable, les débats télévisés, le gouvernement ouvert aux personnalités réelles et les crédits regroupés dans Paramètres. Restent ouverts : la CI GitHub et l'essai de l'APK sur émulateur (GitHub Actions bloqué au niveau du compte ; APK construits et vérifiés en local), l'hébergement de la version web (Q6 : image Docker, déploiement, sauvegardes du serveur, R-45), la licence des résultats 2022 (Q8), une mesure de fluidité sur un téléphone réel (R-47), le calibrage des hypothèses de jeu (R-50) et, avant une publication sur un magasin d'applications, la clé de signature et l'identifiant définitif de l'application.

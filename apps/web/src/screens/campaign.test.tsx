@@ -39,7 +39,7 @@ describe('programme', () => {
     const calls = mockApi(base());
     renderRoute(`/parties/${GAME_ID}/programme`);
     const user = userEvent.setup();
-    await screen.findByRole('heading', { name: 'Programme', level: 1 });
+    await screen.findByRole('region', { name: 'Programme' });
     await user.click(domain('Emploi'));
     const guarantee = screen.getByRole('listitem', {
       name: 'Garantie d’emploi pour les chômeurs de longue durée',
@@ -102,7 +102,13 @@ describe('actions ciblées', () => {
   it('présente les parrainages et le compte de campagne sur le tableau de bord', async () => {
     mockApi(base());
     renderRoute(`/parties/${GAME_ID}/tableau-de-bord`);
-    const panel = await screen.findByRole('region', { name: 'Parrainages' });
+    // Tuile de la vue d'ensemble, puis le détail replié en bas du QG.
+    const tile = await screen.findByRole('button', { name: /^Parrainages\s*0\/500/ });
+    expect(tile).toHaveAttribute('aria-haspopup', 'dialog');
+    await userEvent.click(
+      screen.getByRole('button', { name: /^Parrainages et compte de campagne/ }),
+    );
+    const panel = screen.getByRole('region', { name: 'Parrainages' });
     expect(within(panel).getByText(/présentations comptées sur 500 requises/)).toBeInTheDocument();
     expect(within(panel).getByText('Seuil non atteint')).toBeInTheDocument();
     const account = screen.getByRole('region', { name: 'Compte de campagne' });

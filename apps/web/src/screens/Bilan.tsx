@@ -9,7 +9,7 @@ import {
 import { useRuleset } from '../api/hooks';
 import { Badge } from '../components/Badge';
 import { ErrorMessage } from '../components/ErrorMessage';
-import { card, screenTitle } from '../components/ui';
+import { card } from '../components/ui';
 import {
   formatGameDate,
   formatIndicator,
@@ -20,6 +20,7 @@ import {
 } from '../labels';
 import { useCurrentGame } from './GameLayout';
 import { memberInfo } from './Government';
+import { ScreenHeading } from '../components/Disclosure';
 
 // Bilan des quinquennats achevés (phase 6, P6-08) et présidentielles archivées. Le bilan est
 // arrêté par le moteur au début de la campagne présidentielle suivante ; l'écran ne fait que
@@ -244,9 +245,7 @@ export function Bilan() {
   const ruleset = useRuleset(game.rulesetVersion, game.state.cycle);
   return (
     <section aria-labelledby="titre-ecran-bilan" className="space-y-6">
-      <h1 id="titre-ecran-bilan" className={screenTitle}>
-        Bilan du quinquennat
-      </h1>
+      <ScreenHeading id="titre-ecran-bilan">Bilan du quinquennat</ScreenHeading>
       {ruleset.isError && (
         <ErrorMessage error={ruleset.error} onRetry={() => void ruleset.refetch()} />
       )}

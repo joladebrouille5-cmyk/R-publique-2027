@@ -6,14 +6,41 @@ import {
   type Ruleset,
   type WeeklyReport,
 } from '@r2027/shared';
-import { useRef, useState } from 'react';
+import {
+  Armchair,
+  CalendarClock,
+  CalendarDays,
+  ChartColumn,
+  Flame,
+  Gavel,
+  Hourglass,
+  Landmark,
+  ListChecks,
+  Scale,
+  ScrollText,
+  Siren,
+  Stamp,
+  TrendingUp,
+  TriangleAlert,
+  Vote,
+  Wallet,
+} from 'lucide-react';
+import { useRef, useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { ApiRequestError, newIdempotencyKey } from '../api/client';
-import { spendingCapOf } from '../campaign';
+import { nominationsClosed, presentationSummary, spendingCapOf } from '../campaign';
 import { useAdvance, useJournal, useRuleset } from '../api/hooks';
+import { Disclosure, Embedded } from '../components/Disclosure';
+import { Drawer } from '../components/Drawer';
 import { ErrorMessage } from '../components/ErrorMessage';
-import { CalendarClock, ChevronRight, Hourglass, TriangleAlert } from 'lucide-react';
-import { buttonPrimary, buttonSecondary, card, input, screenTitle } from '../components/ui';
+import {
+  buttonGhost,
+  buttonPrimary,
+  buttonSecondary,
+  card,
+  input,
+  screenTitle,
+} from '../components/ui';
 import { WeeklyDebrief } from '../components/WeeklyDebrief';
 import { WeeklyReportView } from '../components/WeeklyReportView';
 import {
@@ -22,19 +49,24 @@ import {
   formatGameDate,
   formatIndicator,
   formatPollDelta,
+  formatResource,
   formatShare,
   MODE_LABELS,
   PHASE_LABELS,
 } from '../labels';
 import { useWeeklyPlan } from '../stores/plan';
+import { useOpenSections, ScreenSection } from './Espace';
 import { memberInfo } from './Government';
-import { ActionPlanner } from './dashboard/ActionPlanner';
+import { ActionPlanner, remainingAfter } from './dashboard/ActionPlanner';
 import { CampaignPanel } from './dashboard/CampaignPanel';
 import { CalendarPanel } from './dashboard/CalendarPanel';
 import { DecisionsPanel } from './dashboard/DecisionsPanel';
 import { DebatesPanel } from './dashboard/DebatesPanel';
+import { Overview, type OverviewTile } from './dashboard/Overview';
 import { ResourcesPanel } from './dashboard/ResourcesPanel';
 import { useCurrentGame } from './GameLayout';
+import { GAME_SCREENS } from './registry';
+import { SECTION_SCREENS } from './sections';
 
 /** Même règle que le moteur (qui reste seul juge) : affichée avant de programmer la dissolution. */
 function dissolutionRestriction(state: GameState, ruleset: Ruleset): string | null {
@@ -61,6 +93,49 @@ const FAST_FORWARD_STOP_LABELS = {
   blocage: 'la partie ne peut pas aller plus loin pour l’instant',
 } as const;
 
+const DAY_MS = 86_400_000;
+const daysBetween = (from: string, to: string) =>
+  Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / DAY_MS);
+const rankLabel = (rank: number) => (rank === 1 ? '1er' : `${rank}e`);
+/** Montant court d'une tuile : « 3 M€ », « 120 k€ ». */
+const compactEuros = new Intl.NumberFormat('fr-FR', {
+  style: 'currency',
+  currency: 'EUR',
+  notation: 'compact',
+  maximumFractionDigits: 1,
+});
+
+/** Tiroirs du QG (phase 12) : un écran intégré, ou un panneau propre au QG. */
+type Panel =
+  | 'sondages'
+  | 'resultats'
+  | 'programme'
+  | 'candidats'
+  | 'finances'
+  | 'gouvernement'
+  | 'parlement'
+  | 'economie'
+  | 'crises'
+  | 'legislatives'
+  | 'calendrier'
+  | 'parrainages';
+
+const PANEL_TITLES: Partial<Record<Panel, string>> = {
+  calendrier: 'Calendrier électoral',
+  parrainages: 'Parrainages et compte de campagne',
+};
+
+/** Sections repliées en bas du QG (le bilan de la semaine, puis les écrans du QG). */
+const QG_SECTIONS = [
+  'bilan-semaine',
+  'ressources',
+  'campagne-detail',
+  'calendrier',
+  'journal',
+  'sauvegardes',
+  'partie',
+];
+
 export function Dashboard() {
   const game = useCurrentGame();
   const ruleset = useRuleset(game.rulesetVersion, game.state.cycle);
@@ -72,6 +147,9 @@ export function Dashboard() {
   const [fastWeeks, setFastWeeks] = useState(13);
   // Débriefing de la semaine résolue (phase 11), en plein écran jusqu'à « Continuer ».
   const [debrief, setDebrief] = useState<WeeklyReport | null>(null);
+  // Détail ouvert dans un tiroir (phase 12) : la page reste en place.
+  const [panel, setPanel] = useState<Panel | null>(null);
+  const { open, toggle, show } = useOpenSections(QG_SECTIONS);
   // Une clé par tentative ; conservée si le réseau coupe, pour qu'un renvoi ne rejoue rien.
   const attemptKey = useRef<string | null>(null);
 
@@ -134,6 +212,18 @@ export function Dashboard() {
     attemptKey.current = null;
     setAnswers((current) => ({ ...current, [decisionId]: optionId }));
   };
+  // Un tiroir peut modifier le plan (programme, alliances) : nouvelle tentative à sa fermeture.
+  const closePanel = () => {
+    attemptKey.current = null;
+    setPanel(null);
+  };
+  /** Amène une partie de la page à l'écran et y place le focus (titre rendu focalisable). */
+  const reveal = (id: string) => {
+    const target = document.getElementById(id);
+    if (!target) return;
+    target.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    target.focus({ preventScroll: true });
+  };
 
   const submit = (semaines?: number) => {
     attemptKey.current ??= newIdempotencyKey();
@@ -171,17 +261,233 @@ export function Dashboard() {
     );
   };
 
+  // Vue d'ensemble : uniquement des valeurs servies par l'API (état, jeu de règles).
+  const tiles: OverviewTile[] = [];
+  const drawer = (id: Panel, label: string) => ({
+    kind: 'tiroir' as const,
+    run: () => setPanel(id),
+    label,
+  });
+  const section = (id: string, label: string) => ({
+    kind: 'section' as const,
+    run: () => reveal(id),
+    label,
+  });
+  const data = ruleset.data;
+  if (data && actor && (campaigning || presiding) && !blocked) {
+    const catalog = presiding ? data.quinquennat.actions : data.actions;
+    const left = remainingAfter(plan.actions, catalog, actor, reservedHours);
+    tiles.push({
+      id: 'actions',
+      icon: ListChecks,
+      label: presiding ? 'Agenda de la semaine' : 'Actions programmées',
+      value: `${plan.actions.length}/${data.jeu.actionsMaxParSemaine}`,
+      detail: `Reste ${presiding ? '' : `${compactEuros.format(left.budget / 100)} · `}${formatResource('tempsHeures', left.time)}`,
+      action: section('titre-plan', 'Aller au plan de la semaine'),
+    });
+  }
+  if (!observer) {
+    tiles.push({
+      id: 'decisions',
+      icon: Stamp,
+      label: 'Décisions',
+      value: unanswered.length > 0 ? `${unanswered.length} à prendre` : 'Aucune',
+      detail:
+        state.pendingDecisions.length > 0
+          ? `${state.pendingDecisions.length} en attente cette semaine`
+          : 'Rien ne bloque la semaine',
+      tone: unanswered.length > 0 ? 'alerte' : undefined,
+      action:
+        state.pendingDecisions.length > 0
+          ? section('titre-decisions', 'Aller aux décisions')
+          : section('titre-plan', 'Aller au plan de la semaine'),
+    });
+  }
+  if (!quinquennat && latestPoll) {
+    const top = [...latestPoll.results].sort((a, b) => b.value - a.value)[0]!;
+    tiles.push({
+      id: 'sondage',
+      icon: ChartColumn,
+      label: 'Sondage clé',
+      value:
+        playerPoll && playerRank
+          ? `${rankLabel(playerRank)} · ${formatShare(playerPoll.value)}`
+          : `${nameOf(top.actorId)} ${formatShare(top.value)}`,
+      detail: `${latestPoll.institute}, sem. ${latestPoll.week}${
+        playerPoll?.variation !== null && playerPoll?.variation !== undefined
+          ? ` · ${formatPollDelta(playerPoll.variation)}`
+          : ''
+      }`,
+      tone: playerRank === 1 ? 'succes' : undefined,
+      action: drawer('sondages', 'Ouvrir les sondages'),
+    });
+  }
+  if (data && actor && campaigning && !quinquennat) {
+    const summary = presentationSummary(actor.parrainages, data);
+    if (state.campagne.parrainages === 'modelise' && !nominationsClosed(data, state.meta.date))
+      tiles.push({
+        id: 'parrainages',
+        icon: Gavel,
+        label: 'Parrainages',
+        value: `${summary.comptees}/${summary.seuil}`,
+        detail: `${summary.departements}/${summary.departementsMin} départements`,
+        tone: summary.atteint ? 'succes' : 'alerte',
+        action: drawer('parrainages', 'Ouvrir les parrainages et le compte de campagne'),
+      });
+    const cap = spendingCapOf(state, actor, data);
+    tiles.push({
+      id: 'compte',
+      icon: Wallet,
+      label: 'Compte de campagne',
+      value: compactEuros.format(actor.finances.depenses / 100),
+      detail: `dépensés sur ${compactEuros.format(cap / 100)} autorisés`,
+      tone: actor.finances.depassement ? 'alerte' : undefined,
+      action: drawer('finances', 'Ouvrir les finances'),
+    });
+    tiles.push({
+      id: 'programme',
+      icon: ScrollText,
+      label: 'Programme',
+      value: `${actor.programme.propositions.length}`,
+      detail:
+        plan.ajouter.length + plan.retirer.length > 0
+          ? `propositions ; ${plan.ajouter.length + plan.retirer.length} changement(s) prévu(s)`
+          : 'propositions annoncées',
+      action: drawer('programme', 'Ouvrir le programme'),
+    });
+    tiles.push({
+      id: 'elan',
+      icon: Flame,
+      label: 'Élan',
+      value: formatResource('dynamique', actor.resources.dynamique),
+      detail: `Dynamique · Jeunesse ${formatResource('jeunesse', actor.resources.jeunesse)}`,
+      action: {
+        kind: 'section',
+        run: () => show('ressources'),
+        label: 'Voir toutes les ressources',
+      },
+    });
+  }
+  if (quinquennat && data) {
+    const government = quinquennat.gouvernement;
+    tiles.push({
+      id: 'gouvernement',
+      icon: Landmark,
+      label: 'Gouvernement',
+      value: government
+        ? memberInfo(state, data, government.premierMinistre).name
+        : 'Matignon vacant',
+      detail: government
+        ? `Premier ministre · gouvernement n° ${government.numero}`
+        : mandateStarted
+          ? 'Matignon est vacant : un Premier ministre doit être nommé'
+          : 'Nomination la semaine de l’investiture',
+      tone: government ? undefined : 'alerte',
+      action: drawer('gouvernement', 'Ouvrir le gouvernement'),
+    });
+    if (state.parlement)
+      tiles.push({
+        id: 'parlement',
+        icon: Scale,
+        label: 'Parlement',
+        value: `${state.parlement.textes.filter((b) => !b.issue).length} texte(s)`,
+        detail: `en cours · ${state.parlement.reformes.filter((r) => r.appliquee).length} réforme(s) en vigueur`,
+        action: drawer('parlement', 'Ouvrir le Parlement'),
+      });
+    if (state.economie)
+      tiles.push({
+        id: 'economie',
+        icon: TrendingUp,
+        label: 'Économie (simulée)',
+        value: `Chômage ${formatIndicator('chomage', state.economie.indicateurs.chomage ?? 0)}`,
+        detail: `Croissance ${formatIndicator('croissance', state.economie.indicateurs.croissance ?? 0)} · inflation ${formatIndicator('inflation', state.economie.indicateurs.inflation ?? 0)}`,
+        action: drawer('economie', 'Ouvrir l’économie'),
+      });
+    const crises = Object.keys(state.eventHistory).filter((id) => id.startsWith('crise-')).length;
+    tiles.push({
+      id: 'crises',
+      icon: Siren,
+      label: 'Crises',
+      value: state.pendingDecisions.some((d) => d.kind === 'crise') ? 'En cours' : `${crises}`,
+      detail: crises > 0 ? 'crise(s) survenue(s) ; scénarios fictifs' : 'aucune crise survenue',
+      tone: state.pendingDecisions.some((d) => d.kind === 'crise') ? 'alerte' : undefined,
+      action: drawer('crises', 'Ouvrir les crises'),
+    });
+    const legislatives = state.legislatives;
+    tiles.push({
+      id: 'legislatives',
+      icon: Armchair,
+      label: 'Législatives',
+      value: legislatives?.prochaine
+        ? formatGameDate(legislatives.prochaine.t1).replace(/^\S+ /, '')
+        : 'Assemblée élue',
+      detail: legislatives?.prochaine
+        ? legislatives.prochaine.motif === 'dissolution'
+          ? 'Assemblée dissoute : législatives anticipées'
+          : 'Prochaines législatives'
+        : legislatives?.derniere.cohabitation
+          ? 'Cohabitation en cours'
+          : `Élue en ${legislatives?.derniere.t2.slice(0, 4) ?? '2024'}`,
+      action: drawer('legislatives', 'Ouvrir les législatives'),
+    });
+  }
+  if (data) {
+    const next = quinquennat
+      ? { libelle: 'Fin du mandat', date: quinquennat.mandat.fin }
+      : [...data.calendrier.scrutins, ...data.calendrier.echeances]
+          .filter((e) => e.date >= game.date)
+          .sort((a, b) => a.date.localeCompare(b.date))[0];
+    if (next) {
+      const days = daysBetween(game.date, next.date);
+      tiles.push({
+        id: 'echeance',
+        icon: CalendarDays,
+        label: 'Prochaine échéance',
+        value: days === 0 ? 'Aujourd’hui' : `J−${days}`,
+        detail: next.libelle,
+        action: drawer('calendrier', 'Ouvrir le calendrier électoral'),
+      });
+    }
+  }
+  if (!quinquennat && state.elections.t1) {
+    tiles.push({
+      id: 'resultats',
+      icon: Vote,
+      label: 'Résultats',
+      value: state.elections.t2?.winner ? nameOf(state.elections.t2.winner) : '1er tour',
+      detail: state.elections.t2?.winner ? 'élu(e) au second tour' : 'dépouillé',
+      action: drawer('resultats', 'Ouvrir les résultats'),
+    });
+  }
+
+  const overviewIntro: ReactNode = quinquennat ? (
+    <>
+      <p>
+        {presiding
+          ? 'Vous êtes président(e) de la République'
+          : `${nameOf(quinquennat.mandat.presidentId)} est président(e) de la République`}{' '}
+        : mandat du {formatGameDate(quinquennat.mandat.debut)} au{' '}
+        {formatGameDate(quinquennat.mandat.fin)}.
+      </p>
+      {!presiding && actor && (
+        <p>
+          Vous n’êtes pas président(e) : le quinquennat se déroule sans vous, sous la conduite de
+          l’IA (mêmes règles que pour le joueur). Utilisez l’avance rapide ; vous pourrez vous
+          présenter à la présidentielle suivante.
+        </p>
+      )}
+    </>
+  ) : null;
+
+  const scenarioLabel =
+    data?.scenarios.find((s) => s.id === state.scenario)?.libelle ?? state.scenario;
   const facts = [
     { label: 'Date en jeu', value: formatGameDate(game.date) },
     { label: 'Semaine', value: String(game.week) },
     { label: 'Phase', value: PHASE_LABELS[game.phase] },
     { label: 'Mode', value: MODE_LABELS[game.mode] },
     { label: 'Difficulté', value: DIFFICULTY_LABELS[game.difficulty] },
-    {
-      label: 'Scénario',
-      value:
-        ruleset.data?.scenarios.find((s) => s.id === state.scenario)?.libelle ?? state.scenario,
-    },
+    { label: 'Scénario', value: scenarioLabel },
     ...(actor
       ? [
           {
@@ -192,31 +498,46 @@ export function Dashboard() {
       : []),
   ];
 
-  const link =
-    'inline-flex min-h-11 items-center gap-1 rounded-full px-1 font-semibold text-republique-700 hover:underline dark:text-republique-300';
+  const PanelScreen = panel ? SECTION_SCREENS[panel] : undefined;
+  const panelTitle = panel
+    ? (PANEL_TITLES[panel] ?? GAME_SCREENS.find((s) => s.path === panel)?.label ?? panel)
+    : '';
 
   return (
-    <section aria-labelledby="titre-tableau" className="space-y-8">
+    <section aria-labelledby="titre-tableau" className="space-y-6">
       {debrief && (
         <WeeklyDebrief
           report={debrief}
           state={state}
           gameId={game.id}
-          eventFamily={(id) => ruleset.data?.evenements.find((e) => e.id === id)?.famille ?? null}
+          eventFamily={(id) => data?.evenements.find((e) => e.id === id)?.famille ?? null}
           onClose={() => setDebrief(null)}
         />
+      )}
+      {panel && (
+        <Drawer title={panelTitle} onClose={closePanel}>
+          <Embedded>
+            {panel === 'calendrier' && data ? (
+              <CalendarPanel ruleset={data} today={game.date} />
+            ) : panel === 'parrainages' && data && actor ? (
+              <CampaignPanel state={state} actor={actor} ruleset={data} />
+            ) : (
+              PanelScreen && <PanelScreen />
+            )}
+          </Embedded>
+        </Drawer>
       )}
       <div className="space-y-1">
         <h1 id="titre-tableau" className={screenTitle}>
           Tableau de bord
         </h1>
-        <p className="text-slate-600 dark:text-slate-400">
+        <p className="text-slate-600 max-sm:sr-only dark:text-slate-400">
           {quinquennat
             ? presiding
               ? 'Vous gouvernez : fixez l’agenda de la semaine, tranchez, puis avancez.'
               : 'Le quinquennat suit son cours sans vous : avancez jusqu’à la prochaine campagne.'
             : campaigning
-              ? 'Votre QG de campagne : tranchez les dossiers, programmez la semaine, puis résolvez-la.'
+              ? 'Votre QG de campagne : tout est ici. Tranchez, programmez la semaine, puis résolvez-la.'
               : 'Suivez la campagne semaine après semaine.'}
         </p>
       </div>
@@ -232,90 +553,35 @@ export function Dashboard() {
               {state.calendar.blockedMessage ??
                 'La partie ne peut pas avancer davantage pour l’instant.'}
             </p>
-            <Link to="../resultats" className="font-semibold underline">
+            <button
+              type="button"
+              className="font-semibold underline"
+              aria-haspopup="dialog"
+              onClick={() => setPanel('resultats')}
+            >
               Voir les résultats
-            </Link>
+            </button>
           </div>
         </div>
+      )}
+
+      {tiles.length > 0 && (
+        <Overview
+          title={
+            quinquennat
+              ? `Quinquennat ${quinquennat.mandat.debut.slice(0, 4)}–${quinquennat.mandat.fin.slice(0, 4)}`
+              : 'En un coup d’œil'
+          }
+          intro={overviewIntro}
+          tiles={tiles}
+        />
       )}
 
       {!observer && state.pendingDecisions.length > 0 && (
         <DecisionsPanel decisions={state.pendingDecisions} answers={answers} onAnswer={answer} />
       )}
 
-      {!quinquennat && ruleset.data && (
-        <DebatesPanel gameId={game.id} state={state} ruleset={ruleset.data} />
-      )}
-
-      {quinquennat && ruleset.data && (
-        <section aria-labelledby="titre-quinquennat" className={`${card} space-y-2 text-sm`}>
-          <h2 id="titre-quinquennat" className="text-xl font-bold">
-            Quinquennat {quinquennat.mandat.debut.slice(0, 4)}–{quinquennat.mandat.fin.slice(0, 4)}
-          </h2>
-          <p>
-            {presiding
-              ? 'Vous êtes président(e) de la République'
-              : `${nameOf(quinquennat.mandat.presidentId)} est président(e) de la République`}{' '}
-            : mandat du {formatGameDate(quinquennat.mandat.debut)} au{' '}
-            {formatGameDate(quinquennat.mandat.fin)}.
-          </p>
-          <p>
-            {quinquennat.gouvernement
-              ? `Premier ministre : ${memberInfo(state, ruleset.data, quinquennat.gouvernement.premierMinistre).name} (gouvernement n° ${quinquennat.gouvernement.numero}).`
-              : mandateStarted
-                ? 'Matignon est vacant : un Premier ministre doit être nommé.'
-                : `Le Premier ministre sera nommé la semaine de l’investiture.`}
-          </p>
-          {!presiding && actor && (
-            <p>
-              Vous n’êtes pas président(e) : le quinquennat se déroule sans vous, sous la conduite
-              de l’IA (mêmes règles que pour le joueur). Utilisez l’avance rapide ; vous pourrez
-              vous présenter à la présidentielle suivante.
-            </p>
-          )}
-          {state.parlement && (
-            <p>
-              Assemblée nationale : {state.parlement.textes.filter((b) => !b.issue).length} texte(s)
-              en cours, {state.parlement.reformes.filter((r) => r.appliquee).length} réforme(s) en
-              vigueur.
-            </p>
-          )}
-          {state.economie && (
-            <p>
-              Économie (simulée) : croissance{' '}
-              {formatIndicator('croissance', state.economie.indicateurs.croissance ?? 0)}, chômage{' '}
-              {formatIndicator('chomage', state.economie.indicateurs.chomage ?? 0)}, inflation{' '}
-              {formatIndicator('inflation', state.economie.indicateurs.inflation ?? 0)}.
-            </p>
-          )}
-          {state.legislatives?.prochaine && (
-            <p>
-              {state.legislatives.prochaine.motif === 'dissolution'
-                ? 'Assemblée dissoute : législatives anticipées'
-                : 'Prochaines législatives'}{' '}
-              : premier tour le {formatGameDate(state.legislatives.prochaine.t1)}
-              {state.legislatives.derniere.cohabitation ? ' ; cohabitation en cours' : ''}.
-            </p>
-          )}
-          <p className="flex flex-wrap gap-x-3">
-            <Link to="../gouvernement" className={link}>
-              Le gouvernement
-            </Link>
-            <Link to="../parlement" className={link}>
-              Le Parlement
-            </Link>
-            <Link to="../economie" className={link}>
-              L’économie
-            </Link>
-            <Link to="../legislatives" className={link}>
-              Les législatives
-            </Link>
-            <Link to="../resultats" className={link}>
-              Résultats de la présidentielle
-            </Link>
-          </p>
-        </section>
-      )}
+      {!quinquennat && data && <DebatesPanel gameId={game.id} state={state} ruleset={data} />}
 
       {!quinquennat && previousTerm && (
         <section aria-labelledby="titre-nouveau-cycle" className={`${card} space-y-2 text-sm`}>
@@ -341,95 +607,21 @@ export function Dashboard() {
             simulés (simplification du jeu).
           </p>
           <p>
-            <Link to="../bilan" className={link}>
+            <Link
+              to="../pouvoir#bilan"
+              className="inline-flex min-h-11 items-center font-semibold text-republique-700 hover:underline dark:text-republique-300"
+            >
               Le bilan du quinquennat
             </Link>
           </p>
         </section>
       )}
 
-      {!quinquennat && (latestPoll || state.elections.t1) && (
-        <section
-          aria-labelledby="titre-course"
-          className="relative overflow-hidden rounded-dossier bg-slate-900 p-5 text-white shadow-raised sm:p-7 dark:bg-slate-800"
-        >
-          <span aria-hidden="true" className="absolute inset-x-0 top-0 flex h-1.5">
-            <span className="flex-1 bg-republique-500" />
-            <span className="flex-1 bg-white" />
-            <span className="flex-1 bg-red-500" />
-          </span>
-          <h2 id="titre-course" className="text-xl font-bold">
-            La course présidentielle
-          </h2>
-          {latestPoll && playerPoll && playerRank && (
-            <div className="mt-3 flex flex-wrap items-end gap-x-6 gap-y-2">
-              <p className="font-display leading-none font-extrabold">
-                <span className="text-6xl tracking-tight">
-                  {playerRank === 1 ? '1er' : `${playerRank}e`}
-                </span>
-                <span className="ml-2 text-lg font-semibold text-slate-300">
-                  sur {latestPoll.results.length}
-                </span>
-              </p>
-              <p className="text-sm text-slate-300">
-                Dernier sondage ({latestPoll.institute}, semaine {latestPoll.week}) : vous êtes{' '}
-                <strong className="text-white">
-                  {playerRank === 1 ? '1er' : `${playerRank}e`}
-                </strong>{' '}
-                sur {latestPoll.results.length} avec{' '}
-                <strong className="text-white">{formatShare(playerPoll.value)}</strong> (±{' '}
-                {formatShare(playerPoll.margin).replace(' %', ' pt')})
-                {playerPoll.variation !== null &&
-                  `, ${formatPollDelta(playerPoll.variation)} depuis sa vague précédente`}
-                .
-              </p>
-            </div>
-          )}
-          {latestPoll && !playerPoll && (
-            <p className="mt-2 text-sm text-slate-300">
-              Dernier sondage ({latestPoll.institute}, semaine {latestPoll.week}) :{' '}
-              {[...latestPoll.results]
-                .sort((a, b) => b.value - a.value)
-                .slice(0, 3)
-                .map(
-                  (r) =>
-                    `${state.actors[r.actorId] ? candidateName(state.actors[r.actorId]!.candidate) : r.actorId} ${formatShare(r.value)}`,
-                )
-                .join(' · ')}
-            </p>
-          )}
-          <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm">
-            <Link
-              to="../sondages"
-              className="inline-flex min-h-11 items-center gap-1 font-semibold text-white hover:underline"
-            >
-              Tous les sondages
-              <ChevronRight aria-hidden="true" className="size-4" />
-            </Link>
-            <Link
-              to="../candidats"
-              className="inline-flex min-h-11 items-center gap-1 font-semibold text-white hover:underline"
-            >
-              Les candidats
-              <ChevronRight aria-hidden="true" className="size-4" />
-            </Link>
-            {state.elections.t1 && (
-              <Link
-                to="../resultats"
-                className="inline-flex min-h-11 items-center gap-1 font-semibold text-white hover:underline"
-              >
-                Résultats
-                <ChevronRight aria-hidden="true" className="size-4" />
-              </Link>
-            )}
-          </p>
-        </section>
-      )}
-
       {actor && !campaigning && !blocked && !quinquennat && (
         <p className="rounded-card border border-slate-300 p-4 text-sm dark:border-slate-700">
-          Vous n’êtes plus candidat : vous ne programmez plus d’actions de campagne, mais vous
-          pouvez suivre la suite de l’élection semaine après semaine.
+          <strong className="font-semibold">{CANDIDATE_STATUS_LABELS[actor.status]}.</strong> Vous
+          n’êtes plus candidat : vous ne programmez plus d’actions de campagne, mais vous pouvez
+          suivre la suite de l’élection semaine après semaine.
         </p>
       )}
 
@@ -438,14 +630,14 @@ export function Dashboard() {
       )}
       {ruleset.isPending && <p>Chargement du jeu de règles…</p>}
 
-      {ruleset.data && actor && campaigning && !blocked && (
+      {data && actor && campaigning && !blocked && (
         <>
           <ActionPlanner
-            ruleset={ruleset.data}
+            ruleset={data}
             actor={actor}
             plan={plan.actions}
             reservedHours={reservedHours}
-            cap={spendingCapOf(state, actor, ruleset.data)}
+            cap={spendingCapOf(state, actor, data)}
             onAdd={changePlan(plan.addAction)}
             onRemove={changePlan(plan.removeAction)}
             onTarget={changePlan(plan.setTarget)}
@@ -471,21 +663,31 @@ export function Dashboard() {
             {plan.proposer.length > 0 && (
               <p>Propositions de ralliement : {plan.proposer.map(nameOf).join(', ')}.</p>
             )}
-            <p className="flex flex-wrap gap-x-3">
-              <Link to="../programme" className={link}>
+            <p className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                className={buttonGhost}
+                aria-haspopup="dialog"
+                onClick={() => setPanel('programme')}
+              >
                 Composer le programme
-              </Link>
-              <Link to="../candidats" className={link}>
+              </button>
+              <button
+                type="button"
+                className={buttonGhost}
+                aria-haspopup="dialog"
+                onClick={() => setPanel('candidats')}
+              >
                 Relations et alliances
-              </Link>
+              </button>
             </p>
           </section>
         </>
       )}
 
-      {ruleset.data && actor && presiding && !blocked && (
+      {data && actor && presiding && !blocked && (
         <ActionPlanner
-          ruleset={ruleset.data}
+          ruleset={data}
           actor={actor}
           plan={plan.actions}
           mode="presidence"
@@ -495,7 +697,7 @@ export function Dashboard() {
               : action.institution === 'remaniement' && !quinquennat.gouvernement
                 ? 'Aucun gouvernement en place à remanier.'
                 : action.institution === 'dissolution'
-                  ? dissolutionRestriction(state, ruleset.data!)
+                  ? dissolutionRestriction(state, data)
                   : null
           }
           reservedHours={0}
@@ -560,7 +762,7 @@ export function Dashboard() {
             )}
           </div>
           {quinquennat && plan.actions.length > 0 && (
-            <p className="text-xs leading-snug sm:text-sm text-slate-600 dark:text-slate-400">
+            <p className="text-xs leading-snug text-slate-600 sm:text-sm dark:text-slate-400">
               L’avance rapide résout des semaines sans action : videz l’agenda pour l’utiliser.
             </p>
           )}
@@ -574,12 +776,12 @@ export function Dashboard() {
             </p>
           )}
           {unanswered.length > 0 && (
-            <p className="text-xs leading-snug sm:text-sm font-semibold text-amber-800 dark:text-amber-300">
+            <p className="text-xs leading-snug font-semibold text-amber-800 sm:text-sm dark:text-amber-300">
               Répondez d’abord aux décisions en attente.
             </p>
           )}
           {missingTargets > 0 && (
-            <p className="text-xs leading-snug sm:text-sm font-semibold text-amber-800 dark:text-amber-300">
+            <p className="text-xs leading-snug font-semibold text-amber-800 sm:text-sm dark:text-amber-300">
               Choisissez la cible (département ou média) de chaque action qui en demande une.
             </p>
           )}
@@ -587,39 +789,6 @@ export function Dashboard() {
         </div>
       </div>
 
-      <section
-        aria-labelledby="titre-bilan"
-        key={lastReport?.week ?? 'aucun'}
-        className={`${card} animate-revele space-y-3`}
-      >
-        <h2 id="titre-bilan" className="text-xl font-bold">
-          {lastReport
-            ? `Bilan de la semaine ${lastReport.week} (${formatGameDate(lastReport.date)})`
-            : 'Bilan hebdomadaire'}
-        </h2>
-        {lastReport ? (
-          <WeeklyReportView
-            report={lastReport}
-            state={state}
-            proposalLabel={programmeLabel}
-            blocLabel={(id) =>
-              ruleset.data?.legislatives.blocs.find((b) => b.id === id)?.libelle ?? id
-            }
-            eventFamily={(id) => ruleset.data?.evenements.find((e) => e.id === id)?.famille ?? null}
-          />
-        ) : (
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Aucune semaine résolue pour l’instant.
-          </p>
-        )}
-      </section>
-
-      {ruleset.data && actor && (
-        <ResourcesPanel resources={actor.resources} ruleset={ruleset.data} />
-      )}
-      {ruleset.data && actor && !quinquennat && (
-        <CampaignPanel state={state} actor={actor} ruleset={ruleset.data} />
-      )}
       {observer && (
         <p className="text-sm text-slate-600 dark:text-slate-400">
           Mode observateur : aucune campagne n’est contrôlée. Les candidats fictifs mènent leur
@@ -627,42 +796,129 @@ export function Dashboard() {
         </p>
       )}
 
-      {ruleset.data && <CalendarPanel ruleset={ruleset.data} today={game.date} />}
+      {/* Le reste du QG, replié : on déplie ce dont on a besoin. */}
+      <div className="space-y-3">
+        <Disclosure
+          id="bilan-semaine"
+          key={lastReport?.week ?? 'aucun'}
+          title={
+            lastReport
+              ? `Bilan de la semaine ${lastReport.week} (${formatGameDate(lastReport.date)})`
+              : 'Bilan hebdomadaire'
+          }
+          status={
+            lastReport
+              ? `${lastReport.actions.length} action(s), ${lastReport.events.length} événement(s), ${lastReport.changes.length} variation(s) expliquée(s)`
+              : 'Aucune semaine résolue pour l’instant.'
+          }
+          open={open.has('bilan-semaine')}
+          onToggle={() => toggle('bilan-semaine')}
+          icon={<ListChecks className="size-5" strokeWidth={2} />}
+        >
+          {lastReport ? (
+            <WeeklyReportView
+              report={lastReport}
+              state={state}
+              proposalLabel={programmeLabel}
+              blocLabel={(id) => data?.legislatives.blocs.find((b) => b.id === id)?.libelle ?? id}
+              eventFamily={(id) => data?.evenements.find((e) => e.id === id)?.famille ?? null}
+            />
+          ) : (
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Aucune semaine résolue pour l’instant.
+            </p>
+          )}
+        </Disclosure>
 
-      <section aria-labelledby="titre-partie" className={`${card} space-y-3`}>
-        <h2 id="titre-partie" className="text-lg font-bold">
-          La partie
-        </h2>
-        <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm sm:grid-cols-3">
-          {facts.map((fact) => (
-            <div key={fact.label}>
-              <dt className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                {fact.label}
-              </dt>
-              <dd className="mt-0.5 font-semibold">{fact.value}</dd>
-            </div>
-          ))}
-        </dl>
-        <details className="border-t border-slate-200 pt-3 dark:border-slate-800">
-          <summary className="min-h-11 cursor-pointer content-center font-semibold">
-            Paramètres techniques
-          </summary>
-          <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-[12rem_1fr]">
-            <dt className="text-slate-500 dark:text-slate-400">Graine</dt>
-            <dd className="font-mono break-all">{game.seed}</dd>
-            <dt className="text-slate-500 dark:text-slate-400">Version du moteur</dt>
-            <dd className="font-mono">{game.engineVersion}</dd>
-            <dt className="text-slate-500 dark:text-slate-400">Jeu de règles</dt>
-            <dd className="font-mono">{game.rulesetVersion}</dd>
-            <dt className="text-slate-500 dark:text-slate-400">Format de sauvegarde</dt>
-            <dd className="font-mono">{game.saveSchemaVersion}</dd>
-            <dt className="text-slate-500 dark:text-slate-400">Empreinte de l’état</dt>
-            <dd className="font-mono break-all" data-testid="empreinte">
-              {game.stateHash}
-            </dd>
+        {data && actor && (
+          <Disclosure
+            id="ressources"
+            title="Toutes les ressources"
+            status={`Temps ${formatResource('tempsHeures', actor.resources.tempsHeures)} · militants ${formatResource('militants', actor.resources.militants)} · jeunesse ${formatResource('jeunesse', actor.resources.jeunesse)}`}
+            open={open.has('ressources')}
+            onToggle={() => toggle('ressources')}
+            icon={<Flame className="size-5" strokeWidth={2} />}
+          >
+            <ResourcesPanel resources={actor.resources} ruleset={data} />
+          </Disclosure>
+        )}
+
+        {data && actor && !quinquennat && (
+          <Disclosure
+            id="campagne-detail"
+            title="Parrainages et compte de campagne"
+            status="Présentations des élus, dépenses et plafond légal"
+            open={open.has('campagne-detail')}
+            onToggle={() => toggle('campagne-detail')}
+            icon={<Gavel className="size-5" strokeWidth={2} />}
+          >
+            <CampaignPanel state={state} actor={actor} ruleset={data} />
+          </Disclosure>
+        )}
+
+        {data && (
+          <Disclosure
+            id="calendrier"
+            title="Calendrier électoral"
+            status="Scrutins et échéances, avec leur statut"
+            open={open.has('calendrier')}
+            onToggle={() => toggle('calendrier')}
+            icon={<CalendarDays className="size-5" strokeWidth={2} />}
+          >
+            <CalendarPanel ruleset={data} today={game.date} />
+          </Disclosure>
+        )}
+
+        {['journal', 'sauvegardes'].map((path) => (
+          <ScreenSection
+            key={path}
+            path={path}
+            game={game}
+            ruleset={data}
+            open={open.has(path)}
+            onToggle={() => toggle(path)}
+          />
+        ))}
+
+        <Disclosure
+          id="partie"
+          title="La partie"
+          status={`${scenarioLabel} · ${MODE_LABELS[game.mode]} · ${DIFFICULTY_LABELS[game.difficulty]}`}
+          open={open.has('partie')}
+          onToggle={() => toggle('partie')}
+          icon={<Landmark className="size-5" strokeWidth={2} />}
+        >
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm sm:grid-cols-3">
+            {facts.map((fact) => (
+              <div key={fact.label}>
+                <dt className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                  {fact.label}
+                </dt>
+                <dd className="mt-0.5 font-semibold">{fact.value}</dd>
+              </div>
+            ))}
           </dl>
-        </details>
-      </section>
+          <details className="mt-3 border-t border-slate-200 pt-3 dark:border-slate-800">
+            <summary className="min-h-11 cursor-pointer content-center font-semibold">
+              Paramètres techniques
+            </summary>
+            <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-[12rem_1fr]">
+              <dt className="text-slate-500 dark:text-slate-400">Graine</dt>
+              <dd className="font-mono break-all">{game.seed}</dd>
+              <dt className="text-slate-500 dark:text-slate-400">Version du moteur</dt>
+              <dd className="font-mono">{game.engineVersion}</dd>
+              <dt className="text-slate-500 dark:text-slate-400">Jeu de règles</dt>
+              <dd className="font-mono">{game.rulesetVersion}</dd>
+              <dt className="text-slate-500 dark:text-slate-400">Format de sauvegarde</dt>
+              <dd className="font-mono">{game.saveSchemaVersion}</dd>
+              <dt className="text-slate-500 dark:text-slate-400">Empreinte de l’état</dt>
+              <dd className="font-mono break-all" data-testid="empreinte">
+                {game.stateHash}
+              </dd>
+            </dl>
+          </details>
+        </Disclosure>
+      </div>
     </section>
   );
 }

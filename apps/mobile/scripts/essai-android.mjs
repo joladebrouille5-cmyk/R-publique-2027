@@ -153,16 +153,20 @@ try {
   await writeFile(join(captures, '1-tableau-de-bord.png'), await device.screenshot());
 
   step('Carte électorale (MapLibre dans la WebView)');
-  // Menu complet : feuille « Tous les écrans » de la barre du bas sur téléphone.
-  const openScreen = async (label) => {
-    const nav = page.getByRole('navigation', { name: 'Écrans de la partie' });
-    const more = page.getByRole('button', { name: 'Tous les écrans' });
-    await expect(nav.or(more).first()).toBeVisible();
-    if (!(await nav.isVisible())) await activate(page, more);
-    await activate(page, nav.getByRole('link', { name: label }));
-    await expect(page.getByRole('dialog', { name: 'Tous les écrans' })).toHaveCount(0);
+  // Phase 12 : cinq espaces dans la barre du bas, écrans secondaires en sections dépliables.
+  const openScreen = async (space, section) => {
+    await activate(
+      page,
+      page
+        .getByRole('navigation', { name: 'Espaces de la partie' })
+        .getByRole('link', { name: space, exact: true }),
+    );
+    if (!section) return;
+    const toggle = page.locator(`section#${section} > h2 > button`);
+    if ((await toggle.getAttribute('aria-expanded')) !== 'true') await activate(page, toggle);
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
   };
-  await openScreen('Carte électorale');
+  await openScreen('Carte');
   await expect(page.getByRole('region', { name: 'Carte de la métropole' })).toHaveAttribute(
     'data-ready',
     'oui',
@@ -170,7 +174,7 @@ try {
   await writeFile(join(captures, '2-carte.png'), await device.screenshot());
 
   step('Export natif : fichier écrit dans cache/exports puis feuille de partage');
-  await openScreen('Sauvegardes');
+  await openScreen('QG', 'sauvegardes');
   await activate(page, page.getByRole('button', { name: 'Exporter la partie (JSON)' }));
   let exported = '';
   for (let i = 0; i < 120 && !exported.includes('.json'); i++) {

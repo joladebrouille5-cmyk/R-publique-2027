@@ -57,7 +57,8 @@ describe('quinquennat', () => {
     expect(
       within(panel).getByText(/Vous êtes président\(e\) de la République/),
     ).toBeInTheDocument();
-    expect(within(panel).getByText(/Matignon est vacant/)).toBeInTheDocument();
+    // Tuile du gouvernement (vue d'ensemble), lue une fois le jeu de règles chargé.
+    expect(await within(panel).findByText(/Matignon est vacant/)).toBeInTheDocument();
     expect(screen.getByText('Nomination')).toBeInTheDocument();
     const decision = screen.getByRole('group', { name: 'Nommer le Premier ministre' });
     const profile = RULESET.quinquennat.profils[0]!;
@@ -453,7 +454,8 @@ describe('quinquennat', () => {
     const panel = await screen.findByRole('region', { name: 'Présidentielle 2032' });
     expect(within(panel).getByText(/Le quinquennat 2027–2032 de/)).toBeVisible();
     expect(within(panel).getByRole('link', { name: 'Le bilan du quinquennat' })).toBeVisible();
-    const calendar = await screen.findByRole('region', { name: 'Calendrier électoral' });
+    await userEvent.click(await screen.findByRole('button', { name: /^Calendrier électoral/ }));
+    const calendar = screen.getByRole('region', { name: 'Calendrier électoral' });
     expect(within(calendar).getByText(/dimanche 18 avril 2032/)).toBeVisible();
     expect(within(calendar).getAllByText('Date hypothèse de jeu').length).toBeGreaterThan(1);
     expect(screen.queryByRole('region', { name: /Quinquennat 2027–2032/ })).toBeNull();

@@ -10,6 +10,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { Badge } from '../../components/Badge';
+import { ScreenHeading } from '../../components/Disclosure';
 import { formatResource, RESOURCE_LABELS } from '../../labels';
 
 const ICONS: Record<ResourceKey, LucideIcon> = {
@@ -34,9 +35,9 @@ export function ResourcesPanel({ resources, ruleset }: { resources: Resources; r
   return (
     <section aria-labelledby="titre-ressources" className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
-        <h2 id="titre-ressources" className="text-xl font-bold">
+        <ScreenHeading id="titre-ressources" level={2} className="text-xl font-bold">
           Ressources de campagne
-        </h2>
+        </ScreenHeading>
         <Badge tone="simule">Valeurs simulées</Badge>
       </div>
       <dl className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">

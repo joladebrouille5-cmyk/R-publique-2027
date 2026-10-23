@@ -1,5 +1,6 @@
 import type { Ruleset } from '@r2027/shared';
 import { Badge } from '../../components/Badge';
+import { ScreenHeading } from '../../components/Disclosure';
 import { card } from '../../components/ui';
 import { DATA_STATUS_LABELS, formatGameDate } from '../../labels';
 
@@ -16,9 +17,9 @@ export function CalendarPanel({ ruleset, today }: { ruleset: Ruleset; today: str
 
   return (
     <section aria-labelledby="titre-calendrier" className={`${card} space-y-3`}>
-      <h2 id="titre-calendrier" className="text-lg font-semibold">
+      <ScreenHeading id="titre-calendrier" level={2} className="text-lg font-semibold">
         Calendrier électoral
-      </h2>
+      </ScreenHeading>
       <ul className="space-y-3 text-sm">
         {items.map((item) => {
           const inDays = days(today, item.date);

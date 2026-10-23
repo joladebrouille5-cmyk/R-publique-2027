@@ -48,7 +48,7 @@ describe('écran des médias réels', () => {
   it('présente les émissions réelles, leurs présentateurs et l’interview simulée de la semaine', async () => {
     mockApi(handlers());
     renderRoute(`/parties/${GAME_ID}/medias`);
-    expect(await screen.findByRole('heading', { name: 'Médias', level: 1 })).toBeInTheDocument();
+    expect(await screen.findByRole('region', { name: 'Médias' })).toBeInTheDocument();
     expect(screen.getByRole('note')).toHaveTextContent(/aucun propos n’est attribué/);
     const shows = await screen.findByRole('region', { name: 'Émissions politiques' });
     const grandJury = within(shows).getByRole('listitem', { name: SHOW.titre });

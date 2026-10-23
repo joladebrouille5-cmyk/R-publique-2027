@@ -1,9 +1,10 @@
 import { useJournal, useRuleset } from '../api/hooks';
 import { ErrorMessage } from '../components/ErrorMessage';
-import { buttonSecondary, card, screenTitle } from '../components/ui';
+import { buttonSecondary, card } from '../components/ui';
 import { WeeklyReportView } from '../components/WeeklyReportView';
 import { formatGameDate, formatTimestamp, JOURNAL_TYPE_LABELS } from '../labels';
 import { useCurrentGame } from './GameLayout';
+import { ScreenHeading } from '../components/Disclosure';
 
 function describe(type: string, details: Record<string, unknown>): string {
   switch (type) {
@@ -34,9 +35,7 @@ export function Journal() {
 
   return (
     <section aria-labelledby="titre-journal" className="space-y-4">
-      <h1 id="titre-journal" className={screenTitle}>
-        Journal
-      </h1>
+      <ScreenHeading id="titre-journal">Journal</ScreenHeading>
       <p className="text-sm text-slate-600 dark:text-slate-400">
         Historique immuable de la partie, du plus récent au plus ancien. Une restauration de
         sauvegarde n’efface rien : elle apparaît comme une entrée.

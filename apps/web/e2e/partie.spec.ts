@@ -1,9 +1,11 @@
 import { readFile } from 'node:fs/promises';
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { advanceViaApi, createGame, openScreen, resolveWeek } from './helpers';
+import { advanceViaApi, createGame, openScreen, openSection, resolveWeek } from './helpers';
 
+/** Empreinte de l'état : section « La partie » du QG, puis « Paramètres techniques ». */
 async function readStateHash(page: Page): Promise<string> {
+  await openSection(page, 'partie');
   await page.getByText('Paramètres techniques').click();
   const hash = (await page.getByTestId('empreinte').textContent()) ?? '';
   expect(hash).toMatch(/^[0-9a-f]{64}$/);
@@ -18,6 +20,8 @@ test('boucle complète : actions, progression, bilan, sauvegarde, restauration, 
   context,
 }) => {
   await createGame(page, 'Campagne Playwright');
+  // Le détail des ressources est replié en bas du QG.
+  await openSection(page, 'ressources');
   const budget = page.getByTestId('ressource-budgetCentimes');
   await expect(budget).toHaveText(/3\s000\s000\s€/);
 
@@ -33,6 +37,7 @@ test('boucle complète : actions, progression, bilan, sauvegarde, restauration, 
 
   // Effet visible : coût débité exactement, détaillé par facteurs dans le bilan.
   await expect(budget).toHaveText(/2\s870\s000\s€/);
+  await openSection(page, 'bilan-semaine');
   const report = page.getByRole('region', { name: /Bilan de la semaine 0/ });
   const budgetChange = report.locator('details', {
     has: page.getByText('Budget', { exact: true }),
@@ -68,12 +73,15 @@ test('boucle complète : actions, progression, bilan, sauvegarde, restauration, 
 
   // Journal : semaines résolues et restauration, rien n'est effacé.
   await openScreen(page, 'Journal');
-  await expect(page.getByText(/^Semaine 1 — /)).toBeVisible();
-  await expect(page.getByText(/^Semaine 0 — /)).toBeVisible();
+  const journal = page.getByRole('region', { name: 'Journal', exact: true });
+  await expect(journal.getByText(/^Semaine 1 — /)).toBeVisible();
+  await expect(journal.getByText(/^Semaine 0 — /)).toBeVisible();
   await expect(page.getByText('Sauvegarde restaurée')).toBeVisible();
 
   // Reprise après « fermeture » : nouvel onglet, état relu depuis le serveur.
-  const gameUrl = page.url().replace(/\/journal$/, '/tableau-de-bord');
+  // Les sections se déplient sur place : l'adresse reste celle du QG.
+  const gameUrl = page.url();
+  expect(gameUrl).toMatch(/\/tableau-de-bord$/);
   await page.close();
   const resumed = await context.newPage();
   await resumed.goto(gameUrl);
@@ -107,7 +115,11 @@ test('export puis import dans une nouvelle partie identique', async ({ page }) =
 test('tous les écrans du cahier des charges ont leur moteur', async ({ page }) => {
   await createGame(page, 'Écrans', 'e2e-ecrans');
   await openScreen(page, 'Bilan du quinquennat');
-  await expect(page.getByText(/Aucun quinquennat achevé/)).toBeVisible();
+  await expect(
+    page
+      .getByRole('region', { name: 'Bilan du quinquennat', exact: true })
+      .getByText(/Aucun quinquennat achevé/),
+  ).toBeVisible();
   await expect(page.getByText(/Non disponible/)).toHaveCount(0);
 });
 
@@ -141,6 +153,7 @@ test('fin du quinquennat : bilan, puis campagne de la présidentielle 2032', asy
   await openScreen(page, 'Tableau de bord');
   const panel = page.getByRole('region', { name: 'Présidentielle 2032' });
   await expect(panel).toContainText('Le quinquennat 2027–2032');
+  await openSection(page, 'calendrier');
   await expect(
     page.getByRole('region', { name: 'Calendrier électoral' }).getByText(/dimanche 18 avril 2032/),
   ).toBeVisible();
@@ -174,7 +187,7 @@ test('présidentielle complète puis quinquennat : deux tours, résultats, gouve
   await openScreen(page, 'Tableau de bord');
   await resolveWeek(page, 0);
   await openScreen(page, 'Sondages');
-  const latest = page.getByRole('region', { name: /Dernier sondage/ });
+  const latest = page.getByRole('region', { name: /^Dernier sondage/ });
   await expect(latest.getByText(/1\s000 personnes/)).toBeVisible();
   await expect(latest.getByText('Camille Durand (vous)')).toBeVisible();
 
@@ -263,6 +276,9 @@ test('scénario de départ fictif : choisi à la création, affiché pendant la 
   await expect(scenarios.getByText(/Événements de campagne × 1,5/)).toBeVisible();
   await page.getByRole('button', { name: 'Créer la partie' }).click();
   await expect(page.getByRole('heading', { name: 'Tableau de bord' })).toBeVisible();
+  // Le scénario se lit dans la ligne d'état de la section « La partie », et dans ses faits.
+  await expect(page.getByRole('button', { name: /^La partie/ })).toContainText('Colère sociale');
+  await openSection(page, 'partie');
   await expect(page.getByText('Colère sociale', { exact: true })).toBeVisible();
   await openScreen(page, 'Crises');
   await expect(page.getByRole('region', { name: 'Conséquences durables' })).toContainText(

@@ -9,7 +9,7 @@ import {
   type ResourceKey,
   type WeeklyReport,
 } from '@r2027/shared';
-import { useEffect, useId, useRef, type KeyboardEvent } from 'react';
+import { useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router';
 import {
@@ -24,6 +24,7 @@ import {
 } from '../labels';
 import { Badge } from './Badge';
 import { buttonPrimary, buttonSecondary } from './ui';
+import { useModal } from './useModal';
 import { PrestationDetail } from './WeeklyReportView';
 
 // Débriefing de la semaine (phase 11) : écran plein, ouvert après « Résoudre la semaine ». Il ne
@@ -124,45 +125,8 @@ export function WeeklyDebrief({
     return actor ? candidateName(actor.candidate) : actorId;
   };
 
-  // Ouverture : focus sur la fenêtre, page figée ; fermeture : focus rendu à son auteur.
-  useEffect(() => {
-    const previous = document.activeElement as HTMLElement | null;
-    const overflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    dialog.current?.focus();
-    return () => {
-      document.body.style.overflow = overflow;
-      if (previous?.isConnected) previous.focus();
-    };
-  }, []);
-
-  // Clavier : Échap ferme ; Tab reste dans la fenêtre.
-  const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      onClose();
-      return;
-    }
-    if (event.key !== 'Tab' || !dialog.current) return;
-    const focusable = [
-      ...dialog.current.querySelectorAll<HTMLElement>(
-        'a[href], button:not([disabled]), summary, [tabindex]:not([tabindex="-1"])',
-      ),
-    ];
-    if (focusable.length === 0) return;
-    const first = focusable[0]!;
-    const last = focusable.at(-1)!;
-    if (
-      event.shiftKey &&
-      (document.activeElement === first || document.activeElement === dialog.current)
-    ) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault();
-      first.focus();
-    }
-  };
+  // Focus pris puis rendu, page figée, Échap et Tab confinés (fenêtre modale).
+  const onKeyDown = useModal(dialog, onClose);
 
   const own = playerId ? report.actions.filter((a) => a.actorId === playerId) : [];
   const done = groupActions(own.filter((a) => a.status === 'validee'));

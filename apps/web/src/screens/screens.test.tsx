@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { Unavailable } from '../components/Unavailable';
 import { GAME_SCREENS } from './registry';
+import { HUBS, hubOf, screenHref } from './shell/navigation';
 import {
   GAME_ID,
   gameFixture,
@@ -27,40 +28,54 @@ const gameHandlers = {
 };
 
 describe('navigation de partie', () => {
-  it('propose tous les écrans du cahier des charges (§13)', async () => {
+  it('propose cinq espaces à plat, qui rassemblent tous les écrans du cahier des charges (§13)', async () => {
     mockApi(gameHandlers);
     renderRoute(`/parties/${GAME_ID}/tableau-de-bord`);
-    const nav = await screen.findByRole('navigation', { name: 'Écrans de la partie' });
-    const labels = within(nav)
-      .getAllByRole('link')
-      .map((link) => link.textContent);
-    expect(labels).toHaveLength(GAME_SCREENS.length);
-    for (const expected of [
-      'Tableau de bord',
-      'Carte électorale',
-      'Candidats',
-      'Programme',
-      'Finances',
-      'Sondages',
-      'Résultats',
-      'Gouvernement',
-      'Parlement',
-      'Économie',
-      'Crises',
-      'Législatives',
-      'Bilan du quinquennat',
-      'Journal',
-      'Sauvegardes',
-    ]) {
-      expect(labels.some((text) => text?.startsWith(expected))).toBe(true);
+    const nav = await screen.findByRole('navigation', { name: 'Espaces de la partie' });
+    // Un seul niveau : cinq onglets, aucun menu ni sous-menu à ouvrir.
+    expect(
+      within(nav)
+        .getAllByRole('link')
+        .map((link) => link.textContent),
+    ).toEqual(['QG', 'Carte', 'Campagne', 'Opinion', 'Pouvoir']);
+    expect(within(nav).queryByRole('button')).not.toBeInTheDocument();
+    // Chaque écran est un espace, ou une section d'un espace : deux gestes au plus.
+    for (const s of GAME_SCREENS) {
+      const hub = hubOf(s.path);
+      expect(hub, s.path).toBeDefined();
+      expect(screenHref(s.path)).toBe(hub!.path === s.path ? s.path : `${hub!.path}#${s.path}`);
     }
+    expect(HUBS.flatMap((h) => h.sections).sort()).toEqual(
+      GAME_SCREENS.map((s) => s.path)
+        .filter((path) => !HUBS.some((h) => h.path === path))
+        .sort(),
+    );
+  });
+
+  it('redirige une ancienne adresse d’écran vers sa section dépliée', async () => {
+    mockApi(gameHandlers);
+    const { router } = renderRoute(`/parties/${GAME_ID}/sondages`);
+    expect(await screen.findByRole('heading', { level: 1, name: 'Opinion' })).toBeInTheDocument();
+    await waitFor(() => expect(router.state.location.pathname).toBe(`/parties/${GAME_ID}/opinion`));
+    expect(router.state.location.hash).toBe('#sondages');
+    expect(screen.getByRole('button', { name: /^Sondages/ })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
+    // Les autres sections restent repliées : leur contenu n'est pas rendu.
+    const results = screen.getByRole('button', { name: /^Résultats/ });
+    expect(results).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('region', { name: 'Résultats' })).not.toBeInTheDocument();
+    await userEvent.click(results);
+    expect(results).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('region', { name: 'Résultats' })).toBeInTheDocument();
   });
 
   it('affiche le tableau de bord avec la date en jeu', async () => {
     mockApi(gameHandlers);
     renderRoute(`/parties/${GAME_ID}`);
     expect(await screen.findByRole('heading', { name: 'Tableau de bord' })).toBeInTheDocument();
-    expect(screen.getAllByText('lundi 28 septembre 2026').length).toBeGreaterThan(0);
+    expect(screen.getByText('28 sept. 2026')).toBeInTheDocument();
     expect(await screen.findByRole('button', { name: 'Résoudre la semaine 0' })).toBeEnabled();
     expect(screen.getByText('Aucune semaine résolue pour l’instant.')).toBeInTheDocument();
   });
@@ -239,7 +254,7 @@ describe('élection présidentielle', () => {
   it('présente les candidats, fictifs étiquetés comme tels, et leur positionnement', async () => {
     mockApi(withState());
     renderRoute(`/parties/${GAME_ID}/candidats`);
-    expect(await screen.findByRole('heading', { name: 'Candidats' })).toBeInTheDocument();
+    expect(await screen.findByRole('region', { name: 'Candidats' })).toBeInTheDocument();
     expect(screen.getAllByText('Fictif')).toHaveLength(RULESET.candidatsFictifs.length);
     const mine = screen.getByRole('listitem', { name: 'Camille Test' });
     expect(within(mine).getByText('Votre candidat')).toBeInTheDocument();
@@ -250,7 +265,7 @@ describe('élection présidentielle', () => {
   it('affiche les sondages avec leur fiche technique et leur marge d’erreur', async () => {
     mockApi(withState(playedState((s) => s.meta.week >= 2)));
     renderRoute(`/parties/${GAME_ID}/sondages`);
-    const latest = await screen.findByRole('region', { name: /Dernier sondage/ });
+    const latest = await screen.findByRole('region', { name: /^Dernier sondage/ });
     expect(within(latest).getByText(/Baromètre Civis \(fictif\), terrain du/)).toBeInTheDocument();
     expect(within(latest).getByText(/1\s500 personnes/)).toBeInTheDocument();
     expect(within(latest).getAllByText(/^± /).length).toBeGreaterThan(0);
@@ -262,7 +277,7 @@ describe('élection présidentielle', () => {
     const state = playedState((s) => s.meta.week >= 4);
     mockApi(withState(state));
     renderRoute(`/parties/${GAME_ID}/sondages`);
-    const latest = await screen.findByRole('region', { name: /Dernier sondage/ });
+    const latest = await screen.findByRole('region', { name: /^Dernier sondage/ });
     expect(within(latest).getByRole('columnheader', { name: 'Écart' })).toBeInTheDocument();
     const why = within(latest).getByRole('region', { name: 'Pourquoi ça bouge ?' });
     // Votre décomposition est ouverte : chaque fait, puis le total, égal à l'écart affiché.
@@ -280,7 +295,8 @@ describe('élection présidentielle', () => {
   it('annonce l’absence de sondage avant la première semaine', async () => {
     mockApi(withState());
     renderRoute(`/parties/${GAME_ID}/sondages`);
-    expect(await screen.findByText(/Aucun sondage publié pour l’instant/)).toBeInTheDocument();
+    const polls = await screen.findByRole('region', { name: 'Sondages' });
+    expect(within(polls).getByText(/Aucun sondage publié pour l’instant/)).toBeInTheDocument();
   });
 
   it('affiche les résultats simulés des deux tours', async () => {
@@ -302,7 +318,8 @@ describe('élection présidentielle', () => {
   it('annonce les dates des scrutins tant qu’aucun n’a eu lieu', async () => {
     mockApi(withState());
     renderRoute(`/parties/${GAME_ID}/resultats`);
-    expect(await screen.findByText(/Aucun scrutin dépouillé/)).toBeInTheDocument();
+    const results = await screen.findByRole('region', { name: 'Résultats' });
+    expect(within(results).getByText(/Aucun scrutin dépouillé/)).toBeInTheDocument();
     expect(
       await screen.findByText(/Premier tour de l'élection présidentielle : dimanche 18 avril 2027/),
     ).toBeInTheDocument();

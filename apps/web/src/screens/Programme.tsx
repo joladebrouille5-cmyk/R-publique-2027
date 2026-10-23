@@ -3,10 +3,11 @@ import { Link } from 'react-router';
 import { useRuleset } from '../api/hooks';
 import { Badge } from '../components/Badge';
 import { ErrorMessage } from '../components/ErrorMessage';
-import { buttonPrimary, buttonSecondary, card, screenTitle } from '../components/ui';
+import { buttonPrimary, buttonSecondary, card } from '../components/ui';
 import { CONFIDENCE_LABELS, formatAnnualCost } from '../labels';
 import { useWeeklyPlan } from '../stores/plan';
 import { useCurrentGame } from './GameLayout';
+import { ScreenHeading } from '../components/Disclosure';
 
 const signed = (value: number) =>
   `${value > 0 ? '+' : value < 0 ? '−' : '±'}${Math.abs(value).toFixed(2).replace('.', ',')}`;
@@ -63,9 +64,7 @@ export function Programme() {
   return (
     <section aria-labelledby="titre-programme" className="space-y-6">
       <div className="flex flex-wrap items-center gap-2">
-        <h1 id="titre-programme" className={screenTitle}>
-          Programme
-        </h1>
+        <ScreenHeading id="titre-programme">Programme</ScreenHeading>
         <Badge tone="alerte">Estimations de jeu</Badge>
       </div>
       <p className="text-sm text-slate-600 dark:text-slate-400">{rules.programme.note}</p>

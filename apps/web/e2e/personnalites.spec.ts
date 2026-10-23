@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { openScreen, resolveWeek } from './helpers';
+import { openScreen, openSection, resolveWeek } from './helpers';
 
 // Personnalités réelles (phase 5 bis) : création d'une partie où l'on incarne une personnalité
 // sourcée face aux adversaires réels, photos créditées, rappels de simulation, accessibilité.
@@ -34,6 +34,7 @@ test('incarner une personnalité réelle face aux adversaires réels', async ({ 
   await expect(page.getByText(/Partie avec des personnalités réelles/)).toBeVisible();
 
   await resolveWeek(page, 0);
+  await openSection(page, 'bilan-semaine');
   await expect(page.getByRole('region', { name: /Bilan de la semaine 0/ })).toBeVisible();
 
   await openScreen(page, 'Candidats');

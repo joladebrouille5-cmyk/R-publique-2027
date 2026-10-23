@@ -9,9 +9,10 @@ import { useId, useState } from 'react';
 import { useRuleset } from '../api/hooks';
 import { Badge } from '../components/Badge';
 import { ErrorMessage } from '../components/ErrorMessage';
-import { card, input, screenTitle } from '../components/ui';
+import { card, input } from '../components/ui';
 import { DATA_STATUS_LABELS, formatCount, formatGameDate, formatRatio } from '../labels';
 import { useCurrentGame } from './GameLayout';
+import { ScreenHeading } from '../components/Disclosure';
 
 // Législatives (phase 6, P6-07) : calendrier, dissolution, composition issue des dernières
 // élections et résultats par circonscription. Les élections de 2024 sont réelles (ministère de
@@ -339,9 +340,7 @@ export function Legislatives() {
   const ruleset = useRuleset(game.rulesetVersion, game.state.cycle);
   return (
     <section aria-labelledby="titre-ecran-legislatives" className="space-y-6">
-      <h1 id="titre-ecran-legislatives" className={screenTitle}>
-        Législatives
-      </h1>
+      <ScreenHeading id="titre-ecran-legislatives">Législatives</ScreenHeading>
       {ruleset.isError && (
         <ErrorMessage error={ruleset.error} onRetry={() => void ruleset.refetch()} />
       )}

@@ -3,9 +3,10 @@ import { Link } from 'react-router';
 import { useRuleset } from '../api/hooks';
 import { Badge } from '../components/Badge';
 import { ErrorMessage } from '../components/ErrorMessage';
-import { card, screenTitle } from '../components/ui';
+import { card } from '../components/ui';
 import { formatIndicatorDelta, INDICATOR_LABELS } from '../labels';
 import { useCurrentGame } from './GameLayout';
+import { ScreenHeading } from '../components/Disclosure';
 
 const MONTHS = Array.from({ length: 12 }, (_, i) =>
   new Intl.DateTimeFormat('fr-FR', { month: 'long', timeZone: 'UTC' }).format(
@@ -191,9 +192,7 @@ export function Crises() {
   const ruleset = useRuleset(game.rulesetVersion, game.state.cycle);
   return (
     <section aria-labelledby="titre-ecran-crises" className="space-y-6">
-      <h1 id="titre-ecran-crises" className={screenTitle}>
-        Crises
-      </h1>
+      <ScreenHeading id="titre-ecran-crises">Crises</ScreenHeading>
       {ruleset.isError && (
         <ErrorMessage error={ruleset.error} onRetry={() => void ruleset.refetch()} />
       )}

@@ -8,12 +8,12 @@ import {
   type Posture,
   type Ruleset,
 } from '@r2027/shared';
-import { Clock, Crosshair, Plus, Users, Wallet, X } from 'lucide-react';
-import { useId } from 'react';
+import { Clock, Crosshair, Info, Plus, Users, Wallet, X } from 'lucide-react';
+import { useId, useState } from 'react';
 import { Badge } from '../../components/Badge';
-import { InfoPopover } from '../../components/InfoPopover';
+import { Drawer } from '../../components/Drawer';
 import { MEDIA_TYPE_LABELS } from '../../components/RealMedia';
-import { card, input } from '../../components/ui';
+import { buttonPrimary, card, input } from '../../components/ui';
 import {
   formatCount,
   formatDelta,
@@ -92,7 +92,7 @@ export function describeCampaign(campagne: CampaignEffect | null): string[] {
 }
 
 /** Ce qui reste après les actions déjà programmées (coûts fixes, sans simulation). */
-function remainingAfter(
+export function remainingAfter(
   plan: readonly PlannedAction[],
   catalog: readonly ActionDefinition[],
   actor: Actor,
@@ -236,6 +236,63 @@ function effectLines(action: ActionDefinition): string[] {
   ];
 }
 
+/** Fiche d'une action (tiroir de détail) : portée, coût, effets, risque, note. */
+function ActionDetails({
+  action,
+  ruleset,
+  presidency,
+}: {
+  action: ActionDefinition;
+  ruleset: Ruleset;
+  presidency: boolean;
+}) {
+  const plateau = !presidency && isPlateau(ruleset, action);
+  return (
+    <div className="space-y-4 text-sm">
+      <div className="flex flex-wrap gap-1.5">
+        <Badge>Portée {PORTEE_LABELS[action.portee]}</Badge>
+        {action.cible && <Badge tone="alerte">{TARGET_BADGES[action.cible]}</Badge>}
+        {plateau && <Badge tone="simule">Passage noté sans tirage</Badge>}
+      </div>
+      <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2.5">
+        <dt className="text-slate-500 dark:text-slate-400">Coût</dt>
+        <dd>
+          {presidency ? '' : `${formatResource('budgetCentimes', action.cout.budgetCentimes)} · `}
+          {formatResource('tempsHeures', action.cout.tempsHeures)}
+          {action.prerequis.militantsMin > 0 &&
+            ` · ${action.prerequis.militantsMin} militants requis`}
+        </dd>
+        <dt className="text-slate-500 dark:text-slate-400">Effet attendu</dt>
+        <dd>
+          {effectLines(action).length > 0 ? (
+            <ul className="list-inside list-disc space-y-0.5">
+              {effectLines(action).map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+          ) : (
+            'aucun effet direct'
+          )}
+        </dd>
+        <dt className="text-slate-500 dark:text-slate-400">Risque</dt>
+        <dd>
+          {!action.risque
+            ? 'aucun'
+            : plateau
+              ? `si le passage est raté (score de ${ruleset.prestations.seuils.incident} ou moins) : ${action.risque.libelle} (${action.risque.effets.map(describeEffect).join(' ; ')})`
+              : `${Math.round(action.risque.probabilite * 100)} % : ${action.risque.libelle} (${action.risque.effets.map(describeEffect).join(' ; ')})`}
+        </dd>
+      </dl>
+      {action.note && <p className="text-xs text-slate-500 dark:text-slate-400">{action.note}</p>}
+      <p className="text-xs text-slate-500 dark:text-slate-400">
+        {plateau
+          ? 'Passage dans les médias, sans tirage au sort : l’effet se place dans l’écart indiqué selon la préparation, la posture choisie, le format et votre situation (valeurs de jeu, hypothèses).'
+          : 'Valeurs de jeu (hypothèses) ; l’effet réel est tiré au sort dans l’écart indiqué.'}
+      </p>
+    </div>
+  );
+}
+
 /** Jauge d'une ressource consommée par le plan (budget ou temps de la semaine). */
 function Meter({
   icon: Icon,
@@ -291,6 +348,8 @@ export function ActionPlanner({
 }: Props) {
   const presidency = mode === 'presidence';
   const catalog = presidency ? ruleset.quinquennat.actions : ruleset.actions;
+  // Fiche d'une action ouverte dans un tiroir (phase 12), sans quitter le QG.
+  const [details, setDetails] = useState<string | null>(null);
   const remaining = remainingAfter(plan, catalog, actor, reservedHours);
   const full = plan.length >= ruleset.jeu.actionsMaxParSemaine;
   const summary = `Reste après le plan : ${
@@ -299,7 +358,7 @@ export function ActionPlanner({
 
   return (
     <section aria-labelledby="titre-plan" className="space-y-4">
-      <h2 id="titre-plan" className="text-xl font-bold">
+      <h2 id="titre-plan" tabIndex={-1} className="text-xl font-bold outline-none">
         {presidency ? 'Agenda du président cette semaine' : 'Plan d’actions de la semaine'}
       </h2>
 
@@ -445,50 +504,52 @@ export function ActionPlanner({
                   </span>
                 )}
               </button>
-              <InfoPopover
-                label={`Détails : ${action.libelle}`}
-                title={action.libelle}
-                className="absolute top-1 right-1"
+              <button
+                type="button"
+                aria-haspopup="dialog"
+                onClick={() => setDetails(action.id)}
+                className="absolute top-1 right-1 inline-flex size-11 shrink-0 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-republique-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-republique-300"
               >
-                <p className="text-slate-600 dark:text-slate-400">{action.description}</p>
-                <div className="flex flex-wrap gap-1.5">
-                  <Badge>Portée {PORTEE_LABELS[action.portee]}</Badge>
-                  {action.cible && <Badge tone="alerte">{TARGET_BADGES[action.cible]}</Badge>}
-                </div>
-                <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5">
-                  <dt className="text-slate-500 dark:text-slate-400">Coût</dt>
-                  <dd>
-                    {presidency
-                      ? ''
-                      : `${formatResource('budgetCentimes', action.cout.budgetCentimes)} · `}
-                    {formatResource('tempsHeures', action.cout.tempsHeures)}
-                    {action.prerequis.militantsMin > 0 &&
-                      ` · ${action.prerequis.militantsMin} militants requis`}
-                  </dd>
-                  <dt className="text-slate-500 dark:text-slate-400">Effet attendu</dt>
-                  <dd>{effectLines(action).join(' ; ') || 'aucun effet direct'}</dd>
-                  <dt className="text-slate-500 dark:text-slate-400">Risque</dt>
-                  <dd>
-                    {!action.risque
-                      ? 'aucun'
-                      : !presidency && isPlateau(ruleset, action)
-                        ? `si le passage est raté (score de ${ruleset.prestations.seuils.incident} ou moins) : ${action.risque.libelle} (${action.risque.effets.map(describeEffect).join(' ; ')})`
-                        : `${Math.round(action.risque.probabilite * 100)} % : ${action.risque.libelle} (${action.risque.effets.map(describeEffect).join(' ; ')})`}
-                  </dd>
-                </dl>
-                {action.note && (
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{action.note}</p>
-                )}
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {!presidency && isPlateau(ruleset, action)
-                    ? 'Passage dans les médias, sans tirage au sort : l’effet se place dans l’écart indiqué selon la préparation, la posture choisie, le format et votre situation (valeurs de jeu, hypothèses).'
-                    : 'Valeurs de jeu (hypothèses) ; l’effet réel est tiré au sort dans l’écart indiqué.'}
-                </p>
-              </InfoPopover>
+                <Info aria-hidden="true" className="size-5" />
+                <span className="sr-only">{`Détails : ${action.libelle}`}</span>
+              </button>
             </li>
           );
         })}
       </ul>
+      {(() => {
+        const action = catalog.find((a) => a.id === details);
+        if (!action) return null;
+        const reason =
+          restriction?.(action) ??
+          unavailableReason(action, remaining, actor, cap, full, presidency);
+        return (
+          <Drawer
+            title={action.libelle}
+            subtitle={action.description}
+            onClose={() => setDetails(null)}
+            footer={
+              <div className="space-y-2">
+                {reason && <p className="text-sm text-red-700 dark:text-red-300">{reason}</p>}
+                <button
+                  type="button"
+                  className={`${buttonPrimary} w-full`}
+                  disabled={reason !== null}
+                  onClick={() => {
+                    onAdd(action.id);
+                    setDetails(null);
+                  }}
+                >
+                  <Plus aria-hidden="true" className="size-4" />
+                  Ajouter au plan
+                </button>
+              </div>
+            }
+          >
+            <ActionDetails action={action} ruleset={ruleset} presidency={presidency} />
+          </Drawer>
+        );
+      })()}
       <p className="text-xs text-slate-500 dark:text-slate-400">
         {presidency
           ? 'Coûts, effets et probabilités sont des paramètres de jeu (hypothèses), pas des données officielles. Le serveur revalide chaque action.'

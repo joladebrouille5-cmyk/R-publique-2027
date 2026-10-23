@@ -3,8 +3,9 @@ import { useRuleset } from '../api/hooks';
 import { Badge, type BadgeTone } from '../components/Badge';
 import { ErrorMessage } from '../components/ErrorMessage';
 import { Hemicycle } from '../components/Hemicycle';
-import { card, screenTitle } from '../components/ui';
+import { card } from '../components/ui';
 import { useCurrentGame } from './GameLayout';
+import { ScreenHeading } from '../components/Disclosure';
 
 const ALIGNMENT_LABELS: Record<Alignment, { text: string; tone: BadgeTone }> = {
   soutien: { text: 'Soutien', tone: 'succes' },
@@ -241,9 +242,7 @@ export function Parliament() {
   const ruleset = useRuleset(game.rulesetVersion, game.state.cycle);
   return (
     <section aria-labelledby="titre-ecran-parlement" className="space-y-6">
-      <h1 id="titre-ecran-parlement" className={screenTitle}>
-        Parlement
-      </h1>
+      <ScreenHeading id="titre-ecran-parlement">Parlement</ScreenHeading>
       {ruleset.isError && (
         <ErrorMessage error={ruleset.error} onRetry={() => void ruleset.refetch()} />
       )}

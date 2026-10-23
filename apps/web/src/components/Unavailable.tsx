@@ -1,13 +1,11 @@
 import type { GameScreen } from '../screens/registry';
-import { screenTitle } from './ui';
+import { ScreenHeading } from './Disclosure';
 
 /** Écran prévu mais non implémenté : on l'annonce, sans aucune donnée factice. */
 export function Unavailable({ screen }: { screen: GameScreen }) {
   return (
     <section aria-labelledby="titre-ecran" className="space-y-4">
-      <h1 id="titre-ecran" className={screenTitle}>
-        {screen.label}
-      </h1>
+      <ScreenHeading id="titre-ecran">{screen.label}</ScreenHeading>
       <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 dark:border-slate-700 dark:bg-slate-900">
         <p className="inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-900 dark:bg-amber-900/40 dark:text-amber-100">
           Non disponible — prévu en phase {screen.phase}

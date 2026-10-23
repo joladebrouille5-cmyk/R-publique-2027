@@ -95,16 +95,47 @@ export async function advanceAsCandidate(
   return game;
 }
 
+/** Écrans du cahier des charges (§13) : l'onglet de leur espace et leur section dépliable. */
+const SCREENS: Record<string, { espace: string; section?: string }> = {
+  'Tableau de bord': { espace: 'QG' },
+  Journal: { espace: 'QG', section: 'journal' },
+  Sauvegardes: { espace: 'QG', section: 'sauvegardes' },
+  'Carte électorale': { espace: 'Carte' },
+  Programme: { espace: 'Campagne', section: 'programme' },
+  Candidats: { espace: 'Campagne', section: 'candidats' },
+  Médias: { espace: 'Campagne', section: 'medias' },
+  Finances: { espace: 'Campagne', section: 'finances' },
+  Sondages: { espace: 'Opinion', section: 'sondages' },
+  Résultats: { espace: 'Opinion', section: 'resultats' },
+  Gouvernement: { espace: 'Pouvoir', section: 'gouvernement' },
+  Parlement: { espace: 'Pouvoir', section: 'parlement' },
+  Économie: { espace: 'Pouvoir', section: 'economie' },
+  Crises: { espace: 'Pouvoir', section: 'crises' },
+  Législatives: { espace: 'Pouvoir', section: 'legislatives' },
+  'Bilan du quinquennat': { espace: 'Pouvoir', section: 'bilan' },
+};
+
 /**
- * Ouvre un écran par le menu « Écrans de la partie » : rail sur ordinateur, feuille ouverte
- * par « Tous les écrans » sur mobile (barre du bas).
+ * Ouvre un écran (phase 12) : l'onglet de son espace dans « Espaces de la partie » (rail sur
+ * ordinateur, barre du bas sur mobile), puis, pour un écran secondaire, sa section dépliable.
  */
 export async function openScreen(page: Page, label: string) {
-  const nav = page.getByRole('navigation', { name: 'Écrans de la partie' });
-  const more = page.getByRole('button', { name: 'Tous les écrans' });
-  await expect(nav.or(more).first()).toBeVisible();
-  if (!(await nav.isVisible())) await more.click();
-  await nav.getByRole('link', { name: label }).click();
+  const target = SCREENS[label];
+  if (!target) throw new Error(`Écran inconnu : ${label}`);
+  await page
+    .getByRole('navigation', { name: 'Espaces de la partie' })
+    .getByRole('link', { name: target.espace, exact: true })
+    .click();
+  if (!target.section) return;
+  await openSection(page, target.section);
+}
+
+/** Déplie une section de la page (sans effet si elle l'est déjà). */
+export async function openSection(page: Page, id: string) {
+  const toggle = page.locator(`section#${id} > h2 > button`);
+  await expect(toggle).toBeVisible();
+  if ((await toggle.getAttribute('aria-expanded')) !== 'true') await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
 }
 
 /** Résout la semaine depuis le tableau de bord (décisions : première option). */

@@ -44,17 +44,26 @@ test('aucun lien de source sur les écrans de jeu ni à la création de partie',
   await createGame(page, 'Sans sources à l’écran', 'e2e-sans-sources');
   await advanceViaApi(page, (g) => g.week >= 3);
   await page.reload();
-  const nav = page.getByRole('navigation', { name: 'Écrans de la partie' });
-  const more = page.getByRole('button', { name: 'Tous les écrans' });
-  await expect(nav.or(more).first()).toBeVisible();
-  if (!(await nav.isVisible())) await more.click();
-  const screens = await nav
+  // Les cinq espaces, toutes sections dépliées : aucun écran ne garde de lien de source.
+  const nav = page.getByRole('navigation', { name: 'Espaces de la partie' });
+  await expect(nav.getByRole('link')).toHaveCount(5);
+  const spaces = await nav
     .getByRole('link')
     .evaluateAll((links) => links.map((a) => a.getAttribute('href')!));
-  expect(screens.length).toBeGreaterThan(10);
-  for (const href of screens) {
+  expect(spaces).toHaveLength(5);
+  let sections = 0;
+  for (const href of spaces) {
     await page.goto(href);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    const toggles = page.locator('main h2 > button[aria-controls$="-contenu"]');
+    for (let i = 0; i < (await toggles.count()); i++) {
+      if ((await toggles.nth(i).getAttribute('aria-expanded')) !== 'true')
+        await toggles.nth(i).click();
+      sections++;
+    }
     expect(await externalLinks(page), href).toEqual([]);
+    // Un seul titre de niveau 1 par page, même toutes sections dépliées.
+    await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
   }
+  expect(sections).toBeGreaterThan(10);
 });

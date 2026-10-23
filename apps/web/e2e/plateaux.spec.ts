@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
-import { createGame } from './helpers';
+import { createGame, openSection } from './helpers';
 
 // Passages dans les médias sans aléa (phase 11) : le joueur choisit la posture du passage ; le
 // bilan de la semaine en donne le niveau, le score et chacune de ses raisons.
@@ -38,6 +38,7 @@ test('la posture d’un passage se choisit au plan et s’explique au bilan', as
   await page.keyboard.press('Escape');
   await expect(debrief).toBeHidden();
   await expect(page.getByRole('heading', { name: /Bilan de la semaine 0/ })).toBeVisible();
+  await openSection(page, 'bilan-semaine');
   const reasons = page.getByRole('list', { name: 'Raisons du score' });
   await expect(reasons).toContainText('Posture offensive, format « Décryptage »');
   await expect(reasons).toContainText(/Préparation \(0 h sur \d+ h utiles\)/);

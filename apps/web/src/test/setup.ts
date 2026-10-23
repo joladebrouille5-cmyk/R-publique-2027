@@ -17,3 +17,11 @@ afterEach(() => {
   // Plan de la semaine (magasin global) : chaque test part d'un plan vide.
   usePlanStore.setState({ actions: [], ajouter: [], retirer: [], proposer: [], key: null });
 });
+
+// jsdom ne fait pas défiler la page : les sections dépliées par une ancre (phase 12) demandent
+// pourtant à venir à l'écran.
+Object.defineProperty(Element.prototype, 'scrollIntoView', {
+  configurable: true,
+  writable: true,
+  value: () => {},
+});

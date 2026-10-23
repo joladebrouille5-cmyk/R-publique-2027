@@ -16,11 +16,11 @@ function Game({ game }: { game: GameDetail }) {
     (a) => a.candidate.nature === 'reel',
   );
   return (
-    <div className="mx-auto max-w-7xl px-4 pb-28 lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-8 lg:pb-10">
-      <GameNav phase={game.phase} />
+    <div className="mx-auto max-w-7xl px-4 pb-28 lg:grid lg:grid-cols-[11rem_minmax(0,1fr)] lg:gap-8 lg:pb-10">
+      <GameNav />
       <div className="min-w-0">
         <GameHud game={game} ruleset={ruleset.data} />
-        <div className="mb-5 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 sm:mb-5">
           <p className="text-sm text-slate-600 dark:text-slate-400">
             Partie{' '}
             <span className="font-semibold text-slate-800 dark:text-slate-200">{game.name}</span>
@@ -28,7 +28,7 @@ function Game({ game }: { game: GameDetail }) {
           {withRealPeople && (
             <p className="text-xs text-teal-800 dark:text-teal-200">
               Partie avec des personnalités réelles : tout ce qu’elles font ici est simulé.{' '}
-              <Link to="candidats" className="underline">
+              <Link to="campagne#candidats" className="underline">
                 Fiches et sources
               </Link>
             </p>

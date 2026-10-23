@@ -21,6 +21,8 @@ Simulation politique française : présidentielle, campagne et quinquennat. Jeu 
 | 8 | Version publiable : application Android (APK) hors ligne, sécurité, robustesse | ✅ terminée |
 | 9 | Refonte de l'interface (identité « soirée électorale », navigation mobile, avatars), réseaux sociaux et nouveaux médias, direct de la soirée électorale | ✅ terminée |
 | 10 | Débats télévisés jouables (premier tour et entre-deux-tours) et interview longue révisée | ✅ terminée |
+| 11 | Rythme de la soirée électorale, personnalités réelles au gouvernement, Paramètres et crédits, débriefing de la semaine, sondages expliqués, plateaux sans aléa | ✅ terminée |
+| 12 | Ergonomie : navigation à plat en cinq espaces, sections dépliables, QG « en un coup d'œil », détails en tiroir | ✅ terminée |
 
 **Ce qui fonctionne aujourd'hui** :
 - créer une partie avec son candidat (prénom, nom, parti, positionnement économique et sociétal, parcours, profil de départ) ou en observateur, avec difficulté, date de départ et graine ;

@@ -25,12 +25,27 @@ describe('tableau de bord', () => {
   it('affiche les ressources de la campagne avec leur unité', async () => {
     mockApi(base());
     renderRoute(`/parties/${GAME_ID}/tableau-de-bord`);
-    expect(await screen.findByTestId('ressource-budgetCentimes')).toHaveTextContent(
-      /3\s000\s000\s€/,
-    );
+    // Le détail des ressources est replié en bas du QG : on le déplie sur place.
+    const section = await screen.findByRole('button', { name: /^Toutes les ressources/ });
+    expect(section).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByTestId('ressource-budgetCentimes')).not.toBeInTheDocument();
+    await userEvent.click(section);
+    expect(section).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByTestId('ressource-budgetCentimes')).toHaveTextContent(/3\s000\s000\s€/);
     expect(screen.getByTestId('ressource-notoriete')).toHaveTextContent(/6,00\s%/);
     expect(screen.getByTestId('ressource-tempsHeures')).toHaveTextContent('70 h');
     expect(screen.getByText('Valeurs simulées')).toBeInTheDocument();
+  });
+
+  it('déplie une section du QG depuis sa tuile et y amène le focus', async () => {
+    mockApi(base());
+    renderRoute(`/parties/${GAME_ID}/tableau-de-bord`);
+    const overview = await screen.findByRole('region', { name: 'En un coup d’œil' });
+    const section = await screen.findByRole('button', { name: /^Toutes les ressources/ });
+    await userEvent.click(within(overview).getByRole('button', { name: /^Élan/ }));
+    expect(section).toHaveAttribute('aria-expanded', 'true');
+    await waitFor(() => expect(section).toHaveFocus());
+    expect(screen.getByTestId('ressource-dynamique')).toBeInTheDocument();
   });
 
   it('programme des actions puis résout la semaine avec une clé d’idempotence', async () => {
@@ -67,9 +82,10 @@ describe('tableau de bord', () => {
     });
     expect(post.headers['idempotency-key']).toMatch(/^[0-9a-f]{32}$/);
 
-    expect(
-      await screen.findByRole('heading', { name: /Bilan de la semaine 0/ }),
-    ).toBeInTheDocument();
+    const debrief = await screen.findByRole('dialog', { name: 'Débriefing de la semaine 0' });
+    await user.click(within(debrief).getByRole('button', { name: 'Continuer' }));
+    // Le bilan détaillé reste au QG, replié sous son titre.
+    await user.click(screen.getByRole('button', { name: /^Bilan de la semaine 0/ }));
     expect(screen.getByText('Meeting public : coût')).toBeInTheDocument();
     expect(screen.getByRole('list', { name: 'Catalogue des actions' })).toBeInTheDocument();
   });
@@ -137,6 +153,7 @@ describe('tableau de bord', () => {
     expect(debrief).toHaveFocus();
     await user.click(within(debrief).getByRole('button', { name: 'Continuer' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /^Bilan de la semaine 0/ }));
     const reasons = screen.getByRole('list', { name: 'Raisons du score' });
     expect(within(reasons).getByText('Posture offensive, format « Décryptage »'));
     expect(within(reasons).getByText('−20')).toBeInTheDocument();
@@ -149,6 +166,30 @@ describe('tableau de bord', () => {
     renderRoute(`/parties/${GAME_ID}/tableau-de-bord`);
     expect(await screen.findByRole('button', { name: 'Ajouter Meeting public' })).toBeDisabled();
     expect(screen.getByText('Nécessite 50 militants.')).toBeInTheDocument();
+    // Le tiroir de détail rappelle la raison et n'ajoute rien.
+    await userEvent.click(screen.getByRole('button', { name: 'Détails : Meeting public' }));
+    const drawer = screen.getByRole('dialog', { name: 'Meeting public' });
+    expect(within(drawer).getByText('Nécessite 50 militants.')).toBeInTheDocument();
+    expect(within(drawer).getByRole('button', { name: 'Ajouter au plan' })).toBeDisabled();
+  });
+
+  it('ouvre le détail d’une action dans un tiroir, sans changer d’adresse, puis l’ajoute au plan', async () => {
+    mockApi(base());
+    const { router } = renderRoute(`/parties/${GAME_ID}/tableau-de-bord`);
+    const user = userEvent.setup();
+    const trigger = await screen.findByRole('button', { name: 'Détails : Meeting public' });
+    expect(trigger).toHaveAttribute('aria-haspopup', 'dialog');
+    await user.click(trigger);
+    const drawer = screen.getByRole('dialog', { name: 'Meeting public' });
+    expect(within(drawer).getByText(/120\s000\s€ · 8 h · 50 militants requis/)).toBeInTheDocument();
+    expect(within(drawer).getByText(/Notoriété \+0,60 pt/)).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe(`/parties/${GAME_ID}/tableau-de-bord`);
+    expect(router.state.location.hash).toBe('');
+    await user.click(within(drawer).getByRole('button', { name: 'Ajouter au plan' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    const planned = screen.getByRole('list', { name: 'Actions programmées' });
+    expect(within(planned).getAllByRole('listitem')).toHaveLength(1);
+    expect(trigger).toHaveFocus();
   });
 
   it('exige une réponse aux décisions avant de résoudre la semaine', async () => {
@@ -198,7 +239,10 @@ describe('tableau de bord', () => {
     mockApi(base(game));
     renderRoute(`/parties/${GAME_ID}/tableau-de-bord`);
     expect(await screen.findByText(/Claire Delorme est élu\(e\)/)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Voir les résultats' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Voir les résultats' })).toHaveAttribute(
+      'aria-haspopup',
+      'dialog',
+    );
     expect(screen.getByRole('button', { name: 'Résoudre la semaine 0' })).toBeDisabled();
     expect(screen.queryByRole('list', { name: 'Catalogue des actions' })).not.toBeInTheDocument();
   });
@@ -206,12 +250,23 @@ describe('tableau de bord', () => {
   it('situe le candidat dans le dernier sondage publié', async () => {
     const state = playedState((s) => s.meta.week >= 1);
     mockApi(base(gameFixture({}, state)));
-    renderRoute(`/parties/${GAME_ID}/tableau-de-bord`);
-    const race = await screen.findByRole('region', { name: 'La course présidentielle' });
-    expect(
-      within(race).getByText(/Dernier sondage \(Institut Opinio \(fictif\), semaine 0\)/),
-    ).toBeInTheDocument();
-    expect(within(race).getByRole('link', { name: 'Tous les sondages' })).toBeInTheDocument();
+    const { router } = renderRoute(`/parties/${GAME_ID}/tableau-de-bord`);
+    const overview = await screen.findByRole('region', { name: 'En un coup d’œil' });
+    const poll = [...state.polls].reverse().find((p) => p.kind === 'intentions_t1')!;
+    const mine = poll.results.find((r) => r.actorId === state.player.actorId)!;
+    const rank = [...poll.results].sort((a, b) => b.value - a.value).indexOf(mine) + 1;
+    const tile = within(overview).getByRole('button', { name: /^Sondage clé/ });
+    expect(tile).toHaveTextContent(`${rank === 1 ? '1er' : `${rank}e`} · `);
+    expect(tile).toHaveTextContent('Institut Opinio (fictif), sem. 0');
+    // Le détail s'ouvre dans un tiroir : l'adresse ne change pas.
+    await userEvent.click(tile);
+    const drawer = screen.getByRole('dialog', { name: 'Sondages' });
+    expect(within(drawer).getByRole('region', { name: /^Dernier sondage/ })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe(`/parties/${GAME_ID}/tableau-de-bord`);
+    expect(router.state.location.hash).toBe('');
+    await userEvent.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(tile).toHaveFocus();
   });
 
   it('demande une consigne de vote au candidat éliminé, sans plan d’actions', async () => {
@@ -235,7 +290,8 @@ describe('tableau de bord', () => {
   it('affiche le calendrier avec le statut et la source de chaque date', async () => {
     mockApi(base());
     renderRoute(`/parties/${GAME_ID}/tableau-de-bord`);
-    const calendar = await screen.findByRole('region', { name: 'Calendrier électoral' });
+    await userEvent.click(await screen.findByRole('button', { name: /^Calendrier électoral/ }));
+    const calendar = screen.getByRole('region', { name: 'Calendrier électoral' });
     expect(
       within(calendar).getByText("Premier tour de l'élection présidentielle"),
     ).toBeInTheDocument();

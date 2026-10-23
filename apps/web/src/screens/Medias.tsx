@@ -16,10 +16,11 @@ import {
   MEDIA_TYPE_LABELS,
   OutletLogo,
 } from '../components/RealMedia';
-import { card, screenTitle } from '../components/ui';
+import { card } from '../components/ui';
 import { formatGameDate } from '../labels';
 import { useCurrentGame } from './GameLayout';
 import { Reseaux } from './medias/Reseaux';
+import { ScreenHeading } from '../components/Disclosure';
 
 const ACTIVE = new Set(['candidat', 'qualifie']);
 const decimal = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 });
@@ -215,9 +216,7 @@ export function Medias() {
 
   return (
     <section aria-labelledby="titre-medias" className="space-y-6">
-      <h1 id="titre-medias" className={screenTitle}>
-        Médias
-      </h1>
+      <ScreenHeading id="titre-medias">Médias</ScreenHeading>
       <p
         role="note"
         className="rounded-lg bg-teal-50 p-3 text-sm text-teal-900 dark:bg-teal-950 dark:text-teal-100"

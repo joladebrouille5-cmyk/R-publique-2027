@@ -101,7 +101,7 @@ function GroupedOptions({
 export function DecisionsPanel({ decisions, answers, onAnswer }: Props) {
   return (
     <section aria-labelledby="titre-decisions" className="space-y-4">
-      <h2 id="titre-decisions" className="text-xl font-bold">
+      <h2 id="titre-decisions" tabIndex={-1} className="text-xl font-bold outline-none">
         Décisions à prendre
       </h2>
       {decisions.map((decision) => {

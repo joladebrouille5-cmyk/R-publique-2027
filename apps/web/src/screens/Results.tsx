@@ -3,7 +3,7 @@ import { Link } from 'react-router';
 import { useRuleset } from '../api/hooks';
 import { Badge } from '../components/Badge';
 import { ShareBar } from '../components/ShareBar';
-import { card, screenTitle } from '../components/ui';
+import { card } from '../components/ui';
 import {
   DATA_STATUS_LABELS,
   formatCount,
@@ -13,6 +13,7 @@ import {
 } from '../labels';
 import { cancelledDebate, cancelledLabel } from './debat/parts';
 import { useCurrentGame } from './GameLayout';
+import { ScreenHeading } from '../components/Disclosure';
 
 const nameOf = (state: GameState, id: string) => {
   const actor = state.actors[id];
@@ -207,9 +208,7 @@ export function Results() {
 
   return (
     <section aria-labelledby="titre-resultats" className="space-y-6">
-      <h1 id="titre-resultats" className={screenTitle}>
-        Résultats
-      </h1>
+      <ScreenHeading id="titre-resultats">Résultats</ScreenHeading>
       <p className="text-sm text-slate-600 dark:text-slate-400">
         Résultats <strong>simulés</strong> par le moteur de jeu, à partir de groupes d’électeurs
         nationaux (hypothèse de jeu). Les inscrits reprennent le chiffre officiel du second tour de

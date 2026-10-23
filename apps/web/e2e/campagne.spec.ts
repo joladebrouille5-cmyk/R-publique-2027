@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { advanceViaApi, createGame, openScreen, resolveWeek } from './helpers';
+import { advanceViaApi, createGame, openScreen, openSection, resolveWeek } from './helpers';
 
 // Campagne approfondie (phase 5) : programme, actions ciblées, parrainages, finances,
 // relations, mode observateur — bureau et téléphone.
@@ -37,6 +37,8 @@ test('programme, rencontre d’élus ciblée et interview : bilan, parrainages e
   await page.getByLabel(/Cible de l’action n° 3/).selectOption('emi-le-grand-jury');
   await resolveWeek(page, 0);
 
+  // Le bilan détaillé et les parrainages sont repliés en bas du QG.
+  await openSection(page, 'bilan-semaine');
   const report = page.getByRole('region', { name: /Bilan de la semaine 0/ });
   const campaign = report.getByRole('region', { name: 'Campagne de la semaine' });
   await expect(campaign.getByText('Plan d’investissement public')).toBeVisible();
@@ -47,7 +49,8 @@ test('programme, rencontre d’élus ciblée et interview : bilan, parrainages e
   await expect(
     report.getByText(/Invité d’une émission politique — Le Grand Jury \(RTL\)/),
   ).toBeVisible();
-  await expect(page.getByRole('region', { name: 'Parrainages' })).toContainText(
+  await openSection(page, 'campagne-detail');
+  await expect(page.getByRole('region', { name: 'Parrainages', exact: true })).toContainText(
     /présentations comptées sur 500 requises/,
   );
 
@@ -111,6 +114,7 @@ test('observateur : les adversaires agissent, collectent et se motivent seuls', 
   await page.getByLabel('Graine (facultative)').fill('e2e-observateur');
   await page.getByRole('button', { name: 'Créer la partie' }).click();
   await resolveWeek(page, 0);
+  await openSection(page, 'bilan-semaine');
   const report = page.getByRole('region', { name: /Bilan de la semaine 0/ });
   await report.getByText(/Stratégies des adversaires \(7\)/).click();
   await expect(
@@ -132,7 +136,8 @@ test('accessibilité des écrans Programme, Finances, Candidats et Médias (axe-
   await createGame(page, 'Accessibilité', 'e2e-a11y-campagne');
   for (const screen of ['Programme', 'Finances', 'Candidats', 'Médias']) {
     await openScreen(page, screen);
-    await expect(page.getByRole('heading', { level: 1, name: screen })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Campagne' })).toBeVisible();
+    await expect(page.getByRole('region', { name: screen, exact: true })).toBeVisible();
     const audit = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
       .analyze();

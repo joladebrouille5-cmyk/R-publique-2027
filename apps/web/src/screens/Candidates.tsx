@@ -9,7 +9,7 @@ import {
   PersonalityPhoto,
   SIMULATION_NOTICE,
 } from '../components/RealPersonality';
-import { card, screenTitle } from '../components/ui';
+import { card } from '../components/ui';
 import {
   CANDIDATE_STATUS_LABELS,
   describePosition,
@@ -22,6 +22,7 @@ import { portraitOf } from '../portraits';
 import { useWeeklyPlan } from '../stores/plan';
 import { Relations } from './candidates/Relations';
 import { useCurrentGame } from './GameLayout';
+import { ScreenHeading } from '../components/Disclosure';
 
 const STATUS_TONES = {
   candidat: 'neutre',
@@ -92,9 +93,7 @@ export function Candidates() {
 
   return (
     <section aria-labelledby="titre-candidats" className="space-y-6">
-      <h1 id="titre-candidats" className={screenTitle}>
-        Candidats
-      </h1>
+      <ScreenHeading id="titre-candidats">Candidats</ScreenHeading>
       {hasReal && (
         <p
           role="note"

@@ -41,12 +41,16 @@ async function createGame(page: Page, name: string) {
   await expect(page.getByRole('heading', { name: 'Tableau de bord' })).toBeVisible();
 }
 
-async function openScreen(page: Page, label: string) {
-  const nav = page.getByRole('navigation', { name: 'Écrans de la partie' });
-  const more = page.getByRole('button', { name: 'Tous les écrans' });
-  await expect(nav.or(more).first()).toBeVisible();
-  if (!(await nav.isVisible())) await more.click();
-  await nav.getByRole('link', { name: label }).click();
+/** Ouvre un espace (barre du bas), puis, au besoin, déplie une de ses sections (phase 12). */
+async function openScreen(page: Page, space: string, section?: string) {
+  await page
+    .getByRole('navigation', { name: 'Espaces de la partie' })
+    .getByRole('link', { name: space, exact: true })
+    .click();
+  if (!section) return;
+  const toggle = page.locator(`section#${section} > h2 > button`);
+  if ((await toggle.getAttribute('aria-expanded')) !== 'true') await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
 }
 
 test('partie complète sans réseau : création, semaine, reprise, carte, export et import', async ({
@@ -75,7 +79,7 @@ test('partie complète sans réseau : création, semaine, reprise, carte, export
   await page.goto(gameUrl);
 
   // Carte : référentiel de démonstration embarqué, rendu par MapLibre dans la politique CSP.
-  await openScreen(page, 'Carte électorale');
+  await openScreen(page, 'Carte');
   await expect(page.getByRole('region', { name: 'Carte de la métropole' })).toHaveAttribute(
     'data-ready',
     'oui',
@@ -88,7 +92,7 @@ test('partie complète sans réseau : création, semaine, reprise, carte, export
   ).toBeVisible();
 
   // Export (hors application native : téléchargement), puis import en nouvelle partie.
-  await openScreen(page, 'Sauvegardes');
+  await openScreen(page, 'QG', 'sauvegardes');
   const [download] = await Promise.all([
     page.waitForEvent('download'),
     page.getByRole('button', { name: 'Exporter la partie (JSON)' }).click(),

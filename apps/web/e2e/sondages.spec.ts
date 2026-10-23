@@ -13,7 +13,7 @@ test('chaque sondage explique l’écart depuis la vague précédente de l’ins
   await page.reload();
   await openScreen(page, 'Sondages');
 
-  const latest = page.getByRole('region', { name: /Dernier sondage/ });
+  const latest = page.getByRole('region', { name: /^Dernier sondage/ });
   await expect(latest.getByRole('columnheader', { name: 'Écart' })).toBeVisible();
   const why = latest.getByRole('region', { name: 'Pourquoi ça bouge ?' });
   await expect(why).toBeVisible();
