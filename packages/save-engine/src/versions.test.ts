@@ -24,6 +24,7 @@ import V12 from './fixtures/v12-phase-6.json' with { type: 'json' };
 import V13 from './fixtures/v13-phase-9.json' with { type: 'json' };
 import V14 from './fixtures/v14-phase-9.json' with { type: 'json' };
 import V15 from './fixtures/v15-phase-10.json' with { type: 'json' };
+import V16 from './fixtures/v16-phase-12.json' with { type: 'json' };
 import { loadStoredState, MIGRATED_CANDIDATE, SaveFormatError, upgradeState } from './versions';
 
 const ruleset = getRuleset(CURRENT_RULESET_KEY);
@@ -838,6 +839,54 @@ describe('migrations de sauvegarde', () => {
     expect(report.numerique.some((p) => p.acteurId === state.player.actorId)).toBe(true);
   });
 
+  it('passe au jeu de règles 14 sans rien perdre (format 16, gouvernement de figures réelles)', () => {
+    // Président IA, Premier ministre et ministres régaliens choisis parmi les figures réelles,
+    // textes déjà votés à l'Assemblée.
+    expect(V16.state.quinquennat.gouvernement.premierMinistre.nature).toBe('figure');
+    expect(V16.state.parlement.textes.some((b) => b.votes.length > 0)).toBe(true);
+    const { state, migratedFrom } = loadStoredState(V16.state, V16.stateHash, 16);
+    expect(migratedFrom).toBe(16);
+    expect(state.meta).toMatchObject({
+      week: V16.state.meta.week,
+      date: V16.state.meta.date,
+      saveSchemaVersion: SAVE_SCHEMA_VERSION,
+      engineVersion: ENGINE_VERSION,
+      rulesetVersion: CURRENT_RULESET_KEY,
+    });
+    // Tension parlementaire calculée selon le jeu de règles 14 : somme exacte de ses facteurs.
+    const { tension } = state.parlement!;
+    expect(tension.facteurs.length).toBeGreaterThan(0);
+    expect(tension.valeur).toBe(tension.facteurs.reduce((sum, f) => sum + f.valeur, 0));
+    // Rien d'autre ne change : gouvernement, textes et votes, sondages, économie.
+    const { meta: _meta, ...rest } = state;
+    const { meta: _m, ...restBefore } = V16.state;
+    expect(withoutPhase13(rest)).toEqual(restBefore);
+    // Le quinquennat continue avec le jeu de règles 14, de façon déterministe.
+    const play = () => {
+      let current = state;
+      for (let i = 0; i < 6; i++)
+        current = advanceWeek(
+          current,
+          {
+            actions: [],
+            decisions: current.pendingDecisions.map((d) => ({
+              decisionId: d.id,
+              optionId: d.defaultOptionId,
+            })),
+          },
+          { ruleset },
+        ).state;
+      return current;
+    };
+    const later = play();
+    expect(later.meta.week).toBe(state.meta.week + 6);
+    expect(GameStateSchema.parse(later)).toEqual(later);
+    expect(later.parlement!.tension.valeur).toBe(
+      later.parlement!.tension.facteurs.reduce((sum, f) => sum + f.valeur, 0),
+    );
+    expect(play()).toEqual(later);
+  });
+
   it('vérifie l’empreinte avant toute migration', () => {
     const altered = { ...V1_STATE, meta: { ...V1_STATE.meta, week: 3 } };
     expect(errorCode(() => loadStoredState(altered, V1_HASH, 1))).toBe('empreinte_incoherente');
@@ -864,6 +913,7 @@ describe('migrations de sauvegarde', () => {
     expect(errorCode(() => upgradeState(V13.state, 14))).toBe('etat_invalide');
     expect(errorCode(() => upgradeState(V14.state, 15))).toBe('etat_invalide');
     expect(errorCode(() => upgradeState(V15.state, 16))).toBe('etat_invalide');
+    expect(errorCode(() => upgradeState(V16.state, 17))).toBe('etat_invalide');
   });
 
   it('refuse un jeu de règles inconnu', () => {

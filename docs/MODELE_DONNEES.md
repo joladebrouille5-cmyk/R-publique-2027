@@ -1,6 +1,6 @@
 # Modèle de données — RÉPUBLIQUE 2027
 
-> Statut : **phases 1 à 7 réalisées** pour les tables techniques (`User`, `Game`, `GameSave`, `GameAdvance`, `GameAction`, `GameEvent`, `SimulationLog`) — schéma réel : [`apps/api/prisma/schema.prisma`](../apps/api/prisma/schema.prisma) ; état de partie réel (format 16) : [`packages/shared/src/game.ts`](../packages/shared/src/game.ts). Depuis la phase 4, le référentiel territorial et les résultats historiques sont des **fichiers versionnés** produits par `packages/data-import` (décision D9), et non des tables. Le reste du schéma ci-dessous reste indicatif et sera complété phase par phase.
+> Statut : **phases 1 à 7 réalisées** pour les tables techniques (`User`, `Game`, `GameSave`, `GameAdvance`, `GameAction`, `GameEvent`, `SimulationLog`) — schéma réel : [`apps/api/prisma/schema.prisma`](../apps/api/prisma/schema.prisma) ; état de partie réel (format 17) : [`packages/shared/src/game.ts`](../packages/shared/src/game.ts). Depuis la phase 4, le référentiel territorial et les résultats historiques sont des **fichiers versionnés** produits par `packages/data-import` (décision D9), et non des tables. Le reste du schéma ci-dessous reste indicatif et sera complété phase par phase.
 > Voir aussi [ARCHITECTURE.md §7](./ARCHITECTURE.md#7-persistance-et-sauvegardes-12).
 
 ## 1. Principe : trois familles de données
@@ -105,11 +105,19 @@ Stocker des valeurs par commune dans chaque instantané hebdomadaire serait proh
 >
 > Migration 14 → 15 : `debats` vide (un débat d'entre-deux-tours déjà tenu par l'ancien moteur reste dans `elections.debate`), `passages` reconstitués depuis le fil des publications encore présent. Fixture de non-régression : un état réel du format 14 (`packages/save-engine/fixtures/v14-phase-9.json`).
 >
-> **Phase 11 — format 16** (en cours, jeu de règles 13.0.0) :
+> **Phase 11 — format 16** (implémenté, jeu de règles 13.0.0) :
 > - sondages : `variation` et `explication` (décomposition en faits et part d'échantillon) de chaque résultat publié, conservées sur la dernière vague de chaque institut ; `sondagesBase` (vague de référence de chaque institut) ;
 > - gouvernement : un membre (`MemberRef`) peut être une `figure` réelle du jeu de règles (`figures`, issues de `pnpm data:gouvernement`), en plus d'un `acteur` de la partie ou d'un `profil` fictif ; `quinquennat.refus` porte aussi les refus d'un ministère (`posteId` du ministère) et l'identifiant d'une figure dans `acteurId` ; décisions en attente `nomination-ministre` (une par ministère régalien, après la nomination du Premier ministre). Compétence et popularité des membres ne sont pas dans l'état : elles se lisent dans le jeu de règles (fiches et `quinquennat.equipe`) ou dans les ressources de l'acteur.
 >
 > Migration 15 → 16 : sondages déjà publiés sans variation ni explication, aucune vague de référence ; les gouvernements en place restent composés d'acteurs et de profils (les figures n'entrent qu'aux nominations suivantes).
+>
+> **Phase 13 — format 17** (implémenté, jeu de règles 14.0.0, schémas dans [`parlement.ts`](../packages/shared/src/parlement.ts), [`legislatives-etat.ts`](../packages/shared/src/legislatives-etat.ts) et [`portrait.ts`](../packages/shared/src/portrait.ts)) :
+> - candidat : `photo` (URL de données WebP, JPEG ou PNG de 140 000 caractères au plus, signature du fichier contrôlée ; `null` sans photo), choisie à la création d'un candidat personnalisé et conservée avec la partie (export compris) ; le journal des événements n'en garde que la présence (`candidateForJournal`) ;
+> - Parlement : `tension` (valeur de 0 à 100, facteurs nommés dont la somme est la valeur, projection d'une censure), `fronde` (nombre de frondeurs par groupe, jamais de nom), `apaisement`, `motions` (motions de censure spontanées et leur issue) et `motionsSession` (compte de la session ordinaire), `coalition` (bloc partenaire, groupes, semaine) ; par texte, `frondeursNegocies` ; par vote, `frondeurs` de chaque groupe et `intervention` de l'opposition (groupe, meneur fictif éventuel, effet) ;
+> - législatives : `campagne` (accords retenus — ceux du camp du joueur et ceux des blocs de l'IA —, `strategieArretee`, `mobilisation` du camp présidentiel par département, en dix-millièmes de voix en plus) ; par élection, `alliances` retenues et, par circonscription, `communs` (blocs sans candidat propre, investiture commune) et `retraits` (désistements du second tour) ;
+> - quinquennat : `usages` (dernière semaine d'emploi de chaque action du chef de l'État, pour les délais).
+>
+> Migration 16 → 17 : candidats sans photo ; votes sans frondeurs ni intervention ; Parlement sans fronde, apaisement, motion ni coalition, tension recalculée selon le jeu de règles 14 ; législatives sans accord (circonscriptions sans investiture commune ni désistement), campagne ouverte par le moteur si elle est due ; aucune action du président encore employée. Fixture de non-régression : un état réel du format 16 (`packages/save-engine/src/fixtures/v16-phase-12.json`, moteur de la phase 12 : président IA, gouvernement de figures réelles, textes votés).
 >
 > L'esquisse ci-dessous décrit la cible des phases suivantes.
 
