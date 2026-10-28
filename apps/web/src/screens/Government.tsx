@@ -1,5 +1,7 @@
 import {
   candidateName,
+  memberExpertise,
+  memberPostCompetence,
   type GameState,
   type GovernmentFigure,
   type MemberRef,
@@ -12,7 +14,15 @@ import { Avatar } from '../components/Avatar';
 import { Badge, type BadgeTone } from '../components/Badge';
 import { Drawer } from '../components/Drawer';
 import { ErrorMessage } from '../components/ErrorMessage';
+import {
+  expertiseLabel,
+  FigureFilterBar,
+  figureExpertiseOf,
+  matchesFigure,
+  NO_FILTER,
+} from '../components/FigureFilter';
 import { buttonSecondary, card } from '../components/ui';
+import { mainFunction } from '../figures';
 import { formatGameDate } from '../labels';
 import { portraitOf, portraitOfPersonality, portraitOfProfile, type Portrait } from '../portraits';
 import { useCurrentGame } from './GameLayout';
@@ -20,11 +30,7 @@ import { ScreenHeading } from '../components/Disclosure';
 
 const pct = (value: number) => `${Math.round(value * 100)} %`;
 
-/** Fonction principale d'une figure : la première en cours (hors « autre »), sinon la première. */
-export function mainFunction(figure: GovernmentFigure): string {
-  return (figure.fonctions.find((f) => f.enCours && f.nature !== 'autre') ?? figure.fonctions[0]!)
-    .libelle;
-}
+export { mainFunction };
 
 type MemberInfo = {
   name: string;
@@ -82,16 +88,38 @@ export function memberInfo(state: GameState, ruleset: Ruleset, member: MemberRef
   };
 }
 
+/**
+ * Compétence sur le poste et expertise qui la fonde (règle partagée avec le moteur) ; null
+ * sans expertise sur ce poste.
+ */
+export function postExpertiseInfo(
+  ruleset: Ruleset,
+  member: MemberRef,
+  posteId: string,
+): { competence: number; fonction: string; enCours: boolean } | null {
+  const expertise = memberExpertise(ruleset, member).find((e) => e.posteId === posteId);
+  if (!expertise) return null;
+  return {
+    competence: memberPostCompetence(ruleset, member, posteId),
+    fonction: expertise.fonction,
+    enCours: expertise.enCours,
+  };
+}
+
 function Member({
   state,
   ruleset,
   member,
+  posteId = null,
 }: {
   state: GameState;
   ruleset: Ruleset;
   member: MemberRef;
+  /** Poste occupé (ministre) : compétence sur ce poste et expertise affichées. */
+  posteId?: string | null;
 }) {
   const info = memberInfo(state, ruleset, member);
+  const expertise = posteId ? postExpertiseInfo(ruleset, member, posteId) : null;
   return (
     <span className="flex items-start gap-3">
       {info.portrait && <Avatar portrait={info.portrait} size="sm" />}
@@ -106,10 +134,17 @@ function Member({
             {info.detail && info.competence && ' · '}
             {info.competence && (
               <>
-                Compétence {pct(info.competence.value)}{' '}
+                Compétence {pct(info.competence.value)}
+                {expertise && `, ${pct(expertise.competence)} sur ce poste`}{' '}
                 <Badge tone={info.competence.tone}>{info.competence.label}</Badge>
               </>
             )}
+          </span>
+        )}
+        {expertise && (
+          <span className="block text-xs text-emerald-800 dark:text-emerald-300">
+            Expertise : {expertise.fonction}
+            {expertise.enCours ? '' : ' (fonction passée)'}
           </span>
         )}
       </span>
@@ -126,16 +161,20 @@ function solicitedName(state: GameState, ruleset: Ruleset, id: string): string {
 }
 
 /**
- * Personnalités réelles nominables (phase 11) : fiches du jeu de règles, par parti. Fonctions
- * relevées dans les sources ; compétence estimée ; aucun propos. Phase 13 : la liste s'ouvre
- * dans un tiroir plutôt que dans un volet de la section dépliée.
+ * Personnalités réelles nominables (phase 11 ; vivier élargi en phase 14) : fiches du jeu de
+ * règles, par parti, avec recherche et filtres (parti, ministère d'expertise). Fonctions relevées
+ * dans les sources ; compétence estimée ; expertise ministérielle ; aucun propos. La liste
+ * s'ouvre dans un tiroir.
  */
 function Figures({ ruleset }: { ruleset: Ruleset }) {
   const [open, setOpen] = useState(false);
+  const [filter, setFilter] = useState(NO_FILTER);
+  const all = ruleset.figures.figures;
+  const shown = all.filter((f) => matchesFigure(ruleset, f, filter));
   const parties = new Map<string, GovernmentFigure[]>();
-  for (const f of ruleset.figures.figures)
-    parties.set(f.parti, [...(parties.get(f.parti) ?? []), f]);
-  const count = `${ruleset.figures.figures.length} personnalités de ${parties.size} partis`;
+  for (const f of shown) parties.set(f.parti, [...(parties.get(f.parti) ?? []), f]);
+  const partyCount = new Set(all.map((f) => f.parti)).size;
+  const count = `${all.length} personnalités de ${partyCount} partis`;
   return (
     <section aria-labelledby="titre-figures" className={`${card} space-y-3 text-sm`}>
       <h2 id="titre-figures" className="text-lg font-semibold">
@@ -143,8 +182,9 @@ function Figures({ ruleset }: { ruleset: Ruleset }) {
       </h2>
       <p className="text-slate-600 dark:text-slate-400">
         Outre les candidats de la partie et les profils fictifs, le président peut solliciter ces
-        personnalités réelles pour Matignon ou un ministère régalien. Leur réponse est simulée : une
-        personnalité éloignée du président peut refuser.
+        personnalités réelles pour Matignon ou un ministère ; le Premier ministre les place là où
+        elles sont expertes. Leur réponse est simulée : une personnalité éloignée du président peut
+        refuser.
       </p>
       <button type="button" className={buttonSecondary} onClick={() => setOpen(true)}>
         Voir les {count}
@@ -152,38 +192,58 @@ function Figures({ ruleset }: { ruleset: Ruleset }) {
       {open && (
         <Drawer
           title="Personnalités nominables"
-          subtitle={`${count} ; fonctions relevées dans les sources, compétence estimée.`}
+          subtitle={`${count} ; fonctions relevées dans les sources, compétence estimée, expertise d’après les fonctions ministérielles.`}
           onClose={() => setOpen(false)}
         >
           <div className="space-y-4 text-sm">
+            <FigureFilterBar
+              ruleset={ruleset}
+              value={filter}
+              onChange={setFilter}
+              shown={shown.length}
+              total={all.length}
+              idPrefix="vivier"
+            />
+            {shown.length === 0 && (
+              <p>Aucune personnalité ne répond à ces critères : élargissez la recherche.</p>
+            )}
             {[...parties].map(([parti, figures]) => (
               <div key={parti} className="space-y-2">
                 <h3 className="font-semibold">{parti}</h3>
                 <ul className="grid gap-2 sm:grid-cols-2">
-                  {figures.map((f) => (
-                    <li
-                      key={f.id}
-                      aria-label={`${f.prenom} ${f.nom}`}
-                      className="flex items-start gap-3 rounded-lg border border-slate-200 p-2 dark:border-slate-800"
-                    >
-                      <Avatar portrait={portraitOfPersonality(f, ruleset)} size="sm" />
-                      <span className="min-w-0 space-y-0.5">
-                        <span className="block font-medium">
-                          {f.prenom} {f.nom}
-                        </span>
-                        <span className="block text-xs text-slate-600 dark:text-slate-400">
-                          {mainFunction(f)}
-                        </span>
-                        <span className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs">
-                          <span className="inline-flex items-center gap-1">
-                            Compétence {pct(f.competence.valeur)}{' '}
-                            <Badge tone="alerte">Estimation</Badge>
+                  {figures.map((f) => {
+                    const expertise = figureExpertiseOf(ruleset, f.id);
+                    return (
+                      <li
+                        key={f.id}
+                        aria-label={`${f.prenom} ${f.nom}`}
+                        className="flex items-start gap-3 rounded-lg border border-slate-200 p-2 dark:border-slate-800"
+                      >
+                        <Avatar portrait={portraitOfPersonality(f, ruleset)} size="sm" />
+                        <span className="min-w-0 space-y-0.5">
+                          <span className="block font-medium">
+                            {f.prenom} {f.nom}
                           </span>
-                          <span>Notoriété {f.notoriete.niveau}/3</span>
+                          <span className="block text-xs text-slate-600 dark:text-slate-400">
+                            {mainFunction(f)}
+                          </span>
+                          <span className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs">
+                            <span className="inline-flex items-center gap-1">
+                              Compétence {pct(f.competence.valeur)}{' '}
+                              <Badge tone="alerte">Estimation</Badge>
+                            </span>
+                            <span>Notoriété {f.notoriete.niveau}/3</span>
+                          </span>
+                          {expertise.length > 0 && (
+                            <span className="block text-xs text-emerald-800 dark:text-emerald-300">
+                              Expertise :{' '}
+                              {expertise.map((e) => expertiseLabel(ruleset, e)).join(', ')}
+                            </span>
+                          )}
                         </span>
-                      </span>
-                    </li>
-                  ))}
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             ))}
@@ -254,7 +314,12 @@ function Content({ state, ruleset }: { state: GameState; ruleset: Ruleset }) {
                     {postes.get(minister.posteId) ?? minister.posteId}
                   </dt>
                   <dd>
-                    <Member state={state} ruleset={ruleset} member={minister} />
+                    <Member
+                      state={state}
+                      ruleset={ruleset}
+                      member={minister}
+                      posteId={minister.posteId}
+                    />
                   </dd>
                 </div>
               ))}
@@ -271,10 +336,11 @@ function Content({ state, ruleset }: { state: GameState; ruleset: Ruleset }) {
         <p className="text-xs text-slate-500 dark:text-slate-400">
           Les personnalités réelles nommées ne prennent part au jeu que par une simulation : aucun
           propos ne leur est attribué ; leur compétence est une estimation tirée des fonctions
-          exercées. Les profils fictifs sont des personnages inventés. La compétence du Premier
-          ministre et des ministres régaliens pèse sur l’action du gouvernement, la gestion des
-          crises et la censure ; un groupe non allié représenté au gouvernement soutient davantage
-          les textes.
+          exercées ; une fonction ministérielle du domaine d’un poste (passée ou présente) y ajoute
+          une expertise (hypothèse de jeu). Les profils fictifs sont des personnages inventés. La
+          compétence du Premier ministre et celle des ministres sur leur poste pèsent sur l’action
+          du gouvernement, la gestion des crises et la censure ; un groupe non allié représenté au
+          gouvernement soutient davantage les textes.
         </p>
       </section>
 

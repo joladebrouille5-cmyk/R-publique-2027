@@ -14,7 +14,7 @@ import { compareStrings, type Ledger } from '../core/ledger';
 import { daysBetween, weekReaches } from './dates';
 import type { EconomyBook } from './economy';
 import { dissolutionBlocked } from './legislatives';
-import { memberInCharge, memberName, memberTraits } from './members';
+import { memberInCharge, memberName, postCompetenceOf } from './members';
 
 // Actions du président pendant le quinquennat (jeu de règles, `quinquennat.actions`) : mêmes
 // règles pour le joueur et pour l'IA. Elles ne coûtent que du temps : les dépenses de l'État ne
@@ -143,7 +143,7 @@ export function applyPresidentialEffects(
     if (definition.poste !== undefined) {
       const member = memberInCharge(state, definition.poste);
       if (member) {
-        const { competence } = memberTraits(state, ruleset, member);
+        const competence = postCompetenceOf(state, ruleset, member, definition.poste);
         factor = actionCompetenceFactor(ruleset, competence);
         const post = definition.poste
           ? (postes.get(definition.poste) ?? definition.poste)

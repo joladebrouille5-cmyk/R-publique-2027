@@ -14,6 +14,7 @@ import {
   RULESET_URL,
   rulesetHandler,
 } from '../test/utils';
+import { blocPeople } from '../components/BlocFigures';
 
 // Phase 13 : mandat vivant à l'écran — vue du mandat, tuiles du QG, campagne et accords des
 // législatives, carte des législatives par bloc, fiches des actions du chef de l'État. États
@@ -184,6 +185,19 @@ describe('législatives vivantes à l’écran (phase 13)', () => {
     expect(within(group).getAllByRole('radio')).toHaveLength(decision.options.length);
     for (const option of decision.options)
       expect(within(group).getByText(option.libelle)).toBeInTheDocument();
+    // Phase 14 : un accord avec un bloc montre les visages des personnalités de ses partis
+    // (aucun pour un bloc sans personnalité du jeu).
+    const withBloc = decision.options.filter((o) => o.id.includes(':'));
+    expect(withBloc.length).toBeGreaterThan(0);
+    for (const option of withBloc) {
+      const label = within(group).getByText(option.libelle).closest('label')!;
+      const people = blocPeople(RULESET, option.id.split(':')[1]!);
+      // Visages affichés une fois le jeu de règles chargé.
+      await waitFor(() =>
+        expect(label.querySelector('[data-bloc-faces]') !== null).toBe(people.length > 0),
+      );
+    }
+    expect(withBloc.some((o) => blocPeople(RULESET, o.id.split(':')[1]!).length > 0)).toBe(true);
   });
 });
 

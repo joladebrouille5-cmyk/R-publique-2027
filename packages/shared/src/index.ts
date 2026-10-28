@@ -26,3 +26,4 @@ export * from './legislatives';
 export * from './legislatives-etat';
 export * from './portrait';
 export * from './mandat';
+export * from './expertise';

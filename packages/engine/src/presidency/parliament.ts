@@ -27,7 +27,7 @@ import { compareStrings, type Ledger } from '../core/ledger';
 import { stream } from '../core/random';
 import { distance } from '../election/model';
 import { applyReformToEconomy, type EconomyBook } from './economy';
-import { governmentGroups, memberInCharge, memberTraits } from './members';
+import { governmentGroups, memberInCharge, memberTraits, postCompetenceOf } from './members';
 
 // Assemblée nationale (phase 6, P6-04). Composition réelle importée (groupes et sièges, sans
 // nom de député) ; tout le reste est simulé : chaque groupe vote en bloc, avec sa discipline,
@@ -150,8 +150,9 @@ function support(
 }
 
 /**
- * Compétence du ministre chargé du domaine d'une proposition (le Premier ministre si le poste
- * est vacant), ou null si aucun poste ne couvre ce domaine ou si Matignon est vacant.
+ * Compétence du ministre chargé du domaine d'une proposition sur son poste (expertise comprise ;
+ * le Premier ministre si le poste est vacant), ou null si aucun poste ne couvre ce domaine ou si
+ * Matignon est vacant.
  */
 export function domainCompetence(
   state: GameState,
@@ -161,7 +162,7 @@ export function domainCompetence(
   const poste = postOfDomain(ruleset, proposal.domaine);
   if (!poste) return null;
   const member = memberInCharge(state, poste);
-  return member ? memberTraits(state, ruleset, member).competence : null;
+  return member ? postCompetenceOf(state, ruleset, member, poste) : null;
 }
 
 /**

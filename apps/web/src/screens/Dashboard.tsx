@@ -44,7 +44,7 @@ import {
   buttonPrimary,
   buttonSecondary,
   card,
-  input,
+  inputCompact,
   screenTitle,
 } from '../components/ui';
 import { WeeklyDebrief } from '../components/WeeklyDebrief';
@@ -610,7 +610,13 @@ export function Dashboard() {
       )}
 
       {!observer && state.pendingDecisions.length > 0 && (
-        <DecisionsPanel decisions={state.pendingDecisions} answers={answers} onAnswer={answer} />
+        <DecisionsPanel
+          decisions={state.pendingDecisions}
+          answers={answers}
+          onAnswer={answer}
+          state={state}
+          ruleset={data}
+        />
       )}
 
       {!quinquennat && data && <DebatesPanel gameId={game.id} state={state} ruleset={data} />}
@@ -768,22 +774,28 @@ export function Dashboard() {
               )}
             </button>
             {quinquennat && (
+              // Une seule ligne sur téléphone : étiquette, sélecteur compact et bouton.
               <span className="flex flex-wrap items-center gap-2">
                 <label htmlFor="avance-rapide" className="text-sm font-semibold">
                   Avance rapide
                 </label>
                 <select
                   id="avance-rapide"
-                  className={`${input} w-auto py-1.5`}
+                  className={inputCompact}
+                  aria-describedby="avance-rapide-aide"
                   value={fastWeeks}
                   onChange={(event) => setFastWeeks(Number(event.target.value))}
                 >
                   {[4, 13, 26, MAX_FAST_FORWARD_WEEKS].map((n) => (
                     <option key={n} value={n}>
-                      {n} semaines au plus
+                      {n} semaines
                     </option>
                   ))}
                 </select>
+                <span id="avance-rapide-aide" className="sr-only">
+                  Nombre maximal de semaines : l’avance s’arrête plus tôt quand une décision vous
+                  attend, après un scrutin ou un événement majeur.
+                </span>
                 <button
                   type="button"
                   className={buttonSecondary}

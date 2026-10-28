@@ -205,7 +205,9 @@ describe('serveur local : parties et progression', () => {
     const fast = await advance(api, game, { semaines: 20 });
     expect(fast.avanceRapide!.demandees).toBe(20);
     expect(fast.game.week).toBe(game.week + fast.avanceRapide!.resolues);
-  });
+    // Partie complète (une cinquantaine de semaines, puis vingt en avance rapide) : bien plus
+    // que le délai par défaut de 5 s quand toute la suite tourne en parallèle.
+  }, 30_000);
 });
 
 describe('serveur local : débats télévisés (phase 10)', () => {
@@ -274,7 +276,9 @@ describe('serveur local : débats télévisés (phase 10)', () => {
     expect([replay.status, error(replay)]).toEqual([409, 'debat_termine']);
     const reread = GameDetailSchema.parse((await call(api, 'GET', `/api/games/${game.id}`)).body);
     expect(reread.stateHash).toBe(done.stateHash);
-  });
+    // Campagne jouée jusqu'au premier débat (une trentaine de semaines) : plus que le délai par
+    // défaut de 5 s quand toute la suite tourne en parallèle.
+  }, 30_000);
 });
 
 describe('serveur local : photo du candidat (phase 13)', () => {

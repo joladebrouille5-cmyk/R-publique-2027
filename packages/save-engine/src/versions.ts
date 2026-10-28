@@ -32,6 +32,7 @@ import {
   GameStateV14Schema,
   GameStateV15Schema,
   GameStateV16Schema,
+  GameStateV17Schema,
   addDays,
   DIGITAL_HISTORY_WEEKS,
   daysFromCivil,
@@ -57,6 +58,7 @@ import {
   type GameStateV14,
   type GameStateV15,
   type GameStateV16,
+  type GameStateV17,
 } from '@r2027/shared';
 import { z } from 'zod';
 import { hashState, sha256, canonicalStringify } from './canonical';
@@ -101,7 +103,8 @@ const SCHEMAS: Record<number, z.ZodType> = {
   14: GameStateV14Schema,
   15: GameStateV15Schema,
   16: GameStateV16Schema,
-  17: GameStateSchema,
+  17: GameStateV17Schema,
+  18: GameStateSchema,
 };
 
 /** Jeux de règles des parties aux formats 2 (phase 2) et 3 (phase 3). */
@@ -590,7 +593,7 @@ type DistrictV16 = NonNullable<
  * (circonscriptions sans investiture commune ni désistement), campagne ouverte par le moteur si
  * elle est due ; aucune action du président encore employée (délais).
  */
-function migrateV16ToV17(v16: GameStateV16): GameState {
+function migrateV16ToV17(v16: GameStateV16): GameStateV17 {
   const district = (d: DistrictV16) => ({ ...d, communs: [], retraits: [] });
   const parlement = v16.parlement
     ? {
@@ -638,7 +641,7 @@ function migrateV16ToV17(v16: GameStateV16): GameState {
         campagne: null,
       }
     : null;
-  const state: GameState = {
+  const state: GameStateV17 = {
     ...v16,
     meta: {
       ...v16.meta,
@@ -656,9 +659,58 @@ function migrateV16ToV17(v16: GameStateV16): GameState {
     legislatives,
     quinquennat: v16.quinquennat ? { ...v16.quinquennat, usages: {} } : null,
   };
-  // Tension parlementaire calculée selon le jeu de règles 14.
-  updateTension(state, getRuleset(CURRENT_RULESET_KEY));
+  // Tension parlementaire calculée selon le jeu de règles courant (règles de la phase 13). Les
+  // formats 17 et 18 ont les mêmes champs : le calcul du moteur s'applique tel quel.
+  updateTension(state as unknown as GameState, getRuleset(CURRENT_RULESET_KEY));
   return state;
+}
+
+/** Personnalités réelles nominables citées par un état : gouvernements, refus, décisions. */
+function figureRefs(state: GameStateV17): Set<string> {
+  const refs = new Set<string>();
+  const member = (m: { nature: string; ref: string }) => {
+    if (m.nature === 'figure') refs.add(m.ref);
+  };
+  const q = state.quinquennat;
+  if (q?.gouvernement) {
+    member(q.gouvernement.premierMinistre);
+    q.gouvernement.ministres.forEach(member);
+  }
+  q?.anciensGouvernements.forEach((g) => member(g.premierMinistre));
+  q?.refus.forEach((r) => {
+    if (r.acteurId.startsWith('figure-')) refs.add(r.acteurId);
+  });
+  state.historique.quinquennats.forEach((past) =>
+    past.gouvernements.forEach((g) => member(g.premierMinistre)),
+  );
+  for (const decision of state.pendingDecisions)
+    for (const option of decision.options) if (option.id.startsWith('figure-')) refs.add(option.id);
+  return refs;
+}
+
+/**
+ * 17 → 18 (phase 14) : passage au jeu de règles 15 (vivier de 108 personnalités réelles
+ * nominables, expertise ministérielle, ministères ouverts aux personnalités). Aucun champ ne
+ * change ; les personnalités citées par la partie (gouvernements, refus, décisions en attente)
+ * figurent toutes dans le vivier du jeu de règles 15, ce que la migration vérifie.
+ */
+function migrateV17ToV18(v17: GameStateV17): GameState {
+  const known = new Set(getRuleset(CURRENT_RULESET_KEY).figures.figures.map((f) => f.id));
+  const missing = [...figureRefs(v17)].filter((id) => !known.has(id));
+  if (missing.length > 0)
+    throw new SaveFormatError(
+      'incoherence',
+      `Personnalités absentes du jeu de règles courant : ${missing.join(', ')}.`,
+    );
+  return {
+    ...v17,
+    meta: {
+      ...v17.meta,
+      engineVersion: ENGINE_VERSION,
+      rulesetVersion: CURRENT_RULESET_KEY,
+      saveSchemaVersion: 18,
+    },
+  };
 }
 
 const MIGRATIONS: Record<number, (state: never) => unknown> = {
@@ -678,6 +730,7 @@ const MIGRATIONS: Record<number, (state: never) => unknown> = {
   14: migrateV14ToV15,
   15: migrateV15ToV16,
   16: migrateV16ToV17,
+  17: migrateV17ToV18,
 };
 
 export type LoadedState = { state: GameState; stateHash: string; migratedFrom: number | null };

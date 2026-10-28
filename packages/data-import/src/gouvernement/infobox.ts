@@ -94,14 +94,36 @@ function removeTemplates(text: string, name: RegExp): string {
 
 const withoutNotes = (text: string) =>
   removeTemplates(
-    text.replace(/<ref[^>]*\/>/g, '').replace(/<ref[^>]*>[\s\S]*?<\/ref>/g, ''),
+    text
+      .replace(/<!--[\s\S]*?-->/g, '')
+      .replace(/<ref[^>]*\/>/g, '')
+      .replace(/<ref[^>]*>[\s\S]*?<\/ref>/g, ''),
     /^\s*(note|efn|référence nécessaire|refnec)\b/i,
   );
 
-/** Libellé lisible d'une valeur de l'infobox : références et notes retirées, liens réduits. */
+/**
+ * Marque provisoire d'un retour à la ligne (`<br>`) pendant la mise en forme du libellé : un
+ * caractère à usage privé, absent des textes de Wikipédia (et non un caractère de contrôle).
+ */
+const LINE_BREAK = '\uE000';
+
+/** Titre qui, après un retour à la ligne, ouvre une seconde fonction cumulée (« A, ministre B »). */
+const SECOND_TITLE =
+  /\s*\uE000\s*(Ministre|Garde des Sceaux|Porte-parole|Secrétaire|Haute?-commissaire|Présidente?|Vice-présidente?)\b/g;
+
+/**
+ * Libellé lisible d'une valeur de l'infobox : références et notes retirées, liens réduits. Un
+ * retour à la ligne suivi d'un second titre devient une virgule (« Ministre d'État, garde des
+ * Sceaux… ») ; ailleurs, la phrase continue (« conseil régional<br>d'Auvergne » → une espace).
+ */
 export function cleanValue(text: string): string {
-  const kept = withoutNotes(text).replace(/\{\{\s*(?:nobr|nowrap)\s*\|([^{}|]*)\}\}/gi, '$1');
+  const kept = withoutNotes(text)
+    .replace(/\{\{\s*(?:nobr|nowrap)\s*\|([^{}|]*)\}\}/gi, '$1')
+    .replace(/<br\s*\/?>/gi, LINE_BREAK);
   return readable(kept)
+    .replace(SECOND_TITLE, (_m, title: string) => `, ${title[0]!.toLowerCase()}${title.slice(1)}`)
+    .replaceAll(LINE_BREAK, ' ')
+    .replace(/\s+/g, ' ')
     .replace(/\s+([,.])/g, '$1')
     .replace(/[\s,;]+$/, '')
     .trim();
@@ -125,7 +147,8 @@ export function dateValue(text: string | undefined): string | null {
 }
 
 /**
- * Nature d'une fonction d'après son libellé : Premier ministre, ministre (ou garde des Sceaux),
+ * Nature d'une fonction d'après son libellé : présidence de la République, Premier ministre,
+ * ministre (ou garde des Sceaux),
  * secrétaire d'État ou ministre délégué, mandat parlementaire (député, sénateur, député
  * européen), exécutif local (maire, présidence d'un conseil régional, départemental ou général,
  * d'une métropole ou d'une communauté), direction (présidence ou secrétariat national d'un parti,
@@ -133,6 +156,7 @@ export function dateValue(text: string | undefined): string | null {
  */
 export function classify(libelle: string): FigureFunctionKind {
   const l = libelle.toLowerCase().replace(/’/g, "'");
+  if (/^présidente? de la république\b/.test(l)) return 'president-republique';
   if (/^premi(er|ère) ministre\b/.test(l)) return 'premier-ministre';
   if (/^(secrétaire d'état|ministre délégué)/.test(l)) return 'secretaire-etat';
   if (/^(ministre|garde des sceaux)\b/.test(l)) return 'ministre';

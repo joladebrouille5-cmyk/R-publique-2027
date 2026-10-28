@@ -1,6 +1,7 @@
 import {
   addDays,
   candidateName,
+  figureMainFunction,
   MINISTER_DECISION_EVENT,
   PRIME_MINISTER_POST,
   type Actor,
@@ -23,7 +24,15 @@ import { mandateDates, weekReaches } from './dates';
 import { addConsequence } from './consequences';
 import { openEconomy, scheduleEconomy } from './economy';
 import { openLegislatives } from './legislatives';
-import { figureById, memberName, memberTraits, profileById, teamCompetence } from './members';
+import {
+  figureById,
+  memberName,
+  memberTraits,
+  postCompetenceOf,
+  postExpertise,
+  profileById,
+  teamCompetence,
+} from './members';
 import { openParliament } from './parliament';
 import { updateTension } from './tension';
 
@@ -32,8 +41,9 @@ import { updateTension } from './tension';
 // figures réelles du jeu de règles (fiches sourcées) et les profils fictifs ; une personnalité
 // réelle peut refuser (refus simulé, d'après sa proximité avec le président) ; un profil fictif
 // accepte toujours. Le Premier ministre propose les ministres : les personnalités proches du
-// président (acteurs et figures) qui acceptent, dans la limite du jeu de règles, puis des profils
-// fictifs ; le président joueur peut ensuite pourvoir lui-même les ministères régaliens. Même
+// président (acteurs et figures) qui acceptent, placées là où elles sont le plus expertes (phase
+// 14), dans la limite du jeu de règles, puis des profils fictifs pour les postes restants ; le
+// président joueur peut ensuite pourvoir lui-même les ministères régaliens. Même
 // règle pour le président joueur et pour le président IA, dont le choix est déterministe. La
 // compétence et la popularité prêtées aux membres agissent sur la popularité du président, le
 // Parlement, la censure et les crises, toujours par le registre (hypothèses de jeu).
@@ -217,9 +227,12 @@ export function acceptsPost(
 }
 
 /**
- * Ministres proposés par le Premier ministre : d'abord les personnalités proches du président
- * (acteurs et figures, qui acceptent), dans l'ordre des postes et dans la limite du jeu de
- * règles, puis des profils fictifs du plus au moins pertinent.
+ * Ministres proposés par le Premier ministre (phase 14) : les personnalités proches du président
+ * (acteurs et figures, qui acceptent) sont placées là où elles sont le plus expertes — couples
+ * (personnalité, poste) du plus au moins pertinent : bonus d'expertise sur le poste, compétence
+ * sur le poste, préférence du Premier ministre (proximité et compétence), ordre des postes —, au
+ * plus `ministresActeursMax` ; les profils fictifs, du plus au moins pertinent, pourvoient les
+ * postes restants. Déterministe.
  */
 export function composeMinisters(
   state: GameState,
@@ -228,18 +241,39 @@ export function composeMinisters(
   primeMinister: MemberRef,
 ): Government['ministres'] {
   const { proximiteMin, ministresActeursMax } = ruleset.quinquennat.acceptation;
-  const allies = eligibleCandidates(state, ruleset, president)
-    .filter((c) => c.proximite >= proximiteMin && c.member.ref !== primeMinister.ref)
-    .slice(0, ministresActeursMax);
+  const postes = ruleset.quinquennat.postes;
+  const allies = eligibleCandidates(state, ruleset, president).filter(
+    (c) => c.proximite >= proximiteMin && c.member.ref !== primeMinister.ref,
+  );
+  const pairs = allies
+    .flatMap((c, rang) =>
+      postes.map((poste, ordre) => ({
+        member: c.member,
+        posteId: poste.id,
+        rang,
+        ordre,
+        bonus: postExpertise(ruleset, c.member, poste.id)?.bonus ?? 0,
+        competence: postCompetenceOf(state, ruleset, c.member, poste.id),
+      })),
+    )
+    .sort(
+      (a, b) =>
+        b.bonus - a.bonus || b.competence - a.competence || a.rang - b.rang || a.ordre - b.ordre,
+    );
+  const chosen = new Map<string, MemberRef>();
+  const placed = new Set<string>();
+  for (const pair of pairs) {
+    if (chosen.size >= ministresActeursMax) break;
+    if (chosen.has(pair.posteId) || placed.has(pair.member.ref)) continue;
+    chosen.set(pair.posteId, pair.member);
+    placed.add(pair.member.ref);
+  }
   const profiles = sortedProfiles(president, ruleset, new Set([primeMinister.ref]));
-  return ruleset.quinquennat.postes.map((poste, i) => {
-    const ally = allies[i];
-    if (ally) return { ...ally.member, posteId: poste.id };
-    return {
-      nature: 'profil' as const,
-      ref: profiles[i - allies.length]!.profile.id,
-      posteId: poste.id,
-    };
+  let next = 0;
+  return postes.map((poste) => {
+    const member = chosen.get(poste.id);
+    if (member) return { ...member, posteId: poste.id };
+    return { nature: 'profil' as const, ref: profiles[next++]!.profile.id, posteId: poste.id };
   });
 }
 
@@ -328,12 +362,33 @@ export function endGovernment(quinquennat: Quinquennat, date: string, motif: str
   quinquennat.gouvernement = null;
 }
 
-/** Description d'une personnalité proposée au joueur (aucun propos, faits et hypothèses). */
+/**
+ * Compétence d'un membre sur un poste, pour les descriptions : « 60 % » ou, avec une expertise,
+ * « 70 % sur ce poste (expertise : Ministre de l'Intérieur) ».
+ */
+function competenceText(
+  state: GameState,
+  ruleset: Ruleset,
+  member: MemberRef,
+  posteId: string | null,
+): string {
+  const general = memberTraits(state, ruleset, member).competence;
+  const expertise = postExpertise(ruleset, member, posteId);
+  if (!expertise) return pct(general);
+  const onPost = postCompetenceOf(state, ruleset, member, posteId);
+  return `${pct(general)}, ${pct(onPost)} sur ce poste (expertise : ${expertise.fonction}${expertise.enCours ? '' : ', fonction passée'})`;
+}
+
+/**
+ * Description d'une personnalité proposée au joueur (aucun propos, faits et hypothèses), pour
+ * Matignon (`posteId` null) ou pour un ministère (compétence et expertise sur ce poste).
+ */
 function candidateOption(
   state: GameState,
   ruleset: Ruleset,
   president: Actor,
   candidate: Candidate,
+  posteId: string | null = null,
 ): { id: string; libelle: string; description: string } {
   const { proximiteMin } = ruleset.quinquennat.acceptation;
   const answer =
@@ -343,13 +398,15 @@ function candidateOption(
   const proximite = `Proximité avec vous : ${candidate.proximite}/100 ; ${answer}`;
   if (candidate.member.nature === 'figure') {
     const f = figureById(ruleset, candidate.member.ref)!;
-    const current = f.fonctions.find((x) => x.enCours && x.nature !== 'autre') ?? f.fonctions[0]!;
+    // Fonction principale (`@r2027/shared`), signalée comme passée quand elle n'est plus exercée.
+    const main = figureMainFunction(f);
+    const fonction = main.enCours ? main.libelle : `fonction passée : ${main.libelle}`;
     return {
       id: f.id,
       libelle: `${f.prenom} ${f.nom} — ${f.parti}`,
       description:
-        `Personnalité réelle (${current.libelle}) : sa réponse et son action au gouvernement sont simulées, aucun propos ne lui est attribué. ` +
-        `Compétence estimée : ${pct(f.competence.valeur)} ; popularité prêtée (hypothèse) : niveau ${f.notoriete.niveau} sur 3. ${proximite}`,
+        `Personnalité réelle (${fonction}) : sa réponse et son action au gouvernement sont simulées, aucun propos ne lui est attribué. ` +
+        `Compétence estimée : ${competenceText(state, ruleset, candidate.member, posteId)} ; popularité prêtée (hypothèse) : niveau ${f.notoriete.niveau} sur 3. ${proximite}`,
     };
   }
   const actor = state.actors[candidate.member.ref]!;
@@ -420,7 +477,11 @@ export function requestMinisters(state: GameState, ruleset: Ruleset): void {
     const id = ministerDecisionId(week, posteId);
     state.pendingDecisions = state.pendingDecisions.filter((d) => d.id !== id);
     const name = memberLabel(state, ruleset, current);
-    const competence = memberTraits(state, ruleset, current).competence;
+    // Personnalités expertes du poste d'abord (bonus), puis l'ordre de préférence habituel.
+    const forPost = candidates
+      .map((c, rang) => ({ c, rang, bonus: postExpertise(ruleset, c.member, posteId)?.bonus ?? 0 }))
+      .sort((a, b) => b.bonus - a.bonus || a.rang - b.rang)
+      .map(({ c }) => c);
     state.pendingDecisions.push({
       id,
       kind: 'gouvernement',
@@ -430,14 +491,14 @@ export function requestMinisters(state: GameState, ruleset: Ruleset): void {
       label: `Ministère : ${libelles.get(posteId) ?? posteId}`,
       description:
         `Le Premier ministre propose ${name}. Confirmez, ou nommez une autre personnalité : une personnalité éloignée de vous peut refuser (refus simulé), et le ministère reste alors à ${name}. ` +
-        'La compétence du ministre pèse sur l’action du gouvernement et sur la gestion des crises de son domaine.',
+        'La compétence du ministre sur son poste (expertise d’une fonction ministérielle passée ou présente comprise) pèse sur l’action du gouvernement et sur la gestion des crises de son domaine.',
       options: [
         {
           id: current.ref,
           libelle: `Confirmer ${name}`,
-          description: `Proposition du Premier ministre. Compétence ${current.nature === 'figure' ? 'estimée' : 'prêtée'} : ${pct(competence)}.`,
+          description: `Proposition du Premier ministre. Compétence ${current.nature === 'figure' ? 'estimée' : 'prêtée'} : ${competenceText(state, ruleset, current, posteId)}.`,
         },
-        ...candidates.map((c) => candidateOption(state, ruleset, president, c)),
+        ...forPost.map((c) => candidateOption(state, ruleset, president, c, posteId)),
         ...profiles.map(({ profile }) => profileOption(president, profile)),
       ],
       defaultOptionId: current.ref,
@@ -583,7 +644,7 @@ export function answerMinister(
     state,
     `ministre-${posteId}`,
     `${memberLabel(state, ruleset, member)} nommé(e) au ministère « ${poste} »`,
-    `En remplacement de ${memberName(state, ruleset, current)}. Compétence ${member.nature === 'figure' ? 'estimée' : 'prêtée'} : ${pct(memberTraits(state, ruleset, member).competence)}.`,
+    `En remplacement de ${memberName(state, ruleset, current)}. Compétence ${member.nature === 'figure' ? 'estimée' : 'prêtée'} : ${competenceText(state, ruleset, member, posteId)}.`,
   );
 }
 

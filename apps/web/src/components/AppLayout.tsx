@@ -4,19 +4,23 @@ import { useHealth } from '../api/hooks';
 import { platform } from '../platform';
 import { ThemeToggle, useApplyTheme } from './ThemeToggle';
 
+/**
+ * État du serveur (web) ou du moteur local (application) : sur l'appareil, rien n'est affiché
+ * quand le moteur fonctionne (phase 14, demande de l'utilisateur) ; seuls le démarrage et une
+ * panne sont signalés. La version du moteur reste dans Paramètres.
+ */
 function ServerStatus() {
   const health = useHealth();
   const data = health.data;
   const ok = data?.status === 'ok';
   const local = platform().kind === 'local';
+  if (local && ok) return null;
   const text = health.isPending
     ? local
       ? 'Démarrage du moteur local…'
       : 'Connexion au serveur…'
     : ok
-      ? local
-        ? `Hors ligne · moteur ${data.versions.engine} sur l’appareil`
-        : `Serveur connecté · moteur ${data.versions.engine}`
+      ? `Serveur connecté · moteur ${data.versions.engine}`
       : local
         ? 'Moteur local indisponible'
         : 'Serveur ou base de données indisponible';

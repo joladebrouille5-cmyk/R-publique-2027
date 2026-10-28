@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import {
   addDays,
   daysFromCivil,
+  figureExpertise,
   FREE_LICENSES,
   isoWeekday,
   parseIsoDate,
@@ -367,6 +368,74 @@ describe('figures nominables au gouvernement (phase 11)', () => {
     const crisis = full();
     (crisis.crises[0] as { poste: string | null }).poste = 'inconnu';
     expect(RulesetSchema.safeParse(crisis).success).toBe(false);
+  });
+});
+
+describe('vivier élargi et expertise ministérielle (phase 14)', () => {
+  const list = ruleset.figures.figures;
+  const expertise = ruleset.quinquennat.equipe.expertise;
+
+  it('compte au moins 60 personnalités, toutes avec une photo, et publie les fiches écartées', () => {
+    expect(list.length).toBeGreaterThanOrEqual(60);
+    expect(list.every((f) => f.photo !== null)).toBe(true);
+    const ids = new Set(list.map((f) => f.id));
+    for (const e of ruleset.figures.ecartees) {
+      expect(ids.has(e.id)).toBe(false);
+      expect(e.motif).toMatch(/\S/);
+    }
+    // Chaque photo choisie hors de la première de Wikidata porte le motif de ce choix.
+    for (const f of list) if (f.photo?.choix) expect(f.photo.choix.length).toBeGreaterThan(20);
+  });
+
+  it('garde toutes les figures des jeux de règles précédents (parties en cours)', () => {
+    const ids = new Set(list.map((f) => f.id));
+    for (const id of [
+      'figure-bardella',
+      'figure-tanguy',
+      'figure-chenu',
+      'figure-ciotti',
+      'figure-panot',
+      'figure-bompard',
+      'figure-coquerel',
+      'figure-borne',
+      'figure-darmanin',
+      'figure-braun-pivet',
+      'figure-lecornu',
+      'figure-faure',
+      'figure-vallaud',
+      'figure-delga',
+      'figure-wauquiez',
+      'figure-pecresse',
+      'figure-chatelain',
+      'figure-jadot',
+      'figure-bayrou',
+      'figure-fesneau',
+      'figure-estrosi',
+      'figure-brossat',
+    ])
+      expect(ids.has(id)).toBe(true);
+  });
+
+  it('donne une table d’expertise pour chaque ministère, et des experts pour chacun', () => {
+    const posts = ruleset.quinquennat.postes.map((p) => p.id);
+    expect(expertise.postes.map((e) => e.posteId).sort()).toEqual([...posts].sort());
+    expect(expertise.secretaireEtat).toBeLessThan(expertise.ministre);
+    expect(expertise.plafond).toBeLessThanOrEqual(1);
+    for (const posteId of posts) {
+      const experts = list.filter((f) =>
+        figureExpertise(f, expertise).some((e) => e.posteId === posteId),
+      );
+      expect(experts.length, posteId).toBeGreaterThan(0);
+    }
+  });
+
+  it('refuse une table d’expertise sur un poste inconnu ou en double', () => {
+    const unknown = full();
+    unknown.quinquennat.equipe.expertise.postes[0]!.posteId = 'inconnu';
+    expect(RulesetSchema.safeParse(unknown).success).toBe(false);
+    const twice = full();
+    twice.quinquennat.equipe.expertise.postes.push(twice.quinquennat.equipe.expertise.postes[0]!);
+    expect(RulesetSchema.safeParse(twice).success).toBe(false);
   });
 });
 

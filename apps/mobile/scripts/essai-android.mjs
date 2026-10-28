@@ -123,7 +123,11 @@ try {
 
   step('Démarrage hors ligne');
   let { webview, page } = await launch();
-  await expect(page.getByText(/Hors ligne · moteur .* sur l’appareil/)).toBeVisible();
+  // Moteur local prêt : aucune ligne d'état en pied de page (phase 14), ni démarrage ni panne.
+  await expect(page.getByRole('link', { name: 'Nouvelle partie' })).toBeVisible();
+  await expect(page.getByText('Démarrage du moteur local…')).toHaveCount(0);
+  await expect(page.getByText('Moteur local indisponible')).toHaveCount(0);
+  await expect(page.getByText(/Hors ligne · moteur/)).toHaveCount(0);
   const native = await page.evaluate(() => [
     globalThis.Capacitor?.isNativePlatform?.(),
     globalThis.Capacitor?.getPlatform?.(),

@@ -2,12 +2,12 @@ import { z } from 'zod';
 import { IsoDateSchema } from './game';
 import { EstimatedPositionSchema, ImportedSourceSchema, photoCreditSchema } from './personalities';
 
-// Figures politiques réelles proposées pour le gouvernement (phase 11, P11-02) : personnalités
-// qui ne sont pas candidates dans la partie mais que le président peut nommer à Matignon ou à
-// un ministère. Produit par `pnpm data:gouvernement` : fonctions relevées dans l'infobox de
-// l'article Wikipédia (révision figée), identifiant, partis et photo d'après Wikidata, photo
-// sous licence libre (Wikimedia Commons), position du parti d'après l'enquête d'experts Chapel
-// Hill. Compétence : estimation selon une méthode documentée ; notoriété : niveau déduit des
+// Figures politiques réelles proposées pour le gouvernement (phase 11, P11-02 ; vivier élargi en
+// phase 14) : personnalités qui ne sont pas candidates dans la partie mais que le président peut
+// nommer à Matignon ou à un ministère. Produit par `pnpm data:gouvernement` : fonctions et parti
+// relevés dans l'infobox de l'article Wikipédia (révision figée), identifiant, photos et décès
+// d'après Wikidata, photo sous licence libre (Wikimedia Commons), position du parti d'après
+// l'enquête d'experts Chapel Hill. Compétence : estimation selon une méthode documentée ; notoriété : niveau déduit des
 // fonctions. Aucun propos ni aucune citation n'est attribué à une personne réelle : le schéma n'a
 // aucun champ pour cela ; nominations, refus et action au gouvernement sont simulés.
 
@@ -20,6 +20,7 @@ export const PartialDateSchema = z
 
 /** Nature d'une fonction, déduite de son libellé (règles dans `methode.fonctions`). */
 export const FIGURE_FUNCTION_KINDS = [
+  'president-republique',
   'premier-ministre',
   'ministre',
   'secretaire-etat',
@@ -52,7 +53,10 @@ export const GovernmentFigureSchema = z
     id: z.string().regex(/^figure-[a-z0-9-]+$/),
     prenom: z.string().min(1),
     nom: z.string().min(1),
-    /** Parti actuel (appartenance sans date de fin dans Wikidata, vérifiée à l'import). */
+    /**
+     * Parti en cours d'après le champ « parti » de l'infobox de l'article (révision importée), ou
+     * « Sans étiquette » (position du dernier parti suivi quitté, hypothèse).
+     */
     parti: z.string().min(1),
     /** Groupe de l'Assemblée nationale associé au parti (identifiant de `assemblee`), ou null. */
     groupe: Id.nullable(),
@@ -91,6 +95,15 @@ export const GovernmentFigureSchema = z
   });
 export type GovernmentFigure = z.infer<typeof GovernmentFigureSchema>;
 
+/**
+ * Fonction principale d'une figure : la première fonction en cours (hors « autre »), sinon la
+ * première de sa fiche, qui peut être terminée (`enCours` faux : à signaler comme passée). Règle
+ * commune au moteur (descriptions des nominations) et à l'interface (fiches).
+ */
+export function figureMainFunction(figure: Pick<GovernmentFigure, 'fonctions'>): FigureFunction {
+  return figure.fonctions.find((f) => f.enCours && f.nature !== 'autre') ?? figure.fonctions[0]!;
+}
+
 /** Groupe de l'Assemblée associé au parti d'une personnalité réelle candidate (table du jeu). */
 export const GroupAttachmentSchema = z
   .object({
@@ -100,6 +113,20 @@ export const GroupAttachmentSchema = z
   })
   .strict();
 export type GroupAttachment = z.infer<typeof GroupAttachmentSchema>;
+
+/**
+ * Personnalité de la sélection écartée à l'import (phase 14) : article sans infobox de fonctions,
+ * parti en cours non suivi par le jeu, personne décédée… avec le motif.
+ */
+export const DiscardedFigureSchema = z
+  .object({
+    id: z.string().regex(/^figure-[a-z0-9-]+$/),
+    prenom: z.string().min(1),
+    nom: z.string().min(1),
+    motif: z.string().min(1),
+  })
+  .strict();
+export type DiscardedFigure = z.infer<typeof DiscardedFigureSchema>;
 
 export const GovernmentFiguresSchema = z
   .object({
@@ -113,9 +140,13 @@ export const GovernmentFiguresSchema = z
         notoriete: z.string().min(1),
         position: z.string().min(1),
         groupe: z.string().min(1),
+        parti: z.string().min(1),
+        photo: z.string().min(1),
       })
       .strict(),
     figures: z.array(GovernmentFigureSchema).min(1),
+    /** Personnalités de la sélection écartées, avec leur motif (phase 14). */
+    ecartees: z.array(DiscardedFigureSchema),
     rattachements: z.array(GroupAttachmentSchema),
   })
   .strict()

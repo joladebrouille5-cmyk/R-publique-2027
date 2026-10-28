@@ -10,15 +10,16 @@ import { Link } from 'react-router';
 import { useId, useState } from 'react';
 import { useRuleset } from '../api/hooks';
 import { Badge } from '../components/Badge';
+import { BlocFigures } from '../components/BlocFigures';
 import { ErrorMessage } from '../components/ErrorMessage';
-import { card, input } from '../components/ui';
+import { card, inputCompact } from '../components/ui';
 import { DATA_STATUS_LABELS, formatCount, formatGameDate, formatRatio } from '../labels';
 import { useCurrentGame } from './GameLayout';
 import { ScreenHeading } from '../components/Disclosure';
 
 // Législatives (phase 6, P6-07 ; vivantes en phase 13) : calendrier, campagne et accords entre
-// blocs, dissolution, composition issue des dernières élections et résultats par
-// circonscription (désistements, candidatures communes). Les élections de 2024 sont réelles
+// blocs, dissolution, composition issue des dernières élections, figures des blocs (phase 14) et
+// résultats par circonscription (désistements, candidatures communes). Les élections de 2024 sont réelles
 // (ministère de l'Intérieur, sans nom de candidat) ; les suivantes sont simulées et étiquetées
 // comme telles, comme les accords prêtés aux blocs.
 
@@ -356,7 +357,7 @@ function Districts({ rows, title, note }: { rows: Row[]; title: string; note: st
         <label htmlFor={selectId}>Département</label>
         <select
           id={selectId}
-          className={`${input} w-auto py-1.5`}
+          className={inputCompact}
           value={departement}
           onChange={(event) => setDepartement(event.target.value)}
         >
@@ -432,6 +433,7 @@ function Content({ state, ruleset }: { state: GameState; ruleset: Ruleset }) {
       <Calendar state={state} ruleset={ruleset} />
       {legislatives.campagne && <Campaign state={state} ruleset={ruleset} />}
       <Composition outcome={derniere} ruleset={ruleset} />
+      <BlocFigures ruleset={ruleset} />
       {premierTour ? (
         <Districts
           key="premier-tour"

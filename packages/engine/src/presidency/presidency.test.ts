@@ -1,4 +1,10 @@
-import { MINISTER_DECISION_EVENT, type GameState, type WeeklyReport } from '@r2027/shared';
+import {
+  figureMainFunction,
+  memberExpertise,
+  MINISTER_DECISION_EVENT,
+  type GameState,
+  type WeeklyReport,
+} from '@r2027/shared';
 import { describe, expect, it } from 'vitest';
 import { proximity } from '../ai/relations';
 import { advanceWeek } from '../core/advanceWeek';
@@ -14,8 +20,14 @@ import {
   sponsorship,
 } from '../core/testing';
 import { addYears, mandateDates, nextCampaignStart, nextCycle } from './dates';
-import { acceptsPost, eligibleCandidates, openQuinquennat, presidentOf } from './government';
-import { memberTraits, teamCompetence } from './members';
+import {
+  acceptsPost,
+  composeMinisters,
+  eligibleCandidates,
+  openQuinquennat,
+  presidentOf,
+} from './government';
+import { memberTraits, postCompetenceOf, postExpertise, teamCompetence } from './members';
 
 // Phase 6 (P6-01 à P6-03) : calendrier institutionnel, investiture, gouvernement, président IA.
 
@@ -453,5 +465,121 @@ describe('figures réelles au gouvernement (phase 11)', () => {
         }),
       ).toBeGreaterThanOrEqual(proximiteMin);
     expect(state.pendingDecisions.filter((d) => d.eventId === MINISTER_DECISION_EVENT)).toEqual([]);
+  });
+});
+
+describe('expertise ministérielle (phase 14)', () => {
+  const asked = advance(playerElected(), [], [], RULES).state;
+  const named = advance(asked, [], defaults(asked), RULES).state;
+  const government = named.quinquennat!.gouvernement!;
+  const president = presidentOf(named);
+  const rules = RULES.quinquennat.equipe.expertise;
+  const figure = (ref: string) => ({ nature: 'figure' as const, ref });
+  const round2 = (x: number) => Math.round(x * 100) / 100;
+
+  it('ajoute le bonus de l’expertise sur le poste, dans la limite du plafond', () => {
+    const nunez = figure('figure-nunez');
+    const base = memberTraits(named, RULES, nunez).competence;
+    expect(postExpertise(RULES, nunez, 'interieur')).toMatchObject({
+      niveau: 'ministre',
+      bonus: rules.ministre,
+      fonction: expect.stringMatching(/^Ministre de l'Intérieur/),
+    });
+    expect(postCompetenceOf(named, RULES, nunez, 'interieur')).toBe(
+      Math.min(rules.plafond, round2(base + rules.ministre)),
+    );
+    // Hors de son domaine, ou à Matignon : sa compétence de gestion seule.
+    expect(postCompetenceOf(named, RULES, nunez, 'agriculture')).toBe(base);
+    expect(postCompetenceOf(named, RULES, nunez, null)).toBe(base);
+    for (const f of RULES.figures.figures)
+      for (const posteId of POSTES) {
+        const value = postCompetenceOf(named, RULES, figure(f.id), posteId);
+        expect(value).toBeGreaterThanOrEqual(f.competence.valeur);
+        expect(value).toBeLessThanOrEqual(Math.max(rules.plafond, f.competence.valeur));
+      }
+    // Profils fictifs et candidats de la partie : aucune expertise.
+    expect(
+      memberExpertise(RULES, { nature: 'profil', ref: RULES.quinquennat.profils[0]!.id }),
+    ).toEqual([]);
+    expect(memberExpertise(RULES, { nature: 'acteur', ref: PLAYER_ACTOR_ID })).toEqual([]);
+  });
+
+  it('le Premier ministre place les personnalités là où elles sont expertes, sur tous les ministères', () => {
+    const ministers = composeMinisters(named, RULES, president, government.premierMinistre);
+    expect(ministers.map((m) => m.posteId)).toEqual(POSTES);
+    const refs = [government.premierMinistre, ...ministers].map((m) => m.ref);
+    expect(new Set(refs).size).toBe(refs.length);
+    const allies = eligibleCandidates(named, RULES, president).filter(
+      (c) => c.proximite >= proximiteMin && c.member.ref !== government.premierMinistre.ref,
+    );
+    const placed = new Set(ministers.map((m) => m.ref));
+    const real = ministers.filter((m) => m.nature !== 'profil');
+    expect(real.length).toBe(Math.min(ministresActeursMax, allies.length, POSTES.length));
+    for (const m of real) expect(allies.some((a) => a.member.ref === m.ref)).toBe(true);
+    // Un ministère confié à un non-expert : aucune personnalité experte n'est restée sans poste.
+    for (const m of ministers) {
+      if (postExpertise(RULES, m, m.posteId)) continue;
+      const idle = allies.filter(
+        (a) => !placed.has(a.member.ref) && postExpertise(RULES, a.member, m.posteId),
+      );
+      expect(idle, m.posteId).toEqual([]);
+    }
+    expect(ministers.filter((m) => postExpertise(RULES, m, m.posteId)).length).toBeGreaterThan(3);
+  });
+
+  it('compose le même gouvernement quel que soit l’ordre des fiches du jeu de règles', () => {
+    const reversed = JSON.parse(JSON.stringify(RULES)) as typeof RULES;
+    reversed.figures.figures.reverse();
+    expect(composeMinisters(named, reversed, president, government.premierMinistre)).toEqual(
+      composeMinisters(named, RULES, president, government.premierMinistre),
+    );
+  });
+
+  it('propose d’abord les experts du poste pour un ministère régalien, sans propos attribué', () => {
+    const decision = named.pendingDecisions.find((d) => d.id.endsWith('-interieur'))!;
+    const [confirm, ...options] = decision.options;
+    expect(confirm!.libelle).toMatch(/^Confirmer /);
+    const expertIds = new Set(
+      RULES.figures.figures
+        .filter((f) => postExpertise(RULES, figure(f.id), 'interieur'))
+        .map((f) => f.id),
+    );
+    const offered = options.filter((o) => expertIds.has(o.id));
+    expect(offered.length).toBeGreaterThan(0);
+    // Les experts proposés ouvrent la liste.
+    expect(options.slice(0, offered.length).map((o) => o.id)).toEqual(offered.map((o) => o.id));
+    for (const o of offered) {
+      expect(o.description).toMatch(/\d+ % sur ce poste \(expertise : /);
+      expect(o.description).not.toMatch(/[«»“”"]/);
+    }
+  });
+
+  it('signale la fonction principale d’une personnalité réelle comme passée quand elle a pris fin', () => {
+    const decision = named.pendingDecisions.find((d) => d.id.endsWith('-interieur'))!;
+    // Après l'option qui confirme la proposition du Premier ministre.
+    const real = decision.options.slice(1).flatMap((o) => {
+      const f = RULES.figures.figures.find((x) => x.id === o.id);
+      return f ? [{ o, main: figureMainFunction(f) }] : [];
+    });
+    expect(real.some(({ main }) => !main.enCours)).toBe(true);
+    for (const { o, main } of real)
+      expect(o.description).toContain(
+        main.enCours
+          ? `Personnalité réelle (${main.libelle}) :`
+          : `Personnalité réelle (fonction passée : ${main.libelle}) :`,
+      );
+  });
+
+  it('la compétence de l’équipe retient la compétence de chaque ministre régalien sur son poste', () => {
+    const { poidsPremierMinistre, postesRegaliens } = RULES.quinquennat.equipe;
+    const regalian = government.ministres.filter((m) => postesRegaliens.includes(m.posteId));
+    const mean =
+      regalian.reduce((sum, m) => sum + postCompetenceOf(named, RULES, m, m.posteId), 0) /
+      regalian.length;
+    const pm = memberTraits(named, RULES, government.premierMinistre).competence;
+    expect(teamCompetence(named, RULES, government)).toBeCloseTo(
+      poidsPremierMinistre * pm + (1 - poidsPremierMinistre) * mean,
+      10,
+    );
   });
 });

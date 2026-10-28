@@ -11,7 +11,7 @@ import { compareStrings, type Ledger } from '../core/ledger';
 import { drawAlea, stream } from '../core/random';
 import { addConsequence, crisisMultiplier } from './consequences';
 import { scheduleEconomy, type EconomyBook } from './economy';
-import { memberInCharge, memberName, memberTraits } from './members';
+import { memberInCharge, memberName, postCompetenceOf } from './members';
 
 // Crises du quinquennat (phase 6, P6-06) : bibliothèque de crises fictives du jeu de règles,
 // tirées chaque semaine selon leurs conditions, leur saison, leur probabilité et leur fréquence ;
@@ -136,7 +136,7 @@ function crisisManagement(context: Context, crisis: CrisisDefinition): void {
   const { state, ruleset, ledger, presidentId, step } = context;
   const member = memberInCharge(state, crisis.poste);
   if (!member) return;
-  const competence = memberTraits(state, ruleset, member).competence;
+  const competence = postCompetenceOf(state, ruleset, member, crisis.poste);
   const value = Math.round(ruleset.quinquennat.equipe.crise * (competence - 0.5));
   if (value === 0) return;
   const poste = crisis.poste

@@ -137,9 +137,15 @@ describe('Assemblée nationale', () => {
     expect(second!.deposeSemaine - first!.deposeSemaine).toBe(
       RULES.parlement.calendrier.intervalleDepotSemaines,
     );
-    expect(first!.votes[0]?.semaine).toBe(
-      first!.deposeSemaine + RULES.parlement.calendrier.commissionSemaines,
+    // Vote à la fin de l'examen en commission, ou la semaine suivante si l'issue incertaine du
+    // texte a demandé la décision du président (ouverte cette semaine-là, répondue « voter »).
+    const end = first!.deposeSemaine + RULES.parlement.calendrier.commissionSemaines;
+    const decided = reports.some((r) =>
+      r.decisions.some(
+        (d) => d.decisionId === `t-${end + 1}-${first!.id}` && d.optionId === 'voter',
+      ),
     );
+    expect(first!.votes[0]?.semaine).toBe(end + (decided ? 1 : 0));
   });
 
   it('fait voter les groupes en bloc, sans jamais dépasser leurs sièges', () => {

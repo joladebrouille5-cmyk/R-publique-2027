@@ -1,6 +1,6 @@
 {
   "id": "presidentielle-2027",
-  "version": "14.0.0",
+  "version": "15.0.0",
   "libelle": "Présidentielle 2027 et quinquennat — campagne, parrainages, financement, médias réels, présidence, gouvernement et figures réelles nominables, Parlement, économie, crises et législatives",
   "verifieLe": "2026-10-27",
   "sources": {
@@ -5644,14 +5644,14 @@
       "statut": "hypothese",
       "proximiteMin": 60,
       "probabiliteSousSeuil": 0.25,
-      "ministresActeursMax": 5,
+      "ministresActeursMax": 10,
       "delaiApresRefus": 26
     },
     "equipe": {
       "statut": "hypothese",
-      "note": "Figures réelles nominables au gouvernement (gouvernement-2027.json, pnpm data:gouvernement) : fonctions relevées dans Wikipédia, compétence estimée et notoriété déduites par des règles documentées. Effets de la compétence et de la popularité sur la popularité du président, le soutien des groupes aux textes, la censure et la gestion des crises : paramètres de jeu (hypothèses), sans prétention de mesure. La popularité prêtée à une figure dépend de son niveau de notoriété ; ce n’est jamais un sondage. Nominations, refus et action au gouvernement sont simulés ; aucun propos n’est attribué. Phase 13 : chaque poste couvre des domaines du programme et des indicateurs ; la compétence du ministre (écart à 0,5) donne un bonus ou un malus de soutien aux textes de ses domaines, un effet hebdomadaire sur ses indicateurs et module les actions du président liées à son poste (hypothèses).",
+      "note": "Figures réelles nominables au gouvernement (gouvernement-2027.json, pnpm data:gouvernement) : fonctions relevées dans Wikipédia, compétence estimée et notoriété déduites par des règles documentées. Effets de la compétence et de la popularité sur la popularité du président, le soutien des groupes aux textes, la censure et la gestion des crises : paramètres de jeu (hypothèses), sans prétention de mesure. La popularité prêtée à une figure dépend de son niveau de notoriété ; ce n’est jamais un sondage. Nominations, refus et action au gouvernement sont simulés ; aucun propos n’est attribué. Phase 13 : chaque poste couvre des domaines du programme et des indicateurs ; la compétence du ministre (écart à 0,5) donne un bonus ou un malus de soutien aux textes de ses domaines, un effet hebdomadaire sur ses indicateurs et module les actions du président liées à son poste (hypothèses). Phase 14 : vivier élargi à 108 personnalités réelles (parti lu dans l’infobox de l’article, photo libre pour chacune) ; expertise ministérielle : une fonction de ministre (ou de secrétaire d’État, de ministre délégué) dont le libellé cite un mot-clé d’un poste donne un bonus de compétence sur ce poste (hypothèse de jeu) ; le Premier ministre place les personnalités qui acceptent là où elles sont le plus expertes, sur tous les ministères, et ne complète qu’avec des profils fictifs.",
       "fichier": "gouvernement-2027.json",
-      "empreinte": "106d11abbdfe96c2419986e062a60a87bdad59c67c545dd2d45263dc972530f0",
+      "empreinte": "0d9dd766b9d8ae8f669a962ef2d31104529c34ba868144227555cc375d407b25",
       "postesRegaliens": ["economie", "interieur", "affaires-etrangeres", "armees", "justice"],
       "popularite": [2700, 3000, 3300],
       "competenceActeur": 0.5,
@@ -5760,7 +5760,90 @@
         }
       ],
       "soutienTheme": 0.4,
-      "actionPoste": 0.8
+      "actionPoste": 0.8,
+      "expertise": {
+        "postes": [
+          {
+            "posteId": "economie",
+            "motsCles": [
+              "économie",
+              "finances",
+              "budget",
+              "comptes publics",
+              "industrie",
+              "numérique"
+            ]
+          },
+          {
+            "posteId": "interieur",
+            "motsCles": ["intérieur", "citoyenneté"]
+          },
+          {
+            "posteId": "affaires-etrangeres",
+            "motsCles": [
+              "affaires étrangères",
+              "europe",
+              "affaires européennes",
+              "commerce extérieur",
+              "francophonie"
+            ]
+          },
+          {
+            "posteId": "armees",
+            "motsCles": ["armées", "défense", "anciens combattants"]
+          },
+          {
+            "posteId": "justice",
+            "motsCles": ["justice", "garde des sceaux"]
+          },
+          {
+            "posteId": "education",
+            "motsCles": ["éducation", "enseignement", "jeunesse"]
+          },
+          {
+            "posteId": "sante",
+            "motsCles": [
+              "santé",
+              "solidarité",
+              "autonomie",
+              "personnes âgées",
+              "handicap",
+              "affaires sociales",
+              "famille"
+            ]
+          },
+          {
+            "posteId": "travail",
+            "motsCles": [
+              "travail",
+              "emploi",
+              "formation professionnelle",
+              "insertion",
+              "dialogue social"
+            ]
+          },
+          {
+            "posteId": "transition-ecologique",
+            "motsCles": [
+              "écologie",
+              "écologique",
+              "environnement",
+              "énergie",
+              "énergétique",
+              "climat",
+              "biodiversité",
+              "transports"
+            ]
+          },
+          {
+            "posteId": "agriculture",
+            "motsCles": ["agriculture", "alimentation", "alimentaire", "pêche", "forêt", "ruralité"]
+          }
+        ],
+        "ministre": 0.1,
+        "secretaireEtat": 0.05,
+        "plafond": 0.95
+      }
     },
     "opinion": {
       "statut": "hypothese",

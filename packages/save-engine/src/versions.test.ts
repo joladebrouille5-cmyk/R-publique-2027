@@ -25,6 +25,7 @@ import V13 from './fixtures/v13-phase-9.json' with { type: 'json' };
 import V14 from './fixtures/v14-phase-9.json' with { type: 'json' };
 import V15 from './fixtures/v15-phase-10.json' with { type: 'json' };
 import V16 from './fixtures/v16-phase-12.json' with { type: 'json' };
+import V17 from './fixtures/v17-phase-13.json' with { type: 'json' };
 import { loadStoredState, MIGRATED_CANDIDATE, SaveFormatError, upgradeState } from './versions';
 
 const ruleset = getRuleset(CURRENT_RULESET_KEY);
@@ -887,6 +888,57 @@ describe('migrations de sauvegarde', () => {
     expect(play()).toEqual(later);
   });
 
+  it('passe au jeu de règles 15 sans rien perdre (format 17, gouvernement de figures réelles)', () => {
+    // Président IA, gouvernement de figures réelles, d'un candidat de la partie et de profils.
+    const government = V17.state.quinquennat.gouvernement;
+    expect(government.premierMinistre.nature).toBe('figure');
+    expect(government.ministres.filter((m) => m.nature === 'figure').length).toBeGreaterThan(2);
+    const { state, migratedFrom } = loadStoredState(V17.state, V17.stateHash, 17);
+    expect(migratedFrom).toBe(17);
+    expect(state.meta).toMatchObject({
+      week: V17.state.meta.week,
+      date: V17.state.meta.date,
+      saveSchemaVersion: SAVE_SCHEMA_VERSION,
+      engineVersion: ENGINE_VERSION,
+      rulesetVersion: CURRENT_RULESET_KEY,
+    });
+    // Rien d'autre ne change ; chaque personnalité citée figure dans le vivier du jeu de règles 15.
+    const { meta: _meta, ...rest } = state;
+    const { meta: _m, ...restBefore } = V17.state;
+    expect(rest).toEqual(restBefore);
+    const known = new Set(ruleset.figures.figures.map((f) => f.id));
+    const members = [government.premierMinistre, ...government.ministres];
+    for (const m of members.filter((x) => x.nature === 'figure'))
+      expect(known.has(m.ref)).toBe(true);
+    // Le quinquennat continue avec le jeu de règles 15, de façon déterministe.
+    const play = () => {
+      let current = state;
+      for (let i = 0; i < 6; i++)
+        current = advanceWeek(
+          current,
+          {
+            actions: [],
+            decisions: current.pendingDecisions.map((d) => ({
+              decisionId: d.id,
+              optionId: d.defaultOptionId,
+            })),
+          },
+          { ruleset },
+        ).state;
+      return current;
+    };
+    const later = play();
+    expect(later.meta.week).toBe(state.meta.week + 6);
+    expect(GameStateSchema.parse(later)).toEqual(later);
+    expect(play()).toEqual(later);
+  });
+
+  it('refuse un état qui cite une personnalité absente du vivier courant', () => {
+    const altered = JSON.parse(JSON.stringify(V17.state)) as typeof V17.state;
+    altered.quinquennat.gouvernement.ministres[0]!.ref = 'figure-inconnue';
+    expect(errorCode(() => upgradeState(altered, 17))).toBe('incoherence');
+  });
+
   it('vérifie l’empreinte avant toute migration', () => {
     const altered = { ...V1_STATE, meta: { ...V1_STATE.meta, week: 3 } };
     expect(errorCode(() => loadStoredState(altered, V1_HASH, 1))).toBe('empreinte_incoherente');
@@ -914,6 +966,7 @@ describe('migrations de sauvegarde', () => {
     expect(errorCode(() => upgradeState(V14.state, 15))).toBe('etat_invalide');
     expect(errorCode(() => upgradeState(V15.state, 16))).toBe('etat_invalide');
     expect(errorCode(() => upgradeState(V16.state, 17))).toBe('etat_invalide');
+    expect(errorCode(() => upgradeState(V17.state, 18))).toBe('etat_invalide');
   });
 
   it('refuse un jeu de règles inconnu', () => {

@@ -1,10 +1,10 @@
 import { themeIndicatorEffects, type GameState, type Ruleset } from '@r2027/shared';
 import { compareStrings } from '../core/ledger';
 import type { EconomyBook } from './economy';
-import { memberName, memberTraits } from './members';
+import { memberName, postCompetenceOf } from './members';
 
 // Effets thématiques des ministres (phase 13) : chaque semaine, la compétence de chaque
-// ministre (écart à 0,5) pèse sur les indicateurs de son poste (table `equipe.themes` du jeu de
+// ministre sur son poste (écart à 0,5 ; expertise comprise, phase 14) pèse sur les indicateurs de son poste (table `equipe.themes` du jeu de
 // règles, hypothèses), par le registre de l'économie. Le soutien aux textes de son domaine est
 // appliqué par le Parlement ; la modulation des actions du président, par les actions.
 
@@ -17,7 +17,7 @@ export function ministerEffects(state: GameState, ruleset: Ruleset, book: Econom
   for (const minister of [...government.ministres].sort((a, b) =>
     compareStrings(a.posteId, b.posteId),
   )) {
-    const { competence } = memberTraits(state, ruleset, minister);
+    const competence = postCompetenceOf(state, ruleset, minister, minister.posteId);
     for (const effect of themeIndicatorEffects(ruleset, minister.posteId, competence))
       book.add(
         effect.indicateur,

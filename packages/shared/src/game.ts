@@ -685,25 +685,36 @@ export const GameStateV16Schema = GameStateV15Schema.extend({
 export type GameStateV16 = z.infer<typeof GameStateV16Schema>;
 
 /**
- * État complet d'une partie, format de sauvegarde n° 17 (phase 13) : jeu de règles 14 (actions
- * du chef de l'État, tension parlementaire, frondeurs, alliances législatives, effets des
- * ministres) ; photo du candidat personnalisé ; Parlement avec tension, fronde, motions
- * spontanées et coalition ; votes avec frondeurs et interventions de l'opposition ; campagne
- * des législatives (accords, mobilisation) et résultats avec investitures communes et
- * désistements ; dernier emploi de chaque action du président ; décisions d'alliance et de
- * coalition. Reprend tout le format 16 : sondages expliqués, débats télévisés, réseaux et
- * nouveaux médias, scénario de départ, conséquences durables, cycle électoral, présidence et
- * gouvernement, économie et crises, archives des cycles précédents. Toute évolution s'accompagne
- * d'un nouveau numéro de format et d'une migration (packages/save-engine). L'aléa ne figure pas
- * dans l'état : chaque tirage est dérivé de la graine, de la semaine et de son contexte.
+ * État au format 17 (phase 13) : jeu de règles 14 (actions du chef de l'État, tension
+ * parlementaire, frondeurs, alliances législatives, effets des ministres) ; photo du candidat
+ * personnalisé ; Parlement avec tension, fronde, motions spontanées et coalition ; votes avec
+ * frondeurs et interventions de l'opposition ; campagne des législatives (accords, mobilisation)
+ * et résultats avec investitures communes et désistements ; dernier emploi de chaque action du
+ * président ; décisions d'alliance et de coalition ; figé.
  */
-export const GameStateSchema = GameStateV16Schema.extend({
+export const GameStateV17Schema = GameStateV16Schema.extend({
   meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(17) }).strict(),
   actors: z.record(Id, ActorSchema),
   pendingDecisions: z.array(PendingDecisionSchema),
   parlement: ParliamentSchema.nullable(),
   legislatives: LegislativesStateSchema.nullable(),
   quinquennat: QuinquennatSchema.nullable(),
+}).strict();
+export type GameStateV17 = z.infer<typeof GameStateV17Schema>;
+
+/**
+ * État complet d'une partie, format de sauvegarde n° 18 (phase 14) : jeu de règles 15 (vivier
+ * de 108 personnalités réelles nominables, expertise ministérielle, ministères ouverts aux
+ * personnalités) ; mêmes champs que le format 17, que la migration reprend sans perte. Reprend
+ * tout le format 17 : mandat vivant (tension, frondeurs, motions, coalition), législatives avec
+ * accords, sondages expliqués, débats télévisés, réseaux et nouveaux médias, scénario de départ,
+ * conséquences durables, cycle électoral, présidence et gouvernement, économie et crises,
+ * archives des cycles précédents. Toute évolution s'accompagne d'un nouveau numéro de format et
+ * d'une migration (packages/save-engine). L'aléa ne figure pas dans l'état : chaque tirage est
+ * dérivé de la graine, de la semaine et de son contexte.
+ */
+export const GameStateSchema = GameStateV17Schema.extend({
+  meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(18) }).strict(),
 }).strict();
 export type GameState = z.infer<typeof GameStateSchema>;
 

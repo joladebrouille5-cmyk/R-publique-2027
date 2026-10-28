@@ -13,7 +13,7 @@ import { EngineInputError } from '../core/errors';
 import { newGame, playToEnd, QUIET, sponsorship } from '../core/testing';
 import { EconomyBook, openEconomy, scheduleEconomy, shareOfGdp } from './economy';
 import { openQuinquennat } from './government';
-import { memberTraits } from './members';
+import { postCompetenceOf } from './members';
 
 // Phase 6 (P6-05 et P6-06) : économie sourcée, modèle de jeu, crises fictives.
 
@@ -222,7 +222,8 @@ describe('crises fictives', () => {
     const crisis = RULES.crises.find((c) => c.id === 'crise-energie')!;
     const government = state.quinquennat!.gouvernement!;
     const member = government.ministres.find((m) => m.posteId === crisis.poste)!;
-    const competence = memberTraits(state, RULES, member).competence;
+    // Compétence sur le poste : expertise ministérielle comprise (phase 14).
+    const competence = postCompetenceOf(state, RULES, member, crisis.poste);
     const expected = Math.round(RULES.quinquennat.equipe.crise * (competence - 0.5));
     const management = answered.report.changes
       .find((c) => c.actorId === PLAYER_ACTOR_ID && c.ressource === 'popularite')!

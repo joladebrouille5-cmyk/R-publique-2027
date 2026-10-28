@@ -28,9 +28,20 @@ async function offline(context: BrowserContext, page: Page): Promise<Watch> {
   return watch;
 }
 
+/**
+ * Moteur local prêt : le pied de page n'affiche plus de ligne « Hors ligne » (phase 14), seulement
+ * un démarrage en cours ou une panne ; il ne doit afficher ni l'un ni l'autre.
+ */
+async function engineReady(page: Page) {
+  await expect(page.getByRole('link', { name: 'Nouvelle partie' })).toBeVisible();
+  await expect(page.getByText('Démarrage du moteur local…')).toHaveCount(0);
+  await expect(page.getByText('Moteur local indisponible')).toHaveCount(0);
+  await expect(page.getByText(/Hors ligne · moteur/)).toHaveCount(0);
+}
+
 async function createGame(page: Page, name: string) {
   await page.goto('/');
-  await expect(page.getByText(/Hors ligne · moteur .* sur l’appareil/)).toBeVisible();
+  await engineReady(page);
   await page.getByRole('link', { name: 'Nouvelle partie' }).click();
   await page.getByLabel('Nom de la partie').fill(name);
   await page.getByLabel('Prénom').fill('Camille');

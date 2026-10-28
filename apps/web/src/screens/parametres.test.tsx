@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { healthHandler, mockApi, renderRoute, RULESET, rulesetHandler } from '../test/utils';
 
@@ -22,9 +22,23 @@ function show() {
 }
 
 describe('paramètres', () => {
-  it('rassemble toutes les attributions dans les crédits', async () => {
+  // Section volumineuse (plusieurs centaines de liens depuis la phase 14) : délai explicite, la
+  // suite complète tournant en parallèle.
+  it('rassemble toutes les attributions dans les crédits', { timeout: 30_000 }, async () => {
     show();
     const credits = await screen.findByRole('region', { name: 'Crédits et mentions légales' });
+    // Liens lus directement dans le DOM (une requête par rôle parcourt tout l'arbre à chaque
+    // appel) ; la cartographie attend le manifeste géographique, chargé à part.
+    const linksOf = () =>
+      new Map(
+        [...credits.querySelectorAll('a')].map((a) => [a.textContent, a.getAttribute('href')]),
+      );
+    await waitFor(() => {
+      const loaded = linksOf();
+      for (const source of manifest.sources)
+        expect(loaded.has(`${source.producteur} — ${source.titre}`)).toBe(true);
+    });
+    const links = linksOf();
     const text = credits.textContent ?? '';
     // Sources du jeu de règles et des données importées, chacune avec son lien.
     for (const source of Object.values(RULESET.sources)) expect(text).toContain(source.titre);
@@ -36,20 +50,12 @@ describe('paramètres', () => {
       ...RULESET.assemblee.sources,
       ...RULESET.legislatives2024.sources,
     ]) {
-      const link = within(credits).getByRole('link', { name: source.titre });
-      expect(link).toHaveAttribute('href', source.url);
+      expect(links.get(source.titre)).toBe(source.url);
       expect(text).toContain(source.licence);
     }
     // Cartographie : référentiel géographique et bibliothèque de rendu.
-    for (const source of manifest.sources) {
-      expect(
-        await within(credits).findByRole('link', {
-          name: `${source.producteur} — ${source.titre}`,
-        }),
-      ).toBeInTheDocument();
-      expect(text).toContain(source.licence);
-    }
-    expect(within(credits).getByRole('link', { name: 'MapLibre GL JS' })).toBeInTheDocument();
+    for (const source of manifest.sources) expect(text).toContain(source.licence);
+    expect(links.has('MapLibre GL JS')).toBe(true);
     // Photos des personnalités : auteur et licence, ou motif de l'absence.
     for (const p of RULESET.personnalites.personnalites) {
       if (p.photo) {
@@ -66,6 +72,9 @@ describe('paramètres', () => {
       expect(text).toContain(f.notoriete.motif);
     }
     expect(text).toContain(RULESET.figures.decision);
+    // Personnalités de la sélection écartées à l'import, chacune avec son motif (phase 14).
+    for (const e of RULESET.figures.ecartees)
+      expect(text).toContain(`${e.prenom} ${e.nom} : ${e.motif}`);
     expect(text).toContain(RULESET.quinquennat.equipe.note);
     // Logos des médias : auteur et licence, ou motif de l'absence.
     for (const o of RULESET.mediasReels.organes) {

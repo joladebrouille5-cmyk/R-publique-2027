@@ -1,5 +1,5 @@
 import { advanceWeek, openQuinquennat } from '@r2027/engine';
-import type { GameState } from '@r2027/shared';
+import { memberExpertise, type GameState } from '@r2027/shared';
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
@@ -62,6 +62,8 @@ describe('quinquennat', () => {
     expect(screen.getByText('Nomination')).toBeInTheDocument();
     const decision = screen.getByRole('group', { name: 'Nommer le Premier ministre' });
     const profile = RULESET.quinquennat.profils[0]!;
+    // Groupe replié : ses options ne sont rendues qu'une fois déplié (vivier de la phase 14).
+    await userEvent.setup().click(within(decision).getByText(/^Profils fictifs \(\d+\)$/));
     expect(
       within(decision).getByRole('radio', {
         name: new RegExp(`${profile.prenom} ${profile.nom} — profil fictif`),
@@ -121,13 +123,34 @@ describe('quinquennat', () => {
       ].map((m) => m.ref),
     );
     const figure = RULESET.figures.figures.find((f) => !members.has(f.id))!;
+    const user = userEvent.setup();
+    await user.click(within(decision).getByText(/^Personnalités réelles \(\d+\)$/));
+    // Recherche et filtres du vivier (phase 14), photo de chacun.
+    const search = within(decision).getByRole('search', { name: 'Filtrer les personnalités' });
+    await user.type(within(search).getByLabelText('Rechercher'), figure.nom);
+    expect(within(search).getByText(/sur \d+ personnalités$/)).toBeInTheDocument();
     const radio = within(decision).getByRole('radio', {
       name: new RegExp(`${figure.prenom} ${figure.nom} — ${figure.parti}`),
     });
     expect(radio.closest('label')!.textContent).toMatch(/Compétence estimée : \d+ %/);
     expect(radio.closest('label')!.textContent).toMatch(/aucun propos ne lui est attribué/);
-    await userEvent.setup().click(radio);
+    expect(radio.closest('label')!.querySelector('[data-avatar]')).not.toBeNull();
+    await user.click(radio);
     expect(radio).toBeChecked();
+    // Filtre par ministère d'expertise : seuls les experts de l'Intérieur restent proposés.
+    await user.clear(within(search).getByLabelText('Rechercher'));
+    await user.selectOptions(within(search).getByLabelText('Expertise'), 'interieur');
+    const experts = RULESET.figures.figures.filter((f) =>
+      memberExpertise(RULESET, { nature: 'figure', ref: f.id }).some(
+        (e) => e.posteId === 'interieur',
+      ),
+    );
+    const offered = within(decision)
+      .getAllByRole('radio')
+      .map((r) => (r as HTMLInputElement).value)
+      .filter((id) => id.startsWith('figure-') && id !== figure.id);
+    expect(offered.length).toBeGreaterThan(0);
+    for (const id of offered) expect(experts.some((f) => f.id === id)).toBe(true);
   });
 
   it('l’écran Gouvernement présente les personnalités réelles nommées et nominables', async () => {
@@ -149,6 +172,14 @@ describe('quinquennat', () => {
     expect(within(section).getAllByText('Estimation').length).toBeGreaterThanOrEqual(
       figures.length,
     );
+    // Phase 14 : un ministre expert de son poste affiche sa compétence sur ce poste et la
+    // fonction qui fonde l'expertise.
+    const experts = government.ministres.filter((m) =>
+      memberExpertise(RULESET, m).some((e) => e.posteId === m.posteId),
+    );
+    expect(experts.length).toBeGreaterThan(0);
+    expect(within(section).getAllByText(/^Expertise : /)).toHaveLength(experts.length);
+    expect(within(section).getAllByText(/\d+ % sur ce poste/).length).toBe(experts.length);
     // Liste ouverte dans un tiroir (phase 13 : pas de volet dans la section dépliée).
     const user = userEvent.setup();
     await user.click(
@@ -157,13 +188,33 @@ describe('quinquennat', () => {
       }),
     );
     const nominable = screen.getByRole('dialog', { name: 'Personnalités nominables' });
-    for (const f of RULESET.figures.figures)
-      expect(
-        within(nominable).getByRole('listitem', { name: `${f.prenom} ${f.nom}` }),
-      ).toBeInTheDocument();
+    // Noms lus une fois : le vivier de la phase 14 compte plus de cent personnalités.
+    const listed = () =>
+      [...nominable.querySelectorAll('li[aria-label]')].map((li) => li.getAttribute('aria-label'));
+    expect(listed().sort()).toEqual(
+      RULESET.figures.figures.map((f) => `${f.prenom} ${f.nom}`).sort(),
+    );
     // Les photos sous licence libre des personnalités réelles (créditées dans Paramètres).
     const photos = nominable.querySelectorAll('img');
     expect(photos.length).toBe(RULESET.figures.figures.filter((f) => f.photo).length);
+    // Filtres du vivier : parti, puis ministère d'expertise (règle partagée avec le moteur).
+    const search = within(nominable).getByRole('search', { name: 'Filtrer les personnalités' });
+    await user.selectOptions(within(search).getByLabelText('Parti'), 'Parti socialiste');
+    const socialists = RULESET.figures.figures.filter((f) => f.parti === 'Parti socialiste');
+    expect(listed()).toHaveLength(socialists.length);
+    await user.selectOptions(within(search).getByLabelText('Parti'), '');
+    await user.selectOptions(within(search).getByLabelText('Expertise'), 'justice');
+    const justice = RULESET.figures.figures.filter((f) =>
+      memberExpertise(RULESET, { nature: 'figure', ref: f.id }).some(
+        (e) => e.posteId === 'justice',
+      ),
+    );
+    expect(listed().sort()).toEqual(justice.map((f) => `${f.prenom} ${f.nom}`).sort());
+    expect(within(nominable).getAllByText(/^Expertise : .*Justice/).length).toBe(justice.length);
+    await user.type(within(search).getByLabelText('Rechercher'), 'zzz');
+    expect(
+      within(nominable).getByText(/Aucune personnalité ne répond à ces critères/),
+    ).toBeVisible();
   });
 
   it('le joueur battu suit le quinquennat en avance rapide', async () => {
@@ -212,7 +263,9 @@ describe('quinquennat', () => {
     const profiles = [government.premierMinistre, ...government.ministres].filter(
       (m) => m.nature === 'profil',
     );
-    expect(screen.getAllByText('Profil fictif')).toHaveLength(profiles.length);
+    // Phase 14 : les personnalités qui acceptent pourvoient d'abord les ministères ; les profils
+    // fictifs ne comblent que les postes restants (souvent aucun).
+    expect(screen.queryAllByText('Profil fictif')).toHaveLength(profiles.length);
     expect(
       screen.getByText(/Mandat n° 1 du vendredi 14 mai 2027 au jeudi 13 mai 2032/),
     ).toBeVisible();
@@ -453,6 +506,34 @@ describe('quinquennat', () => {
     const corse = RULESET.legislatives2024.circonscriptions.filter((d) => d.departement === '2A');
     expect(within(table).getAllByRole('row')).toHaveLength(corse.length + 1);
     expect(within(districts).getByText(/sans aucun nom de candidat/)).toBeInTheDocument();
+
+    // Phase 14 : figures des blocs — personnalités réelles des partis de chaque bloc, avec photo
+    // et fonction relevée dans les sources ; aucune candidature dans une circonscription prêtée.
+    const figures = screen.getByRole('region', { name: 'Figures des blocs' });
+    expect(
+      within(figures).getByText(/Aucune candidature dans une circonscription ni aucun propos/),
+    ).toBeInTheDocument();
+    for (const bloc of RULESET.legislatives.blocs)
+      expect(within(figures).getByText(bloc.libelle)).toBeInTheDocument();
+    const left = RULESET.legislatives.blocs.find((b) => b.id === 'gauche')!;
+    await user.click(
+      within(figures).getByRole('button', {
+        name: `Voir les personnalités du bloc ${left.libelle}`,
+      }),
+    );
+    const drawer = screen.getByRole('dialog', { name: left.libelle });
+    const people = within(drawer).getByRole('list', {
+      name: `Personnalités du bloc ${left.libelle}`,
+    });
+    const expected = RULESET.figures.figures.filter(
+      (f) => f.groupe !== null && left.groupes.includes(f.groupe),
+    );
+    for (const f of expected)
+      expect(within(people).getByText(`${f.prenom} ${f.nom}`)).toBeInTheDocument();
+    // Candidats réels de la partie rattachés à un groupe du bloc, signalés comme tels.
+    const attached = RULESET.figures.rattachements.filter((r) => left.groupes.includes(r.groupe));
+    expect(within(people).queryAllByText('Candidat(e) de la partie')).toHaveLength(attached.length);
+    expect(people.querySelectorAll('img').length).toBeGreaterThan(expected.length / 2);
   });
 
   it('les législatives après une dissolution : premier tour, puis nouvelle Assemblée simulée', async () => {

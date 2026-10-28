@@ -324,6 +324,28 @@ export const QuinquennatRulesSchema = z
         soutienTheme: z.number().min(0).max(2),
         /** Effets d'une action du président liée à un poste : × (1 + poids × (compétence − 0,5)). */
         actionPoste: z.number().min(0).max(2),
+        /**
+         * Expertise ministérielle (phase 14) : une fonction de ministre, de secrétaire d'État ou
+         * de ministre délégué, en cours ou passée, dont le libellé cite un mot-clé d'un poste
+         * donne un bonus de compétence sur ce poste (meilleure fonction retenue). Table de
+         * mots-clés et bonus : paramètres de jeu (hypothèses).
+         */
+        expertise: z
+          .object({
+            /** Mots-clés cherchés dans le libellé (sans accents ni majuscules), par poste. */
+            postes: z
+              .array(
+                z.object({ posteId: Id, motsCles: z.array(z.string().min(3)).min(1) }).strict(),
+              )
+              .min(1),
+            /** Bonus d'une fonction de ministre du domaine (ministre d'État, garde des Sceaux). */
+            ministre: Fraction,
+            /** Bonus d'une fonction de secrétaire d'État ou de ministre délégué du domaine. */
+            secretaireEtat: Fraction,
+            /** Compétence maximale sur un poste, bonus compris. */
+            plafond: Fraction,
+          })
+          .strict(),
       })
       .strict(),
     /** Usure du pouvoir : perte de popularité hebdomadaire du président (centièmes de point). */
@@ -1634,6 +1656,16 @@ export const RulesetSchema = z
     }
     for (const id of ruleset.quinquennat.equipe.postesRegaliens)
       if (!postIds.has(id)) issue(`Poste régalien inconnu : ${id}`);
+    // Expertise ministérielle (phase 14) : postes connus, une entrée par poste.
+    const expertise = ruleset.quinquennat.equipe.expertise;
+    unique(
+      'Expertise ministérielle',
+      expertise.postes.map((e) => e.posteId),
+    );
+    for (const e of expertise.postes)
+      if (!postIds.has(e.posteId)) issue(`Expertise : poste inconnu ${e.posteId}`);
+    if (expertise.secretaireEtat > expertise.ministre)
+      issue('Expertise : le bonus de secrétaire d’État dépasse celui de ministre');
     const assemblyIds = new Set(ruleset.assemblee.groupes.map((g) => g.id));
     const realIds = new Set(ruleset.personnalites.personnalites.map((p) => p.id));
     unique(

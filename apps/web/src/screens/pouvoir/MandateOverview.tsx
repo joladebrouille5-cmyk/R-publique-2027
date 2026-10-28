@@ -1,4 +1,5 @@
 import {
+  memberPostCompetence,
   candidateName,
   groupOfActor,
   themeIndicatorEffects,
@@ -21,7 +22,7 @@ import {
   formatIndicatorDelta,
   INDICATOR_LABELS,
 } from '../../labels';
-import { memberInfo } from '../Government';
+import { memberInfo, postExpertiseInfo } from '../Government';
 
 // Vue du mandat (phase 13) : en tête de l'espace Pouvoir, toujours visible, l'essentiel du
 // quinquennat sans rien déplier — hémicycle et jauges, Parlement de la semaine, gouvernement et
@@ -280,7 +281,9 @@ export function MandateOverview({
               >
                 {government.ministres.map((m) => {
                   const info = memberInfo(state, ruleset, m);
-                  const competence = info.competence?.value ?? 0.5;
+                  // Compétence sur le poste, expertise comprise : celle qu'emploie le moteur.
+                  const competence = memberPostCompetence(ruleset, m, m.posteId);
+                  const expertise = postExpertiseInfo(ruleset, m, m.posteId);
                   const theme = themeOfPost(ruleset, m.posteId);
                   const indicators = themeIndicatorEffects(ruleset, m.posteId, competence);
                   const support = themeSupport(ruleset, competence);
@@ -309,6 +312,7 @@ export function MandateOverview({
                         <span className="font-medium">{info.name}</span>{' '}
                         <span className="text-xs text-slate-600 dark:text-slate-400">
                           compétence {Math.round(competence * 100)} %
+                          {expertise && ', expertise du domaine'}
                         </span>
                         <span className="block text-xs">
                           {effects.length > 0 ? (

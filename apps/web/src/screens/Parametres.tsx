@@ -166,6 +166,16 @@ function Credits({ ruleset }: { ruleset: Ruleset }) {
             <dt className="font-semibold">Personnalités nominables au gouvernement</dt>
             <dd className="text-slate-600 dark:text-slate-400">{ruleset.figures.decision}</dd>
           </div>
+          {ruleset.figures.ecartees.length > 0 && (
+            <div>
+              <dt className="font-semibold">Personnalités de la sélection écartées à l’import</dt>
+              <dd className="text-slate-600 dark:text-slate-400">
+                {ruleset.figures.ecartees
+                  .map((e) => `${e.prenom} ${e.nom} : ${e.motif}`)
+                  .join(' ; ')}
+              </dd>
+            </div>
+          )}
           <div>
             <dt className="font-semibold">Médias</dt>
             <dd className="text-slate-600 dark:text-slate-400">{ruleset.mediasReels.decision}</dd>
