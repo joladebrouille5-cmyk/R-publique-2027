@@ -110,6 +110,8 @@ export function createPlayerActor(
     nature: 'personnalise' as const,
     profilId: candidate.profilId ?? null,
     personnaliteId: null,
+    // Photo choisie par le joueur (phase 13), déjà contrôlée par le schéma de la requête.
+    photo: candidate.photo ?? null,
   };
   return {
     id: PLAYER_ACTOR_ID,
@@ -155,6 +157,7 @@ export function createOpponents(difficulty: Difficulty, ruleset: Ruleset): Recor
         nature: 'fictif',
         profilId: null,
         personnaliteId: null,
+        photo: null,
       },
       style: c.style,
       toleranceRisque: c.toleranceRisque,
@@ -234,6 +237,7 @@ export function createRealActor(
     nature: 'reel' as const,
     profilId: null,
     personnaliteId: personality.id,
+    photo: null,
   };
   return {
     id: asPlayer ? PLAYER_ACTOR_ID : personality.id,

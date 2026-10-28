@@ -11,6 +11,7 @@ import {
   openParliament,
   PLAYER_ACTOR_ID,
   SAVE_SCHEMA_VERSION,
+  updateTension,
 } from '@r2027/engine';
 import { CURRENT_RULESET_KEY, getRuleset, UnknownRulesetError } from '@r2027/rulesets';
 import {
@@ -30,6 +31,7 @@ import {
   GameStateV13Schema,
   GameStateV14Schema,
   GameStateV15Schema,
+  GameStateV16Schema,
   addDays,
   DIGITAL_HISTORY_WEEKS,
   daysFromCivil,
@@ -54,6 +56,7 @@ import {
   type GameStateV13,
   type GameStateV14,
   type GameStateV15,
+  type GameStateV16,
 } from '@r2027/shared';
 import { z } from 'zod';
 import { hashState, sha256, canonicalStringify } from './canonical';
@@ -97,7 +100,8 @@ const SCHEMAS: Record<number, z.ZodType> = {
   13: GameStateV13Schema,
   14: GameStateV14Schema,
   15: GameStateV15Schema,
-  16: GameStateSchema,
+  16: GameStateV16Schema,
+  17: GameStateSchema,
 };
 
 /** Jeux de règles des parties aux formats 2 (phase 2) et 3 (phase 3). */
@@ -556,7 +560,7 @@ function migrateV14ToV15(v14: GameStateV14): GameStateV15 {
  * expliqués) ; résultats des sondages déjà publiés sans variation ni explication, aucun point
  * de comparaison d'institut (la prochaine vague en fixe un).
  */
-function migrateV15ToV16(v15: GameStateV15): GameState {
+function migrateV15ToV16(v15: GameStateV15): GameStateV16 {
   return {
     ...v15,
     meta: {
@@ -572,6 +576,89 @@ function migrateV15ToV16(v15: GameStateV15): GameState {
     })),
     sondagesBase: {},
   };
+}
+
+type DistrictV16 = NonNullable<
+  GameStateV16['legislatives']
+>['derniere']['circonscriptions'][number];
+
+/**
+ * 16 → 17 (phase 13) : passage au jeu de règles 14 (actions du chef de l'État, tension
+ * parlementaire, frondeurs, alliances législatives, effets des ministres). Candidats sans
+ * photo ; votes sans frondeurs ni intervention de l'opposition ; Parlement sans fronde, sans
+ * apaisement, sans motion spontanée ni coalition, tension recalculée ; législatives sans accord
+ * (circonscriptions sans investiture commune ni désistement), campagne ouverte par le moteur si
+ * elle est due ; aucune action du président encore employée (délais).
+ */
+function migrateV16ToV17(v16: GameStateV16): GameState {
+  const district = (d: DistrictV16) => ({ ...d, communs: [], retraits: [] });
+  const parlement = v16.parlement
+    ? {
+        groupes: v16.parlement.groupes,
+        textes: v16.parlement.textes.map((bill) => ({
+          id: bill.id,
+          propositionId: bill.propositionId,
+          deposeSemaine: bill.deposeSemaine,
+          etape: bill.etape,
+          echeance: bill.echeance,
+          concessions: bill.concessions,
+          procedure: bill.procedure,
+          votes: bill.votes.map((vote) => ({
+            ...vote,
+            parGroupe: Object.fromEntries(
+              Object.entries(vote.parGroupe).map(([id, g]) => [id, { ...g, frondeurs: 0 }]),
+            ),
+            intervention: null,
+          })),
+          censure: bill.censure ? { ...bill.censure, intervention: null } : null,
+          issue: bill.issue,
+          frondeursNegocies: false,
+        })),
+        reformes: v16.parlement.reformes,
+        usage49_3: v16.parlement.usage49_3,
+        prochainDepot: v16.parlement.prochainDepot,
+        tension: { valeur: 0, facteurs: [], censure: null },
+        fronde: {},
+        apaisement: 0,
+        motions: [],
+        motionsSession: { session: 0, nombre: 0 },
+        coalition: null,
+      }
+    : null;
+  const legislatives = v16.legislatives
+    ? {
+        derniere: {
+          ...v16.legislatives.derniere,
+          circonscriptions: v16.legislatives.derniere.circonscriptions.map(district),
+          alliances: [],
+        },
+        prochaine: v16.legislatives.prochaine,
+        finLegislature: v16.legislatives.finLegislature,
+        premierTour: v16.legislatives.premierTour?.map(district) ?? null,
+        campagne: null,
+      }
+    : null;
+  const state: GameState = {
+    ...v16,
+    meta: {
+      ...v16.meta,
+      engineVersion: ENGINE_VERSION,
+      rulesetVersion: CURRENT_RULESET_KEY,
+      saveSchemaVersion: 17,
+    },
+    actors: Object.fromEntries(
+      Object.entries(v16.actors).map(([id, actor]) => [
+        id,
+        { ...actor, candidate: { ...actor.candidate, photo: null } },
+      ]),
+    ),
+    parlement,
+    legislatives,
+    quinquennat: v16.quinquennat ? { ...v16.quinquennat, usages: {} } : null,
+  };
+  // Tension parlementaire calculée selon le jeu de règles 14.
+  updateTension(state, getRuleset(CURRENT_RULESET_KEY));
+  return state;
 }
 
 const MIGRATIONS: Record<number, (state: never) => unknown> = {
@@ -590,6 +677,7 @@ const MIGRATIONS: Record<number, (state: never) => unknown> = {
   13: migrateV13ToV14,
   14: migrateV14ToV15,
   15: migrateV15ToV16,
+  16: migrateV16ToV17,
 };
 
 export type LoadedState = { state: GameState; stateHash: string; migratedFrom: number | null };

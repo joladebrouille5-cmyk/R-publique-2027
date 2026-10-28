@@ -113,9 +113,18 @@ export const QuinquennatSnapshotSchema = z
   .strict();
 export type QuinquennatSnapshot = z.infer<typeof QuinquennatSnapshotSchema>;
 
-/** Quinquennat en cours (format 12) : relevé de départ, à l'ouverture du mandat. */
-export const QuinquennatSchema = QuinquennatV8Schema.extend({
+/** Quinquennat aux formats 12 à 16 (figé) : relevé de départ, à l'ouverture du mandat. */
+export const QuinquennatV16Schema = QuinquennatV8Schema.extend({
   depart: QuinquennatSnapshotSchema,
+}).strict();
+export type QuinquennatV16 = z.infer<typeof QuinquennatV16Schema>;
+
+/**
+ * Quinquennat en cours (format 17, phase 13) : semaine du dernier emploi de chaque action du
+ * président, pour les délais entre deux emplois (discours devant le Congrès, panthéonisation…).
+ */
+export const QuinquennatSchema = QuinquennatV16Schema.extend({
+  usages: z.record(Id, z.number().int().min(0)),
 }).strict();
 export type Quinquennat = z.infer<typeof QuinquennatSchema>;
 

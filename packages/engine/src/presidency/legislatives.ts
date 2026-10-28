@@ -1,11 +1,13 @@
 import {
   addDays,
   daysFromCivil,
+  departementOfDistrict,
   formatIsoDate,
   isoWeekday,
   parseIsoDate,
   type Actor,
   type DistrictOutcome,
+  type ElectoralPact,
   type GameState,
   type LegislativeOutcome,
   type LegislativesState,
@@ -29,6 +31,9 @@ import { alignmentOf, membersMajority } from './parliament';
 // premier tour avec la majorité absolue des exprimés et au moins 25 % des inscrits ; second tour
 // ouvert aux blocs ayant réuni 12,5 % des inscrits (sinon les deux premiers), avec des reports
 // selon la proximité des blocs ; 577 sièges, répartis ensuite entre les groupes de chaque bloc.
+// Phase 13 : accords électoraux (investitures communes au premier tour, désistements entre
+// alliés et front républicain au second tour) et mobilisation du camp présidentiel par les
+// déplacements du président dans un département pendant la campagne (hypothèses).
 
 type Votes = Record<string, number>;
 const POPULARITY_EFFECT_MAX = 0.1;
@@ -110,11 +115,13 @@ function endOfTermElections(finLegislature: string) {
   return { motif: 'fin-de-legislature' as const, t1: addDays(t2, -7), t2 };
 }
 
-function seatsByGroup(parliament: Parliament): Record<string, number> {
+type Composition = Pick<Parliament, 'groupes'>;
+
+function seatsByGroup(parliament: Composition): Record<string, number> {
   return Object.fromEntries(Object.entries(parliament.groupes).map(([id, g]) => [id, g.sieges]));
 }
 
-function cohabitation(parliament: Parliament): boolean {
+function cohabitation(parliament: Composition): boolean {
   const opposition = Object.values(parliament.groupes)
     .filter((g) => g.alignement === 'opposition')
     .reduce((sum, g) => sum + g.sieges, 0);
@@ -125,7 +132,7 @@ function cohabitation(parliament: Parliament): boolean {
  * Législatives au début du premier quinquennat : celles de 2024 (réelles) comme dernières
  * élections, celles de la fin de la législature comme prochaines.
  */
-export function openLegislatives(ruleset: Ruleset, parliament: Parliament): LegislativesState {
+export function openLegislatives(ruleset: Ruleset, parliament: Composition): LegislativesState {
   const groups = blocOfGroup(ruleset);
   const siegesParBloc: Record<string, number> = Object.fromEntries(
     blocIds(ruleset).map((b) => [b, 0]),
@@ -143,10 +150,12 @@ export function openLegislatives(ruleset: Ruleset, parliament: Parliament): Legi
       voixT1: nationalShares(ruleset),
       cohabitation: cohabitation(parliament),
       circonscriptions: [],
+      alliances: [],
     },
     prochaine: { motif: 'fin-de-legislature', t1: echeance.t1, t2: echeance.t2 },
     finLegislature: finLegislature.date,
     premierTour: null,
+    campagne: null,
   };
 }
 
@@ -226,7 +235,22 @@ const ordered = (ruleset: Ruleset, votes: Votes) =>
       (a, b) => votes[b]! - votes[a]! || blocIds(ruleset).indexOf(a) - blocIds(ruleset).indexOf(b),
     );
 
-/** Premier tour dans chaque circonscription. */
+/** Deux blocs sont-ils liés par un accord d'investitures ou de désistements ? */
+function allied(pacts: readonly ElectoralPact[], a: string, b: string): boolean {
+  return pacts.some(
+    (p) =>
+      (p.type === 'investitures' || p.type === 'desistements') &&
+      p.blocs.includes(a) &&
+      p.blocs.includes(b),
+  );
+}
+
+/**
+ * Premier tour dans chaque circonscription. Investitures communes : seul le mieux placé des
+ * deux alliés présente un candidat, qui reçoit une part des voix de son partenaire (le reste
+ * se perd). Mobilisation : les voix du camp présidentiel augmentent dans les départements où
+ * le président s'est déplacé pendant la campagne.
+ */
 export function firstRound(
   state: GameState,
   ruleset: Ruleset,
@@ -235,14 +259,41 @@ export function firstRound(
   const ratios = nationalTargets(state, ruleset, president);
   const { aleaLocal } = ruleset.legislatives.modele;
   const { premierTourInscrits } = ruleset.legislatives.regles;
+  const campagne = state.legislatives?.campagne;
+  const pacts = (campagne?.alliances ?? []).filter((p) => p.type === 'investitures');
+  const camp = presidentBloc(ruleset, president);
+  const { reportInvestitures } = ruleset.legislatives.alliances;
   return baseVotes(ruleset).map((d) => {
     const rng = stream(state.meta.seed, state.meta.week, 'legislatives', d.code);
-    const exprimes = Object.values(d.voix).reduce((a, b) => a + b, 0);
-    const blocs = blocIds(ruleset).filter((b) => (d.voix[b] ?? 0) > 0);
-    const weights = blocs.map(
-      (b) => d.voix[b]! * ratios[b]! * (1 + (rng.nextFloat() * 2 - 1) * aleaLocal),
+    const base = Object.values(d.voix).reduce((a, b) => a + b, 0);
+    const mobilisation = (campagne?.mobilisation[departementOfDistrict(d.code)] ?? 0) / 10_000;
+    const weight: Votes = {};
+    for (const b of blocIds(ruleset).filter((id) => (d.voix[id] ?? 0) > 0))
+      weight[b] =
+        d.voix[b]! *
+        ratios[b]! *
+        (1 + (rng.nextFloat() * 2 - 1) * aleaLocal) *
+        (b === camp ? 1 + mobilisation : 1);
+    const before = Object.values(weight).reduce((a, b) => a + b, 0);
+    const communs: string[] = [];
+    for (const pact of pacts) {
+      const [a, b] = pact.blocs as [string, string];
+      if (weight[a] === undefined || weight[b] === undefined) continue;
+      const [stronger, weaker] =
+        weight[a]! > weight[b]! || (weight[a] === weight[b] && compareStrings(a, b) < 0)
+          ? [a, b]
+          : [b, a];
+      weight[stronger] = weight[stronger]! + reportInvestitures * weight[weaker]!;
+      delete weight[weaker];
+      communs.push(weaker);
+    }
+    const blocs = blocIds(ruleset).filter((b) => weight[b] !== undefined);
+    const after = blocs.reduce((sum, b) => sum + weight[b]!, 0);
+    const exprimes = before > 0 ? Math.round((base * after) / before) : 0;
+    const shares = largestRemainder(
+      exprimes,
+      blocs.map((b) => weight[b]!),
     );
-    const shares = largestRemainder(exprimes, weights);
     const voix: Votes = Object.fromEntries(blocs.map((b, i) => [b, shares[i]!]));
     const [leader] = ordered(ruleset, voix);
     const elected =
@@ -256,40 +307,106 @@ export function firstRound(
       t2: null,
       elu: elected ? leader! : null,
       tour: 1,
+      communs: communs.sort(compareStrings),
+      retraits: [],
     };
   });
+}
+
+/**
+ * Désistements avant le second tour, dans une triangulaire (au moins trois qualifiés) : un
+ * allié distancé par son allié se retire ; un signataire du front républicain distancé par un
+ * autre candidat que celui du bloc exclu se retire quand ce bloc est qualifié. Jamais moins de
+ * deux candidats. Renvoie les retraits et le bénéficiaire de chacun.
+ */
+function withdrawals(
+  ruleset: Ruleset,
+  voix: Votes,
+  qualified: string[],
+  pacts: readonly ElectoralPact[],
+): { bloc: string; beneficiaire: string }[] {
+  const result: { bloc: string; beneficiaire: string }[] = [];
+  const remaining = [...qualified].sort(
+    (a, b) => voix[b]! - voix[a]! || blocIds(ruleset).indexOf(a) - blocIds(ruleset).indexOf(b),
+  );
+  const fronts = pacts.filter((p) => p.type === 'front-republicain');
+  // Du moins bien placé au mieux placé.
+  for (const bloc of [...remaining].reverse()) {
+    if (remaining.length <= 2) break;
+    const ally = remaining.find(
+      (other) => other !== bloc && voix[other]! > voix[bloc]! && allied(pacts, bloc, other),
+    );
+    let beneficiaire = ally;
+    if (!beneficiaire) {
+      const front = fronts.find((p) => p.blocs.includes(bloc) && remaining.includes(p.contre!));
+      if (front) {
+        const best = remaining.find((other) => other !== front.contre);
+        if (best && best !== bloc) beneficiaire = best;
+      }
+    }
+    if (!beneficiaire) continue;
+    remaining.splice(remaining.indexOf(bloc), 1);
+    result.push({ bloc, beneficiaire });
+  }
+  return result;
 }
 
 /** Second tour là où personne n'a été élu au premier. */
 export function secondRound(
   ruleset: Ruleset,
   round1: readonly DistrictOutcome[],
+  pacts: readonly ElectoralPact[] = [],
 ): DistrictOutcome[] {
   const positions = blocPositions(ruleset);
   const { qualificationInscrits } = ruleset.legislatives.regles;
   const { reportMax, distanceReport, blancsNulsT2 } = ruleset.legislatives.modele;
+  const { reportDesistement } = ruleset.legislatives.alliances;
   return round1.map((d) => {
     if (d.elu) return d;
     const ranking = ordered(ruleset, d.t1.voix);
     let qualified = ranking.filter((b) => d.t1.voix[b]! >= qualificationInscrits * d.inscrits);
     if (qualified.length < 2) qualified = ranking.slice(0, 2);
-    const voix: Votes = Object.fromEntries(qualified.map((b) => [b, d.t1.voix[b]!]));
-    for (const eliminated of ranking.filter((b) => !qualified.includes(b))) {
-      const weights = qualified.map((q) =>
+    const retreats = withdrawals(ruleset, d.t1.voix, qualified, pacts);
+    const retired = new Set(retreats.map((r) => r.bloc));
+    // Un bénéficiaire peut s'être retiré à son tour : on remonte jusqu'à celui qui reste en lice.
+    const finalBeneficiary = (bloc: string): string => {
+      let current = bloc;
+      while (retired.has(current)) current = retreats.find((r) => r.bloc === current)!.beneficiaire;
+      return current;
+    };
+    for (const r of retreats) r.beneficiaire = finalBeneficiary(r.beneficiaire);
+    const running = qualified.filter((b) => !retired.has(b));
+    const voix: Votes = Object.fromEntries(running.map((b) => [b, d.t1.voix[b]!]));
+    // Report de chaque bloc retiré : une part à son bénéficiaire, puis les autres reports.
+    const leftover: Votes = {};
+    for (const r of retreats) {
+      const given = Math.floor(reportDesistement * d.t1.voix[r.bloc]!);
+      voix[r.beneficiaire] = voix[r.beneficiaire]! + given;
+      leftover[r.bloc] = d.t1.voix[r.bloc]! - given;
+    }
+    for (const eliminated of ranking.filter((b) => !running.includes(b))) {
+      const pool = leftover[eliminated] ?? d.t1.voix[eliminated]!;
+      const weights = running.map((q) =>
         Math.max(0, 1 - distance(positions.get(eliminated)!, positions.get(q)!) / distanceReport),
       );
       const total = weights.reduce((a, b) => a + b, 0);
       if (total === 0) continue;
-      qualified.forEach((q, i) => {
-        voix[q] = voix[q]! + Math.floor((reportMax * d.t1.voix[eliminated]! * weights[i]!) / total);
+      running.forEach((q, i) => {
+        voix[q] = voix[q]! + Math.floor((reportMax * pool * weights[i]!) / total);
       });
     }
     const exprimes = Object.values(voix).reduce((a, b) => a + b, 0);
     const votants = Math.min(d.inscrits, Math.round(exprimes / (1 - blancsNulsT2)));
-    const winner = [...qualified].sort(
+    const winner = [...running].sort(
       (a, b) => voix[b]! - voix[a]! || d.t1.voix[b]! - d.t1.voix[a]!,
     )[0]!;
-    return { ...d, t2: { votants, exprimes, voix }, elu: winner, tour: 2 };
+    return {
+      ...d,
+      t2: { votants, exprimes, voix },
+      elu: winner,
+      tour: 2,
+      retraits: [...retired].sort(compareStrings),
+    };
   });
 }
 
@@ -368,7 +485,8 @@ export function legislativeWeek(
     };
   }
   if (legislatives.premierTour && weekReaches(state.meta.date, prochaine.t2)) {
-    const outcomes = secondRound(ruleset, legislatives.premierTour);
+    const pacts = legislatives.campagne?.alliances ?? [];
+    const outcomes = secondRound(ruleset, legislatives.premierTour, pacts);
     const { siegesParBloc, voixT1 } = recompose(state, ruleset, president, outcomes);
     const outcome: LegislativeOutcome = {
       motif: prochaine.motif,
@@ -379,6 +497,7 @@ export function legislativeWeek(
       voixT1,
       cohabitation: cohabitation(state.parlement!),
       circonscriptions: outcomes,
+      alliances: pacts,
     };
     const finLegislature = thirdTuesdayOfJune(
       Number(prochaine.t2.slice(0, 4)) + ruleset.legislatives.regles.dureeAnnees,
@@ -388,8 +507,13 @@ export function legislativeWeek(
       prochaine: endOfTermElections(finLegislature),
       finLegislature,
       premierTour: null,
+      campagne: null,
     };
+    // Nouvelle Assemblée : aucune fronde héritée, coalition à reformer.
+    state.parlement!.fronde = {};
+    state.parlement!.coalition = null;
     const elected = outcomes.filter((d) => d.tour === 2).length;
+    const retreats = outcomes.reduce((sum, d) => sum + d.retraits.length, 0);
     const blocs = ruleset.legislatives.blocs
       .map((b) => `${b.libelle} ${siegesParBloc[b.id]}`)
       .join(' ; ');
@@ -401,7 +525,7 @@ export function legislativeWeek(
           kind: 'evenement',
           refId: 'legislatives',
           label: `Législatives ${label} : nouvelle Assemblée${outcome.cohabitation ? ' (cohabitation)' : ''}`,
-          description: `Sièges simulés : ${blocs}. Le gouvernement remet sa démission ; un Premier ministre doit être nommé.`,
+          description: `Sièges simulés : ${blocs}.${retreats > 0 ? ` ${retreats} désistement(s) avant le second tour.` : ''} Le gouvernement remet sa démission ; un Premier ministre doit être nommé.`,
           nature: 'simule',
           majeur: true,
           decisionId: null,

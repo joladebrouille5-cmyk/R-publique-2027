@@ -76,7 +76,26 @@ export {
 } from './territory/baseline';
 export { BaselineMismatchError, communeResults } from './territory/communes';
 export { tallyBaseline, tallyUnit } from './territory/tally';
-export { governmentAgeWeeks, validatePresidencyActions } from './presidency/actions';
+export {
+  applyPresidentialEffects,
+  governmentAgeWeeks,
+  presidentialActionBlocked,
+  recentCrisis,
+  validatePresidencyActions,
+} from './presidency/actions';
+export {
+  aiCoalitionChoice,
+  aiPacts,
+  ALLIANCE_DECISION_EVENT,
+  allianceOptions,
+  blocDistance,
+  COALITION_DECISION_EVENT,
+  needsCoalition,
+  openLegislativeCampaign,
+  playerCamp,
+} from './presidency/alliances';
+export { computeTension, updateTension, weeklyTension } from './presidency/tension';
+export { ministerEffects } from './presidency/themes';
 export {
   addYears,
   FIRST_CYCLE,
@@ -131,11 +150,20 @@ export {
   BILL_DECISION_EVENT,
   canEngage,
   censureVote,
+  domainCompetence,
+  engagementFactor,
   filledSeats,
+  interventionLabel,
+  isKeyVote,
   membersMajority,
   openParliament,
+  oppositionIntervention,
+  projectVote,
+  rebelShare,
+  rebelsOf,
   reformDelayWeeks,
   reformEffect,
+  reformKept,
   reformReception,
   sessionOf,
   tallyVote,

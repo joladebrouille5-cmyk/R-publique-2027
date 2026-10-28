@@ -15,6 +15,7 @@ const KINDS: Record<PendingDecision['kind'], { badge: string; tone: BadgeTone; a
   texte: { badge: 'Parlement', tone: 'alerte', accent: 'bg-or-500' },
   crise: { badge: 'Crise fictive', tone: 'fictif', accent: 'bg-red-500' },
   evenement: { badge: 'Événement fictif', tone: 'fictif', accent: 'bg-violet-500' },
+  alliance: { badge: 'Législatives', tone: 'simule', accent: 'bg-emerald-500' },
 };
 
 type Option = PendingDecision['options'][number];

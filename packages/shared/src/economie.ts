@@ -76,6 +76,9 @@ export const EconomyChangeSchema = z
               'differe',
               'limite',
               'durable',
+              // Phase 13 : action du chef de l'État, effet des ministres de leur domaine.
+              'action',
+              'gouvernement',
             ]),
           })
           .strict(),

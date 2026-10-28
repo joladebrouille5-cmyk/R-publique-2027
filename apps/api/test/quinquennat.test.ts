@@ -226,6 +226,14 @@ describe('dissolution et législatives', () => {
     expect(dissolved.statusCode).toBe(200);
     const afterDissolution = AdvanceResponseSchema.parse(dissolved.json());
     expect(afterDissolution.game.state.legislatives!.prochaine!.motif).toBe('dissolution');
+    // Phase 13 : la campagne s'ouvre aussitôt ; le camp du joueur arrête sa stratégie d'alliance.
+    expect(afterDissolution.game.state.legislatives!.campagne).toMatchObject({
+      strategieArretee: false,
+    });
+    const strategy = afterDissolution.game.state.pendingDecisions.find(
+      (d) => d.kind === 'alliance',
+    )!;
+    expect(strategy.options[0]!.id).toBe('aucune');
 
     // Premier tour : événement majeur, l'avance rapide s'arrête ; l'état est sauvegardé.
     const round1 = AdvanceResponseSchema.parse(
@@ -233,6 +241,10 @@ describe('dissolution et législatives', () => {
         await advanceVia(client, afterDissolution.game, {
           expectedWeek: afterDissolution.game.week,
           semaines: 8,
+          decisions: afterDissolution.game.state.pendingDecisions.map((d) => ({
+            decisionId: d.id,
+            optionId: d.kind === 'alliance' ? 'front-republicain' : d.defaultOptionId,
+          })),
         })
       ).json(),
     );
@@ -251,6 +263,11 @@ describe('dissolution et législatives', () => {
     const legislatives = round2.game.state.legislatives!;
     expect(legislatives.derniere.motif).toBe('dissolution');
     expect(Object.values(legislatives.derniere.siegesParBloc).reduce((a, b) => a + b, 0)).toBe(577);
+    // Accord choisi par le joueur, conservé avec le résultat ; campagne close.
+    expect(legislatives.derniere.alliances).toContainEqual(
+      expect.objectContaining({ type: 'front-republicain', origine: 'joueur' }),
+    );
+    expect(legislatives.campagne).toBeNull();
     expect(round2.game.state.pendingDecisions.map((d) => d.kind)).toContain('gouvernement');
 
     // Pas de nouvelle dissolution dans l'année : l'action est rejetée par le moteur.

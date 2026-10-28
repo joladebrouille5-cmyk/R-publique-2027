@@ -13,6 +13,7 @@ import {
   SeedSchema,
 } from './game';
 import { PersonalityIdSchema, PositionSchema } from './politics';
+import { CandidatePhotoSchema } from './portrait';
 import { WeeklyReportSchema } from './report';
 
 // Contrats de l'API REST, partagés entre `apps/api` et `apps/web`.
@@ -28,6 +29,8 @@ export const CandidateInputSchema = z
     positionnement: PositionSchema,
     parcours: z.string().trim().max(500).default(''),
     profilId: z.string().min(1).max(60).nullable().default(null),
+    /** Photo choisie par le joueur (phase 13) : URL de données d'image contrôlée, ou null. */
+    photo: CandidatePhotoSchema.nullable().default(null),
   })
   .strict();
 export type CandidateInput = z.input<typeof CandidateInputSchema>;

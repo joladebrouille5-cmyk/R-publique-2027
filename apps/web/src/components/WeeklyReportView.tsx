@@ -140,6 +140,8 @@ const ECONOMY_SOURCE_LABELS: Record<EconomyChange['factors'][number]['source'], 
   differe: 'Effet différé',
   limite: 'Borne',
   durable: 'Conséquence durable',
+  action: 'Action du chef de l’État',
+  gouvernement: 'Ministre du domaine',
 };
 
 /** Variations des indicateurs économiques de la semaine (quinquennat), avec leurs facteurs. */

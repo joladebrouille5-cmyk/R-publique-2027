@@ -115,6 +115,90 @@ const withoutDepart = <T extends object>(state: T) => {
   };
 };
 
+/**
+ * Retire les ajouts du format 17 (phase 13) après avoir vérifié qu'ils valent leurs valeurs de
+ * migration : photo des candidats, tension, fronde, motions et coalition du Parlement, frondeurs
+ * et interventions des votes, accords et campagne des législatives, emplois des actions du
+ * président.
+ */
+const withoutPhase13 = <T extends object>(state: T): T => {
+  const s = state as Partial<GameState>;
+  const out: Record<string, unknown> = { ...(state as Record<string, unknown>) };
+  if (s.actors)
+    out.actors = Object.fromEntries(
+      Object.entries(s.actors).map(([id, a]) => {
+        expect(a.candidate.photo).toBeNull();
+        const { photo: _p, ...candidate } = a.candidate;
+        return [id, { ...a, candidate }];
+      }),
+    );
+  if (s.parlement) {
+    const {
+      tension: _t,
+      fronde,
+      apaisement,
+      motions,
+      motionsSession: _ms,
+      coalition,
+      textes,
+      ...parlement
+    } = s.parlement;
+    expect({ fronde, apaisement, motions, coalition }).toEqual({
+      fronde: {},
+      apaisement: 0,
+      motions: [],
+      coalition: null,
+    });
+    out.parlement = {
+      ...parlement,
+      textes: textes.map(({ frondeursNegocies, votes, censure, ...bill }) => {
+        expect(frondeursNegocies).toBe(false);
+        return {
+          ...bill,
+          votes: votes.map(({ intervention, parGroupe, ...vote }) => {
+            expect(intervention).toBeNull();
+            return {
+              ...vote,
+              parGroupe: Object.fromEntries(
+                Object.entries(parGroupe).map(([id, { frondeurs, ...g }]) => {
+                  expect(frondeurs).toBe(0);
+                  return [id, g];
+                }),
+              ),
+            };
+          }),
+          censure: censure ? (({ intervention: _i, ...c }) => c)(censure) : null,
+        };
+      }),
+    };
+  }
+  if (s.legislatives) {
+    const { campagne, derniere, premierTour, ...legislatives } = s.legislatives;
+    expect(campagne).toBeNull();
+    const district = ({
+      communs,
+      retraits,
+      ...d
+    }: NonNullable<GameState['legislatives']>['derniere']['circonscriptions'][number]) => {
+      expect([communs, retraits]).toEqual([[], []]);
+      return d;
+    };
+    const { alliances, circonscriptions, ...outcome } = derniere;
+    expect(alliances).toEqual([]);
+    out.legislatives = {
+      ...legislatives,
+      derniere: { ...outcome, circonscriptions: circonscriptions.map(district) },
+      premierTour: premierTour?.map(district) ?? null,
+    };
+  }
+  if (s.quinquennat) {
+    const { usages, ...quinquennat } = s.quinquennat;
+    expect(usages).toEqual({});
+    out.quinquennat = quinquennat;
+  }
+  return out as T;
+};
+
 const errorCode = (fn: () => unknown) => {
   try {
     fn();
@@ -292,7 +376,7 @@ describe('migrations de sauvegarde', () => {
       const before = V5.state.actors[id as keyof typeof V5.state.actors];
       expect({ ...actor, resources: v1Resources(actor.resources) }).toEqual({
         ...before,
-        candidate: { ...before.candidate, personnaliteId: null },
+        candidate: { ...before.candidate, personnaliteId: null, photo: null },
       });
     }
     // La couverture par les organes fictifs est effacée (format 7, médias réels).
@@ -312,7 +396,7 @@ describe('migrations de sauvegarde', () => {
       ...rest
     } = state;
     const { meta: _m, player: _p, actors: _a, medias: _md, ...restBefore } = V5.state;
-    expect(withoutDepart(withoutPollNews(rest))).toEqual(restBefore);
+    expect(withoutDepart(withoutPollNews(withoutPhase13(rest)))).toEqual(restBefore);
     expect(state.alliances).toHaveLength(1);
 
     let current = state;
@@ -351,7 +435,7 @@ describe('migrations de sauvegarde', () => {
       ...rest
     } = state;
     const { meta: _m, medias: _md, ...restBefore } = V6.state;
-    expect(withoutDepart(withoutPollNews(rest))).toEqual(restBefore);
+    expect(withoutDepart(withoutPollNews(withoutPhase13(rest)))).toEqual(restBefore);
     expect(state.player).toMatchObject({ mode: 'candidat_reel', adversaires: 'reels' });
 
     // La partie continue : couverture par les organes réels, interview dans une émission réelle.
@@ -407,6 +491,8 @@ describe('migrations de sauvegarde', () => {
         popularite: null,
         indicateurs: state.economie!.historique[0]!.valeurs,
       },
+      // Format 17 : aucune action du président encore employée.
+      usages: {},
     });
     // Rien d'autre ne change : candidats, résultats, médias, relations.
     const {
@@ -421,7 +507,7 @@ describe('migrations de sauvegarde', () => {
       ...rest
     } = state;
     const { meta: _m, calendar: _c, ...restBefore } = V7.state;
-    expect(withoutDepart(withoutPollNews(rest))).toEqual(restBefore);
+    expect(withoutDepart(withoutPollNews(withoutPhase13(rest)))).toEqual(restBefore);
 
     // Critère 10 : la victoire ouvre la phase gouvernementale ; reprise et rejeu déterministes.
     const play = () => {
@@ -463,7 +549,7 @@ describe('migrations de sauvegarde', () => {
       ...rest
     } = state;
     const { meta: _m, ...restBefore } = V8.state;
-    expect(withoutDepart(withoutPollNews(rest))).toEqual(restBefore);
+    expect(withoutDepart(withoutPollNews(withoutPhase13(rest)))).toEqual(restBefore);
     expect(Object.entries(parlement!.groupes).map(([id, g]) => [id, g.sieges])).toEqual(
       ruleset.assemblee.groupes.map((g) => [g.id, g.sieges]),
     );
@@ -503,7 +589,7 @@ describe('migrations de sauvegarde', () => {
     // Rien d'autre ne change ; l'économie part des valeurs de l'Insee du jeu de règles.
     const { meta: _meta, economie, legislatives: _legislatives, ...rest } = state;
     const { meta: _m, ...restBefore } = V9.state;
-    expect(withoutDepart(withoutPollNews(rest))).toEqual(restBefore);
+    expect(withoutDepart(withoutPollNews(withoutPhase13(rest)))).toEqual(restBefore);
     expect(economie!.indicateurs.chomage).toBe(ruleset.economieReelle.indicateurs.chomage.valeur);
     expect(economie!.historique).toEqual([{ semaine: 61, valeurs: economie!.indicateurs }]);
 
@@ -540,7 +626,7 @@ describe('migrations de sauvegarde', () => {
     // Rien d'autre ne change ; dernières élections : 2024 (réelles) ; prochaines : juin 2029.
     const { meta: _meta, legislatives, ...rest } = state;
     const { meta: _m, ...restBefore } = V10.state;
-    expect(withoutDepart(withoutPollNews(rest))).toEqual(restBefore);
+    expect(withoutDepart(withoutPollNews(withoutPhase13(rest)))).toEqual(restBefore);
     expect(legislatives).toMatchObject({
       derniere: { motif: 'reelles-2024', t2: '2024-07-07', circonscriptions: [] },
       prochaine: { motif: 'fin-de-legislature', t1: '2029-06-10', t2: '2029-06-17' },
@@ -577,7 +663,7 @@ describe('migrations de sauvegarde', () => {
     // Rien d'autre ne change ; départ : semaine du second tour, économie de cette semaine.
     const { meta: _meta, ...rest } = state;
     const { meta: _m, ...restBefore } = V11.state;
-    expect(withoutDepart(withoutPollNews(rest))).toEqual(restBefore);
+    expect(withoutDepart(withoutPollNews(withoutPhase13(rest)))).toEqual(restBefore);
     const opening = V11.state.economie.historique.find((h) => h.semaine === 30)!;
     expect(state.quinquennat!.depart).toEqual({
       semaine: 30,
@@ -627,7 +713,7 @@ describe('migrations de sauvegarde', () => {
     expect(bilan).toEqual(V12.state.historique.quinquennats[0]!.bilan);
     const { meta: _meta, historique: _h, ...rest } = state;
     const { meta: _m, historique: _hb, ...restBefore } = V12.state;
-    expect(withoutDepart(withoutPollNews(rest))).toEqual(restBefore);
+    expect(withoutDepart(withoutPollNews(withoutPhase13(rest)))).toEqual(restBefore);
     // La campagne de 2032 continue.
     let current = state;
     for (let i = 0; i < 4; i++)
@@ -660,12 +746,14 @@ describe('migrations de sauvegarde', () => {
     const before = V13.state.actors as Record<string, { resources: object }>;
     for (const [id, actor] of Object.entries(state.actors)) {
       expect(actor.resources).toEqual({ ...before[id]!.resources, ...ruleset.numerique.initial });
-      expect({ ...actor, resources: before[id]!.resources }).toEqual(before[id]);
+      const { photo, ...candidate } = actor.candidate;
+      expect(photo).toBeNull();
+      expect({ ...actor, candidate, resources: before[id]!.resources }).toEqual(before[id]);
     }
     expect(state.numerique).toEqual({ publications: [], passages: {} });
     const { meta: _meta, actors: _a, numerique: _n, debats: _d, ...rest } = state;
     const { meta: _m, actors: _ab, ...restBefore } = V13.state;
-    expect(withoutPollNews(rest)).toEqual(restBefore);
+    expect(withoutPollNews(withoutPhase13(rest))).toEqual(restBefore);
     // La campagne continue avec une interview longue : publication simulée et jauges en hausse.
     const { state: next, report } = advanceWeek(
       state,
@@ -702,7 +790,7 @@ describe('migrations de sauvegarde', () => {
       expect(state.numerique.passages[post.acteurId]?.[post.actionId]).toContain(post.semaine);
     const { meta: _meta, debats: _d, numerique: _n, ...rest } = state;
     const { meta: _m, numerique: _nb, ...restBefore } = V14.state;
-    expect(withoutPollNews(rest)).toEqual(restBefore);
+    expect(withoutPollNews(withoutPhase13(rest))).toEqual(restBefore);
     // La campagne continue : la semaine du premier débat télévisé se résout.
     let current = state;
     for (let i = 0; i < 2; i++)
@@ -732,7 +820,7 @@ describe('migrations de sauvegarde', () => {
     });
     const { meta: _meta, ...rest } = state;
     const { meta: _m, ...restBefore } = V15.state;
-    expect(withoutPollNews(rest)).toEqual(restBefore);
+    expect(withoutPollNews(withoutPhase13(rest))).toEqual(restBefore);
     expect(state.debats.seances.some((d) => d.statut === 'termine')).toBe(true);
     // La campagne continue avec le jeu de règles 13 : interview longue et réactions.
     const { state: next, report } = advanceWeek(

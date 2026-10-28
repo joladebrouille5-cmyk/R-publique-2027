@@ -16,16 +16,18 @@ import { isValidIsoDate } from './dates';
 import {
   CampaignStyleSchema,
   CandidateIdentitySchema,
+  CandidateIdentityV16Schema,
   CandidateIdentityV5Schema,
 } from './politics';
 import { ConsequenceSchema } from './consequences';
 import { EconomyStateSchema } from './economie';
-import { LegislativesStateSchema } from './legislatives-etat';
-import { ParliamentSchema } from './parlement';
+import { LegislativesStateSchema, LegislativesStateV16Schema } from './legislatives-etat';
+import { ParliamentSchema, ParliamentV16Schema } from './parlement';
 import {
   CycleSchema,
   QuinquennatSchema,
   QuinquennatSummarySchema,
+  QuinquennatV16Schema,
   QuinquennatSummaryV12Schema,
   QuinquennatSummaryV8Schema,
   QuinquennatV8Schema,
@@ -262,15 +264,19 @@ const ActorV5Schema = ActorV4Schema.extend({
 export type ActorV5 = z.infer<typeof ActorV5Schema>;
 
 /** Candidat et sa campagne aux formats 6 à 11 (figé) : l'identité peut être une personnalité réelle. */
-const ActorV6Schema = ActorV5Schema.extend({ candidate: CandidateIdentitySchema }).strict();
+const ActorV6Schema = ActorV5Schema.extend({ candidate: CandidateIdentityV16Schema }).strict();
 export type ActorV6 = z.infer<typeof ActorV6Schema>;
 
 /** Candidat et sa campagne aux formats 12 et 13 (figé) : statut `ineligible` possible. */
 const ActorV13Schema = ActorV6Schema.extend({ status: CandidateStatusSchema }).strict();
 export type ActorV13 = z.infer<typeof ActorV13Schema>;
 
-/** Candidat et sa campagne (format 14) : jauges Jeunesse et Dynamique (phase 9). */
-export const ActorSchema = ActorV13Schema.extend({ resources: ResourcesSchema }).strict();
+/** Candidat et sa campagne aux formats 14 à 16 (figé) : jauges Jeunesse et Dynamique (phase 9). */
+export const ActorV16Schema = ActorV13Schema.extend({ resources: ResourcesSchema }).strict();
+export type ActorV16 = z.infer<typeof ActorV16Schema>;
+
+/** Candidat et sa campagne (format 17) : identité avec la photo d'un candidat personnalisé. */
+export const ActorSchema = ActorV16Schema.extend({ candidate: CandidateIdentitySchema }).strict();
 export type Actor = z.infer<typeof ActorSchema>;
 
 /** Décision obligatoire aux formats 3 à 7 (événement ou consigne de vote), figée. */
@@ -289,12 +295,20 @@ export const PendingDecisionV9Schema = PendingDecisionV2Schema.extend({
 }).strict();
 
 /**
- * Décision obligatoire : réponse à un événement, consigne de vote entre les deux tours, choix
- * du gouvernement (nomination du Premier ministre), conduite d'un texte au Parlement ou réponse
- * à une crise fictive (phase 6).
+ * Décision obligatoire aux formats 10 à 16 (figée) : réponse à un événement, consigne de vote
+ * entre les deux tours, choix du gouvernement (nomination du Premier ministre), conduite d'un
+ * texte au Parlement ou réponse à une crise fictive (phase 6).
+ */
+export const PendingDecisionV16Schema = PendingDecisionV2Schema.extend({
+  kind: z.enum(['evenement', 'consigne', 'gouvernement', 'texte', 'crise']),
+}).strict();
+
+/**
+ * Décision obligatoire (format 17) : en plus, stratégie d'alliance pour les législatives et
+ * coalition de gouvernement après des législatives sans majorité (phase 13).
  */
 export const PendingDecisionSchema = PendingDecisionV2Schema.extend({
-  kind: z.enum(['evenement', 'consigne', 'gouvernement', 'texte', 'crise']),
+  kind: z.enum(['evenement', 'consigne', 'gouvernement', 'texte', 'crise', 'alliance']),
 }).strict();
 export type PendingDecision = z.infer<typeof PendingDecisionSchema>;
 
@@ -592,14 +606,14 @@ export const GameStateV9Schema = GameStateV8Schema.extend({
   meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(9) }).strict(),
   pendingDecisions: z.array(PendingDecisionV9Schema),
   /** Assemblée nationale et textes ; null tant qu'aucun quinquennat n'a commencé. */
-  parlement: ParliamentSchema.nullable(),
+  parlement: ParliamentV16Schema.nullable(),
 }).strict();
 export type GameStateV9 = z.infer<typeof GameStateV9Schema>;
 
 /** État au format 10 (phase 6, P6-05 et P6-06), figé pour les migrations. */
 export const GameStateV10Schema = GameStateV9Schema.extend({
   meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(10) }).strict(),
-  pendingDecisions: z.array(PendingDecisionSchema),
+  pendingDecisions: z.array(PendingDecisionV16Schema),
   /** Économie du quinquennat ; null tant qu'aucun quinquennat n'a commencé. */
   economie: EconomyStateSchema.nullable(),
 }).strict();
@@ -609,7 +623,7 @@ export type GameStateV10 = z.infer<typeof GameStateV10Schema>;
 export const GameStateV11Schema = GameStateV10Schema.extend({
   meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(11) }).strict(),
   /** Législatives ; null tant qu'aucun quinquennat n'a commencé. */
-  legislatives: LegislativesStateSchema.nullable(),
+  legislatives: LegislativesStateV16Schema.nullable(),
 }).strict();
 export type GameStateV11 = z.infer<typeof GameStateV11Schema>;
 
@@ -617,7 +631,7 @@ export type GameStateV11 = z.infer<typeof GameStateV11Schema>;
 export const GameStateV12Schema = GameStateV11Schema.extend({
   meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(12) }).strict(),
   actors: z.record(Id, ActorV13Schema),
-  quinquennat: QuinquennatSchema.nullable(),
+  quinquennat: QuinquennatV16Schema.nullable(),
   historique: z
     .object({
       presidentielles: z.array(PresidentialArchiveSchema),
@@ -646,7 +660,7 @@ export type GameStateV13 = z.infer<typeof GameStateV13Schema>;
 /** État au format 14 (phase 9) : jauges Jeunesse et Dynamique, fil des réseaux ; figé. */
 export const GameStateV14Schema = GameStateV13Schema.extend({
   meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(14) }).strict(),
-  actors: z.record(Id, ActorSchema),
+  actors: z.record(Id, ActorV16Schema),
   /** Réseaux sociaux et nouveaux médias : publications simulées des dernières semaines. */
   numerique: DigitalStateV14Schema,
 }).strict();
@@ -660,25 +674,36 @@ export const GameStateV15Schema = GameStateV14Schema.extend({
 }).strict();
 export type GameStateV15 = z.infer<typeof GameStateV15Schema>;
 
-/**
- * État complet d'une partie, format de sauvegarde n° 16 (phase 11) : mêmes données que le
- * format 15, jeu de règles 13 (réactions, événements, plateaux, gouvernement) ; débats télévisés de la
- * présidentielle en cours (invités, chaises vides, séquences jouées, approbation, sondage flash),
- * relevé des passages récents de chaque candidat dans les formats numériques ;
- * jauges Jeunesse et Dynamique de chaque candidat, fil des publications simulées sur les réseaux
- * et nouveaux médias ; scénario de départ, conséquences durables (en cours et passées), cycle
- * électoral, présidence et gouvernement, Parlement, économie et crises, législatives, archives
- * des cycles précédents ; statut `ineligible` (art. 6). Toute évolution s'accompagne d'un nouveau
- * numéro de format et d'une migration (packages/save-engine). L'aléa ne figure pas dans l'état :
- * chaque tirage est dérivé de la graine, de la semaine et de son contexte (module, action,
- * événement, groupe…).
- */
-export const GameStateSchema = GameStateV15Schema.extend({
+/** État au format 16 (phase 11) : sondages expliqués, dernière vague de chaque institut ; figé. */
+export const GameStateV16Schema = GameStateV15Schema.extend({
   meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(16) }).strict(),
   /** Sondages publiés, avec variation et explication (phase 11). */
   polls: z.array(PollSchema),
   /** Dernière vague de chaque institut, pour expliquer la suivante (phase 11). */
   sondagesBase: z.record(Id, PollBaseSchema).default({}),
+}).strict();
+export type GameStateV16 = z.infer<typeof GameStateV16Schema>;
+
+/**
+ * État complet d'une partie, format de sauvegarde n° 17 (phase 13) : jeu de règles 14 (actions
+ * du chef de l'État, tension parlementaire, frondeurs, alliances législatives, effets des
+ * ministres) ; photo du candidat personnalisé ; Parlement avec tension, fronde, motions
+ * spontanées et coalition ; votes avec frondeurs et interventions de l'opposition ; campagne
+ * des législatives (accords, mobilisation) et résultats avec investitures communes et
+ * désistements ; dernier emploi de chaque action du président ; décisions d'alliance et de
+ * coalition. Reprend tout le format 16 : sondages expliqués, débats télévisés, réseaux et
+ * nouveaux médias, scénario de départ, conséquences durables, cycle électoral, présidence et
+ * gouvernement, économie et crises, archives des cycles précédents. Toute évolution s'accompagne
+ * d'un nouveau numéro de format et d'une migration (packages/save-engine). L'aléa ne figure pas
+ * dans l'état : chaque tirage est dérivé de la graine, de la semaine et de son contexte.
+ */
+export const GameStateSchema = GameStateV16Schema.extend({
+  meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(17) }).strict(),
+  actors: z.record(Id, ActorSchema),
+  pendingDecisions: z.array(PendingDecisionSchema),
+  parlement: ParliamentSchema.nullable(),
+  legislatives: LegislativesStateSchema.nullable(),
+  quinquennat: QuinquennatSchema.nullable(),
 }).strict();
 export type GameState = z.infer<typeof GameStateSchema>;
 

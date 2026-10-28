@@ -34,6 +34,7 @@ describe('personnalités réelles', () => {
       nature: 'reel',
       profilId: null,
       personnaliteId: 'reel-tondelier',
+      photo: null,
     });
     expect(player.programme.propositions).toEqual([]);
     expect(player.implantation).toEqual(f.implantation.regions);

@@ -172,6 +172,27 @@ export const ActionDefinitionSchema = z
     institution: z.enum(['remaniement', 'dissolution']).optional(),
     /** Format des réseaux et nouveaux médias (phase 9) : l'action produit une publication. */
     format: Id.optional(),
+    // Actions du chef de l'État (phase 13) : paramètres de jeu (hypothèses), sauf la règle citée.
+    /** Délai minimal entre deux emplois (semaines) ; un nouveau quinquennat le remet à zéro. */
+    delaiSemaines: z.number().int().min(1).optional(),
+    /** Condition d'emploi : une crise est survenue dans les semaines précédentes. */
+    condition: z.enum(['crise-recente']).optional(),
+    /** Effets immédiats sur les indicateurs économiques (centièmes), par le registre de l'économie. */
+    economie: z
+      .array(z.object({ indicateur: EconomicIndicatorSchema, valeur: z.number().int() }).strict())
+      .optional(),
+    /** Effets sur le Parlement : apaisement de la tension (points) et part de la fronde résorbée. */
+    parlement: z
+      .object({ apaisement: z.number().int().min(0).max(100), fronde: Fraction })
+      .strict()
+      .optional(),
+    /**
+     * Poste du gouvernement dont le titulaire module les effets (compétence) ; null : le Premier
+     * ministre ; absent : aucune modulation.
+     */
+    poste: Id.nullable().optional(),
+    /** Règle officielle citée par l'action (source du jeu de règles). */
+    sourceId: Id.optional(),
   })
   .strict();
 export type ActionDefinition = z.infer<typeof ActionDefinitionSchema>;
@@ -279,6 +300,30 @@ export const QuinquennatRulesSchema = z
         censureCompetence: z.number().min(0).max(2),
         /** Crise : effet sur la popularité de poids × (compétence du ministre concerné − 0,5). */
         crise: z.number().int().min(0).max(1_000),
+        /**
+         * Effets thématiques des ministres (phase 13) : domaines du programme et indicateurs de
+         * chaque poste ; effet hebdomadaire sur un indicateur par unité d'écart de compétence à
+         * 0,5 (centièmes).
+         */
+        themes: z
+          .array(
+            z
+              .object({
+                posteId: Id,
+                domaines: z.array(Id),
+                indicateurs: z.array(
+                  z
+                    .object({ indicateur: EconomicIndicatorSchema, parSemaine: z.number().int() })
+                    .strict(),
+                ),
+              })
+              .strict(),
+          )
+          .min(1),
+        /** Soutien des groupes aux textes du domaine d'un ministre : poids × (compétence − 0,5). */
+        soutienTheme: z.number().min(0).max(2),
+        /** Effets d'une action du président liée à un poste : × (1 + poids × (compétence − 0,5)). */
+        actionPoste: z.number().min(0).max(2),
       })
       .strict(),
     /** Usure du pouvoir : perte de popularité hebdomadaire du président (centièmes de point). */
@@ -319,6 +364,8 @@ export const ParliamentRulesSchema = z
         autres49_3ParSession: z.number().int().min(0),
         /** Mois d'ouverture de la session ordinaire (art. 28). */
         moisOuvertureSession: z.number().int().min(1).max(12),
+        /** Motions de censure qu'un député peut signer par session ordinaire (art. 49 al. 2). */
+        motionsParSession: z.number().int().min(1),
         regle: z.string().min(1),
       })
       .strict(),
@@ -387,6 +434,79 @@ export const ParliamentRulesSchema = z
         accueilNeutre: z.number(),
         /** Accueil supplémentaire des publics particulièrement concernés. */
         bonusPublics: z.number().min(0),
+      })
+      .strict(),
+    /**
+     * Tension parlementaire (phase 13), de 0 à 100 : facteurs (points) et effets. Toutes ces
+     * valeurs sont des hypothèses de jeu.
+     */
+    tension: z
+      .object({
+        statut: z.literal('hypothese'),
+        base: z.number().int().min(0).max(100),
+        /** Points pour une Assemblée entièrement dans l'opposition (au prorata des sièges). */
+        poidsOpposition: z.number().min(0),
+        /** Points pour un président sans aucun soutien (au prorata des voix manquantes). */
+        poidsMinorite: z.number().min(0),
+        /** Points pour un président sans aucune popularité (au prorata de l'écart à la référence). */
+        poidsImpopularite: z.number().min(0),
+        par49_3: z.number().int().min(0),
+        /** Points par frondeur (fronde de fond), plafonnés. */
+        parFrondeur: z.number().min(0),
+        frondeMax: z.number().int().min(0),
+        /** Points par motion spontanée de la session. */
+        parMotion: z.number().int().min(0),
+        /** Points retranchés par une coalition de gouvernement. */
+        coalition: z.number().int().min(0),
+        /** Points par point de tensions sociales au-dessus de 50 (indicateur de l'économie). */
+        poidsTensionsSociales: z.number().min(0),
+        /** Part de l'apaisement perdue chaque semaine. */
+        decroissanceApaisement: Fraction,
+        /** Au-delà, l'opposition peut déposer une motion de censure spontanée. */
+        seuilMotion: z.number().int().min(0).max(100),
+        /** Probabilité hebdomadaire d'une motion par point au-dessus du seuil. */
+        probabiliteParPoint: Probability,
+        delaiMotionSemaines: Weeks,
+        /** Propension à censurer : poids × (tension − 50) / 50. */
+        effetCensure: z.number().min(0),
+        /** Coût du 49.3 (popularité, tensions sociales) × (1 + majoration × tension / 100). */
+        majoration49_3: z.number().min(0),
+      })
+      .strict(),
+    /**
+     * Frondeurs (phase 13) : part des députés d'un groupe qui soutient le président votant
+     * contre un texte (hypothèses). Nombres seulement : aucun député n'est nommé.
+     */
+    frondeurs: z
+      .object({
+        statut: z.literal('hypothese'),
+        /** Distance (axes du jeu) entre le groupe et le texte en deçà de laquelle nul ne fronde. */
+        toleranceDistance: z.number().min(0),
+        poidsEloignement: z.number().min(0),
+        poidsImpopularite: z.number().min(0),
+        poidsTension: z.number().min(0),
+        /** Réduction par la compétence du ministre du domaine : poids × (compétence − 0,5). */
+        poidsMinistre: z.number().min(0),
+        partMax: Fraction,
+        /** Part des sièges des groupes soutiens qui rejoint la fronde après un 49.3. */
+        hausse49_3: Fraction,
+        /** Part de la fronde de fond résorbée chaque semaine. */
+        baisseHebdomadaire: Fraction,
+        negociation: z.object({ reduction: Fraction, reductionEffet: Fraction }).strict(),
+        /** Part supplémentaire de frondeurs dans les groupes d'une coalition. */
+        coalition: Fraction,
+      })
+      .strict(),
+    /** Interventions du premier groupe d'opposition lors des votes clés (phase 13, hypothèses). */
+    opposition: z
+      .object({
+        statut: z.literal('hypothese'),
+        /** Vote clé : écart projeté entre pour et contre inférieur à cette part des sièges. */
+        margeCle: Fraction,
+        /** Effet sur le soutien des groupes non alignés. */
+        effet: Fraction,
+        /** Distance (axes du jeu) maximale entre un candidat fictif battu et le groupe qu'il mène. */
+        distanceMeneur: z.number().positive(),
       })
       .strict(),
   })
@@ -594,6 +714,43 @@ export const LegislativeRulesSchema = z
         soutiensMax: Fraction,
         /** … et si sa popularité atteint ce niveau. */
         populariteMin: z.number().int().min(0).max(10_000),
+      })
+      .strict(),
+    /**
+     * Alliances (phase 13) : campagne, investitures communes, désistements, front républicain,
+     * coalition et mobilisation par les déplacements du président. Hypothèses de jeu.
+     */
+    alliances: z
+      .object({
+        statut: z.literal('hypothese'),
+        note: z.string().min(1),
+        /** Ouverture de la campagne : semaines avant le premier tour (aussitôt après une dissolution). */
+        campagneSemaines: z.number().int().min(1),
+        /** Part des voix du partenaire reportée sur le candidat commun. */
+        reportInvestitures: Fraction,
+        /** Part des voix d'un allié désisté reportée sur l'allié resté en lice. */
+        reportDesistement: Fraction,
+        /** Distances (axes du jeu) maximales pour qu'un bloc accepte chaque accord. */
+        distanceDesistements: z.number().positive(),
+        distanceInvestitures: z.number().positive(),
+        frontRepublicain: z
+          .object({
+            /** Bloc face auquel les signataires se désistent. */
+            contre: z.string().regex(/^[a-z]+(-[a-z]+)*$/),
+            /** Distance minimale au bloc exclu pour qu'un bloc s'y associe. */
+            distanceMin: z.number().positive(),
+          })
+          .strict(),
+        coalition: z.object({ distanceMax: z.number().positive() }).strict(),
+        /** Mobilisation du camp présidentiel : bonus de voix par déplacement, plafond (dix-millièmes). */
+        mobilisation: z
+          .object({
+            parDeplacement: z.number().int().min(0).max(10_000),
+            max: z.number().int().min(0).max(10_000),
+          })
+          .strict(),
+        /** Règle de l'IA pour les blocs que le joueur ne conduit pas. */
+        ia: z.object({ desistements: z.boolean(), frontRepublicain: z.boolean() }).strict(),
       })
       .strict(),
   })
@@ -1382,7 +1539,47 @@ export const RulesetSchema = z
       if (action.cible !== null && action.cible !== 'departement')
         issue(`${action.id} : seule une cible départementale est possible pour le président`);
       if (action.effets.length === 0 && !action.institution) issue(`${action.id} : aucun effet`);
+      if (action.poste && !ruleset.quinquennat.postes.some((p) => p.id === action.poste))
+        issue(`${action.id} : poste inconnu ${action.poste}`);
+      if (action.sourceId && !sourceIds.has(action.sourceId))
+        issue(`${action.id} : source inconnue ${action.sourceId}`);
     }
+    for (const action of ruleset.actions) {
+      const presidential = [
+        action.delaiSemaines,
+        action.condition,
+        action.economie,
+        action.parlement,
+        action.poste,
+        action.sourceId,
+      ];
+      if (presidential.some((v) => v !== undefined))
+        issue(
+          `${action.id} : délai, condition, économie, Parlement et poste réservés au président`,
+        );
+    }
+    // Thèmes des ministres (phase 13) : postes et domaines connus, un thème par poste.
+    unique(
+      'Thème ministériel',
+      ruleset.quinquennat.equipe.themes.map((t) => t.posteId),
+    );
+    const domainIds = new Set(ruleset.programme.domaines.map((d) => d.id));
+    for (const theme of ruleset.quinquennat.equipe.themes) {
+      if (!ruleset.quinquennat.postes.some((p) => p.id === theme.posteId))
+        issue(`Thème : poste inconnu ${theme.posteId}`);
+      for (const d of theme.domaines)
+        if (!domainIds.has(d)) issue(`Thème ${theme.posteId} : domaine inconnu ${d}`);
+    }
+    unique(
+      'Domaine couvert par un ministre',
+      ruleset.quinquennat.equipe.themes.flatMap((t) => t.domaines),
+    );
+    if (
+      !ruleset.legislatives.blocs.some(
+        (b) => b.id === ruleset.legislatives.alliances.frontRepublicain.contre,
+      )
+    )
+      issue('Front républicain : bloc exclu inconnu');
     if (ruleset.quinquennat.actions.filter((a) => a.institution === 'remaniement').length !== 1)
       issue('Quinquennat : une et une seule action de remaniement');
     if (ruleset.quinquennat.actions.filter((a) => a.institution === 'dissolution').length > 1)

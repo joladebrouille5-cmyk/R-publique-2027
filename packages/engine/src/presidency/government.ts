@@ -25,6 +25,7 @@ import { openEconomy, scheduleEconomy } from './economy';
 import { openLegislatives } from './legislatives';
 import { figureById, memberName, memberTraits, profileById, teamCompetence } from './members';
 import { openParliament } from './parliament';
+import { updateTension } from './tension';
 
 // Investiture et gouvernement (phase 6, P6-03 ; figures réelles en phase 11, P11-02). Le
 // président nomme le Premier ministre : le joueur choisit parmi les acteurs de la partie, les
@@ -649,7 +650,7 @@ export function openQuinquennat(state: GameState, ruleset: Ruleset, winnerId: st
   const numero = renewed ? previous.numero + 1 : 1;
   if (numero > ruleset.quinquennat.mandat.mandatsConsecutifsMax)
     throw new Error(`${winnerId} ne peut pas exercer un troisième mandat consécutif`);
-  state.quinquennat = {
+  const quinquennat: Quinquennat = {
     mandat: { presidentId: winnerId, debut, fin, numero },
     gouvernement: null,
     anciensGouvernements: [],
@@ -661,15 +662,18 @@ export function openQuinquennat(state: GameState, ruleset: Ruleset, winnerId: st
       popularite: null,
       indicateurs: null,
     },
+    usages: {},
   };
+  state.quinquennat = quinquennat;
   state.parlement = openParliament(ruleset, winner, state.parlement);
   if (state.economie === null) {
     state.economie = openEconomy(ruleset, state.meta.week);
     openScenario(state, ruleset);
   }
   state.legislatives ??= openLegislatives(ruleset, state.parlement);
+  updateTension(state, ruleset);
   // Relevé de départ (bilan de fin de mandat) : popularité du président élu, économie.
-  state.quinquennat.depart = snapshot(state, winnerId);
+  quinquennat.depart = snapshot(state, winnerId);
   state.meta.phase = 'presidence';
   state.calendar = { blockedBy: null, blockedMessage: null };
   requestGovernment(state, ruleset);

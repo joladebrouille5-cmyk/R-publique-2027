@@ -1,8 +1,8 @@
 {
   "id": "presidentielle-2027",
-  "version": "13.0.0",
+  "version": "14.0.0",
   "libelle": "Présidentielle 2027 et quinquennat — campagne, parrainages, financement, médias réels, présidence, gouvernement et figures réelles nominables, Parlement, économie, crises et législatives",
-  "verifieLe": "2026-10-22",
+  "verifieLe": "2026-10-27",
   "sources": {
     "elysee-cm-2026-07-01": {
       "titre": "Compte rendu du Conseil des ministres du mercredi 1er juillet 2026 — communication relative au calendrier électoral 2027",
@@ -55,9 +55,9 @@
       "consulteLe": "2026-10-21"
     },
     "constitution-art-49": {
-      "titre": "Constitution du 4 octobre 1958, article 49 (motion de censure signée par un dixième des membres et adoptée à la majorité des membres ; engagement de responsabilité sur un texte autre que financier une fois par session) — texte cité par l'article Wikipédia « Article 49 de la Constitution de la Cinquième République française » (révision 240034355 du 03/10/2026) ; texte de Légifrance non relu (accès refusé)",
+      "titre": "Constitution du 4 octobre 1958, article 49 (motion de censure signée par un dixième des membres et adoptée à la majorité des membres ; un député ne peut signer plus de trois motions de censure par session ordinaire ; engagement de responsabilité sur un texte autre que financier une fois par session) — texte cité par l'article Wikipédia « Article 49 de la Constitution de la Cinquième République française » (révision 240034355 du 03/10/2026) ; texte de Légifrance non relu (accès refusé)",
       "url": "https://fr.wikipedia.org/w/index.php?title=Article_49_de_la_Constitution_de_la_Cinqui%C3%A8me_R%C3%A9publique_fran%C3%A7aise&oldid=240034355",
-      "consulteLe": "2026-10-21"
+      "consulteLe": "2026-10-27"
     },
     "constitution-art-12": {
       "titre": "Constitution du 4 octobre 1958, article 12 (dissolution ; élections générales vingt jours au moins et quarante jours au plus après ; pas de nouvelle dissolution dans l'année qui suit ces élections) — texte cité par l'article Wikipédia « Article 12 de la Constitution de la Cinquième République française » (révision 230532189 du 10/11/2025) ; texte de Légifrance non relu (accès refusé)",
@@ -93,6 +93,16 @@
       "titre": "Wikipédia — « Twitch », révision 240180491",
       "url": "https://fr.wikipedia.org/w/index.php?title=Twitch&oldid=240180491",
       "consulteLe": "2026-10-22"
+    },
+    "constitution-art-18": {
+      "titre": "Constitution du 4 octobre 1958, article 18 (le président de la République « peut prendre la parole devant le Parlement réuni à cet effet en Congrès » ; sa déclaration peut donner lieu, hors sa présence, à un débat qui ne fait l'objet d'aucun vote) — texte cité par l'article Wikipédia « Article 18 de la Constitution de la Cinquième République française » (révision 239705826) ; texte de Légifrance non relu (accès refusé)",
+      "url": "https://fr.wikipedia.org/w/index.php?title=Article_18_de_la_Constitution_de_la_Cinqui%C3%A8me_R%C3%A9publique_fran%C3%A7aise&oldid=239705826",
+      "consulteLe": "2026-10-27"
+    },
+    "pantheon-usage": {
+      "titre": "Panthéon (Paris) — article Wikipédia (révision 240490285) : sous la Cinquième République, le choix d'une entrée au Panthéon revient au président de la République, « plus un état de fait qu'un véritable droit », aucun texte officiel n'en régissant les critères ni la cérémonie",
+      "url": "https://fr.wikipedia.org/w/index.php?title=Panth%C3%A9on_(Paris)&oldid=240490285",
+      "consulteLe": "2026-10-27"
     }
   },
   "calendrier": {
@@ -5639,7 +5649,7 @@
     },
     "equipe": {
       "statut": "hypothese",
-      "note": "Figures réelles nominables au gouvernement (gouvernement-2027.json, pnpm data:gouvernement) : fonctions relevées dans Wikipédia, compétence estimée et notoriété déduites par des règles documentées. Effets de la compétence et de la popularité sur la popularité du président, le soutien des groupes aux textes, la censure et la gestion des crises : paramètres de jeu (hypothèses), sans prétention de mesure. La popularité prêtée à une figure dépend de son niveau de notoriété ; ce n’est jamais un sondage. Nominations, refus et action au gouvernement sont simulés ; aucun propos n’est attribué.",
+      "note": "Figures réelles nominables au gouvernement (gouvernement-2027.json, pnpm data:gouvernement) : fonctions relevées dans Wikipédia, compétence estimée et notoriété déduites par des règles documentées. Effets de la compétence et de la popularité sur la popularité du président, le soutien des groupes aux textes, la censure et la gestion des crises : paramètres de jeu (hypothèses), sans prétention de mesure. La popularité prêtée à une figure dépend de son niveau de notoriété ; ce n’est jamais un sondage. Nominations, refus et action au gouvernement sont simulés ; aucun propos n’est attribué. Phase 13 : chaque poste couvre des domaines du programme et des indicateurs ; la compétence du ministre (écart à 0,5) donne un bonus ou un malus de soutien aux textes de ses domaines, un effet hebdomadaire sur ses indicateurs et module les actions du président liées à son poste (hypothèses).",
       "fichier": "gouvernement-2027.json",
       "empreinte": "106d11abbdfe96c2419986e062a60a87bdad59c67c545dd2d45263dc972530f0",
       "postesRegaliens": ["economie", "interieur", "affaires-etrangeres", "armees", "justice"],
@@ -5657,7 +5667,100 @@
         "membresMax": 2
       },
       "censureCompetence": 0.6,
-      "crise": 80
+      "crise": 80,
+      "themes": [
+        {
+          "posteId": "economie",
+          "domaines": ["economie", "pouvoir-achat"],
+          "indicateurs": [
+            {
+              "indicateur": "confiance",
+              "parSemaine": 16
+            }
+          ]
+        },
+        {
+          "posteId": "interieur",
+          "domaines": ["securite", "immigration", "collectivites"],
+          "indicateurs": [
+            {
+              "indicateur": "tensions",
+              "parSemaine": -16
+            }
+          ]
+        },
+        {
+          "posteId": "affaires-etrangeres",
+          "domaines": ["diplomatie"],
+          "indicateurs": []
+        },
+        {
+          "posteId": "armees",
+          "domaines": ["defense"],
+          "indicateurs": []
+        },
+        {
+          "posteId": "justice",
+          "domaines": ["justice", "institutions"],
+          "indicateurs": []
+        },
+        {
+          "posteId": "education",
+          "domaines": ["education"],
+          "indicateurs": [
+            {
+              "indicateur": "confiance",
+              "parSemaine": 8
+            }
+          ]
+        },
+        {
+          "posteId": "sante",
+          "domaines": ["sante"],
+          "indicateurs": [
+            {
+              "indicateur": "confiance",
+              "parSemaine": 10
+            },
+            {
+              "indicateur": "tensions",
+              "parSemaine": -8
+            }
+          ]
+        },
+        {
+          "posteId": "travail",
+          "domaines": ["emploi", "retraites"],
+          "indicateurs": [
+            {
+              "indicateur": "tensions",
+              "parSemaine": -20
+            }
+          ]
+        },
+        {
+          "posteId": "transition-ecologique",
+          "domaines": ["environnement", "energie", "logement"],
+          "indicateurs": [
+            {
+              "indicateur": "confiance",
+              "parSemaine": 6
+            }
+          ]
+        },
+        {
+          "posteId": "agriculture",
+          "domaines": ["agriculture"],
+          "indicateurs": [
+            {
+              "indicateur": "tensions",
+              "parSemaine": -8
+            }
+          ]
+        }
+      ],
+      "soutienTheme": 0.4,
+      "actionPoste": 0.8
     },
     "opinion": {
       "statut": "hypothese",
@@ -5711,8 +5814,8 @@
       },
       {
         "id": "deplacement-presidentiel",
-        "libelle": "Déplacement en région",
-        "description": "Visite de terrain : élus locaux, entreprises, services publics.",
+        "libelle": "Déplacement de terrain en région",
+        "description": "Visite de terrain : élus locaux, entreprises, services publics. Pendant la campagne des législatives, mobilise le camp présidentiel dans le département.",
         "portee": "regionale",
         "cible": "departement",
         "cout": {
@@ -5781,6 +5884,372 @@
         "note": "Effets : hypothèses de jeu."
       },
       {
+        "id": "visite-usine",
+        "libelle": "Visite d'une usine",
+        "description": "Rencontre des salariés et de la direction d'un site industriel : emploi, investissement, souveraineté industrielle.",
+        "portee": "regionale",
+        "cible": "departement",
+        "cout": {
+          "budgetCentimes": 0,
+          "tempsHeures": 10
+        },
+        "prerequis": {
+          "militantsMin": 0
+        },
+        "effets": [
+          {
+            "ressource": "popularite",
+            "base": 25,
+            "ecart": 20,
+            "delaiSemaines": 0,
+            "saturation": true
+          },
+          {
+            "ressource": "notoriete",
+            "base": 10,
+            "ecart": 5,
+            "delaiSemaines": 0,
+            "saturation": true
+          }
+        ],
+        "campagne": null,
+        "risque": {
+          "probabilite": 0.1,
+          "libelle": "Annonce de suppressions d'emplois le jour de la visite",
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -60,
+              "ecart": 30,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        },
+        "note": "Effets : hypothèses de jeu. Mobilise le camp présidentiel pendant la campagne des législatives.",
+        "delaiSemaines": 2,
+        "economie": [
+          {
+            "indicateur": "confiance",
+            "valeur": 30
+          }
+        ],
+        "poste": "economie"
+      },
+      {
+        "id": "visite-chu",
+        "libelle": "Visite d'un centre hospitalier universitaire",
+        "description": "Échange avec les soignants et les patients d'un CHU : urgences, recrutements, investissement hospitalier.",
+        "portee": "regionale",
+        "cible": "departement",
+        "cout": {
+          "budgetCentimes": 0,
+          "tempsHeures": 10
+        },
+        "prerequis": {
+          "militantsMin": 0
+        },
+        "effets": [
+          {
+            "ressource": "popularite",
+            "base": 30,
+            "ecart": 20,
+            "delaiSemaines": 0,
+            "saturation": true
+          }
+        ],
+        "campagne": null,
+        "risque": {
+          "probabilite": 0.08,
+          "libelle": "Accueil tendu des soignants",
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -50,
+              "ecart": 25,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        },
+        "note": "Effets : hypothèses de jeu. Mobilise le camp présidentiel pendant la campagne des législatives.",
+        "delaiSemaines": 2,
+        "economie": [
+          {
+            "indicateur": "tensions",
+            "valeur": -30
+          }
+        ],
+        "poste": "sante"
+      },
+      {
+        "id": "sommet-crise",
+        "libelle": "Sommet de crise à l'Élysée",
+        "description": "Réunion des ministres concernés, des élus et des acteurs de terrain après une crise : mesures d'urgence et coordination.",
+        "portee": "nationale",
+        "cible": null,
+        "cout": {
+          "budgetCentimes": 0,
+          "tempsHeures": 14
+        },
+        "prerequis": {
+          "militantsMin": 0
+        },
+        "effets": [
+          {
+            "ressource": "popularite",
+            "base": 50,
+            "ecart": 30,
+            "delaiSemaines": 0,
+            "saturation": false
+          }
+        ],
+        "campagne": null,
+        "risque": null,
+        "note": "Effets : hypothèses de jeu. Possible seulement dans les quatre semaines qui suivent une crise.",
+        "delaiSemaines": 4,
+        "condition": "crise-recente",
+        "economie": [
+          {
+            "indicateur": "tensions",
+            "valeur": -200
+          },
+          {
+            "indicateur": "confiance",
+            "valeur": 100
+          }
+        ],
+        "parlement": {
+          "apaisement": 5,
+          "fronde": 0
+        },
+        "poste": null
+      },
+      {
+        "id": "negociation-sociale",
+        "libelle": "Négociation avec les partenaires sociaux à l'Élysée",
+        "description": "Syndicats et organisations patronales reçus à l'Élysée : salaires, conditions de travail, retraites.",
+        "portee": "nationale",
+        "cible": null,
+        "cout": {
+          "budgetCentimes": 0,
+          "tempsHeures": 12
+        },
+        "prerequis": {
+          "militantsMin": 0
+        },
+        "effets": [
+          {
+            "ressource": "popularite",
+            "base": 20,
+            "ecart": 30,
+            "delaiSemaines": 0,
+            "saturation": false
+          }
+        ],
+        "campagne": null,
+        "risque": {
+          "probabilite": 0.25,
+          "libelle": "Échec des négociations",
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -80,
+              "ecart": 40,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        },
+        "note": "Effets : hypothèses de jeu. Le ministre du Travail en module l'issue.",
+        "delaiSemaines": 6,
+        "economie": [
+          {
+            "indicateur": "tensions",
+            "valeur": -300
+          },
+          {
+            "indicateur": "confiance",
+            "valeur": 50
+          }
+        ],
+        "poste": "travail"
+      },
+      {
+        "id": "discours-congres",
+        "libelle": "Discours devant le Parlement réuni en Congrès",
+        "description": "Le président prend la parole devant les deux assemblées réunies à Versailles (Constitution, art. 18) ; un débat sans vote peut suivre, hors sa présence.",
+        "portee": "nationale",
+        "cible": null,
+        "cout": {
+          "budgetCentimes": 0,
+          "tempsHeures": 16
+        },
+        "prerequis": {
+          "militantsMin": 0
+        },
+        "effets": [
+          {
+            "ressource": "popularite",
+            "base": 60,
+            "ecart": 60,
+            "delaiSemaines": 0,
+            "saturation": false
+          },
+          {
+            "ressource": "notoriete",
+            "base": 40,
+            "ecart": 20,
+            "delaiSemaines": 0,
+            "saturation": true
+          }
+        ],
+        "campagne": null,
+        "risque": {
+          "probabilite": 0.15,
+          "libelle": "Discours jugé sans cap",
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -80,
+              "ecart": 40,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        },
+        "note": "Règle citée : Constitution, art. 18. Fréquence (une fois par an au plus) et effets : hypothèses de jeu.",
+        "delaiSemaines": 52,
+        "economie": [
+          {
+            "indicateur": "confiance",
+            "valeur": 100
+          }
+        ],
+        "parlement": {
+          "apaisement": 15,
+          "fronde": 0.3
+        },
+        "sourceId": "constitution-art-18"
+      },
+      {
+        "id": "reunion-majorite",
+        "libelle": "Réunir les parlementaires de la majorité à l'Élysée",
+        "description": "Le président reçoit les députés des groupes qui le soutiennent pour resserrer les rangs avant les votes.",
+        "portee": "nationale",
+        "cible": null,
+        "cout": {
+          "budgetCentimes": 0,
+          "tempsHeures": 6
+        },
+        "prerequis": {
+          "militantsMin": 0
+        },
+        "effets": [
+          {
+            "ressource": "popularite",
+            "base": -10,
+            "ecart": 10,
+            "delaiSemaines": 0,
+            "saturation": false
+          }
+        ],
+        "campagne": null,
+        "risque": null,
+        "note": "Effets : hypothèses de jeu. Résorbe une partie de la fronde ; perçu comme partisan.",
+        "delaiSemaines": 4,
+        "parlement": {
+          "apaisement": 2,
+          "fronde": 0.4
+        }
+      },
+      {
+        "id": "commemoration",
+        "libelle": "Commémoration nationale",
+        "description": "Cérémonie d'hommage de la Nation : anniversaire historique, victimes, grandes figures.",
+        "portee": "nationale",
+        "cible": null,
+        "cout": {
+          "budgetCentimes": 0,
+          "tempsHeures": 6
+        },
+        "prerequis": {
+          "militantsMin": 0
+        },
+        "effets": [
+          {
+            "ressource": "popularite",
+            "base": 20,
+            "ecart": 10,
+            "delaiSemaines": 0,
+            "saturation": false
+          }
+        ],
+        "campagne": null,
+        "risque": null,
+        "note": "Effets : hypothèses de jeu.",
+        "delaiSemaines": 8,
+        "economie": [
+          {
+            "indicateur": "tensions",
+            "valeur": -50
+          }
+        ],
+        "parlement": {
+          "apaisement": 3,
+          "fronde": 0
+        }
+      },
+      {
+        "id": "pantheonisation",
+        "libelle": "Panthéonisation d'une grande figure de l'histoire",
+        "description": "Le président décide l'entrée au Panthéon d'une grande figure de l'histoire nationale ; la figure n'est pas nommée dans le jeu.",
+        "portee": "nationale",
+        "cible": null,
+        "cout": {
+          "budgetCentimes": 0,
+          "tempsHeures": 10
+        },
+        "prerequis": {
+          "militantsMin": 0
+        },
+        "effets": [
+          {
+            "ressource": "popularite",
+            "base": 80,
+            "ecart": 40,
+            "delaiSemaines": 0,
+            "saturation": false
+          },
+          {
+            "ressource": "notoriete",
+            "base": 20,
+            "ecart": 10,
+            "delaiSemaines": 0,
+            "saturation": true
+          }
+        ],
+        "campagne": null,
+        "risque": null,
+        "note": "Usage sous la Cinquième République, sans texte officiel (source citée). Une fois par mandat ; effets : hypothèses de jeu.",
+        "delaiSemaines": 260,
+        "economie": [
+          {
+            "indicateur": "confiance",
+            "valeur": 150
+          },
+          {
+            "indicateur": "tensions",
+            "valeur": -100
+          }
+        ],
+        "parlement": {
+          "apaisement": 6,
+          "fronde": 0
+        },
+        "sourceId": "pantheon-usage"
+      },
+      {
         "id": "remaniement",
         "libelle": "Remaniement du gouvernement",
         "description": "Mettre fin aux fonctions du gouvernement et nommer un nouveau Premier ministre, qui compose son équipe.",
@@ -5841,7 +6310,7 @@
     ]
   },
   "parlement": {
-    "note": "Règles constitutionnelles citées (art. 28, 45 et 49) ; tout le reste — calendrier des textes, modèle de vote par groupe, concessions, Sénat simplifié, décision de censurer et effet des réformes sur la popularité — est un paramètre de jeu (hypothèse). Les votes sont ceux des groupes, simulés : aucun vote individuel n'est attribué à un député réel. Le Sénat n'est pas modélisé groupe par groupe : son accord est tiré au sort, l'Assemblée ayant le dernier mot en cas de désaccord.",
+    "note": "Règles constitutionnelles citées (art. 28, 45 et 49) ; tout le reste — calendrier des textes, modèle de vote par groupe, concessions, Sénat simplifié, décision de censurer et effet des réformes sur la popularité — est un paramètre de jeu (hypothèse). Les votes sont ceux des groupes, simulés : aucun vote individuel n'est attribué à un député réel. Le Sénat n'est pas modélisé groupe par groupe : son accord est tiré au sort, l'Assemblée ayant le dernier mot en cas de désaccord. Phase 13 : tension parlementaire, frondeurs (nombres de députés, jamais de nom), interventions de l'opposition aux votes clés et motions de censure spontanées sont des paramètres de jeu (hypothèses).",
     "fichier": "assemblee-2026.json",
     "empreinte": "c8a7a825905cab4763a1e15efdcf8d42690562907723bf748d26dd86b3f6e222",
     "regles": {
@@ -5850,7 +6319,8 @@
       "signaturesCensure": 0.1,
       "autres49_3ParSession": 1,
       "moisOuvertureSession": 10,
-      "regle": "Motion de censure recevable si elle est signée par un dixième au moins des membres de l'Assemblée, adoptée seulement à la majorité des membres qui la composent (seuls les votes favorables sont recensés) ; engagement de responsabilité sur un projet autre que de finances ou de financement de la sécurité sociale : une fois par session ordinaire, qui commence en octobre ; en cas de désaccord persistant avec le Sénat, l'Assemblée statue définitivement."
+      "motionsParSession": 3,
+      "regle": "Motion de censure recevable si elle est signée par un dixième au moins des membres de l'Assemblée, adoptée seulement à la majorité des membres qui la composent (seuls les votes favorables sont recensés), un député ne pouvant en signer plus de trois par session ordinaire ; engagement de responsabilité sur un projet autre que de finances ou de financement de la sécurité sociale : une fois par session ordinaire, qui commence en octobre ; en cas de désaccord persistant avec le Sénat, l'Assemblée statue définitivement."
     },
     "calendrier": {
       "statut": "hypothese",
@@ -5896,6 +6366,47 @@
       "effetPopulariteMax": 150,
       "accueilNeutre": 0.5,
       "bonusPublics": 0.3
+    },
+    "tension": {
+      "statut": "hypothese",
+      "base": 10,
+      "poidsOpposition": 40,
+      "poidsMinorite": 30,
+      "poidsImpopularite": 25,
+      "par49_3": 12,
+      "parFrondeur": 0.4,
+      "frondeMax": 15,
+      "parMotion": 6,
+      "coalition": 8,
+      "poidsTensionsSociales": 0.3,
+      "decroissanceApaisement": 0.15,
+      "seuilMotion": 65,
+      "probabiliteParPoint": 0.012,
+      "delaiMotionSemaines": 6,
+      "effetCensure": 0.4,
+      "majoration49_3": 1
+    },
+    "frondeurs": {
+      "statut": "hypothese",
+      "toleranceDistance": 0.45,
+      "poidsEloignement": 0.2,
+      "poidsImpopularite": 0.1,
+      "poidsTension": 0.08,
+      "poidsMinistre": 0.1,
+      "partMax": 0.3,
+      "hausse49_3": 0.05,
+      "baisseHebdomadaire": 0.08,
+      "negociation": {
+        "reduction": 0.6,
+        "reductionEffet": 0.1
+      },
+      "coalition": 0.05
+    },
+    "opposition": {
+      "statut": "hypothese",
+      "margeCle": 0.06,
+      "effet": 0.12,
+      "distanceMeneur": 0.6
     }
   },
   "economie": {
@@ -7952,6 +8463,30 @@
       "statut": "hypothese",
       "soutiensMax": 0.35,
       "populariteMin": 4500
+    },
+    "alliances": {
+      "statut": "hypothese",
+      "note": "Accords électoraux entre blocs (investitures communes, désistements réciproques, front républicain), coalition après des législatives sans majorité et mobilisation par les déplacements du président : règles et paramètres de jeu (hypothèses). Les accords que le jeu prête aux blocs conduits par l'IA ne décrivent aucun accord réel ; par convention du jeu, ces blocs ne concluent aucun accord avec le bloc visé par le front républicain.",
+      "campagneSemaines": 6,
+      "reportInvestitures": 0.8,
+      "reportDesistement": 0.75,
+      "distanceDesistements": 1.0,
+      "distanceInvestitures": 0.7,
+      "frontRepublicain": {
+        "contre": "extreme-droite",
+        "distanceMin": 0.75
+      },
+      "coalition": {
+        "distanceMax": 0.9
+      },
+      "mobilisation": {
+        "parDeplacement": 150,
+        "max": 600
+      },
+      "ia": {
+        "desistements": true,
+        "frontRepublicain": true
+      }
     }
   },
   "debats": {

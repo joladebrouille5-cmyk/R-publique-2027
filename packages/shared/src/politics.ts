@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { CandidatePhotoSchema } from './portrait';
 
 // Identité politique des candidats (§1.2) et positionnement sur deux axes.
 
@@ -38,16 +39,37 @@ export type CandidateNature = z.infer<typeof CandidateNatureSchema>;
 
 export const PersonalityIdSchema = z.string().regex(/^reel-[a-z0-9-]+$/);
 
-/** Identité d'un candidat (format 6). */
-export const CandidateIdentitySchema = CandidateIdentityV5Schema.extend({
+const CandidateIdentityV6Shape = CandidateIdentityV5Schema.extend({
   nature: CandidateNatureSchema,
   /** Fiche de la personnalité réelle dans le jeu de règles ; null sinon. */
   personnaliteId: PersonalityIdSchema.nullable(),
+}).strict();
+
+const realHasFiche = {
+  check: (c: { nature: CandidateNature; personnaliteId: string | null }) =>
+    (c.nature === 'reel') === (c.personnaliteId !== null),
+  message: 'Une personnalité réelle, et elle seule, renvoie à sa fiche',
+};
+
+/** Identité d'un candidat aux formats 6 à 16 (figée pour les migrations). */
+export const CandidateIdentityV16Schema = CandidateIdentityV6Shape.refine(realHasFiche.check, {
+  message: realHasFiche.message,
+  path: ['personnaliteId'],
+});
+export type CandidateIdentityV16 = z.infer<typeof CandidateIdentityV16Schema>;
+
+/**
+ * Identité d'un candidat (format 17, phase 13) : photo choisie par le joueur pour son candidat
+ * personnalisé (URL de données contrôlée), null sinon.
+ */
+export const CandidateIdentitySchema = CandidateIdentityV6Shape.extend({
+  photo: CandidatePhotoSchema.nullable(),
 })
   .strict()
-  .refine((c) => (c.nature === 'reel') === (c.personnaliteId !== null), {
-    message: 'Une personnalité réelle, et elle seule, renvoie à sa fiche',
-    path: ['personnaliteId'],
+  .refine(realHasFiche.check, { message: realHasFiche.message, path: ['personnaliteId'] })
+  .refine((c) => c.photo === null || c.nature === 'personnalise', {
+    message: 'Seul un candidat personnalisé porte une photo choisie par le joueur',
+    path: ['photo'],
   });
 export type CandidateIdentity = z.infer<typeof CandidateIdentitySchema>;
 

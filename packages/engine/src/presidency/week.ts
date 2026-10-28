@@ -18,12 +18,27 @@ import { stream } from '../core/random';
 import { WEEKLY_STEPS } from '../core/steps';
 import { weeklyDrift } from '../election/opinion';
 import { applyDecisions, validateDecisionAnswers } from '../event/events';
-import { planPresidentActions, validatePresidencyActions } from './actions';
+import {
+  applyPresidentialEffects,
+  planPresidentActions,
+  validatePresidencyActions,
+} from './actions';
+import {
+  aiCoalitionChoice,
+  ALLIANCE_DECISION_EVENT,
+  answerAlliance,
+  answerCoalition,
+  coalitionDecision,
+  needsCoalition,
+  openLegislativeCampaign,
+} from './alliances';
 import { applyConsequences } from './consequences';
 import { answerCrisis, drawCrises } from './crises';
 import { EconomyBook, weeklyEconomy } from './economy';
 import { dissolve, legislativeNotices, legislativeWeek } from './legislatives';
-import { advanceParliament } from './parliament';
+import { advanceParliament, refreshBillDecisions } from './parliament';
+import { weeklyTension, updateTension } from './tension';
+import { ministerEffects } from './themes';
 import { openNextCampaign } from './cycle';
 import { nextCampaignStart, weekReaches } from './dates';
 import {
@@ -157,7 +172,8 @@ export function advancePresidencyWeek(
   set(4, false, 'Pas de campagne en cours : relations et ralliements inchangés.');
 
   // 5. Décisions, effets des actions, remaniement, Parlement.
-  const institutional = new Set(['gouvernement', 'texte', 'crise']);
+  const institutional = new Set(['gouvernement', 'texte', 'crise', 'alliance']);
+  const allianceAnswers = answers.filter((a) => a.decision.kind === 'alliance');
   const governmentAnswers = answers.filter((a) => a.decision.kind === 'gouvernement');
   const billAnswers = answers.filter((a) => a.decision.kind === 'texte');
   const crisisAnswers = answers.filter((a) => a.decision.kind === 'crise');
@@ -169,7 +185,12 @@ export function advancePresidencyWeek(
     answers.filter((a) => !institutional.has(a.decision.kind)),
     5,
   );
-  for (const answer of [...governmentAnswers, ...billAnswers, ...crisisAnswers]) {
+  for (const answer of [
+    ...allianceAnswers,
+    ...governmentAnswers,
+    ...billAnswers,
+    ...crisisAnswers,
+  ]) {
     const option = answer.decision.options.find((o) => o.id === answer.optionId)!;
     decisions.push({
       decisionId: answer.decision.id,
@@ -179,6 +200,14 @@ export function advancePresidencyWeek(
       automatic: answer.automatic,
     });
   }
+  // Alliances des législatives et coalition (phase 13), avant le gouvernement : une coalition
+  // change la majorité dont dépend le choix du Premier ministre.
+  for (const answer of allianceAnswers)
+    events.push(
+      answer.decision.eventId === ALLIANCE_DECISION_EVENT
+        ? answerAlliance(state, ruleset, answer.optionId)
+        : answerCoalition(state, ruleset, answer.optionId),
+    );
   for (const answer of governmentAnswers) {
     if (answer.decision.eventId === MINISTER_DECISION_EVENT) {
       const event = answerMinister(state, ruleset, answer.decision, answer.optionId, {
@@ -197,6 +226,7 @@ export function advancePresidencyWeek(
     validated,
     5,
   );
+  applyPresidentialEffects({ state, ruleset, ledger, economy, step: 5 }, validated);
   for (const action of validated)
     if (action.definition.institution === 'dissolution') events.push(dissolve(state, ruleset));
   for (const action of validated) {
@@ -251,6 +281,8 @@ export function advancePresidencyWeek(
   if (playerPresides) requestGovernment(state, ruleset);
   if (crisisContext && weekReaches(date, state.quinquennat!.mandat.debut))
     events.push(...drawCrises(crisisContext, playerPresides));
+  // Tension parlementaire (phase 13) : fronde et apaisement décroissent, puis recalcul.
+  weeklyTension(state, ruleset);
   set(
     5,
     true,
@@ -280,6 +312,7 @@ export function advancePresidencyWeek(
   // 7. Conséquences durables (phase 7), puis économie : effets différés, dynamique des
   // indicateurs, conjoncture et popularité.
   const lasting = applyConsequences(state, economy, ledger, president.id, 7);
+  if (economy) ministerEffects(state, ruleset, economy);
   if (economy) {
     weeklyEconomy(
       state,
@@ -299,11 +332,20 @@ export function advancePresidencyWeek(
           (lasting ? ` ; ${plural(lasting, 'conséquence durable')} en cours.` : '.')
       : 'Économie non initialisée.',
   );
-  // 8. Législatives : premier ou second tour de la semaine, nouvelle Assemblée.
+  // 8. Législatives : campagne (accords, phase 13), premier ou second tour de la semaine,
+  // nouvelle Assemblée, coalition éventuelle.
+  const campaign = openLegislativeCampaign(state, ruleset);
+  if (campaign) events.push(campaign);
   const legislatives = legislativeWeek(state, ruleset, president);
   events.push(...legislatives.events);
   if (legislatives.newAssembly) {
     endGovernment(state.quinquennat!, date, 'élections législatives');
+    if (needsCoalition(state)) {
+      if (playerPresides) state.pendingDecisions.push(coalitionDecision(state, ruleset, president));
+      else
+        events.push(answerCoalition(state, ruleset, aiCoalitionChoice(state, ruleset, president)));
+    }
+    updateTension(state, ruleset);
     if (!playerPresides)
       events.push(
         nominate(state, ruleset, aiPrimeMinister(state, ruleset, president), { ledger, step: 8 }),
@@ -329,6 +371,11 @@ export function advancePresidencyWeek(
     requestGovernment(state, ruleset);
     endOfGame(state, ruleset);
   }
+  // Tension parlementaire de fin de semaine : popularité, économie et Assemblée telles que le
+  // joueur les voit (la décroissance de la fronde a eu lieu à l'étape 5) ; les textes en attente
+  // de sa décision sont projetés sur cette base.
+  updateTension(state, ruleset);
+  if (!transition) refreshBillDecisions(state, ruleset);
   set(
     9,
     true,

@@ -1,4 +1,4 @@
-import type { GameState, WeeklyReport } from '@r2027/shared';
+import { postOfDomain, type GameState, type WeeklyReport } from '@r2027/shared';
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { proposalsById } from '../campaign/programme';
@@ -6,10 +6,12 @@ import { advanceWeek } from '../core/advanceWeek';
 import { PLAYER_ACTOR_ID } from '../core/createGame';
 import { newGame, playToEnd, QUIET, sponsorship, TEST_CANDIDATE } from '../core/testing';
 import { openQuinquennat } from './government';
+import { updateTension } from './tension';
 import {
   canEngage,
   censureVote,
   filledSeats,
+  groupSupport,
   membersMajority,
   openness,
   reformDelayWeeks,
@@ -217,6 +219,9 @@ describe('Assemblée nationale', () => {
     hostile.actors[PLAYER_ACTOR_ID]!.resources.popularite = 1_000;
     // Premier ministre de compétence moyenne : sa compétence ne pèse pas sur la censure.
     hostile.quinquennat!.gouvernement!.premierMinistre = { nature: 'profil', ref: AVERAGE };
+    // La tension parlementaire (phase 13) suit la composition fabriquée.
+    updateTension(hostile, RULES);
+    expect(hostile.parlement!.tension.valeur).toBeGreaterThan(60);
     expect(censureVote(hostile, RULES, null)!.adoptee).toBe(true);
     const decision = hostile.pendingDecisions.find((d) => d.kind === 'texte')!;
     const billId = decision.id.replace(/^t-\d+-/, '');
@@ -256,24 +261,34 @@ describe('Assemblée nationale', () => {
     const groupe = figure.groupe!;
     const base = JSON.parse(JSON.stringify(asked)) as GameState;
     const government = base.quinquennat!.gouvernement!;
+    // Équipe de compétence moyenne : ni la censure ni le domaine du texte (phase 13) ne
+    // dépendent alors de la composition, seule l'ouverture change.
     government.premierMinistre = { nature: 'profil', ref: AVERAGE };
-    government.ministres = government.ministres.map((m) =>
-      m.nature === 'figure' && RULES.figures.figures.find((f) => f.id === m.ref)!.groupe === groupe
-        ? { nature: 'profil', ref: AVERAGE, posteId: m.posteId }
-        : m,
-    );
+    government.ministres = government.ministres.map((m) => ({
+      nature: 'profil',
+      ref: AVERAGE,
+      posteId: m.posteId,
+    }));
     expect(openness(base, RULES).get(groupe)).toBeUndefined();
     const open = JSON.parse(JSON.stringify(base)) as GameState;
-    open.quinquennat!.gouvernement!.ministres[0] = {
+    // Un ministère sans rapport avec le texte : la compétence du ministre du domaine (phase 13)
+    // ne change pas entre les deux gouvernements.
+    const domain = postOfDomain(RULES, proposals.get(bill.propositionId)!.domaine);
+    const slot = open.quinquennat!.gouvernement!.ministres.findIndex((m) => m.posteId !== domain);
+    open.quinquennat!.gouvernement!.ministres[slot] = {
       nature: 'figure',
       ref: figure.id,
-      posteId: open.quinquennat!.gouvernement!.ministres[0]!.posteId,
+      posteId: open.quinquennat!.gouvernement!.ministres[slot]!.posteId,
     };
     expect(openness(open, RULES).get(groupe)).toBe(1);
+    // Le soutien du groupe au texte augmente exactement de l'effet d'ouverture, et son vote
+    // ne s'en trouve jamais moins favorable.
+    expect(
+      groupSupport(open, RULES, bill, groupe) - groupSupport(base, RULES, bill, groupe),
+    ).toBeCloseTo(RULES.quinquennat.equipe.ouverture.soutienParMembre);
     const before = tallyVote(base, RULES, bill, 'premiere', null).parGroupe[groupe]!;
     const after = tallyVote(open, RULES, bill, 'premiere', null).parGroupe[groupe]!;
-    // Le groupe passe du vote contre à l'abstention, ou de l'abstention au vote pour.
-    expect(after.pour - after.contre).toBeGreaterThan(before.pour - before.contre);
+    expect(after.pour - after.contre).toBeGreaterThanOrEqual(before.pour - before.contre);
     const hostile = (state: GameState) => {
       const copy = JSON.parse(JSON.stringify(state)) as GameState;
       copy.actors[PLAYER_ACTOR_ID]!.resources.popularite = 500;

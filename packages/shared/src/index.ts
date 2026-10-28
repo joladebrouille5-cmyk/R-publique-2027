@@ -24,3 +24,5 @@ export * from './economie';
 export * from './economie-reelle';
 export * from './legislatives';
 export * from './legislatives-etat';
+export * from './portrait';
+export * from './mandat';
