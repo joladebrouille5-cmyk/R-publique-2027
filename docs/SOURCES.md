@@ -414,6 +414,8 @@ Les **attaques** ne portent que sur des faits de la partie (crédibilité du pro
 
 ## 8 nonies. Personnalités nominables au gouvernement (phase 11)
 
+> Fiches et méthode remplacées à partir du jeu de règles 15.0.0 (phase 14) : voir le [§8 undecies](#8-undecies-vivier-élargi-et-expertise-ministérielle-phase-14).
+
 Demande de l'utilisateur du 22/10/2026 (phase 11, demande 2) : figures clés des partis, dont Jordan Bardella et Jean-Philippe Tanguy, nominables à Matignon et aux ministères régaliens. Sélection éditoriale (dans [`packages/data-import/src/gouvernement/selection.ts`](../packages/data-import/src/gouvernement/selection.ts)) : responsables nationaux des partis représentés par un groupe à l'Assemblée nationale ; les personnalités candidates à la présidentielle (§8 quater) restent nominables comme acteurs de la partie et ne sont pas reprises ici. Import : `pnpm data:gouvernement` ; fiches dans [`packages/rulesets/src/gouvernement-2027.json`](../packages/rulesets/src/gouvernement-2027.json), photos dans `apps/web/public/gouvernement/`. Jeu de règles `presidentielle-2027@13.0.0`.
 
 | Source | Usage | Version, licence |
@@ -483,6 +485,198 @@ Tout le reste est un **paramètre de jeu** (statut `hypothese` dans le jeu de r�
 - **Couleurs des groupes** de l'hémicycle et **groupe du joueur** (celui de sa personnalité réelle, sinon le plus proche de son positionnement) : conventions d'affichage du jeu, signalées comme telles à l'écran ; ce ne sont pas des couleurs officielles.
 - **Carte des législatives** : résultats officiels de 2024 par bloc au niveau du département (§3.3, mêmes fichiers) ; législatives simulées étiquetées comme telles, jamais présentées comme une prévision.
 - **Portraits** : photo choisie par le joueur pour son candidat personnalisé (fichier JPEG, PNG ou WebP ; recadrée en carré de 256 px et réencodée en WebP ou JPEG sur l'appareil, environ 100 Ko au plus — URL de données de 140 000 caractères —, contrôlée par le serveur : type, taille, signature du fichier), conservée dans l'état de la partie ; portraits illustrés générés (SVG déterministe) pour les seuls personnages fictifs ; une personnalité réelle sans photo libre garde une silhouette neutre et ses initiales (aucun visage généré). Nouvelle recherche des trois photos manquantes (§8 nonies) non faite : leurs fichiers Wikidata restent sous licence non retenue, et les API Wikimedia répondaient 429 depuis l'environnement le 28/10/2026.
+
+## 8 undecies. Vivier élargi et expertise ministérielle (phase 14)
+
+Demande de l'utilisateur du 28/10/2026 : « augmenter significativement le nombre de personnalités politiques présentes avec leurs photos pour tous », pour les ministères et les législatives. Même import qu'au §8 nonies (`pnpm data:gouvernement`, fiches dans [`packages/rulesets/src/gouvernement-2027.json`](../packages/rulesets/src/gouvernement-2027.json), photos dans `apps/web/public/gouvernement/`), méthode révisée ; jeu de règles `presidentielle-2027@15.0.0`, format de sauvegarde 18. Les fiches ci-dessous **remplacent** celles du §8 nonies (révisions du 28/10/2026).
+
+Sélection éditoriale (dans [`packages/data-import/src/gouvernement/selection.ts`](../packages/data-import/src/gouvernement/selection.ts), environ 120 personnes) : membres du gouvernement en fonction (article « Gouvernement Lecornu II », révision 240680163), anciens Premiers ministres et ministres encore actifs, dirigeants nationaux et présidents de groupe (Assemblée nationale et Sénat) des partis suivis par le jeu ; hors candidats déclarés à la présidentielle (acteurs de la partie, §8 quater). Résultat : **108 fiches retenues, toutes avec une photo sous licence libre**, et 12 fiches écartées avec leur motif. Répartition par parti : Renaissance 26, Les Républicains 16, Parti socialiste 12, Horizons 10, Rassemblement national 9, La France insoumise 9, Mouvement démocrate 9, Les Écologistes 6, Parti communiste français 6, Sans étiquette 3, Union des droites pour la République 1, Reconquête 1.
+
+| Source | Usage | Version, licence |
+|---|---|---|
+| Wikipédia, article de chaque figure (infobox « Personnalité politique ») | libellés des fonctions et leurs dates ; **parti** (champ `parti` : partis cités et périodes) ; aucune phrase de l'article | révisions du 28/10/2026 (numéro de révision dans chaque fiche) ; texte CC BY-SA 4.0 : seuls les libellés des fonctions, leurs dates et les partis cités sont repris ; empreinte SHA-256 de la réponse dans les fiches |
+| Wikidata (requête SPARQL) | identifiant ; photos (P18, toutes, rang préféré d'abord) ; catégorie Commons (P373) ; date de décès (P570) | CC0 1.0 ; requête du 28/10/2026, empreinte dans les fiches |
+| Wikimedia Commons (API `imageinfo`, et liste des fichiers de la catégorie de la personne) | photos ; licence et auteur lus dans les métadonnées du fichier (`extmetadata`) ; type et largeur de l'image | licences acceptées : CC0, domaine public, CC BY et CC BY-SA 1.0 à 4.0 (2.5 comprise), Licence Ouverte d'Etalab ; image JPEG, PNG ou WebP d'au moins 150 pixels de large ; photos réduites (240 px de large au plus, WebP), métadonnées retirées |
+| Chapel Hill Expert Survey 2024 (§8 quater) | position du parti, convertie par (x − 5) × 20 | même fichier et même licence qu'au §8 quater |
+| Assemblée nationale (§7, fichier du 19/10/2026) | groupe associé à chaque parti (table du jeu) ; taille du groupe (notoriété) | Licence Ouverte |
+
+Méthodes (écrites dans les fiches et affichées dans Paramètres → Crédits) — changements par rapport au §8 nonies :
+- **Parti** : lu dans le champ `parti` de l'infobox (plus à jour que Wikidata, dont la propriété P102 donnait un parti périmé ou inexact pour plusieurs figures). Une ligne est en cours si sa période porte « depuis » ou si elle n'en a pas (« A puis B » : A est close) ; le parti retenu est le dernier parti suivi par le jeu cité dans une ligne en cours ; anciens noms reconnus (Front national, La République en marche, Europe Écologie Les Verts). Aucune ligne en cours : **« Sans étiquette »**, sans groupe, position du dernier parti suivi quitté (`hypothese`).
+- **Fiche écartée** (au lieu de faire échouer tout l'import) : parti en cours non suivi par le jeu, aucun parti dans l'infobox, personne décédée (Wikidata), article sans infobox de fonctions ou page d'homonymie.
+- **Photo** : choix à la main après revue visuelle sur une planche contact quand le premier choix automatique ne convenait pas (scène de groupe, plan large ou en pied, manifestation ; motif consigné dans la fiche), sinon les photos de Wikidata (P18) dans l'ordre, sinon les fichiers de la catégorie Commons de la personne dont le titre porte son nom et n'annonce pas plusieurs personnes (année la plus récente d'abord). Les fichiers essayés et écartés avant la photo retenue sont consignés avec leur motif (licence, format, taille).
+- **Compétence** (`estimation`) : + 0,30 aussi pour un président de la République (en fonction ou ancien) ; le reste est inchangé (§8 nonies). **Notoriété** : niveau 3 aussi pour un président de la République.
+- **Fonction principale affichée** : la première fonction en cours (hors « autre ») de l'infobox, sinon la première de la fiche, signalée « fonction passée » quand elle a pris fin (règle partagée par le moteur et l'interface).
+
+**Expertise ministérielle** (paramètres du jeu de règles, `quinquennat.equipe.expertise`, `hypothese`) : une fonction de ministre, de secrétaire d'État ou de ministre délégué, en cours ou passée, dont le libellé cite un mot-clé d'un poste du jeu (sans tenir compte des accents ni des majuscules) donne une expertise sur ce poste ; la meilleure fonction est retenue (ministre avant secrétaire d'État ; à égalité, une fonction en cours). Compétence sur le poste = compétence estimée + 0,10 (ministre du domaine) ou + 0,05 (secrétaire d'État ou ministre délégué), dans la limite de 0,95, jamais abaissée par ce plafond. Elle sert à la composition du gouvernement, aux effets des ministres (domaines, crises, textes, actions du président) et à l'affichage, par les mêmes fonctions de `@r2027/shared`. Le Premier ministre (IA) place les personnalités de son camp là où elles sont expertes (au plus 10 personnalités réelles ou candidats parmi les ministres), les profils fictifs comblant les autres postes.
+
+| Poste du jeu | Mots-clés (libellé de la fonction) |
+|---|---|
+| Économie et Finances | économie, finances, budget, comptes publics, industrie, numérique |
+| Intérieur | intérieur, citoyenneté |
+| Europe et Affaires étrangères | affaires étrangères, europe, affaires européennes, commerce extérieur, francophonie |
+| Armées | armées, défense, anciens combattants |
+| Justice | justice, garde des sceaux |
+| Éducation nationale | éducation, enseignement, jeunesse |
+| Santé et Solidarités | santé, solidarité, autonomie, personnes âgées, handicap, affaires sociales, famille |
+| Travail et Emploi | travail, emploi, formation professionnelle, insertion, dialogue social |
+| Transition écologique et Énergie | écologie, écologique, environnement, énergie, énergétique, climat, biodiversité, transports |
+| Agriculture | agriculture, alimentation, alimentaire, pêche, forêt, ruralité |
+
+Fiches écartées (12) :
+- Jean-Pierre Farandou : Aucun parti indiqué dans l’infobox de l’article.
+- Monique Barbut : Aucun parti indiqué dans l’infobox de l’article.
+- Serge Papin : Aucun parti indiqué dans l’infobox de l’article.
+- Édouard Geffray : Aucun parti indiqué dans l’infobox de l’article.
+- Françoise Gatel : Parti en cours non suivi par le jeu (infobox : Union des démocrates et indépendants).
+- Philippe Baptiste : Aucun parti indiqué dans l’infobox de l’article.
+- Laurent Panifous : Parti en cours non suivi par le jeu (infobox : Régions et peuples solidaires, La Convention).
+- Alice Rufo : Aucun parti indiqué dans l’infobox de l’article.
+- Michel Fournier : Aucun parti indiqué dans l’infobox de l’article.
+- Catherine Pégard : Parti en cours non suivi par le jeu (infobox : Indépendant (politique)).
+- François Patriat : Personne décédée (Wikidata : 2026-08-19).
+- Hervé Marseille : Parti en cours non suivi par le jeu (infobox : Les Centristes - Le Nouveau Centre, Union des démocrates et indépendants, Force européenne démocrate).
+
+Photos dont le choix est motivé dans la fiche (22) :
+- Jordan Bardella : Choisie à la main après revue visuelle : portrait de face ; la photo retenue par défaut est une scène de groupe.
+- Jean-Philippe Tanguy : Choisie à la main après revue visuelle : photo récente (2025), visage lisible ; celle de Wikidata est un plan en pied.
+- Sébastien Chenu : Fichier de la catégorie Commons « Sébastien Chenu » ; écartées avant elle : Denain - Sébastien Chenu lors du conseil municipal du 27 juin 2016 (cropped).JPG : licence non reconnue comme libre (GFDL 1.2).
+- Manuel Bompard : Choisie à la main après revue visuelle : portrait de face ; la photo retenue par défaut est prise dans une manifestation.
+- Yannick Jadot : Autre photo de Wikidata (P18) ; écartées avant elle : Member of the European Parliament Yannick Jadot.jpg : licence non reconnue comme libre (European Parliament).
+- Stéphanie Rist : Choisie à la main après revue visuelle : portrait recadré ; la photo de Wikidata est un plan large.
+- Marie-Pierre Vedrenne : Autre photo de Wikidata (P18) ; écartées avant elle : 1720447608272 20240708 VEDRENNE Marie-Pierre FR 021.jpg : licence non reconnue comme libre (European Parliament).
+- Catherine Chabaud : Choisie à la main après revue visuelle : portrait officiel recadré ; la photo de Wikidata est un plan large.
+- Mathieu Lefèvre : Choisie à la main après revue visuelle : portrait recadré ; la photo de Wikidata est un plan large d’une cérémonie.
+- David Amiel : Choisie à la main après revue visuelle : version recadrée de la même photo ; celle de Wikidata est un plan en pied.
+- Jean-Didier Berger : Choisie à la main après revue visuelle : version recadrée de la même photo ; celle de Wikidata est un plan en pied.
+- Camille Galliard-Minier : Choisie à la main après revue visuelle : visage lisible ; la photo de Wikidata est une vue d’ensemble de l’hémicycle.
+- Jean Castex : Choisie à la main après revue visuelle : portrait rapproché ; la photo de Wikidata est prise de loin.
+- Guillaume Gontard : Choisie à la main après revue visuelle : portrait rapproché ; la photo de Wikidata est un plan large.
+- Laure Lavalette : Choisie à la main après revue visuelle : portrait ; la photo de Wikidata est un plan large.
+- Philippe Ballard : Choisie à la main après revue visuelle : portrait recadré ; la photo de Wikidata est prise dans un cortège.
+- Antoine Léaument : Choisie à la main après revue visuelle : portrait recadré ; la photo de Wikidata est prise dans un cortège.
+- Éric Piolle : Choisie à la main après revue visuelle : photo récente (2024), visage lisible ; celle de Wikidata est un plan en pied.
+- Grégory Doucet : Choisie à la main après revue visuelle : portrait recadré ; la photo de Wikidata est un plan large.
+- Marie Toussaint : Choisie à la main après revue visuelle : portrait ; la photo retenue par défaut est un plan large dans l’hémicycle du Parlement européen.
+- François-Xavier Bellamy : Fichier de la catégorie Commons « François-Xavier Bellamy » ; écartées avant elle : François-Xavier Bellamy intervenant en Session Plénière (crop).jpg : licence non reconnue comme libre (European Parliament) ; François-Xavier Bellamy au Parlement européen en 2021.jpg : licence non reconnue comme libre (European Parliament).
+- Léon Deffontaines : Choisie à la main après revue visuelle : visage lisible ; la photo de Wikidata est un plan large.
+
+Fiches retenues (108 ; économie / société sur −100 … +100 ; groupe « — » : aucun groupe) :
+
+| Personnalité | Parti | Groupe | Fonction principale (source) | Révision | Position | Compétence | Notoriété | Photo |
+|---|---|---|---|---|---|---|---|---|
+| Jordan Bardella | Rassemblement national | rn | Président du groupe Patriotes pour l'Europe au Parlement européen | 240789020 | 20 / 67 (`estimation`) | 0,40 | 3 | CC BY-SA 4.0 — Raphael ATTAL @BootEXE |
+| Jean-Philippe Tanguy | Rassemblement national | rn | Député français | 240277243 | 20 / 67 (`estimation`) | 0,35 | 2 | CC0 — Timeolove122 |
+| Sébastien Chenu | Rassemblement national | rn | Président du groupe Rassemblement national à l'Assemblée nationale | 240783032 | 20 / 67 (`estimation`) | 0,40 | 2 | CC BY 4.0 — VenteXe |
+| Éric Ciotti | Union des droites pour la République | udr | Président de la Métropole Nice Côte d'Azur | 240686213 | 56 / 44 (`hypothese`) | 0,50 | 2 | CC BY 2.0 — European People's Party |
+| Mathilde Panot | La France insoumise | lfi-nfp | Présidente du groupe LFI à l’Assemblée nationale | 240363721 | -82 / -64 (`estimation`) | 0,40 | 2 | CC BY 4.0 — original : Antoine Stouls modification : O.Taris |
+| Manuel Bompard | La France insoumise | lfi-nfp | Coordinateur de La France insoumise | 240653520 | -82 / -64 (`estimation`) | 0,40 | 3 | CC BY-SA 4.0 — SarahBulle ( talk · contribs ) |
+| Éric Coquerel | La France insoumise | lfi-nfp | Président de la commission des Finances de l’Assemblée nationale | 240732677 | -82 / -64 (`estimation`) | 0,40 | 2 | CC BY-SA 4.0 — Marche des fiertés de Paris 2017-14.jpg : Jérémie Silvestro Derivative work : Keymap9 |
+| Élisabeth Borne | Renaissance | epr | Députée française | 240713602 | 24 / -18 (`estimation`) | 0,90 | 3 | CC BY-SA 4.0 — Andrea Adriani © European Union 2022 |
+| Gérald Darmanin | Sans étiquette | — | Garde des Sceaux, ministre de la Justice | 240718787 | 24 / -18 (`hypothese`) | 0,60 | 2 | CC BY 2.5 — UK Home Office |
+| Yaël Braun-Pivet | Renaissance | epr | Présidente de l'Assemblée nationale | 239994034 | 24 / -18 (`estimation`) | 0,55 | 2 | CC BY 2.0 — Houses of the Oireachtas from Ireland |
+| Sébastien Lecornu | Renaissance | epr | Premier ministre français chargé de la Planification écologique et énergétique | 240418778 | 24 / -18 (`estimation`) | 0,90 | 3 | Public domain — U.S. Secretary of Defense |
+| Olivier Faure | Parti socialiste | soc | Premier secrétaire du Parti socialiste | 240685583 | -33 / -45 (`estimation`) | 0,45 | 3 | CC BY-SA 2.0 — Olivier Faure |
+| Boris Vallaud | Parti socialiste | soc | Président du groupe socialiste à l'Assemblée nationale | 239852242 | -33 / -45 (`estimation`) | 0,40 | 2 | CC BY-SA 4.0 — Bloody-libu |
+| Carole Delga | Parti socialiste | soc | Présidente des Régions de France | 240743599 | -33 / -45 (`estimation`) | 0,45 | 2 | CC BY-SA 3.0 — Clément Bucco-Lechat |
+| Laurent Wauquiez | Les Républicains | dr | Président du groupe Droite républicaine à l'Assemblée nationale | 240759457 | 56 / 44 (`estimation`) | 0,70 | 2 | CC BY 2.0 — European People's Party |
+| Valérie Pécresse | Les Républicains | dr | Présidente de Soyons libres | 240408505 | 56 / 44 (`estimation`) | 0,60 | 2 | CC BY-SA 4.0 — Gail Leenstra |
+| Cyrielle Chatelain | Les Écologistes | ecos | Présidente du groupe écologiste et social à l'Assemblée nationale | 237388032 | -54 / -66 (`estimation`) | 0,35 | 2 | CC BY-SA 4.0 — GLaG 38 - Guillaume LAGET |
+| Yannick Jadot | Sans étiquette | — | Sénateur français (fonction passée) | 240723795 | -54 / -66 (`hypothese`) | 0,40 | 1 | CC BY 2.0 — greensefa |
+| François Bayrou | Mouvement démocrate | dem | Président du Mouvement démocrate | 240230804 | 14 / -10 (`estimation`) | 0,90 | 3 | Licence Ouverte — Service photographique de Matignon |
+| Marc Fesneau | Mouvement démocrate | dem | Président du groupe Les Démocrates à l'Assemblée nationale | 236197196 | 14 / -10 (`estimation`) | 0,60 | 2 | CC BY 4.0 — European Commission Audiovisual Center |
+| Christian Estrosi | Horizons | hor | Président délégué du conseil régional de Provence-Alpes-Côte-d'Azur | 240786276 | 36 / 6 (`estimation`) | 0,65 | 2 | CC BY-SA 3.0 — Olivier Ezratty |
+| Ian Brossat | Parti communiste français | gdr | Sénateur français | 240072173 | -75 / -29 (`estimation`) | 0,35 | 1 | CC BY-SA 4.0 — Ismaelelhajri |
+| Laurent Nuñez | Renaissance | epr | Ministre de l'Intérieur | 240745946 | 24 / -18 (`estimation`) | 0,50 | 2 | Licence Ouverte — Ministère de l'Intérieur |
+| Catherine Vautrin | Renaissance | epr | Ministre des Armées et des Anciens Combattants | 239090512 | 24 / -18 (`estimation`) | 0,80 | 2 | Licence Ouverte — Lara PRIOLET/ECPAD/DEFENSE |
+| Roland Lescure | Renaissance | epr | Ministre de l'Économie, des Finances et de la Souveraineté industrielle, énergétique et numérique | 239218983 | 24 / -18 (`estimation`) | 0,55 | 2 | CC BY 4.0 — Lukasz Kobus / European Union, 2022 / EC - Audiovisual Service |
+| Annie Genevard | Les Républicains | dr | Ministre de l'Agriculture, de l'Agroalimentaire et de la Souveraineté alimentaire | 239221198 | 56 / 44 (`estimation`) | 0,65 | 2 | CC0 — Yladda |
+| Jean-Noël Barrot | Mouvement démocrate | dem | Ministre de l'Europe et des Affaires étrangères | 239893726 | 14 / -10 (`estimation`) | 0,60 | 2 | CC BY 2.0 — Belgian Presidency of the Council of the EU 2024 from Belgium |
+| Rachida Dati | Les Républicains | dr | Maire du de Paris | 240527290 | 56 / 44 (`estimation`) | 0,60 | 2 | CC BY-SA 4.0 — Thesupermat |
+| Stéphanie Rist | Renaissance | epr | Ministre de la Santé, des Familles, de l'Autonomie et des Personnes handicapées | 239134704 | 24 / -18 (`estimation`) | 0,45 | 2 | Licence Ouverte — Cédric Bufkens / SIPA |
+| Naïma Moutchou | Horizons | hor | Ministre des Outre-mer | 238981248 | 36 / 6 (`estimation`) | 0,55 | 2 | Licence Ouverte — Ministère des Outre-mer - DICOM |
+| Amélie de Montchalin | Renaissance | epr | Première présidente de la Cour des comptes | 240608502 | 24 / -18 (`estimation`) | 0,60 | 2 | CC BY-SA 4.0 — Gézelin Grée |
+| Marina Ferrari | Mouvement démocrate | dem | Ministre des Sports, de la Jeunesse et de la Vie associative (fonction passée) | 239001369 | 14 / -10 (`estimation`) | 0,55 | 2 | CC BY 2.0 — Régions Démocrates 2010 |
+| Philippe Tabarot | Les Républicains | dr | Ministre des Transports | 240069738 | 56 / 44 (`estimation`) | 0,45 | 2 | CC BY 4.0 — Nicolas Kovarik / European Union, 2025 / EC - Audiovisual Service |
+| Vincent Jeanbrun | Les Républicains | dr | Ministre de la Ville et du Logement | 239717840 | 56 / 44 (`estimation`) | 0,50 | 2 | CC BY 4.0 — Thomas Padilla / European Union, 2026 / EC - Audiovisual Service |
+| Maud Bregeon | Renaissance | epr | Ministre déléguée chargée de l'Énergie | 240662079 | 24 / -18 (`estimation`) | 0,35 | 2 | CC BY 3.0 — Ministère de l'Europe et des Affaires étrangères |
+| Aurore Bergé | Renaissance | epr | Ministre déléguée chargée de l'Égalité entre les femmes et les hommes et de la Lutte contre les discriminations | 240787265 | 24 / -18 (`estimation`) | 0,55 | 2 | CC BY-SA 4.0 — HUGUES DE BEAUCHESNE |
+| Marie-Pierre Vedrenne | Mouvement démocrate | dem | Ministre déléguée auprès du ministre de l'Intérieur, chargée de la Citoyenneté | 237145524 | 14 / -10 (`estimation`) | 0,45 | 2 | CC BY-SA 2.0 — World Trade Organization from Switzerland |
+| Catherine Chabaud | Mouvement démocrate | dem | Ministre déléguée à la Mer et à la Pêche | 236930417 | 14 / -10 (`estimation`) | 0,40 | 2 | Licence Ouverte — Damien Valente / Terra |
+| Mathieu Lefèvre | Renaissance | epr | Ministre délégué chargé de la Transition écologique | 240764002 | 24 / -18 (`estimation`) | 0,40 | 2 | CC BY-SA 4.0 — Nicolas Maramotti |
+| Sébastien Martin | Les Républicains | dr | Ministre délégué chargé de l'Industrie | 240676109 | 56 / 44 (`estimation`) | 0,40 | 2 | CC BY 4.0 — Bogdan Hoyaux / European Union, 2025 / EC - Audiovisual Service |
+| Anne Le Hénanff | Horizons | hor | Ministre délégué chargé de l’Intelligence artificielle et du Numérique | 240238375 | 36 / 6 (`estimation`) | 0,35 | 2 | CC BY 4.0 — Europäische Kommission - Audiovisueller Dienst, Lukasz Kobus, Yügen, CE - Service audiovisuel, EC - Audiovisual Service |
+| Benjamin Haddad | Renaissance | epr | Ministre délégué chargé de l'Europe | 240409741 | 24 / -18 (`estimation`) | 0,35 | 2 | CC BY 4.0 — TrisHR |
+| Nicolas Forissier | Les Républicains | dr | Ministre délégué chargé du Commerce extérieur et de l'Attractivité | 240715659 | 56 / 44 (`estimation`) | 0,50 | 2 | Licence Ouverte — Ministère de l'Europe et des Affaires étrangères |
+| Éléonore Caroit | Renaissance | epr | Ministre déléguée chargée de la Francophonie, des Partenariats internationaux et des Français de l'étranger | 240253347 | 24 / -18 (`estimation`) | 0,35 | 2 | CC BY 4.0 — Claudio Centonze / European Union, 2026 / EC - Audiovisual Service |
+| Charlotte Parmentier-Lecocq | Horizons | hor | Députée française | 240471978 | 36 / 6 (`estimation`) | 0,40 | 2 | CC BY-SA 4.0 — Qlprvst |
+| David Amiel | Renaissance | epr | Ministre de l'Action et des Comptes publics | 240419775 | 24 / -18 (`estimation`) | 0,50 | 2 | CC BY-SA 4.0 — B.MODIFICATEUR |
+| Jean-Didier Berger | Les Républicains | dr | Ministre délégué auprès du ministre de l'Intérieur | 239226762 | 56 / 44 (`estimation`) | 0,45 | 2 | CC BY-SA 4.0 — TrisHR |
+| Sabrina Agresti-Roubache | Renaissance | epr | Ministre déléguée chargée de l'Enseignement et de la Formation professionnels et de l'Apprentissage | 240574387 | 24 / -18 (`estimation`) | 0,40 | 2 | CC BY-SA 4.0 — Sacha Vaytet |
+| Camille Galliard-Minier | Renaissance | epr | Ministre déléguée chargée de l'Autonomie et des Personnes handicapées | 238843173 | 24 / -18 (`estimation`) | 0,35 | 2 | CC BY-SA 4.0 — Henry de Chambernac |
+| Michel Barnier | Les Républicains | dr | Député français | 239309161 | 56 / 44 (`estimation`) | 0,90 | 3 | CC BY-SA 4.0 — Florian David Pm |
+| Jean Castex | Sans étiquette | — | Président directeur-général de la Société nationale des chemins de fer français | 237142807 | 56 / 44 (`hypothese`) | 0,70 | 3 | CC BY-SA 4.0 — Florian DAVID |
+| Manuel Valls | Renaissance | epr | Ministre d'État, ministre des Outre-mer (fonction passée) | 240518229 | 24 / -18 (`estimation`) | 0,85 | 3 | CC BY 4.0 — Nicolas Kovarik / European Union, 2025 / EC - Audiovisual Service |
+| Paul Christophe | Horizons | hor | Maire de Zuydcoote | 239669706 | 36 / 6 (`estimation`) | 0,55 | 2 | CC BY-SA 4.0 — G.Garitan |
+| Stéphane Peu | Parti communiste français | gdr | Président du groupe de la Gauche démocrate et républicaine à l’Assemblée nationale | 240703446 | -75 / -29 (`estimation`) | 0,40 | 2 | CC BY 3.0 — PCF - Parti communiste français (PCF) |
+| Gérard Larcher | Les Républicains | dr | Président du Sénat français | 240585871 | 56 / 44 (`estimation`) | 0,60 | 2 | CC BY-SA 4.0 — Senate |
+| Mathieu Darnaud | Les Républicains | dr | Président du groupe Les Républicains au Sénat | 239943637 | 56 / 44 (`estimation`) | 0,50 | 2 | CC BY-SA 4.0 — Ladroite07 |
+| Patrick Kanner | Parti socialiste | soc | Président du groupe socialiste au Sénat | 240285357 | -33 / -45 (`estimation`) | 0,60 | 2 | CC BY-SA 3.0 — Photo Claude TRUONG-NGOC |
+| Cécile Cukierman | Parti communiste français | gdr | Présidente du groupe Communiste Républicain Citoyen et Écologiste - Kanaky au Sénat | 240105150 | -75 / -29 (`estimation`) | 0,45 | 2 | CC BY-SA 4.0 — PCF AuvergneRhoneAlpes |
+| Guillaume Gontard | Les Écologistes | ecos | Sénateur français | 240017197 | -54 / -66 (`estimation`) | 0,45 | 1 | CC BY-SA 4.0 — Percygam |
+| Claude Malhuret | Horizons | hor | Président du groupe Les Indépendants – République et territoires au Sénat | 240140298 | 36 / 6 (`estimation`) | 0,55 | 2 | CC BY-SA 4.0 — ClarisseBuchot |
+| Louis Aliot | Rassemblement national | rn | Président de Perpignan Méditerranée Métropole | 240567862 | 20 / 67 (`estimation`) | 0,45 | 2 | CC BY-SA 4.0 — Pablo Tupin-Noriega |
+| Edwige Diaz | Rassemblement national | rn | Présidente du groupe Union nationale pour les territoires au Sénat | 240780243 | 20 / 67 (`estimation`) | 0,35 | 2 | CC BY-SA 4.0 — Marsouinduteich |
+| Laurent Jacobelli | Rassemblement national | rn | Député français | 240638620 | 20 / 67 (`estimation`) | 0,30 | 1 | CC BY-SA 2.0 — Debout la France |
+| Julien Odoul | Rassemblement national | rn | Député français (fonction passée) | 240164147 | 20 / 67 (`estimation`) | 0,30 | 1 | CC BY-SA 4.0 — Toufik-de-Planoise |
+| Laure Lavalette | Rassemblement national | rn | Députée française | 240218063 | 20 / 67 (`estimation`) | 0,30 | 1 | CC BY-SA 4.0 — Alain V |
+| Philippe Ballard | Rassemblement national | rn | Député français | 236733973 | 20 / 67 (`estimation`) | 0,30 | 1 | CC0 — LuilGG |
+| Sarah Knafo | Reconquête | — | Députée européenne | 240735123 | 67 / 82 (`estimation`) | 0,30 | 1 | CC BY-SA 2.0 — Anh De France |
+| Clémence Guetté | La France insoumise | lfi-nfp | Députée française | 240596861 | -82 / -64 (`estimation`) | 0,30 | 1 | CC BY 4.0 — Claire Jacquin |
+| Aurélie Trouvé | La France insoumise | lfi-nfp | Députée française | 239631222 | -82 / -64 (`estimation`) | 0,35 | 1 | CC BY-SA 4.0 — Azimuts14 |
+| Manon Aubry | La France insoumise | lfi-nfp | Députée européenne | 239747826 | -82 / -64 (`estimation`) | 0,35 | 1 | CC BY 2.0 — European Parliament from EU |
+| Paul Vannier | La France insoumise | lfi-nfp | Député français | 236052561 | -82 / -64 (`estimation`) | 0,30 | 1 | CC BY 4.0 — satellio |
+| Louis Boyard | La France insoumise | lfi-nfp | Député français | 240626944 | -82 / -64 (`estimation`) | 0,35 | 1 | CC BY-SA 4.0 — Babar BZH |
+| Antoine Léaument | La France insoumise | lfi-nfp | Député français | 239644585 | -82 / -64 (`estimation`) | 0,30 | 1 | CC0 — Tomkiou |
+| François Hollande | Parti socialiste | soc | Député français | 240311894 | -33 / -45 (`estimation`) | 0,70 | 3 | CC BY 2.0 — Web Summit |
+| Jérôme Guedj | Parti socialiste | soc | Député français | 240554631 | -33 / -45 (`estimation`) | 0,35 | 1 | CC BY-SA 2.0 — Audrey AK |
+| Hélène Geoffroy | Parti socialiste | soc | Conseillère municipale de Vaulx-en-Velin | 239922154 | -33 / -45 (`estimation`) | 0,40 | 2 | CC BY-SA 3.0 — Gwada |
+| Nicolas Mayer-Rossignol | Parti socialiste | soc | Président de la Métropole Rouen Normandie | 240163922 | -33 / -45 (`estimation`) | 0,40 | 1 | CC BY-SA 4.0 — Alexandre Moatti |
+| Johanna Rolland | Parti socialiste | soc | Première secrétaire déléguée du Parti socialiste | 240042705 | -33 / -45 (`estimation`) | 0,40 | 3 | CC BY-SA 4.0 — Jpjp12 |
+| Pierre Jouvet | Parti socialiste | soc | Député européen | 239005333 | -33 / -45 (`estimation`) | 0,40 | 3 | CC BY 4.0 — Maxlath |
+| Najat Vallaud-Belkacem | Parti socialiste | soc | Conseillère régionale d'Auvergne-Rhône-Alpes | 240579425 | -33 / -45 (`estimation`) | 0,50 | 2 | CC BY 2.0 — Potrait_Najat_Vallaud-Belkacem.jpg : Benjamin Geminel derivative work: Flappiefh |
+| Anne Hidalgo | Parti socialiste | soc | Maire de Paris (fonction passée) | 240702088 | -33 / -45 (`estimation`) | 0,35 | 1 | CC BY 2.0 — Jacques Paquier |
+| Sandrine Rousseau | Les Écologistes | ecos | Députée française | 240771630 | -54 / -66 (`estimation`) | 0,35 | 1 | CC BY-SA 4.0 — Greenbox |
+| Éric Piolle | Les Écologistes | ecos | Porte-parole des Écologistes (fonction passée) | 240592713 | -54 / -66 (`estimation`) | 0,35 | 1 | CC BY-SA 4.0 — Jean-Paul Corlin |
+| Grégory Doucet | Les Écologistes | ecos | Maire de Lyon | 240483113 | -54 / -66 (`estimation`) | 0,35 | 1 | CC BY-SA 4.0 — CloudMamma |
+| Marie Toussaint | Les Écologistes | ecos | Députée européenne | 238162225 | -54 / -66 (`estimation`) | 0,35 | 1 | CC BY-SA 4.0 — Greenbox |
+| François-Xavier Bellamy | Les Républicains | dr | Député européen | 240597851 | 56 / 44 (`estimation`) | 0,35 | 1 | CC BY 2.0 — European People's Party |
+| Philippe Juvin | Les Républicains | dr | Député français | 239233821 | 56 / 44 (`estimation`) | 0,45 | 1 | CC BY-SA 3.0 — Andy Mabbett |
+| Jean-François Copé | Les Républicains | dr | Maire de Meaux | 240720668 | 56 / 44 (`estimation`) | 0,60 | 2 | CC BY-SA 4.0 — Astrakan25 |
+| Yannick Neuder | Les Républicains | dr | Député français | 236179386 | 56 / 44 (`estimation`) | 0,50 | 2 | CC BY 3.0 — Unió Europea i Acció Exterior sur YouTube |
+| Stéphane Séjourné | Renaissance | epr | Vice-président exécutif de la Commission européenne à la Prospérité et à la Stratégie industrielle Commissaire européen à l'Industrie, aux PME et au Marché unique | 240764028 | 24 / -18 (`estimation`) | 0,50 | 2 | CC BY 4.0 — European Commission Audiovisual Service |
+| Agnès Pannier-Runacher | Renaissance | epr | Députée française | 240577334 | 24 / -18 (`estimation`) | 0,60 | 2 | CC BY 2.0 — IAEA Imagebank |
+| Prisca Thevenot | Renaissance | epr | Députée française | 240729989 | 24 / -18 (`estimation`) | 0,40 | 2 | CC BY-SA 4.0 — Maxime BOUDET |
+| Olivier Véran | Renaissance | epr | Député français (fonction passée) | 239879796 | 24 / -18 (`estimation`) | 0,55 | 2 | CC BY-SA 4.0 — Audran Demierre |
+| Clément Beaune | Renaissance | epr | Haut-commissaire à la Stratégie et au Plan | 239777607 | 24 / -18 (`estimation`) | 0,40 | 2 | CC BY 4.0 — Lukasz Kobus / European Union, 2023 / EC - Audiovisual Service |
+| Bruno Le Maire | Renaissance | epr | Ministre d'État, ministre des Armées et des Anciens Combattants (fonction passée) | 240590581 | 24 / -18 (`estimation`) | 0,60 | 2 | CC BY 2.5 — Sebastiaan ter Burg from Utrecht, The Netherlands |
+| Valérie Hayer | Renaissance | epr | Présidente du groupe Renew Europe au Parlement européen | 240331262 | 24 / -18 (`estimation`) | 0,40 | 2 | CC BY 4.0 — Christophe Licoppe / European Union |
+| Laurent Saint-Martin | Renaissance | epr | Conseiller régional d'Île-de-France | 239050842 | 24 / -18 (`estimation`) | 0,55 | 2 | CC BY-SA 4.0 — Lionel Barbe |
+| Marc Ferracci | Renaissance | epr | Député français | 239226146 | 24 / -18 (`estimation`) | 0,45 | 2 | CC BY 4.0 — Lukasz Kobus / European Union, 2025 / EC - Audiovisual Service |
+| Geneviève Darrieussecq | Mouvement démocrate | dem | Députée française | 238345423 | 14 / -10 (`estimation`) | 0,65 | 2 | CC BY-SA 2.0 — Jérémy Barande |
+| Sarah El Haïry | Mouvement démocrate | dem | Haute-commissaire à l'Enfance | 240363996 | 14 / -10 (`estimation`) | 0,40 | 2 | CC BY-SA 4.0 — Lionel Barbe |
+| Patrick Mignola | Mouvement démocrate | dem | Ministre délégué chargé des Relations avec le Parlement (fonction passée) | 239787636 | 14 / -10 (`estimation`) | 0,50 | 2 | CC0 — JohnWhite73 |
+| Christophe Béchu | Horizons | hor | Maire d'Angers | 240605291 | 36 / 6 (`estimation`) | 0,65 | 2 | CC BY-SA 4.0 — AminataDkt |
+| Agnès Firmin Le Bodo | Horizons | hor | Députée française | 236602432 | 36 / 6 (`estimation`) | 0,55 | 2 | CC BY-SA 4.0 — CELINEPOIZAT |
+| Frédéric Valletoux | Horizons | hor | Président de la commission des Affaires sociales de l'Assemblée nationale | 240414973 | 36 / 6 (`estimation`) | 0,45 | 2 | CC BY-SA 4.0 — Baidax |
+| Laurent Marcangeli | Horizons | hor | Président du groupe Horizons à l'Assemblée nationale | 239935408 | 36 / 6 (`estimation`) | 0,55 | 2 | CC BY 4.0 — Christophe Licoppe / European Union, 2025 / EC - Audiovisual Service |
+| André Chassaigne | Parti communiste français | gdr | Président du groupe de la Gauche démocrate et républicaine à l'Assemblée nationale (fonction passée) | 239917853 | -75 / -29 (`estimation`) | 0,50 | 1 | CC BY-SA 3.0 — Le grand Cricri |
+| Léon Deffontaines | Parti communiste français | gdr | Vice-président d'Amiens Métropole | 239001441 | -75 / -29 (`estimation`) | 0,35 | 1 | CC BY-SA 4.0 — TestDeTuring |
+| Pierre Laurent | Parti communiste français | gdr | Maire de Saint-Martin-du-Tartre | 238541054 | -75 / -29 (`estimation`) | 0,50 | 1 | CC BY-SA 4.0 — Thesupermat |
+
+Remarques :
+- **Fonctions et partis** : ceux de la révision importée, sans correction manuelle ; l'infobox peut être en retard ou en avance sur un changement. Exemple : l'infobox de Gérald Darmanin clôt ses appartenances à Renaissance (2017-2025) et à Populaires (2024-2025) ; il figure donc « Sans étiquette », avec la position de Renaissance (`hypothese`).
+- **Photos** : les trois figures du §8 nonies restées sans photo libre (Sébastien Chenu, Manuel Bompard, Yannick Jadot) en ont désormais une (autre photo de Wikidata, fichier de la catégorie Commons ou choix après revue).
+- **Ce qui reste simulé** : réponse d'une personnalité sollicitée, action au gouvernement, effets ; aucun propos ni aucune citation n'est attribué (le schéma n'a aucun champ pour cela ; les tests du jeu de règles le vérifient). Aux législatives, les « figures des blocs » montrent les personnalités des partis de chaque bloc avec leur fonction relevée dans les sources : aucune candidature dans une circonscription ni aucun propos ne leur est prêté.
 
 ## 9. Points restant non vérifiés
 
