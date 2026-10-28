@@ -7,8 +7,9 @@ import {
   type TerritorySearchResult,
 } from '@r2027/shared';
 import { useQueries } from '@tanstack/react-query';
-import { Info, MapPin, MousePointerClick, SlidersHorizontal, X } from 'lucide-react';
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Info, MapPin, MousePointerClick, Play, SlidersHorizontal, X } from 'lucide-react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useRuleset } from '../api/hooks';
 import { ErrorMessage } from '../components/ErrorMessage';
 import { buttonSecondary, card, input, label, screenTitle } from '../components/ui';
 import { formatCount, formatRatio } from '../labels';
@@ -86,12 +87,17 @@ function useCommunes(manifest: GeoManifest | undefined, codes: readonly string[]
 }
 
 function legendTitle(coloring: Coloring, data: SourceData): string {
-  if (coloring.kind === 'vainqueur') return 'Candidat en tête';
+  const blocs = data.source.kind === 'legislatives';
+  if (coloring.kind === 'vainqueur') return blocs ? 'Bloc en tête' : 'Candidat en tête';
   if (coloring.kind === 'participation') return 'Participation (votants / inscrits)';
   if (coloring.kind === 'score')
-    return `Score de ${data.candidats[coloring.candidate]!.label} (% des exprimés)`;
+    return `Score ${blocs ? 'du bloc' : 'de'} ${data.candidats[coloring.candidate]!.label} (% des exprimés)`;
   return `Écart entre ${data.candidats[coloring.a]!.label} et ${data.candidats[coloring.b]!.label} (points de % des exprimés)`;
 }
+
+/** Départements révélés à chaque pas du dépouillement rejouable (phase 13). */
+const REVEAL_STEP = 3;
+const REVEAL_DELAY_MS = 110;
 
 /** Écran Carte électorale (§3) : métropole, cinq encarts DROM, recherche, fiche, tableau. */
 export function MapScreen() {
@@ -101,11 +107,40 @@ export function MapScreen() {
   const manifest = useGeoManifest();
   const overview = useTopology(manifest.data?.apercu ?? null);
   const history = useHistoricalStatus();
-  const sources = availableSources(game.state, history.data);
+  const ruleset = useRuleset(game.rulesetVersion, game.state.cycle);
+  const sources = availableSources(game.state, history.data, true);
   const [sourceIndex, setSourceIndex] = useState(0);
   const source = sources[Math.min(sourceIndex, sources.length - 1)]!;
-  const sourceData = useSourceData(game.state, source, history.data);
+  const sourceData = useSourceData(game.state, source, history.data, ruleset.data);
   const data: SourceData | null = sourceData.data;
+  // Dépouillement rejouable des législatives (phase 13) : les départements se colorent un à un,
+  // les plus petits d'abord ; d'un coup si le mouvement réduit est demandé.
+  const reduceMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
+  const [reveal, setReveal] = useState<number | null>(null);
+  const revealOrder = useMemo(
+    () =>
+      data?.legislatives
+        ? [...data.departements.entries()]
+            .sort((a, b) => a[1].exprimes - b[1].exprimes || a[0].localeCompare(b[0]))
+            .map(([code]) => code)
+        : [],
+    [data],
+  );
+  const revealed = useMemo(
+    () => (reveal === null ? null : new Set(revealOrder.slice(0, reveal))),
+    [reveal, revealOrder],
+  );
+  useEffect(() => {
+    if (reveal === null) return;
+    const timer = setTimeout(
+      () =>
+        setReveal((r) =>
+          r === null || r + REVEAL_STEP >= revealOrder.length ? null : r + REVEAL_STEP,
+        ),
+      REVEAL_DELAY_MS,
+    );
+    return () => clearTimeout(timer);
+  }, [reveal, revealOrder.length]);
   const [coloring, setColoring] = useState<Coloring>({ kind: 'vainqueur' });
   const [motifs, setMotifs] = useState(false);
   const [level, setLevel] = useState<TerritoryLevel>('departement');
@@ -232,15 +267,19 @@ export function MapScreen() {
     !data
       ? undefined
       : lvl === 'region'
-        ? data.regions.get(code)
+        ? revealed
+          ? undefined
+          : data.regions.get(code)
         : lvl === 'departement'
-          ? data.departements.get(code)
+          ? revealed && !revealed.has(code)
+            ? undefined
+            : data.departements.get(code)
           : communeResultMap.map.get(code);
   const colorOf = (lvl: TerritoryLevel, code: string) => scheme.colorOf(resultOf(lvl, code));
   const motifOf = motifs
     ? (lvl: TerritoryLevel, code: string) => scheme.motifOf(resultOf(lvl, code))
     : undefined;
-  const colorKey = `${source.label}|${JSON.stringify(coloring)}|${mode}|${motifs}|${communeResultMap.map.size}|${data ? 'd' : 'n'}`;
+  const colorKey = `${source.label}|${JSON.stringify(coloring)}|${mode}|${motifs}|${communeResultMap.map.size}|${data ? 'd' : 'n'}|${reveal ?? 'tout'}`;
 
   const nameOf = (lvl: TerritoryLevel, code: string): string => {
     if (lvl === 'region') return m?.regions.find((r) => r.code === code)?.nom ?? code;
@@ -462,7 +501,10 @@ export function MapScreen() {
           id="carte-source"
           className={input}
           value={sourceIndex}
-          onChange={(e) => setSourceIndex(Number(e.target.value))}
+          onChange={(e) => {
+            setSourceIndex(Number(e.target.value));
+            setReveal(null);
+          }}
         >
           {sources.map((s, i) => (
             <option key={s.label} value={i}>
@@ -488,12 +530,18 @@ export function MapScreen() {
             else setColoring({ kind: v as 'vainqueur' | 'participation' });
           }}
         >
-          <option value="vainqueur">Candidat en tête</option>
+          <option value="vainqueur">
+            {source.kind === 'legislatives' ? 'Bloc en tête' : 'Candidat en tête'}
+          </option>
           <option value="participation">Participation</option>
-          <option value="ecart">Écart entre deux candidats</option>
+          <option value="ecart">
+            {source.kind === 'legislatives'
+              ? 'Écart entre deux blocs'
+              : 'Écart entre deux candidats'}
+          </option>
           {data?.candidats.map((c, i) => (
             <option key={c.key} value={`score-${i}`}>
-              Score de {c.label}
+              Score {source.kind === 'legislatives' ? 'du bloc' : 'de'} {c.label}
             </option>
           ))}
         </select>
@@ -630,6 +678,35 @@ export function MapScreen() {
             </div>
             {levels}
           </div>
+          {source.kind === 'legislatives' && data && (
+            <div className="pointer-events-auto flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                className="inline-flex min-h-11 items-center gap-2 rounded-full border border-slate-200/80 bg-white/95 px-4 text-sm font-bold text-slate-800 shadow-raised hover:bg-white dark:border-slate-700 dark:bg-slate-900/95 dark:text-slate-100"
+                onClick={() => {
+                  setLevel('departement');
+                  setReveal(reduceMotion ? null : 0);
+                }}
+              >
+                <Play aria-hidden="true" className="size-4" />
+                Rejouer le dépouillement
+              </button>
+              <p
+                aria-live="polite"
+                className="rounded-full bg-slate-950/90 px-3 py-1.5 text-xs font-medium text-white empty:hidden dark:bg-white/90 dark:text-slate-900"
+              >
+                {reveal !== null
+                  ? `Dépouillement : ${Math.min(reveal, revealOrder.length)} départements sur ${revealOrder.length}`
+                  : ''}
+              </p>
+            </div>
+          )}
+          {source.kind === 'legislatives' && level === 'commune' && (
+            <p className="pointer-events-auto max-w-sm animate-apparait rounded-2xl bg-slate-950/90 px-3 py-2 text-xs font-medium text-white shadow-raised dark:bg-white/90 dark:text-slate-900">
+              Les législatives se lisent par département : touchez un département pour voir ses
+              circonscriptions et ses sièges.
+            </p>
+          )}
           {level === 'commune' && (!view || view.zoom < 6.5) && (
             <p className="pointer-events-auto max-w-sm animate-apparait rounded-2xl bg-slate-950/90 px-3 py-2 text-xs font-medium text-white shadow-raised dark:bg-white/90 dark:text-slate-900">
               Zoomez sur la carte de la métropole (ou recherchez une commune) pour afficher les
@@ -656,10 +733,13 @@ export function MapScreen() {
             <p className="flex items-start gap-2 text-xs text-slate-700 dark:text-slate-300">
               <Info aria-hidden="true" className="mt-px size-4 shrink-0" />
               <span>
-                Aucun résultat affiché :{' '}
-                {game.state.elections.t1
-                  ? 'ce tour n’a pas de détail territorial (partie migrée d’une version antérieure).'
-                  : 'le premier tour de la partie n’a pas encore eu lieu.'}
+                {source.kind === 'legislatives'
+                  ? 'Chargement des résultats des législatives…'
+                  : `Aucun résultat affiché : ${
+                      game.state.elections.t1
+                        ? 'ce tour n’a pas de détail territorial (partie migrée d’une version antérieure).'
+                        : 'le premier tour de la partie n’a pas encore eu lieu.'
+                    }`}
               </span>
             </p>
           )}

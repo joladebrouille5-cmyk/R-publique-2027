@@ -78,3 +78,14 @@ export const CandidatePhotoSchema = z
     message: 'Le contenu de la photo ne correspond pas à son type',
   });
 export type CandidatePhoto = z.infer<typeof CandidatePhotoSchema>;
+
+/**
+ * Identité d'un candidat telle que la consigne le journal des événements : la photo n'y est pas
+ * recopiée (elle reste dans l'état de la partie), seule sa présence est notée.
+ */
+export function candidateForJournal<T extends { photo: string | null }>(
+  candidate: T,
+): Omit<T, 'photo'> & { photo: boolean } {
+  const { photo, ...rest } = candidate;
+  return { ...rest, photo: photo !== null };
+}

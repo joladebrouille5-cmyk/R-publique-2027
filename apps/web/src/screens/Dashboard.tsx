@@ -2,11 +2,15 @@ import {
   addDays,
   candidateName,
   MAX_FAST_FORWARD_WEEKS,
+  membersMajority,
+  presidentialActionBlocked,
+  supportSeats,
   type GameState,
   type Ruleset,
   type WeeklyReport,
 } from '@r2027/shared';
 import {
+  Activity,
   Armchair,
   CalendarClock,
   CalendarDays,
@@ -22,6 +26,7 @@ import {
   Stamp,
   TrendingUp,
   TriangleAlert,
+  Users,
   Vote,
   Wallet,
 } from 'lucide-react';
@@ -32,6 +37,7 @@ import { nominationsClosed, presentationSummary, spendingCapOf } from '../campai
 import { useAdvance, useJournal, useRuleset } from '../api/hooks';
 import { Disclosure, Embedded } from '../components/Disclosure';
 import { Drawer } from '../components/Drawer';
+import { tensionLevel } from '../components/ParliamentGauges';
 import { ErrorMessage } from '../components/ErrorMessage';
 import {
   buttonGhost,
@@ -385,15 +391,41 @@ export function Dashboard() {
       tone: government ? undefined : 'alerte',
       action: drawer('gouvernement', 'Ouvrir le gouvernement'),
     });
-    if (state.parlement)
+    if (state.parlement) {
+      const parliament = state.parlement;
+      const majority = membersMajority(parliament);
+      const supporters = supportSeats(parliament);
+      const seuil = data.parlement.tension.seuilMotion;
+      tiles.push({
+        id: 'majorite',
+        icon: Users,
+        label: 'Majorité',
+        value: `${supporters}/${majority}`,
+        detail:
+          supporters >= majority
+            ? 'majorité absolue des membres'
+            : `il manque ${majority - supporters} voix`,
+        tone: supporters >= majority ? 'succes' : 'alerte',
+        action: drawer('parlement', 'Ouvrir le Parlement'),
+      });
+      tiles.push({
+        id: 'tension',
+        icon: Activity,
+        label: 'Tension parlementaire',
+        value: `${parliament.tension.valeur}/100`,
+        detail: tensionLevel(parliament.tension.valeur, seuil).label,
+        tone: parliament.tension.valeur >= seuil ? 'alerte' : undefined,
+        action: drawer('parlement', 'Ouvrir le Parlement'),
+      });
       tiles.push({
         id: 'parlement',
         icon: Scale,
         label: 'Parlement',
-        value: `${state.parlement.textes.filter((b) => !b.issue).length} texte(s)`,
-        detail: `en cours · ${state.parlement.reformes.filter((r) => r.appliquee).length} réforme(s) en vigueur`,
+        value: `${parliament.textes.filter((b) => !b.issue).length} texte(s)`,
+        detail: `en cours · ${parliament.reformes.filter((r) => r.appliquee).length} réforme(s) en vigueur`,
         action: drawer('parlement', 'Ouvrir le Parlement'),
       });
+    }
     if (state.economie)
       tiles.push({
         id: 'economie',
@@ -698,7 +730,11 @@ export function Dashboard() {
                 ? 'Aucun gouvernement en place à remanier.'
                 : action.institution === 'dissolution'
                   ? dissolutionRestriction(state, data)
-                  : null
+                  : action.delaiSemaines !== undefined &&
+                      plan.actions.some((p) => p.actionId === action.id)
+                    ? 'Une seule fois par semaine.'
+                    : // Délai et condition : la règle du moteur (`@r2027/shared`), à l'identique.
+                      presidentialActionBlocked(state, action)
           }
           reservedHours={0}
           cap={0}
@@ -898,11 +934,10 @@ export function Dashboard() {
               </div>
             ))}
           </dl>
-          <details className="mt-3 border-t border-slate-200 pt-3 dark:border-slate-800">
-            <summary className="min-h-11 cursor-pointer content-center font-semibold">
-              Paramètres techniques
-            </summary>
-            <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-[12rem_1fr]">
+          {/* Phase 13 : à plat, sans volet dans la section dépliée. */}
+          <div className="mt-3 border-t border-slate-200 pt-3 dark:border-slate-800">
+            <h3 className="font-semibold">Paramètres techniques</h3>
+            <dl className="mt-2 grid gap-2 text-sm sm:grid-cols-[12rem_1fr]">
               <dt className="text-slate-500 dark:text-slate-400">Graine</dt>
               <dd className="font-mono break-all">{game.seed}</dd>
               <dt className="text-slate-500 dark:text-slate-400">Version du moteur</dt>
@@ -916,7 +951,7 @@ export function Dashboard() {
                 {game.stateHash}
               </dd>
             </dl>
-          </details>
+          </div>
         </Disclosure>
       </div>
     </section>

@@ -1,10 +1,14 @@
-import type { Alignment } from '@r2027/shared';
+import type { Alignment, AssemblyGroup } from '@r2027/shared';
+import { useId } from 'react';
 
-// Hémicycle de l'Assemblée nationale (phase 6, P6-09) : un point par siège, groupes rangés de
-// gauche à droite selon leur position économique, couleur selon la position du groupe à l'égard
-// du président (trois teintes catégorielles de la palette de référence validée, les mêmes que
-// la carte). La couleur n'est jamais seule : légende chiffrée, infobulle par siège et tableau
-// des groupes juste en dessous.
+// Hémicycle de l'Assemblée nationale (phase 6, refondu en phase 13) : un point par siège,
+// groupes rangés de gauche à droite sur un axe synthétique (moyenne des deux axes de position,
+// convention du jeu), séparés par un intervalle. Couleurs des groupes : convention du jeu, pas
+// des couleurs officielles (rouge LFI-NFP, rose socialiste, vert écologiste, jaunes du centre,
+// bleu de la droite, bleu marine du RN…), vérifiées en vision normale et pour les daltonismes.
+// La couleur n'est jamais seule : sigle des grands groupes sur l'arc, légende chiffrée,
+// infobulle par siège et tableau des groupes. Les sièges du groupe du joueur portent un liseré
+// lumineux ; la fronde de fond de la majorité est dessinée en sièges évidés.
 
 export type HemicycleGroup = {
   id: string;
@@ -12,29 +16,56 @@ export type HemicycleGroup = {
   libelle: string;
   sieges: number;
   alignement: Alignment;
+  /** Frondeurs de fond du groupe (nombres, aucun nom). */
+  fronde?: number;
 };
 
-const FILLS: Record<Alignment | 'vacant', string> = {
-  soutien: 'fill-[#2a78d6] dark:fill-[#3987e5]',
-  opposition: 'fill-[#eb6834] dark:fill-[#d95926]',
-  independant: 'fill-[#1baf7a] dark:fill-[#199e70]',
-  vacant: 'fill-slate-300 dark:fill-slate-600',
+/** Couleur de chaque groupe (convention du jeu), en thème clair et en thème sombre. */
+export const GROUP_COLORS: Record<string, { fill: string; swatch: string }> = {
+  'lfi-nfp': {
+    fill: 'fill-[#cc1f2f] dark:fill-[#e0384a]',
+    swatch: 'bg-[#cc1f2f] dark:bg-[#e0384a]',
+  },
+  gdr: { fill: 'fill-[#7d1428] dark:fill-[#c23d57]', swatch: 'bg-[#7d1428] dark:bg-[#c23d57]' },
+  ecos: { fill: 'fill-[#3aa655] dark:fill-[#5cd27c]', swatch: 'bg-[#3aa655] dark:bg-[#5cd27c]' },
+  soc: { fill: 'fill-[#e8559a] dark:fill-[#f57ab2]', swatch: 'bg-[#e8559a] dark:bg-[#f57ab2]' },
+  liot: { fill: 'fill-[#4b5868] dark:fill-[#5f6d85]', swatch: 'bg-[#4b5868] dark:bg-[#5f6d85]' },
+  ni: { fill: 'fill-[#c3c8d1] dark:fill-[#a3aab6]', swatch: 'bg-[#c3c8d1] dark:bg-[#a3aab6]' },
+  dem: { fill: 'fill-[#f39200] dark:fill-[#f27a12]', swatch: 'bg-[#f39200] dark:bg-[#f27a12]' },
+  epr: { fill: 'fill-[#ffd200] dark:fill-[#ffe14d]', swatch: 'bg-[#ffd200] dark:bg-[#ffe14d]' },
+  hor: { fill: 'fill-[#8c6d00] dark:fill-[#c79a1a]', swatch: 'bg-[#8c6d00] dark:bg-[#c79a1a]' },
+  rn: { fill: 'fill-[#13235b] dark:fill-[#4a5fc0]', swatch: 'bg-[#13235b] dark:bg-[#4a5fc0]' },
+  dr: { fill: 'fill-[#2a7de1] dark:fill-[#56a0ff]', swatch: 'bg-[#2a7de1] dark:bg-[#56a0ff]' },
+  udr: { fill: 'fill-[#5a2d91] dark:fill-[#7b4fd0]', swatch: 'bg-[#5a2d91] dark:bg-[#7b4fd0]' },
 };
-const LABELS: Record<Alignment | 'vacant', string> = {
-  soutien: 'Soutiens du président',
-  independant: 'Non alignés',
-  opposition: 'Opposition',
-  vacant: 'Sièges vacants',
+const FALLBACK = { fill: 'fill-slate-500', swatch: 'bg-slate-500' };
+const VACANT = 'fill-slate-200 dark:fill-slate-700';
+export const colorOf = (id: string) => GROUP_COLORS[id] ?? FALLBACK;
+
+/** Rang de l'hémicycle (convention du jeu) : moyenne des deux axes, puis axe économique. */
+export function seatingOrder<T extends Pick<AssemblyGroup, 'id' | 'position'>>(
+  groups: readonly T[],
+): T[] {
+  const axis = (g: T) => (g.position.economie + g.position.societe) / 2;
+  return [...groups].sort(
+    (a, b) =>
+      axis(a) - axis(b) || a.position.economie - b.position.economie || a.id.localeCompare(b.id),
+  );
+}
+
+const LABELS: Record<Alignment, string> = {
+  soutien: 'soutien du président',
+  independant: 'non aligné',
+  opposition: 'opposition',
 };
-const ORDER = ['soutien', 'independant', 'opposition', 'vacant'] as const;
 
 const WIDTH = 400;
 const HEIGHT = 212;
 const CENTER = { x: WIDTH / 2, y: HEIGHT - 6 };
-const OUTER = 194;
-const INNER = 78;
+const OUTER = 186;
+const INNER = 74;
 
-/** Rangs de l'hémicycle : nombre de sièges par rang, proportionnel au rayon (plus fort reste). */
+/** Rangs de l'hémicycle : nombre de places par rang, proportionnel au rayon (plus fort reste). */
 function rows(total: number) {
   const count = Math.max(1, Math.round(Math.sqrt(total / 4.5)));
   const radii = Array.from(
@@ -55,7 +86,7 @@ function rows(total: number) {
   return radii.map((radius, i) => ({ radius, seats: seats[i]! }));
 }
 
-/** Positions des sièges, de la gauche (angle π) vers la droite (angle 0). */
+/** Positions des places, de la gauche (angle π) vers la droite (angle 0). */
 function seatPositions(total: number) {
   const positions: { x: number; y: number; angle: number }[] = [];
   for (const { radius, seats } of rows(total)) {
@@ -71,69 +102,196 @@ function seatPositions(total: number) {
   return positions.sort((a, b) => b.angle - a.angle);
 }
 
+/** Place d'un siège : un groupe (et l'état de ce siège), un intervalle ou un siège vacant. */
+type Slot =
+  | { kind: 'groupe'; group: HemicycleGroup; frondeur: boolean }
+  | { kind: 'intervalle' }
+  | { kind: 'vacant' };
+
 export function Hemicycle({
   groups,
   total,
   title,
+  playerGroup = null,
+  playerConvention = false,
 }: {
-  /** Groupes, de la gauche vers la droite. */
+  /** Groupes, de la gauche vers la droite (`seatingOrder`). */
   groups: HemicycleGroup[];
   /** Nombre total de sièges (pourvus et vacants). */
   total: number;
   title: string;
+  /** Groupe du joueur (liseré lumineux), ou null. */
+  playerGroup?: string | null;
+  /** Groupe du joueur déduit de son positionnement (convention du jeu, signalée). */
+  playerConvention?: boolean;
 }) {
-  const seats = groups.flatMap((g) => Array.from({ length: g.sieges }, () => g));
-  const vacant = Math.max(0, total - seats.length);
-  const positions = seatPositions(seats.length + vacant);
-  const counts = { soutien: 0, independant: 0, opposition: 0, vacant };
-  for (const g of groups) counts[g.alignement] += g.sieges;
-  // Rayon des points : 40 % de l'écart entre deux sièges voisins (un liseré reste visible).
-  const layout = rows(total);
+  const glow = useId().replace(/:/g, '');
+  const seated = groups.filter((g) => g.sieges > 0);
+  // Un intervalle entre deux groupes voisins ; les sièges vacants à l'extrémité droite.
+  const slots: Slot[] = [];
+  seated.forEach((group, i) => {
+    if (i > 0) slots.push({ kind: 'intervalle' });
+    const rebels = Math.min(group.sieges, group.fronde ?? 0);
+    for (let k = 0; k < group.sieges; k++)
+      slots.push({ kind: 'groupe', group, frondeur: k >= group.sieges - rebels });
+  });
+  const filled = seated.reduce((sum, g) => sum + g.sieges, 0);
+  for (let k = filled; k < total; k++) slots.push({ kind: 'vacant' });
+  const positions = seatPositions(slots.length);
+  // Rayon des points : 40 % de l'écart entre deux places voisines (un liseré reste visible).
+  const layout = rows(slots.length);
   const radial = (OUTER - INNER) / Math.max(1, layout.length - 1);
-  const arc = (Math.PI * layout.reduce((sum, r) => sum + r.radius, 0)) / Math.max(1, total);
+  const arc = (Math.PI * layout.reduce((sum, r) => sum + r.radius, 0)) / Math.max(1, slots.length);
   const dot = 0.4 * Math.min(radial, arc);
-  // Les sièges vacants occupent l'extrémité droite, après les groupes.
+  const supporters = groups
+    .filter((g) => g.alignement === 'soutien')
+    .reduce((s, g) => s + g.sieges, 0);
+  const player = groups.find((g) => g.id === playerGroup);
+  const rebels = groups.reduce((s, g) => s + Math.min(g.sieges, g.fronde ?? 0), 0);
+
+  // Sigle des groupes assez nombreux, au milieu de leur arc, à l'extérieur de l'hémicycle.
+  const labels = seated
+    .filter((g) => g.sieges / Math.max(1, total) >= 0.05)
+    .map((g) => {
+      const indices = slots.flatMap((s, i) => (s.kind === 'groupe' && s.group === g ? [i] : []));
+      const angles = indices.map((i) => positions[i]!.angle);
+      const angle = (Math.max(...angles) + Math.min(...angles)) / 2;
+      const r = OUTER + 12;
+      return {
+        id: g.id,
+        sigle: g.sigle,
+        x: CENTER.x + r * Math.cos(angle),
+        y: CENTER.y - r * Math.sin(angle),
+        anchor: (Math.cos(angle) > 0.3 ? 'start' : Math.cos(angle) < -0.3 ? 'end' : 'middle') as
+          'start' | 'end' | 'middle',
+      };
+    });
+
+  const description = `${title} : ${seated.map((g) => `${g.sigle} ${g.sieges}`).join(', ')}${
+    total > filled ? `, ${total - filled} vacants` : ''
+  }. Soutiens du président ${supporters}.${
+    player ? ` Votre groupe : ${player.sigle} (${player.sieges} sièges).` : ''
+  }${rebels > 0 ? ` Frondeurs de la majorité : ${rebels}.` : ''}`;
+
   return (
-    <figure className="space-y-2">
+    <figure className="space-y-3">
       <svg
-        viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+        viewBox={`-26 -16 ${WIDTH + 52} ${HEIGHT + 20}`}
         className="mx-auto block w-full max-w-xl"
         role="img"
-        aria-label={`${title} : ${ORDER.filter((k) => counts[k] > 0)
-          .map((k) => `${LABELS[k]} ${counts[k]}`)
-          .join(', ')}.`}
+        aria-label={description}
       >
+        <defs>
+          <filter id={glow} x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur stdDeviation="1.6" />
+          </filter>
+        </defs>
         {positions.map((p, i) => {
-          const group = seats[i];
-          const kind = group ? group.alignement : 'vacant';
+          const slot = slots[i]!;
+          if (slot.kind === 'intervalle') return null;
+          if (slot.kind === 'vacant')
+            return (
+              <circle
+                key={i}
+                data-siege=""
+                cx={p.x.toFixed(2)}
+                cy={p.y.toFixed(2)}
+                r={dot.toFixed(2)}
+                className={VACANT}
+              >
+                <title>Siège vacant</title>
+              </circle>
+            );
+          const { group, frondeur } = slot;
+          const mine = group.id === playerGroup;
           return (
-            <circle
-              key={i}
-              cx={p.x.toFixed(2)}
-              cy={p.y.toFixed(2)}
-              r={dot.toFixed(2)}
-              className={FILLS[kind]}
-            >
-              <title>{group ? `${group.sigle} — ${LABELS[kind]}` : LABELS.vacant}</title>
-            </circle>
+            <g key={i} data-groupe={group.id} data-joueur={mine ? '' : undefined}>
+              {mine && (
+                <circle
+                  cx={p.x.toFixed(2)}
+                  cy={p.y.toFixed(2)}
+                  r={(dot * 1.75).toFixed(2)}
+                  className="fill-cyan-400/80 dark:fill-cyan-300/80"
+                  filter={`url(#${glow})`}
+                />
+              )}
+              <circle
+                data-siege=""
+                cx={p.x.toFixed(2)}
+                cy={p.y.toFixed(2)}
+                r={dot.toFixed(2)}
+                fillOpacity={frondeur ? 0.3 : undefined}
+                className={`${colorOf(group.id).fill} ${
+                  frondeur
+                    ? 'stroke-current stroke-[1.2] text-slate-700 dark:text-slate-200'
+                    : mine
+                      ? 'stroke-white stroke-[0.9] dark:stroke-slate-950'
+                      : 'stroke-slate-950/15 stroke-[0.5] dark:stroke-white/10'
+                }`}
+              >
+                <title>
+                  {`${group.sigle} — ${LABELS[group.alignement]}${frondeur ? ' — frondeur (fronde de fond)' : ''}${mine ? ' — votre groupe' : ''}`}
+                </title>
+              </circle>
+            </g>
           );
         })}
+        {labels.map((l) => (
+          <text
+            key={l.id}
+            x={l.x.toFixed(1)}
+            y={l.y.toFixed(1)}
+            textAnchor={l.anchor}
+            dominantBaseline="middle"
+            className="fill-slate-600 text-[9px] font-semibold dark:fill-slate-300"
+            aria-hidden="true"
+          >
+            {l.sigle}
+          </text>
+        ))}
       </svg>
-      <figcaption>
-        <ul className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs">
-          {ORDER.filter((k) => counts[k] > 0).map((k) => (
-            <li key={k} className="flex items-center gap-1.5">
-              <svg width="10" height="10" aria-hidden="true" className="shrink-0">
-                <circle cx="5" cy="5" r="5" className={FILLS[k]} />
-              </svg>
+      <figcaption className="space-y-2">
+        <ul className="flex flex-wrap justify-center gap-x-3 gap-y-1.5 text-xs">
+          {seated.map((g) => (
+            <li
+              key={g.id}
+              className={`flex items-center gap-1.5 rounded-full px-1.5 py-0.5 ${
+                g.id === playerGroup
+                  ? 'bg-cyan-50 ring-2 ring-cyan-400 dark:bg-cyan-950/40 dark:ring-cyan-300'
+                  : ''
+              }`}
+            >
+              <span
+                aria-hidden="true"
+                className={`inline-block size-2.5 shrink-0 rounded-full ${colorOf(g.id).swatch}`}
+              />
               <span>
-                {LABELS[k]} : <span className="font-semibold tabular-nums">{counts[k]}</span>
+                <span className="font-semibold">{g.sigle}</span>{' '}
+                <span className="tabular-nums">{g.sieges}</span>
+                {g.id === playerGroup && (
+                  <span className="font-semibold text-cyan-800 dark:text-cyan-200">
+                    {' '}
+                    · votre groupe{playerConvention ? ' (convention du jeu)' : ''}
+                  </span>
+                )}
               </span>
             </li>
           ))}
+          {total > filled && (
+            <li className="flex items-center gap-1.5">
+              <span
+                aria-hidden="true"
+                className="inline-block size-2.5 rounded-full bg-slate-200 dark:bg-slate-700"
+              />
+              Vacants <span className="tabular-nums">{total - filled}</span>
+            </li>
+          )}
         </ul>
-        <p className="mt-1 text-center text-xs text-slate-500 dark:text-slate-400">
-          Groupes rangés de gauche à droite selon leur position économique ; détail dans le tableau.
+        <p className="text-center text-xs text-slate-500 dark:text-slate-400">
+          Couleurs des groupes : convention du jeu, pas des couleurs officielles. Groupes rangés de
+          gauche à droite selon leur position (moyenne des deux axes).
+          {rebels > 0 &&
+            ` Sièges évidés : ${rebels} frondeur(s) de la majorité (nombre simulé, aucun nom).`}
         </p>
       </figcaption>
     </figure>

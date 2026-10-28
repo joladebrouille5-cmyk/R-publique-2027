@@ -3,13 +3,11 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { advanceViaApi, createGame, openScreen, openSection, resolveWeek } from './helpers';
 
-/** Empreinte de l'état : section « La partie » du QG, puis « Paramètres techniques ». */
+/** Empreinte de l'état : paramètres techniques de la section « La partie » du QG. */
 async function readStateHash(page: Page): Promise<string> {
   await openSection(page, 'partie');
-  await page.getByText('Paramètres techniques').click();
   const hash = (await page.getByTestId('empreinte').textContent()) ?? '';
   expect(hash).toMatch(/^[0-9a-f]{64}$/);
-  await page.getByText('Paramètres techniques').click();
   return hash;
 }
 
@@ -178,6 +176,8 @@ test('fin du quinquennat : bilan, puis campagne de la présidentielle 2032', asy
 test('présidentielle complète puis quinquennat : deux tours, résultats, gouvernement, avance rapide', async ({
   page,
 }) => {
+  // Une présidentielle entière puis cinq audits axe de l'espace Pouvoir (vue du mandat comprise).
+  test.setTimeout(90_000);
   await createGame(page, 'Présidentielle', 'e2e-presidentielle');
   await openScreen(page, 'Candidats');
   const mine = page.getByRole('listitem', { name: 'Camille Durand' });

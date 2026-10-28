@@ -1,9 +1,12 @@
-import type { Actor, PhotoCredit, RealPersonality, Ruleset } from '@r2027/shared';
+import type { Actor, MinisterProfile, PhotoCredit, RealPersonality, Ruleset } from '@r2027/shared';
 
-// Portraits des candidats (phase 9) : photo sous licence libre quand elle existe, sinon
-// initiales sur la couleur de la famille politique la plus proche. La famille est le groupe
-// d'électeurs du jeu de règles le plus proche du positionnement (convention du jeu : ce ne
-// sont pas les couleurs officielles d'un parti).
+// Portraits (phase 9, étendus en phase 13) : la photo importée par le joueur pour son candidat,
+// ou la photo sous licence libre d'une personnalité réelle ; à défaut, un portrait illustré
+// généré pour un personnage fictif (adversaire, profil du gouvernement, candidat sans photo) et
+// une silhouette neutre avec les initiales pour une personne réelle — jamais de visage dessiné
+// pour une personne réelle. Fond : couleur de la famille politique la plus proche, le groupe
+// d'électeurs du jeu de règles le plus proche du positionnement (convention du jeu : ce ne sont
+// pas les couleurs officielles d'un parti).
 
 export type Family = {
   id: string;
@@ -65,6 +68,7 @@ export function portraitOfPersonality(
     nom: personality.nom,
     photo: personality.photo ? photoUrl(personality.photo) : null,
     famille: familyOf(personality.position, ruleset),
+    illustration: null,
   };
 }
 
@@ -73,9 +77,15 @@ export type Portrait = {
   nom: string;
   photo: string | null;
   famille: Family | null;
+  /** Graine du portrait illustré d'un personnage fictif ; null pour une personne réelle. */
+  illustration: string | null;
 };
 
-/** Portrait d'un acteur de la partie : photo de sa fiche réelle s'il en a une. */
+/**
+ * Portrait d'un acteur de la partie : la photo importée par le joueur, la photo libre de sa
+ * fiche réelle, sinon un portrait illustré s'il est fictif (silhouette et initiales s'il est
+ * réel).
+ */
 export function portraitOf(
   actor: Pick<Actor, 'candidate'>,
   ruleset: Ruleset | undefined,
@@ -87,7 +97,25 @@ export function portraitOf(
   return {
     prenom: candidate.prenom,
     nom: candidate.nom,
-    photo: fiche?.photo ? photoUrl(fiche.photo) : null,
+    photo: candidate.photo ?? (fiche?.photo ? photoUrl(fiche.photo) : null),
     famille: familyOf(candidate.positionnement, ruleset),
+    illustration:
+      candidate.nature === 'reel'
+        ? null
+        : `${candidate.nature}:${candidate.prenom} ${candidate.nom}`,
+  };
+}
+
+/** Portrait d'un profil fictif du gouvernement : toujours illustré. */
+export function portraitOfProfile(
+  profile: Pick<MinisterProfile, 'id' | 'prenom' | 'nom' | 'positionnement'>,
+  ruleset: Pick<Ruleset, 'electorat'> | undefined,
+): Portrait {
+  return {
+    prenom: profile.prenom,
+    nom: profile.nom,
+    photo: null,
+    famille: familyOf(profile.positionnement, ruleset),
+    illustration: `profil:${profile.id}`,
   };
 }

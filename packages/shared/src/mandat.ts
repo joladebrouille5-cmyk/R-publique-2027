@@ -1,12 +1,12 @@
-import type { Actor } from './game';
+import type { Actor, GameState } from './game';
 import type { DistrictOutcome, LegislativeOutcome } from './legislatives-etat';
 import type { Position } from './politics';
-import type { Ruleset } from './ruleset';
+import type { ActionDefinition, Ruleset } from './ruleset';
 
 // Règles du mandat partagées par le moteur et l'interface (phase 13) : effets thématiques des
-// ministres, groupe de l'Assemblée du joueur et regroupement des résultats des législatives par
-// département. Fonctions pures : l'interface les emploie pour afficher exactement ce que le
-// moteur applique, sans rien simuler.
+// ministres, disponibilité des actions du chef de l'État, groupe de l'Assemblée du joueur et
+// regroupement des résultats des législatives par département. Fonctions pures : l'interface
+// les emploie pour afficher exactement ce que le moteur applique, sans rien simuler.
 
 type Theme = Ruleset['quinquennat']['equipe']['themes'][number];
 
@@ -51,8 +51,56 @@ export function themeIndicatorEffects(
     .filter((e) => e.valeur !== 0);
 }
 
+type Seats = { groupes: Record<string, { sieges: number }> };
+
+/** Sièges pourvus de l'Assemblée. */
+export function filledSeats(parliament: Seats): number {
+  return Object.values(parliament.groupes).reduce((sum, g) => sum + g.sieges, 0);
+}
+
+/** Majorité des membres composant l'Assemblée (sièges pourvus) : 289 quand les 577 le sont. */
+export function membersMajority(parliament: Seats): number {
+  return Math.floor(filledSeats(parliament) / 2) + 1;
+}
+
+/** Sièges des groupes qui soutiennent le président. */
+export function supportSeats(parliament: {
+  groupes: Record<string, { sieges: number; alignement: string }>;
+}): number {
+  return Object.values(parliament.groupes)
+    .filter((g) => g.alignement === 'soutien')
+    .reduce((sum, g) => sum + g.sieges, 0);
+}
+
+/** Fenêtre (semaines) pendant laquelle une crise justifie un sommet de crise. */
+export const RECENT_CRISIS_WEEKS = 4;
+
+/** Une crise est-elle survenue dans les quatre dernières semaines (sommet de crise) ? */
+export function recentCrisis(state: Pick<GameState, 'eventHistory' | 'meta'>): boolean {
+  return Object.entries(state.eventHistory).some(
+    ([id, h]) => id.startsWith('crise-') && state.meta.week - h.lastWeek <= RECENT_CRISIS_WEEKS,
+  );
+}
+
+/** Motif d'indisponibilité d'une action du président (délai, condition), ou null. */
+export function presidentialActionBlocked(
+  state: Pick<GameState, 'eventHistory' | 'meta' | 'quinquennat'>,
+  definition: Pick<ActionDefinition, 'delaiSemaines' | 'condition' | 'id'>,
+): string | null {
+  const last = state.quinquennat?.usages[definition.id];
+  if (definition.delaiSemaines !== undefined && last !== undefined) {
+    const left = definition.delaiSemaines - (state.meta.week - last);
+    if (left > 0)
+      return `Encore ${left} semaine(s) avant de pouvoir renouveler cette action (une fois toutes les ${definition.delaiSemaines} semaines au plus).`;
+  }
+  if (definition.condition === 'crise-recente' && !recentCrisis(state))
+    return `Aucune crise dans les ${RECENT_CRISIS_WEEKS} dernières semaines : un sommet de crise n’a pas lieu d’être.`;
+  return null;
+}
+
+/** Distance entre deux positions : même calcul (et même arrondi) que le moteur électoral. */
 const distanceOf = (a: Position, b: Position) =>
-  Math.hypot((a.economie - b.economie) / 100, (a.societe - b.societe) / 100);
+  Math.hypot(a.economie - b.economie, a.societe - b.societe) / 100;
 
 /** Groupe de l'Assemblée le plus proche d'une position (le plus nombreux à égalité). */
 export function closestGroup(ruleset: Ruleset, position: Position): string | null {
@@ -86,6 +134,31 @@ export function groupOfActor(
     : undefined;
   if (attached) return { groupe: attached, convention: false };
   return { groupe: closestGroup(ruleset, actor.candidate.positionnement), convention: true };
+}
+
+/** Position d'un bloc : moyenne de celles de ses groupes, pondérée par leurs sièges importés. */
+export function blocPositions(ruleset: Ruleset): Map<string, Position> {
+  const positions = new Map<string, Position>();
+  for (const bloc of ruleset.legislatives.blocs) {
+    const groups = ruleset.assemblee.groupes.filter((g) => bloc.groupes.includes(g.id));
+    const seats = groups.reduce((sum, g) => sum + g.sieges, 0) || groups.length;
+    const weight = (g: (typeof groups)[number]) => (seats === groups.length ? 1 : g.sieges);
+    positions.set(bloc.id, {
+      economie: Math.round(groups.reduce((s, g) => s + weight(g) * g.position.economie, 0) / seats),
+      societe: Math.round(groups.reduce((s, g) => s + weight(g) * g.position.societe, 0) / seats),
+    });
+  }
+  return positions;
+}
+
+/** Bloc le plus proche d'une position : le camp d'un candidat aux législatives. */
+export function closestBloc(ruleset: Ruleset, position: Position): string {
+  const positions = blocPositions(ruleset);
+  return [...positions.entries()].sort(
+    (a, b) =>
+      distanceOf(position, a[1]) - distanceOf(position, b[1]) ||
+      (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0),
+  )[0]![0];
 }
 
 /** Code du département d'une circonscription (« 0101 » → « 01 », « 97101 » → « 971 »). */

@@ -5,14 +5,16 @@ import {
   type MemberRef,
   type Ruleset,
 } from '@r2027/shared';
+import { useState } from 'react';
 import { Link } from 'react-router';
 import { useRuleset } from '../api/hooks';
 import { Avatar } from '../components/Avatar';
 import { Badge, type BadgeTone } from '../components/Badge';
+import { Drawer } from '../components/Drawer';
 import { ErrorMessage } from '../components/ErrorMessage';
-import { card } from '../components/ui';
+import { buttonSecondary, card } from '../components/ui';
 import { formatGameDate } from '../labels';
-import { portraitOf, portraitOfPersonality, type Portrait } from '../portraits';
+import { portraitOf, portraitOfPersonality, portraitOfProfile, type Portrait } from '../portraits';
 import { useCurrentGame } from './GameLayout';
 import { ScreenHeading } from '../components/Disclosure';
 
@@ -41,7 +43,7 @@ export function memberInfo(state: GameState, ruleset: Ruleset, member: MemberRef
       name: profile ? `${profile.prenom} ${profile.nom}` : member.ref,
       detail: profile ? `${profile.famille} — ${profile.parcours}` : null,
       badge: { tone: 'fictif', text: 'Profil fictif' },
-      portrait: null,
+      portrait: profile ? portraitOfProfile(profile, ruleset) : null,
       competence: profile
         ? { value: profile.competence, tone: 'neutre', label: 'Paramètre du jeu' }
         : null,
@@ -125,12 +127,15 @@ function solicitedName(state: GameState, ruleset: Ruleset, id: string): string {
 
 /**
  * Personnalités réelles nominables (phase 11) : fiches du jeu de règles, par parti. Fonctions
- * relevées dans les sources ; compétence estimée ; aucun propos.
+ * relevées dans les sources ; compétence estimée ; aucun propos. Phase 13 : la liste s'ouvre
+ * dans un tiroir plutôt que dans un volet de la section dépliée.
  */
 function Figures({ ruleset }: { ruleset: Ruleset }) {
+  const [open, setOpen] = useState(false);
   const parties = new Map<string, GovernmentFigure[]>();
   for (const f of ruleset.figures.figures)
     parties.set(f.parti, [...(parties.get(f.parti) ?? []), f]);
+  const count = `${ruleset.figures.figures.length} personnalités de ${parties.size} partis`;
   return (
     <section aria-labelledby="titre-figures" className={`${card} space-y-3 text-sm`}>
       <h2 id="titre-figures" className="text-lg font-semibold">
@@ -141,41 +146,50 @@ function Figures({ ruleset }: { ruleset: Ruleset }) {
         personnalités réelles pour Matignon ou un ministère régalien. Leur réponse est simulée : une
         personnalité éloignée du président peut refuser.
       </p>
-      <details>
-        <summary className="cursor-pointer font-medium">
-          {ruleset.figures.figures.length} personnalités de {parties.size} partis
-        </summary>
-        <div className="mt-3 space-y-4">
-          {[...parties].map(([parti, figures]) => (
-            <div key={parti} className="space-y-2">
-              <h3 className="font-semibold">{parti}</h3>
-              <ul className="grid gap-2 sm:grid-cols-2">
-                {figures.map((f) => (
-                  <li
-                    key={f.id}
-                    aria-label={`${f.prenom} ${f.nom}`}
-                    className="flex items-start gap-3 rounded-lg border border-slate-200 p-2 dark:border-slate-800"
-                  >
-                    <Avatar portrait={portraitOfPersonality(f, ruleset)} size="sm" />
-                    <span className="min-w-0 space-y-0.5">
-                      <span className="block font-medium">
-                        {f.prenom} {f.nom}
+      <button type="button" className={buttonSecondary} onClick={() => setOpen(true)}>
+        Voir les {count}
+      </button>
+      {open && (
+        <Drawer
+          title="Personnalités nominables"
+          subtitle={`${count} ; fonctions relevées dans les sources, compétence estimée.`}
+          onClose={() => setOpen(false)}
+        >
+          <div className="space-y-4 text-sm">
+            {[...parties].map(([parti, figures]) => (
+              <div key={parti} className="space-y-2">
+                <h3 className="font-semibold">{parti}</h3>
+                <ul className="grid gap-2 sm:grid-cols-2">
+                  {figures.map((f) => (
+                    <li
+                      key={f.id}
+                      aria-label={`${f.prenom} ${f.nom}`}
+                      className="flex items-start gap-3 rounded-lg border border-slate-200 p-2 dark:border-slate-800"
+                    >
+                      <Avatar portrait={portraitOfPersonality(f, ruleset)} size="sm" />
+                      <span className="min-w-0 space-y-0.5">
+                        <span className="block font-medium">
+                          {f.prenom} {f.nom}
+                        </span>
+                        <span className="block text-xs text-slate-600 dark:text-slate-400">
+                          {mainFunction(f)}
+                        </span>
+                        <span className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs">
+                          <span className="inline-flex items-center gap-1">
+                            Compétence {pct(f.competence.valeur)}{' '}
+                            <Badge tone="alerte">Estimation</Badge>
+                          </span>
+                          <span>Notoriété {f.notoriete.niveau}/3</span>
+                        </span>
                       </span>
-                      <span className="block text-xs text-slate-600 dark:text-slate-400">
-                        {mainFunction(f)}
-                      </span>
-                      <span className="flex flex-wrap items-center gap-1 text-xs">
-                        Compétence {pct(f.competence.valeur)}{' '}
-                        <Badge tone="alerte">Estimation</Badge> · Notoriété {f.notoriete.niveau}/3
-                      </span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-      </details>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </Drawer>
+      )}
     </section>
   );
 }

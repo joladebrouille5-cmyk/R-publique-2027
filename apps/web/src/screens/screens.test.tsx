@@ -186,6 +186,7 @@ describe('création de partie', () => {
         parti: 'Parti du renouveau',
         parcours: '',
         profilId: 'societe-civile',
+        photo: null,
         positionnement: { economie: 0, societe: 0 },
       },
       adversaires: 'fictifs',

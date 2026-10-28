@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { initialsOf, type Portrait } from '../portraits';
+import { GeneratedPortrait, Silhouette } from './GeneratedPortrait';
 
 const SIZES = {
   xs: 'size-7 text-[0.7rem]',
@@ -10,8 +11,10 @@ const SIZES = {
 } as const;
 
 /**
- * Avatar d'un candidat : sa photo libre, ou ses initiales sur la couleur de sa famille
- * politique (aussi quand l'image ne se charge pas). Décoratif : le nom figure toujours à côté.
+ * Avatar d'un candidat : sa photo (importée ou libre) ; à défaut, le portrait illustré d'un
+ * personnage fictif, ou la silhouette et les initiales d'une personne réelle, sur la couleur de
+ * sa famille politique (aussi quand l'image ne se charge pas). Décoratif : le nom figure
+ * toujours à côté.
  */
 export function Avatar({
   portrait,
@@ -46,6 +49,13 @@ export function Avatar({
       </span>
     );
   }
+  if (portrait.illustration) {
+    return (
+      <span className={frame} aria-hidden="true" data-avatar="illustration">
+        <GeneratedPortrait seed={portrait.illustration} background={color.fond} />
+      </span>
+    );
+  }
   return (
     <span
       className={`${frame} items-center justify-center font-display font-bold tracking-tight`}
@@ -53,7 +63,8 @@ export function Avatar({
       aria-hidden="true"
       data-avatar="initiales"
     >
-      {initialsOf(portrait)}
+      <Silhouette />
+      <span className="relative">{initialsOf(portrait)}</span>
     </span>
   );
 }

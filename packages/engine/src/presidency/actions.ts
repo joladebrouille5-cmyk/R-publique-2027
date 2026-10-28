@@ -1,5 +1,7 @@
 import {
   actionCompetenceFactor,
+  presidentialActionBlocked,
+  recentCrisis,
   type ActionDefinition,
   type ActionOutcome,
   type GameState,
@@ -22,30 +24,8 @@ import { memberInCharge, memberName, memberTraits } from './members';
 // l'économie et le Parlement, modulation par la compétence du ministre du poste et mobilisation
 // du camp présidentiel pendant la campagne des législatives.
 
-/** Une crise est-elle survenue dans les quatre dernières semaines (sommet de crise) ? */
-const RECENT_CRISIS_WEEKS = 4;
-
-export function recentCrisis(state: GameState): boolean {
-  return Object.entries(state.eventHistory).some(
-    ([id, h]) => id.startsWith('crise-') && state.meta.week - h.lastWeek <= RECENT_CRISIS_WEEKS,
-  );
-}
-
-/** Motif d'indisponibilité d'une action du président (délai, condition), ou null. */
-export function presidentialActionBlocked(
-  state: GameState,
-  definition: ActionDefinition,
-): string | null {
-  const last = state.quinquennat?.usages[definition.id];
-  if (definition.delaiSemaines !== undefined && last !== undefined) {
-    const left = definition.delaiSemaines - (state.meta.week - last);
-    if (left > 0)
-      return `Encore ${left} semaine(s) avant de pouvoir renouveler cette action (une fois toutes les ${definition.delaiSemaines} semaines au plus).`;
-  }
-  if (definition.condition === 'crise-recente' && !recentCrisis(state))
-    return `Aucune crise dans les ${RECENT_CRISIS_WEEKS} dernières semaines : un sommet de crise n’a pas lieu d’être.`;
-  return null;
-}
+// Disponibilité d'une action (délai, condition) : règle partagée avec l'interface.
+export { presidentialActionBlocked, recentCrisis };
 
 /**
  * Validation des actions du président, dans l'ordre soumis : rejet motivé avant l'investiture,

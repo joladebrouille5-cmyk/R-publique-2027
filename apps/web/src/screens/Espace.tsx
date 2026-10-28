@@ -6,6 +6,7 @@ import { Disclosure } from '../components/Disclosure';
 import { Unavailable } from '../components/Unavailable';
 import { screenTitle } from '../components/ui';
 import { useCurrentGame } from './GameLayout';
+import { MandateOverview, MandateOverviewShown, showsMandate } from './pouvoir/MandateOverview';
 import { GAME_SCREENS } from './registry';
 import { SECTION_SCREENS, sectionStatus } from './sections';
 import { SECTION_ICONS, type Hub } from './shell/navigation';
@@ -90,7 +91,8 @@ export function ScreenSection({
 export function Espace({ hub }: { hub: Hub }) {
   const game = useCurrentGame();
   const ruleset = useRuleset(game.rulesetVersion, game.state.cycle);
-  const { open, toggle } = useOpenSections(hub.sections);
+  const { open, toggle, show } = useOpenSections(hub.sections);
+  const overview = hub.path === 'pouvoir' && ruleset.data !== undefined && showsMandate(game.state);
   return (
     <section aria-labelledby="titre-espace" className="space-y-5">
       <div className="space-y-1">
@@ -99,18 +101,24 @@ export function Espace({ hub }: { hub: Hub }) {
         </h1>
         <p className="text-slate-600 dark:text-slate-400">{hub.intro}</p>
       </div>
-      <div className="space-y-3">
-        {hub.sections.map((path) => (
-          <ScreenSection
-            key={path}
-            path={path}
-            game={game}
-            ruleset={ruleset.data}
-            open={open.has(path)}
-            onToggle={() => toggle(path)}
-          />
-        ))}
-      </div>
+      {/* Phase 13 : l'essentiel du mandat, toujours visible, en tête de l'espace Pouvoir. */}
+      {overview && ruleset.data && (
+        <MandateOverview state={game.state} ruleset={ruleset.data} onShow={show} />
+      )}
+      <MandateOverviewShown.Provider value={overview}>
+        <div className="space-y-3">
+          {hub.sections.map((path) => (
+            <ScreenSection
+              key={path}
+              path={path}
+              game={game}
+              ruleset={ruleset.data}
+              open={open.has(path)}
+              onToggle={() => toggle(path)}
+            />
+          ))}
+        </div>
+      </MandateOverviewShown.Provider>
     </section>
   );
 }

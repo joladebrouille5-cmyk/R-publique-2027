@@ -147,10 +147,9 @@ function RoundCard({
         </table>
       </div>
 
-      <details>
-        <summary className="cursor-pointer text-sm font-medium">
-          Par groupe d’électeurs (hypothèse de jeu)
-        </summary>
+      {/* Phase 13 : à plat, sans volet dans la section dépliée. */}
+      <div>
+        <h3 className="text-sm font-semibold">Par groupe d’électeurs (hypothèse de jeu)</h3>
         <div className="mt-2 overflow-x-auto">
           <table className="w-full text-left text-xs">
             <caption className="sr-only">{`${roundLabel} : résultats par groupe d’électeurs`}</caption>
@@ -192,7 +191,7 @@ function RoundCard({
             </tbody>
           </table>
         </div>
-      </details>
+      </div>
     </section>
   );
 }

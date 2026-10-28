@@ -76,8 +76,14 @@ describe('quinquennat', () => {
       RULESET.quinquennat.actions.length,
     );
     expect(within(catalog).getByText('Aucun gouvernement en place à remanier.')).toBeVisible();
-    for (const action of RULESET.quinquennat.actions.filter((a) => !a.institution))
+    for (const action of RULESET.quinquennat.actions.filter((a) => !a.institution && !a.condition))
       expect(screen.getByRole('button', { name: `Ajouter ${action.libelle}` })).toBeEnabled();
+    // Phase 13 : le sommet de crise attend une crise récente (règle du moteur, motif affiché).
+    const summit = RULESET.quinquennat.actions.find((a) => a.condition === 'crise-recente')!;
+    expect(screen.getByRole('button', { name: `Ajouter ${summit.libelle}` })).toBeDisabled();
+    expect(
+      within(catalog).getByText(/Aucune crise dans les 4 dernières semaines/),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Ajouter Remaniement du gouvernement' }),
     ).toBeDisabled();
@@ -143,7 +149,14 @@ describe('quinquennat', () => {
     expect(within(section).getAllByText('Estimation').length).toBeGreaterThanOrEqual(
       figures.length,
     );
-    const nominable = screen.getByRole('region', { name: 'Personnalités nominables' });
+    // Liste ouverte dans un tiroir (phase 13 : pas de volet dans la section dépliée).
+    const user = userEvent.setup();
+    await user.click(
+      within(screen.getByRole('region', { name: 'Personnalités nominables' })).getByRole('button', {
+        name: /^Voir les \d+ personnalités de \d+ partis$/,
+      }),
+    );
+    const nominable = screen.getByRole('dialog', { name: 'Personnalités nominables' });
     for (const f of RULESET.figures.figures)
       expect(
         within(nominable).getByRole('listitem', { name: `${f.prenom} ${f.nom}` }),
@@ -189,9 +202,12 @@ describe('quinquennat', () => {
     mockApi(base(state));
     renderRoute(`/parties/${GAME_ID}/gouvernement`);
     expect(await screen.findByRole('heading', { name: 'Gouvernement n° 1' })).toBeInTheDocument();
-    expect(screen.getByText('Premier ministre')).toBeInTheDocument();
+    // Section dépliée « Gouvernement » (la vue du mandat, en tête de l'espace, nomme aussi les
+    // postes).
+    const section = within(document.getElementById('gouvernement')!);
+    expect(section.getByText('Premier ministre')).toBeInTheDocument();
     for (const poste of RULESET.quinquennat.postes)
-      expect(screen.getByText(poste.libelle)).toBeInTheDocument();
+      expect(section.getByText(poste.libelle)).toBeInTheDocument();
     const government = state.quinquennat!.gouvernement!;
     const profiles = [government.premierMinistre, ...government.ministres].filter(
       (m) => m.nature === 'profil',
@@ -216,17 +232,44 @@ describe('quinquennat', () => {
     });
     const table = within(assembly).getByRole('table', { name: 'Groupes politiques et sièges' });
     expect(within(table).getAllByRole('row')).toHaveLength(RULESET.assemblee.groupes.length + 1);
-    expect(within(assembly).getByText(/majorité des membres : \d+ voix/)).toBeInTheDocument();
     expect(within(assembly).getByText(/sans aucun nom de député/)).toBeInTheDocument();
-    // Hémicycle : un point par siège (577), légende chiffrée par position à l'égard du président.
-    const hemicycle = within(assembly).getByRole('img', { name: /^Hémicycle de l’Assemblée/ });
-    expect(hemicycle.querySelectorAll('circle')).toHaveLength(RULESET.assemblee.siegesTotal);
+    // Hémicycle et jauges dans la vue du mandat, en tête de l'espace ; la section Parlement ne
+    // les répète pas (une seule figure de 577 sièges par page) et garde le détail.
+    const overview = screen.getByRole('region', { name: 'Vue du mandat' });
+    expect(within(assembly).queryByRole('img', { name: /^Hémicycle/ })).toBeNull();
+    expect(within(assembly).queryAllByRole('meter')).toEqual([]);
+    expect(screen.getAllByRole('img', { name: /^Hémicycle/ })).toHaveLength(1);
+    // Hémicycle : un point par siège (577), couleur et sigle de chaque groupe (convention du
+    // jeu), légende chiffrée.
+    const hemicycle = within(overview).getByRole('img', { name: /^Hémicycle de l’Assemblée/ });
+    expect(hemicycle.querySelectorAll('[data-siege]')).toHaveLength(RULESET.assemblee.siegesTotal);
     const supporters = Object.values(state.parlement!.groupes)
       .filter((g) => g.alignement === 'soutien')
       .reduce((sum, g) => sum + g.sieges, 0);
     expect(hemicycle).toHaveAccessibleName(
       expect.stringContaining(`Soutiens du président ${supporters}`),
     );
+    for (const g of RULESET.assemblee.groupes.filter((g) => state.parlement!.groupes[g.id]!.sieges))
+      expect(hemicycle).toHaveAccessibleName(
+        expect.stringContaining(`${g.sigle} ${state.parlement!.groupes[g.id]!.sieges}`),
+      );
+    expect(
+      within(overview).getByText(/convention du jeu, pas des couleurs officielles/),
+    ).toBeVisible();
+    // Groupe du joueur (battu ici) : liseré lumineux sur ses sièges, signalé dans la légende.
+    const mine = hemicycle.querySelectorAll('[data-joueur]');
+    expect(mine.length).toBeGreaterThan(0);
+    expect(within(assembly).getAllByText(/votre groupe/i).length).toBeGreaterThan(0);
+    // Jauges : majorité des membres et tension parlementaire calculées par le moteur.
+    const majority = within(overview).getByRole('meter', {
+      name: 'Soutiens du président face à la majorité des membres',
+    });
+    expect(majority).toHaveAttribute('aria-valuenow', String(supporters));
+    const tension = within(overview).getByRole('meter', { name: 'Tension parlementaire' });
+    expect(tension).toHaveAttribute('aria-valuenow', String(state.parlement!.tension.valeur));
+    expect(
+      within(assembly).getByRole('list', { name: 'Facteurs de la tension parlementaire' }),
+    ).toBeInTheDocument();
     // Le président (candidat fictif) dépose son programme : des textes ont déjà été votés.
     expect(state.parlement!.textes.some((b) => b.votes.length > 0)).toBe(true);
     expect(screen.getAllByText(/votes de groupe simulés/).length).toBeGreaterThan(0);
@@ -264,10 +307,44 @@ describe('quinquennat', () => {
 
   it('l’économie : valeurs de départ réelles, valeurs simulées et facteurs', async () => {
     let state = elected;
-    for (let i = 0; i < 6; i++) state = step(state);
-    mockApi(base(state));
+    for (let i = 0; i < 5; i++) state = step(state);
+    const { state: next, report } = advanceWeek(
+      state,
+      { actions: [], decisions: defaults(state) },
+      { ruleset: RULESET },
+    );
+    state = next;
+    const change = report.economie.find((c) => c.indicateur === 'chomage')!;
+    expect(change.factors.length).toBeGreaterThan(0);
+    mockApi({
+      ...base(state),
+      [`GET ${JOURNAL_URL}`]: () => ({
+        body: {
+          entries: [
+            {
+              id: 'bilan',
+              week: report.week,
+              type: 'semaine',
+              nature: 'simule',
+              createdAt: '2027-06-01T00:00:00.000Z',
+              report,
+              details: {},
+            },
+          ],
+          nextBefore: null,
+        },
+      }),
+    });
     renderRoute(`/parties/${GAME_ID}/economie`);
     const unemployment = await screen.findByRole('listitem', { name: 'Taux de chômage' });
+    // Facteurs de la dernière semaine visibles à plat (phase 13 : aucun volet imbriqué).
+    expect(
+      await within(unemployment).findByText(new RegExp(`^Semaine ${report.week} : `)),
+    ).toBeVisible();
+    const factor = change.factors[0]!.label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    expect(within(unemployment).getByText(new RegExp(`^${factor} : `))).toBeVisible();
+    for (const region of screen.getAllByRole('region', { name: 'Économie' }))
+      expect(region.querySelector('details')).toBeNull();
     // Étiquette courte à l'écran ; la série et son lien sont dans Paramètres → Crédits.
     expect(within(unemployment).getByText('Donnée réelle')).toBeInTheDocument();
     expect(within(unemployment).queryAllByRole('link')).toEqual([]);
@@ -321,6 +398,24 @@ describe('quinquennat', () => {
     expect(
       within(lasting).getByText(/Cyberattaque contre des hôpitaux plus probable \(× 3\)/),
     ).toBeVisible();
+    cleanup();
+
+    // Achevée, elle reste listée à plat (phase 13 : aucun volet dans la section dépliée).
+    const ended = JSON.parse(JSON.stringify(state)) as GameState;
+    for (const c of ended.consequences) {
+      c.debut = Math.min(c.debut, ended.meta.week - 2);
+      c.fin = ended.meta.week - 1;
+    }
+    mockApi(base(ended));
+    renderRoute(`/parties/${GAME_ID}/crises`);
+    const done = await screen.findByRole('list', { name: /^Conséquences achevées \(\d+\)$/ });
+    expect(
+      within(done).getByText(/^Failles informatiques non corrigées \(semaines \d+ à \d+\)$/),
+    ).toBeVisible();
+    expect(screen.getByText('Aucune conséquence durable en cours.')).toBeVisible();
+    expect(
+      screen.getByRole('region', { name: 'Conséquences durables' }).querySelector('details'),
+    ).toBeNull();
   });
 
   it('les législatives : Assemblée de 2024 réelle, filtre par département, sans nom', async () => {

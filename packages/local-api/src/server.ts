@@ -25,6 +25,7 @@ import {
 import {
   AdvanceRequestSchema,
   AdvanceResponseSchema,
+  candidateForJournal,
   CreateGameRequestSchema,
   CreateSaveRequestSchema,
   DebateIdSchema,
@@ -519,7 +520,9 @@ export class LocalApi {
         adversaires: state.player.adversaires,
         scenario: state.scenario,
         startDate: state.meta.date,
-        candidat: state.player.actorId ? state.actors[state.player.actorId]!.candidate : null,
+        candidat: state.player.actorId
+          ? candidateForJournal(state.actors[state.player.actorId]!.candidate)
+          : null,
       }),
     ]);
     return this.detail(row, state, stateHash);

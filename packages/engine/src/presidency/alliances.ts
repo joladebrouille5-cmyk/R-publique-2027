@@ -6,6 +6,7 @@ import type {
   ReportEvent,
   Ruleset,
 } from '@r2027/shared';
+import { formatFrenchDate } from '../core/calendar';
 import { compareStrings } from '../core/ledger';
 import { distance } from '../election/model';
 import { daysBetween } from './dates';
@@ -151,7 +152,7 @@ export function allianceDecision(
     actorId: state.player.actorId!,
     createdWeek: state.meta.week,
     label: `Législatives : stratégie d’alliance de votre camp (« ${blocLabel(ruleset, camp)} »)`,
-    description: `Premier tour le ${prochaine.t1}, second tour le ${prochaine.t2}. L’acceptation des partenaires est simulée selon la proximité des positions ; les autres blocs suivent une règle du jeu. Accords fictifs : ils ne décrivent aucun accord réel.`,
+    description: `Premier tour le ${formatFrenchDate(prochaine.t1)}, second tour le ${formatFrenchDate(prochaine.t2)}. L’acceptation des partenaires est simulée selon la proximité des positions ; les autres blocs suivent une règle du jeu. Accords fictifs : ils ne décrivent aucun accord réel.`,
     options,
     defaultOptionId: defaultStrategy(ruleset, camp, options),
   };
@@ -181,7 +182,7 @@ export function openLegislativeCampaign(state: GameState, ruleset: Ruleset): Rep
     kind: 'evenement',
     refId: 'legislatives',
     label: 'Campagne des élections législatives ouverte',
-    description: `Premier tour le ${prochaine.t1}. Accords électoraux${camp ? ' : votre camp arrête sa stratégie' : ''} ; chaque déplacement du président dans un département y mobilise son camp (hypothèse du jeu).`,
+    description: `Premier tour le ${formatFrenchDate(prochaine.t1)}. Accords électoraux${camp ? ' : votre camp arrête sa stratégie' : ''} ; chaque déplacement du président dans un département y mobilise son camp (hypothèse du jeu).`,
     nature: 'simule',
     majeur: false,
     decisionId: null,

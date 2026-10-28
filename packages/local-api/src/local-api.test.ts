@@ -277,6 +277,40 @@ describe('serveur local : débats télévisés (phase 10)', () => {
   });
 });
 
+describe('serveur local : photo du candidat (phase 13)', () => {
+  const PHOTO =
+    'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+
+  it('crée une partie avec la photo choisie ; refuse une photo invalide avec le code de l’API', async () => {
+    const api = server();
+    const game = await newGame(api, { candidate: { ...candidate, photo: PHOTO } });
+    expect(game.state.actors.joueur!.candidate.photo).toBe(PHOTO);
+    // Le journal note la présence de la photo, sans en recopier le contenu.
+    const journal = JournalPageSchema.parse(
+      (await call(api, 'GET', `/api/games/${game.id}/journal?limit=10`)).body,
+    );
+    const created = journal.entries.find((e) => e.type === 'partie_creee')!;
+    expect(created.details).toMatchObject({ candidat: { nom: 'Local', photo: true } });
+    expect(JSON.stringify(journal)).not.toContain('base64');
+    for (const photo of [
+      'data:image/png;base64,/9j/4AAQSkZJRgABAQ==',
+      'data:image/gif;base64,R0lGODlhAQABAAAAACw=',
+      'data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=',
+      `data:image/png;base64,iVBORw0KGgo${'A'.repeat(140_000)}`,
+      'https://exemple.fr/photo.png',
+    ])
+      expect(
+        error(
+          await call(api, 'POST', '/api/games', {
+            name: 'Photo',
+            mode: 'candidat_personnalise',
+            candidate: { ...candidate, photo },
+          }),
+        ),
+      ).toBe('requete_invalide');
+  });
+});
+
 describe('serveur local : journal, sauvegardes, export', () => {
   it('pagine le journal sans doublon ni événement résumé dans le bilan', async () => {
     const api = server();

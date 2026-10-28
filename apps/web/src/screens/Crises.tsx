@@ -74,17 +74,23 @@ function Consequences({ state, ruleset }: { state: GameState; ruleset: Ruleset }
       ) : (
         <p>Aucune conséquence durable en cours.</p>
       )}
+      {/* Phase 13 : à plat, sans volet dans la section dépliée. */}
       {past.length > 0 && (
-        <details>
-          <summary className="cursor-pointer">Conséquences achevées ({past.length})</summary>
-          <ul className="mt-1 list-inside list-disc">
+        <div>
+          <h3 id="titre-consequences-achevees" className="font-semibold">
+            Conséquences achevées ({past.length})
+          </h3>
+          <ul
+            aria-labelledby="titre-consequences-achevees"
+            className="mt-1 list-inside list-disc text-slate-600 dark:text-slate-400"
+          >
             {past.map((c) => (
               <li key={c.id}>
                 {c.libelle} (semaines {c.debut} à {c.fin})
               </li>
             ))}
           </ul>
-        </details>
+        </div>
       )}
       <p className="text-xs text-slate-500 dark:text-slate-400">
         Effets et durées sont des hypothèses de jeu ; chaque effet hebdomadaire apparaît dans les

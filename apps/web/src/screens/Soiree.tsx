@@ -321,7 +321,7 @@ function Night({ result }: { result: RoundResult }) {
       player: candidats[index]!.player,
       portrait: state.actors[key]
         ? portraitOf(state.actors[key], ruleset.data)
-        : { prenom: key, nom: '', photo: null, famille: null },
+        : { prenom: key, nom: '', photo: null, famille: null, illustration: null },
       estimation: now.estimation[key] ?? 0,
       depouille:
         now.depouille.exprimes > 0 ? (now.depouille.voix[key] ?? 0) / now.depouille.exprimes : 0,

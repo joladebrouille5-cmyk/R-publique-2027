@@ -1,10 +1,12 @@
 import {
   addDays,
   type DistrictOutcome,
+  type ElectoralPact,
   type GameState,
   type LegislativeOutcome,
   type Ruleset,
 } from '@r2027/shared';
+import { Link } from 'react-router';
 import { useId, useState } from 'react';
 import { useRuleset } from '../api/hooks';
 import { Badge } from '../components/Badge';
@@ -14,9 +16,11 @@ import { DATA_STATUS_LABELS, formatCount, formatGameDate, formatRatio } from '..
 import { useCurrentGame } from './GameLayout';
 import { ScreenHeading } from '../components/Disclosure';
 
-// Législatives (phase 6, P6-07) : calendrier, dissolution, composition issue des dernières
-// élections et résultats par circonscription. Les élections de 2024 sont réelles (ministère de
-// l'Intérieur, sans nom de candidat) ; les suivantes sont simulées et étiquetées comme telles.
+// Législatives (phase 6, P6-07 ; vivantes en phase 13) : calendrier, campagne et accords entre
+// blocs, dissolution, composition issue des dernières élections et résultats par
+// circonscription (désistements, candidatures communes). Les élections de 2024 sont réelles
+// (ministère de l'Intérieur, sans nom de candidat) ; les suivantes sont simulées et étiquetées
+// comme telles, comme les accords prêtés aux blocs.
 
 const MOTIF_LABELS: Record<LegislativeOutcome['motif'], string> = {
   'reelles-2024': 'Élections législatives des 30 juin et 7 juillet 2024 (résultats réels)',
@@ -35,6 +39,8 @@ type Row = {
   /** Premier en voix au premier tour (nuance pour 2024, bloc pour la simulation). */
   tete: { label: string; voix: number } | null;
   elu: { label: string; tour: 1 | 2 } | null;
+  /** Candidatures communes et désistements de la circonscription (simulation). */
+  accords: string | null;
 };
 
 function leader(voix: Record<string, number>): [string, number] | null {
@@ -58,6 +64,7 @@ function realRows(ruleset: Ruleset): Row[] {
         label: `${d.elu.nuance} (${blocs.get(blocOf.get(d.elu.nuance)?.id ?? '') ?? 'bloc inconnu'})`,
         tour: d.elu.tour,
       },
+      accords: null,
     };
   });
 }
@@ -75,6 +82,11 @@ function simulatedRows(ruleset: Ruleset, districts: readonly DistrictOutcome[]):
       exprimes: d.t1.exprimes,
       tete: first ? { label: blocs.get(first[0]) ?? first[0], voix: first[1] } : null,
       elu: d.elu ? { label: blocs.get(d.elu) ?? d.elu, tour: d.tour } : null,
+      accords:
+        [
+          ...d.communs.map((b) => `candidature commune (sans ${blocs.get(b) ?? b})`),
+          ...d.retraits.map((b) => `désistement : ${blocs.get(b) ?? b}`),
+        ].join(' ; ') || null,
     };
   });
 }
@@ -113,6 +125,13 @@ function Calendar({ state, ruleset }: { state: GameState; ruleset: Ruleset }) {
           )}
         </p>
       )}
+      {prochaine && !legislatives.campagne && !premierTour && (
+        <p>
+          La campagne (accords entre blocs, mobilisation par les déplacements du président) s’ouvre{' '}
+          {rules.alliances.campagneSemaines} semaines avant le premier tour, aussitôt après une
+          dissolution.
+        </p>
+      )}
       {premierTour && (
         <p>
           Premier tour dépouillé : {premierTour.filter((d) => d.elu).length} député(s) élu(s) dès le
@@ -149,6 +168,95 @@ function Calendar({ state, ruleset }: { state: GameState; ruleset: Ruleset }) {
   );
 }
 
+const PACT_LABELS: Record<ElectoralPact['type'], string> = {
+  investitures: 'Investitures communes',
+  desistements: 'Désistements réciproques',
+  'front-republicain': 'Front républicain',
+};
+
+/** Accord électoral en clair (blocs, bloc visé, origine). */
+export function pactText(ruleset: Ruleset, pact: ElectoralPact): string {
+  const blocs = blocLabels(ruleset);
+  const names = pact.blocs.map((b) => `« ${blocs.get(b) ?? b} »`).join(', ');
+  return pact.type === 'front-republicain'
+    ? `${PACT_LABELS[pact.type]} de ${names} face au bloc « ${blocs.get(pact.contre ?? '') ?? pact.contre} »`
+    : `${PACT_LABELS[pact.type]} entre ${names}`;
+}
+
+function Pacts({ ruleset, pacts }: { ruleset: Ruleset; pacts: readonly ElectoralPact[] }) {
+  if (pacts.length === 0) return <p>Aucun accord entre blocs : un candidat par bloc partout.</p>;
+  return (
+    <ul className="space-y-1" aria-label="Accords électoraux">
+      {pacts.map((pact) => (
+        <li
+          key={`${pact.type}-${pact.blocs.join('-')}`}
+          className="flex flex-wrap items-center gap-2"
+        >
+          <span>{pactText(ruleset, pact)}</span>
+          <Badge tone={pact.origine === 'joueur' ? 'succes' : 'simule'}>
+            {pact.origine === 'joueur' ? 'Votre camp' : 'Règle de l’IA'}
+          </Badge>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** Campagne des législatives (phase 13) : stratégie du camp du joueur, accords, mobilisation. */
+function Campaign({ state, ruleset }: { state: GameState; ruleset: Ruleset }) {
+  const campagne = state.legislatives!.campagne!;
+  const departements = ruleset.parrainages.reservoir.departements;
+  const mobilised = Object.entries(campagne.mobilisation).sort((a, b) => b[1] - a[1]);
+  const pending = state.pendingDecisions.find((d) => d.kind === 'alliance');
+  return (
+    <section aria-labelledby="titre-campagne-legislatives" className={`${card} space-y-3 text-sm`}>
+      <h2 id="titre-campagne-legislatives" className="text-lg font-semibold">
+        Campagne en cours
+      </h2>
+      {pending ? (
+        <p className="rounded-xl bg-amber-50 p-3 text-amber-950 dark:bg-amber-950/40 dark:text-amber-100">
+          <span className="font-semibold">Stratégie à arrêter : </span>
+          {pending.label}.{' '}
+          <Link to="../tableau-de-bord" className="font-semibold underline underline-offset-2">
+            Décider au QG
+          </Link>
+        </p>
+      ) : (
+        <p>
+          <Badge tone="succes">Stratégie arrêtée</Badge>{' '}
+          {state.player.actorId ? 'Votre camp a choisi sa stratégie.' : 'Mode observateur.'}
+        </p>
+      )}
+      <Pacts ruleset={ruleset} pacts={campagne.alliances} />
+      <div className="space-y-1">
+        <h3 className="font-semibold">Mobilisation du camp présidentiel</h3>
+        {mobilised.length > 0 ? (
+          <ul className="flex flex-wrap gap-2" aria-label="Mobilisation par département">
+            {mobilised.map(([code, value]) => (
+              <li
+                key={code}
+                className="rounded-full bg-slate-100 px-2.5 py-1 text-xs dark:bg-slate-800"
+              >
+                {departements[code]?.nom ?? code} ({code}) : +{Math.round(value / 100)} %
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-slate-600 dark:text-slate-400">
+            Aucun déplacement du président dans un département depuis l’ouverture de la campagne.
+          </p>
+        )}
+      </div>
+      <p className="text-xs text-slate-500 dark:text-slate-400">
+        Accords simulés, acceptés par les partenaires selon la proximité des positions : ils ne
+        décrivent aucun accord réel. Les blocs conduits par l’IA ne concluent aucun accord avec le
+        bloc visé par le front républicain (convention du jeu). Chaque déplacement du président dans
+        un département y renforce son camp au premier tour (hypothèse de jeu).
+      </p>
+    </section>
+  );
+}
+
 function Composition({ outcome, ruleset }: { outcome: LegislativeOutcome; ruleset: Ruleset }) {
   const groups = new Map(ruleset.assemblee.groupes.map((g) => [g.id, g]));
   const seats = Object.values(outcome.siegesParBloc).reduce((a, b) => a + b, 0);
@@ -174,6 +282,18 @@ function Composition({ outcome, ruleset }: { outcome: LegislativeOutcome; rulese
         {outcome.cohabitation &&
           ' L’opposition au président détient la majorité des sièges : un président IA nomme un Premier ministre (profil fictif) proche de cette majorité (hypothèse de jeu) ; un président joueur choisit librement, mais ses textes dépendent de cette majorité.'}
       </p>
+      {!real && (
+        <div className="space-y-1">
+          <h3 className="font-semibold">Accords de ce scrutin</h3>
+          <Pacts ruleset={ruleset} pacts={outcome.alliances} />
+          <p>
+            {outcome.circonscriptions.reduce((n, d) => n + d.communs.length, 0)} candidature(s)
+            commune(s) au premier tour ;{' '}
+            {outcome.circonscriptions.reduce((n, d) => n + d.retraits.length, 0)} désistement(s)
+            avant le second tour.
+          </p>
+        </div>
+      )}
       <div
         className="overflow-x-auto"
         tabIndex={0}
@@ -212,7 +332,7 @@ function Composition({ outcome, ruleset }: { outcome: LegislativeOutcome; rulese
       <p className="text-xs text-slate-500 dark:text-slate-400">
         {real
           ? 'Sièges : composition actuelle de l’Assemblée (groupes et députés en exercice, sans aucun nom), rattachée aux blocs. Voix : premier tour de 2024, nuances du ministère de l’Intérieur regroupées par bloc.'
-          : 'Résultats simulés : un candidat par bloc dans chaque circonscription, voix de 2024 modulées par l’élan présidentiel, la popularité du président et un aléa ; reports de voix au second tour selon la proximité des blocs ; sièges d’un bloc répartis entre ses groupes au prorata de leurs sièges sortants. Les désistements ne sont pas simulés. Aucun résultat simulé n’est une prévision.'}{' '}
+          : 'Résultats simulés : un candidat par bloc dans chaque circonscription (un seul pour deux blocs liés par des investitures communes), voix de 2024 modulées par l’élan présidentiel, la popularité du président, la mobilisation de campagne et un aléa ; désistements au second tour selon les accords, reports de voix selon la proximité des blocs ; sièges d’un bloc répartis entre ses groupes au prorata de leurs sièges sortants. Aucun résultat simulé n’est une prévision.'}{' '}
         Rattachement des nuances et des groupes aux blocs : hypothèse de jeu.
       </p>
     </section>
@@ -263,6 +383,7 @@ function Districts({ rows, title, note }: { rows: Row[]; title: string; note: st
               <th scope="col">Participation au premier tour</th>
               <th scope="col">En tête au premier tour</th>
               <th scope="col">Élu(e)</th>
+              {rows.some((r) => r.accords) && <th scope="col">Accords</th>}
             </tr>
           </thead>
           <tbody>
@@ -279,6 +400,7 @@ function Districts({ rows, title, note }: { rows: Row[]; title: string; note: st
                     ? `${r.elu.label}, ${r.elu.tour === 1 ? 'premier tour' : 'second tour'}`
                     : 'Second tour à venir'}
                 </td>
+                {rows.some((row) => row.accords) && <td>{r.accords ?? '—'}</td>}
               </tr>
             ))}
           </tbody>
@@ -308,6 +430,7 @@ function Content({ state, ruleset }: { state: GameState; ruleset: Ruleset }) {
   return (
     <>
       <Calendar state={state} ruleset={ruleset} />
+      {legislatives.campagne && <Campaign state={state} ruleset={ruleset} />}
       <Composition outcome={derniere} ruleset={ruleset} />
       {premierTour ? (
         <Districts

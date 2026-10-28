@@ -1,13 +1,18 @@
 import {
   CommuneResultsResponseSchema,
+  closestBloc,
   GeoManifestSchema,
   HistoricalCommunesSchema,
   HistoricalOverviewSchema,
   HistoricalStatusSchema,
+  legislativeDepartments,
+  realLegislativeDepartments,
   TerritorySearchResultSchema,
   type Counts,
   type GameState,
   type HistoricalStatus,
+  type LegislativeDepartment,
+  type Ruleset,
 } from '@r2027/shared';
 import { candidateName } from '@r2027/shared';
 import { useQuery } from '@tanstack/react-query';
@@ -18,6 +23,8 @@ import { api } from '../api/client';
 
 // Données de la carte : référentiel géographique (fichiers TopoJSON servis par l'API) et
 // résultats, simulés (partie) ou réels (présidentielle 2022 importée), ramenés à une forme commune.
+// Phase 13 : législatives par département et par bloc — 2024 (résultats officiels du jeu de
+// règles) et scrutins simulés de la partie, regroupés par les fonctions partagées avec le moteur.
 
 export type TerritoryProperties = {
   code: string;
@@ -99,6 +106,13 @@ export type TerritoryResult = {
 export type ResultSource =
   | { kind: 'partie'; tour: 1 | 2; label: string }
   | { kind: 'historique'; tour: 1 | 2; label: string }
+  /** Législatives par bloc (phase 13) : 2024 réelles, dernier scrutin simulé ou tour en cours. */
+  | {
+      kind: 'legislatives';
+      scrutin: 'reelles-2024' | 'simulees' | 'en-cours';
+      tour: 1 | 2;
+      label: string;
+    }
   | { kind: 'aucune'; label: string };
 
 export type SourceData = {
@@ -109,6 +123,21 @@ export type SourceData = {
   regions: Map<string, TerritoryResult>;
   departements: Map<string, TerritoryResult>;
   horsCarte: Map<string, TerritoryResult>;
+  /** Législatives (phase 13) : sièges par bloc et circonscriptions de chaque département. */
+  legislatives?: {
+    sieges: Map<string, Record<string, number>>;
+    circonscriptions: Map<string, LegislativeDistrict[]>;
+  };
+};
+
+/** Circonscription dans la fiche d'un département (aucun nom de candidat). */
+export type LegislativeDistrict = {
+  code: string;
+  libelle: string;
+  /** Bloc en tête au tour affiché, et sa part des exprimés. */
+  tete: { bloc: string; part: number } | null;
+  /** Bloc élu (au tour affiché ou avant), avec son tour. */
+  elu: { bloc: string; tour: 1 | 2 } | null;
 };
 
 export const fromCounts = (c: Counts, keys: readonly string[]): TerritoryResult => ({
@@ -133,16 +162,52 @@ export const fromValues = (v: readonly number[]): TerritoryResult => ({
 const toMap = <T>(record: Record<string, T>, map: (value: T) => TerritoryResult) =>
   new Map(Object.entries(record).map(([code, value]) => [code, map(value)]));
 
-/** Sources disponibles : tours dépouillés de la partie (avec détail territorial), puis 2022. */
+/**
+ * Sources disponibles : tours dépouillés de la partie (avec détail territorial), législatives
+ * (en cours, dernier scrutin simulé, 2024 réelles), puis présidentielle 2022.
+ */
 export function availableSources(
   state: GameState,
   history: HistoricalStatus | undefined,
+  withLegislatives = false,
 ): ResultSource[] {
   const sources: ResultSource[] = [];
+  const legislatives = state.legislatives;
+  const simulated: ResultSource[] = [];
+  if (withLegislatives && legislatives) {
+    if (legislatives.premierTour)
+      simulated.push({
+        kind: 'legislatives',
+        scrutin: 'en-cours',
+        tour: 1,
+        label: 'Législatives en cours — premier tour (simulé)',
+      });
+    if (legislatives.derniere.motif !== 'reelles-2024') {
+      const year = legislatives.derniere.t2.slice(0, 4);
+      simulated.push(
+        {
+          kind: 'legislatives',
+          scrutin: 'simulees',
+          tour: 1,
+          label: `Législatives ${year} — premier tour (simulé)`,
+        },
+        {
+          kind: 'legislatives',
+          scrutin: 'simulees',
+          tour: 2,
+          label: `Législatives ${year} — second tour (simulé)`,
+        },
+      );
+    }
+  }
+  // Pendant le quinquennat, les législatives de la partie passent en tête de liste.
+  const presidency = state.meta.phase === 'presidence';
+  if (presidency) sources.push(...simulated);
   if (state.elections.t1?.territoire)
     sources.push({ kind: 'partie', tour: 1, label: 'Partie — premier tour (simulé)' });
   if (state.elections.t2?.territoire)
     sources.push({ kind: 'partie', tour: 2, label: 'Partie — second tour (simulé)' });
+  if (!presidency) sources.push(...simulated);
   if (history?.disponible) {
     for (const t of history.tours) {
       sources.push({
@@ -152,7 +217,18 @@ export function availableSources(
       });
     }
   }
-  sources.push({ kind: 'aucune', label: 'Géographie seule (sans résultats)' });
+  const real2024: ResultSource = {
+    kind: 'legislatives',
+    scrutin: 'reelles-2024',
+    tour: 1,
+    label: 'Législatives 2024 — premier tour par bloc (officiel)',
+  };
+  const none: ResultSource = { kind: 'aucune', label: 'Géographie seule (sans résultats)' };
+  // Pendant la campagne présidentielle, la carte s'ouvre sur la présidentielle (ou sur la
+  // géographie seule) ; les législatives de 2024 restent proposées.
+  if (!withLegislatives) sources.push(none);
+  else if (presidency) sources.push(real2024, none);
+  else sources.push(none, real2024);
   return sources;
 }
 
@@ -161,6 +237,7 @@ export function useSourceData(
   state: GameState,
   source: ResultSource,
   history: HistoricalStatus | undefined,
+  ruleset?: Ruleset,
 ) {
   const overview = useQuery({
     queryKey: ['geo', 'historique', source.kind === 'historique' ? source.tour : 0, 'apercu'],
@@ -192,6 +269,10 @@ export function useSourceData(
     };
     return { data, isPending: false, error: null };
   }
+  if (source.kind === 'legislatives') {
+    if (!ruleset) return { data: null, isPending: true, error: null };
+    return { data: legislativeSource(state, ruleset, source), isPending: false, error: null };
+  }
   if (source.kind === 'historique') {
     const tour = history?.disponible
       ? history.tours.find((t) => t.tour === source.tour)
@@ -213,6 +294,129 @@ export function useSourceData(
     return { data, isPending: false, error: null };
   }
   return { data: null, isPending: false, error: null };
+}
+
+/** Codes des territoires hors carte pour les circonscriptions qui n'ont pas de département. */
+const OFF_MAP: Record<string, string> = {
+  // Français établis hors de France : onze circonscriptions.
+  ZZ: '99',
+  // Saint-Barthélemy et Saint-Martin : une seule circonscription, comptée avec Saint-Martin.
+  ZX: '978',
+};
+
+/**
+ * Législatives par département et par bloc (phase 13) : 2024 (résultats officiels du jeu de
+ * règles) ou scrutin simulé de la partie, regroupés par les fonctions partagées avec le moteur ;
+ * régions additionnées, territoires sans département rangés hors carte.
+ */
+export function legislativeSource(
+  state: GameState,
+  ruleset: Ruleset,
+  source: Extract<ResultSource, { kind: 'legislatives' }>,
+): SourceData | null {
+  const legislatives = state.legislatives;
+  const blocs = ruleset.legislatives.blocs;
+  const player = state.player.actorId ? state.actors[state.player.actorId] : undefined;
+  // Camp du joueur : le bloc le plus proche de son candidat (règle du moteur, partagée).
+  const camp = player ? closestBloc(ruleset, player.candidate.positionnement) : null;
+  let byDepartment: Map<string, LegislativeDepartment>;
+  const circonscriptions = new Map<string, LegislativeDistrict[]>();
+  const names = new Map(ruleset.legislatives2024.circonscriptions.map((d) => [d.code, d.libelle]));
+  const add = (departement: string, district: LegislativeDistrict) =>
+    circonscriptions.set(departement, [...(circonscriptions.get(departement) ?? []), district]);
+  const best = (voix: Record<string, number>) =>
+    Object.entries(voix).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0];
+  if (source.scrutin === 'reelles-2024') {
+    byDepartment = realLegislativeDepartments(ruleset);
+    const blocOf = new Map(blocs.flatMap((b) => b.nuances.map((n) => [n, b.id])));
+    for (const d of ruleset.legislatives2024.circonscriptions) {
+      const voix: Record<string, number> = {};
+      for (const [nuance, n] of Object.entries(d.voix)) {
+        const bloc = blocOf.get(nuance);
+        if (bloc) voix[bloc] = (voix[bloc] ?? 0) + n;
+      }
+      const top = best(voix);
+      const elected = blocOf.get(d.elu.nuance);
+      add(d.departement, {
+        code: d.code,
+        libelle: d.libelle,
+        tete: top ? { bloc: top[0], part: top[1] / Math.max(1, d.exprimes) } : null,
+        elu: elected ? { bloc: elected, tour: d.elu.tour } : null,
+      });
+    }
+  } else {
+    const districts =
+      source.scrutin === 'en-cours'
+        ? legislatives?.premierTour
+        : legislatives?.derniere.circonscriptions;
+    if (!districts || districts.length === 0) return null;
+    byDepartment = legislativeDepartments(districts, source.tour);
+    for (const d of districts) {
+      const round = source.tour === 2 ? d.t2 : d.t1;
+      const top = round ? best(round.voix) : undefined;
+      add(d.code.slice(0, -2), {
+        code: d.code,
+        libelle: names.get(d.code) ?? d.code,
+        tete: top ? { bloc: top[0], part: top[1] / Math.max(1, round!.exprimes) } : null,
+        elu: d.elu && (source.tour === 2 || d.tour === 1) ? { bloc: d.elu, tour: d.tour } : null,
+      });
+    }
+  }
+  const keys = blocs.map((b) => b.id);
+  const toResult = (d: LegislativeDepartment): TerritoryResult => ({
+    inscrits: d.inscrits,
+    votants: d.votants,
+    // Blancs et nuls ne sont pas distingués dans ces résultats par circonscription.
+    blancs: d.votants - d.exprimes,
+    nuls: 0,
+    exprimes: d.exprimes,
+    voix: keys.map((k) => d.voix[k] ?? 0),
+  });
+  const departements = new Map<string, TerritoryResult>();
+  const horsCarte = new Map<string, TerritoryResult>();
+  const regions = new Map<string, TerritoryResult>();
+  const sieges = new Map<string, Record<string, number>>();
+  const reservoir = ruleset.parrainages.reservoir.departements;
+  for (const [code, d] of byDepartment) {
+    const result = toResult(d);
+    const region = reservoir[code]?.region;
+    const offMap = OFF_MAP[code] ?? (region ? null : code);
+    if (offMap !== null) {
+      horsCarte.set(offMap, result);
+      sieges.set(offMap, d.sieges);
+      circonscriptions.set(offMap, circonscriptions.get(code) ?? []);
+      continue;
+    }
+    departements.set(code, result);
+    sieges.set(code, d.sieges);
+    const total = regions.get(region!);
+    regions.set(
+      region!,
+      total
+        ? {
+            inscrits: total.inscrits + result.inscrits,
+            votants: total.votants + result.votants,
+            blancs: total.blancs + result.blancs,
+            nuls: 0,
+            exprimes: total.exprimes + result.exprimes,
+            voix: total.voix.map((v, i) => v + result.voix[i]!),
+          }
+        : { ...result, voix: [...result.voix] },
+    );
+  }
+  return {
+    source,
+    nature: source.scrutin === 'reelles-2024' ? 'reel' : 'simule',
+    candidats: blocs.map((b) => ({
+      key: b.id,
+      label: `${b.libelle}${b.id === camp ? ' (votre camp)' : ''}`,
+      player: false,
+    })),
+    regions,
+    departements,
+    horsCarte,
+    legislatives: { sieges, circonscriptions },
+  };
 }
 
 /** Résultats des communes d'un département pour la source choisie (simulés ou réels). */

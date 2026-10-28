@@ -2,7 +2,13 @@ import { randomBytes } from 'node:crypto';
 import { createGame, GameCreationError } from '@r2027/engine';
 import { CURRENT_RULESET_KEY, getRuleset } from '@r2027/rulesets';
 import { snapshotState } from '@r2027/save-engine';
-import type { CreateGameRequestSchema, GameDetail, GameState, GameSummary } from '@r2027/shared';
+import {
+  candidateForJournal,
+  type CreateGameRequestSchema,
+  type GameDetail,
+  type GameState,
+  type GameSummary,
+} from '@r2027/shared';
 import type { z } from 'zod';
 import type { Database } from '../db';
 import { HttpError } from '../errors';
@@ -79,7 +85,9 @@ export async function createNewGame(
           adversaires: state.player.adversaires,
           scenario: state.scenario,
           startDate: state.meta.date,
-          candidat: state.player.actorId ? state.actors[state.player.actorId]!.candidate : null,
+          candidat: state.player.actorId
+            ? candidateForJournal(state.actors[state.player.actorId]!.candidate)
+            : null,
         },
       },
     });

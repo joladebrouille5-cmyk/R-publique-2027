@@ -3,6 +3,8 @@ import { useCurrentRuleset } from '../../api/hooks';
 import { ErrorMessage } from '../../components/ErrorMessage';
 import { input, label } from '../../components/ui';
 import { describePosition, formatDelta, RESOURCE_LABELS } from '../../labels';
+import { familyOf } from '../../portraits';
+import { PhotoPicker } from './PhotoPicker';
 
 export type CandidateDraft = {
   prenom: string;
@@ -12,6 +14,8 @@ export type CandidateDraft = {
   societe: number;
   parcours: string;
   profilId: string | null;
+  /** Photo importée, réduite sur l'appareil (URL de données), ou null (portrait illustré). */
+  photo: string | null;
 };
 
 export const EMPTY_CANDIDATE: CandidateDraft = {
@@ -22,6 +26,7 @@ export const EMPTY_CANDIDATE: CandidateDraft = {
   societe: 0,
   parcours: '',
   profilId: null,
+  photo: null,
 };
 
 type Props = { value: CandidateDraft; onChange: (next: CandidateDraft) => void };
@@ -100,6 +105,13 @@ export function CandidateForm({ value, onChange }: Props) {
         {text('nom', 'Nom', 60, true)}
       </div>
       {text('parti', 'Parti ou mouvement', 80, true)}
+      <PhotoPicker
+        prenom={value.prenom}
+        nom={value.nom}
+        famille={familyOf({ economie: value.economie, societe: value.societe }, ruleset.data)}
+        value={value.photo}
+        onChange={(photo) => set('photo', photo)}
+      />
 
       <div className="grid gap-4 sm:grid-cols-2">
         {slider('economie', 'Positionnement économique', 'gauche', 'droite')}

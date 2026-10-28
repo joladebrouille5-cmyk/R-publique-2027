@@ -108,20 +108,22 @@ function Content({
                 <p className="text-xs text-slate-600 dark:text-slate-400">
                   Départ : <Origin ruleset={ruleset} indicator={indicator} />
                 </p>
+                {/* Phase 13 : facteurs à plat, sans volet dans la section dépliée. */}
                 {change && (
-                  <details className="mt-1 text-xs">
-                    <summary className="cursor-pointer">
-                      Semaine {lastWeek} : {formatIndicatorDelta(change.after - change.before)} —
-                      facteurs
-                    </summary>
-                    <ul className="mt-1 list-inside list-disc">
-                      {change.factors.map((f, i) => (
-                        <li key={i}>
-                          {f.label} : {formatIndicatorDelta(f.value)}
-                        </li>
-                      ))}
-                    </ul>
-                  </details>
+                  <div className="mt-1 text-xs">
+                    <p className="font-medium">
+                      Semaine {lastWeek} : {formatIndicatorDelta(change.after - change.before)}
+                    </p>
+                    {change.factors.length > 0 && (
+                      <ul className="list-inside list-disc text-slate-600 dark:text-slate-400">
+                        {change.factors.map((f, i) => (
+                          <li key={i}>
+                            {f.label} : {formatIndicatorDelta(f.value)}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 )}
               </li>
             );

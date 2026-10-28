@@ -1,5 +1,7 @@
 import {
   addDays,
+  blocPositions,
+  closestBloc,
   daysFromCivil,
   departementOfDistrict,
   formatIsoDate,
@@ -12,7 +14,6 @@ import {
   type LegislativeOutcome,
   type LegislativesState,
   type Parliament,
-  type Position,
   type ReportEvent,
   type Ruleset,
   type WeeklyReport,
@@ -54,29 +55,12 @@ export function blocOfGroup(ruleset: Ruleset): Map<string, string> {
   );
 }
 
-/** Position d'un bloc : moyenne de celles de ses groupes, pondérée par leurs sièges importés. */
-export function blocPositions(ruleset: Ruleset): Map<string, Position> {
-  const positions = new Map<string, Position>();
-  for (const bloc of ruleset.legislatives.blocs) {
-    const groups = ruleset.assemblee.groupes.filter((g) => bloc.groupes.includes(g.id));
-    const seats = groups.reduce((sum, g) => sum + g.sieges, 0) || groups.length;
-    const weight = (g: (typeof groups)[number]) => (seats === groups.length ? 1 : g.sieges);
-    positions.set(bloc.id, {
-      economie: Math.round(groups.reduce((s, g) => s + weight(g) * g.position.economie, 0) / seats),
-      societe: Math.round(groups.reduce((s, g) => s + weight(g) * g.position.societe, 0) / seats),
-    });
-  }
-  return positions;
-}
+// Positions des blocs et camp d'un candidat : règles partagées avec l'interface.
+export { blocPositions };
 
 /** Bloc le plus proche du président (son camp). */
 export function presidentBloc(ruleset: Ruleset, president: Actor): string {
-  const positions = blocPositions(ruleset);
-  return [...positions.entries()].sort(
-    (a, b) =>
-      distance(president.candidate.positionnement, a[1]) -
-        distance(president.candidate.positionnement, b[1]) || compareStrings(a[0], b[0]),
-  )[0]![0];
+  return closestBloc(ruleset, president.candidate.positionnement);
 }
 
 /** Voix de 2024 au premier tour, par bloc, dans chaque circonscription. */

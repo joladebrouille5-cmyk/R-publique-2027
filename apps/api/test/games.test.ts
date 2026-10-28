@@ -42,6 +42,18 @@ const newGame = {
   candidate,
 };
 
+/** Photo valide (PNG d'un pixel) et photos refusées : contenu d'un autre type, format non
+ * accepté, image trop lourde, adresse distante. */
+const PHOTO =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+const INVALID_PHOTOS = [
+  'data:image/png;base64,/9j/4AAQSkZJRgABAQ==',
+  'data:image/gif;base64,R0lGODlhAQABAAAAACw=',
+  'data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=',
+  `data:image/png;base64,iVBORw0KGgo${'A'.repeat(140_000)}`,
+  'https://exemple.fr/photo.png',
+];
+
 async function createGame(client: Client, body: object = newGame): Promise<GameDetail> {
   const response = await client.post('/api/games', body);
   expect(response.statusCode).toBe(201);
@@ -119,6 +131,30 @@ describe('création de partie', () => {
     const events = await db.gameEvent.findMany({ where: { gameId: game.id } });
     expect(events.map((e) => e.type)).toEqual(['partie_creee']);
     expect(events[0]!.payload).toMatchObject({ candidat: { nom: 'Test', parti: 'Parti du test' } });
+  });
+
+  it('crée une partie avec la photo du candidat ; refuse une photo invalide (phase 13)', async () => {
+    const client = new Client(app);
+    const game = await createGame(client, {
+      ...newGame,
+      candidate: { ...candidate, photo: PHOTO },
+    });
+    expect(game.state.actors.joueur!.candidate.photo).toBe(PHOTO);
+    expect(game.stateHash).toBe(hashState(game.state));
+    // Le journal note la présence de la photo, sans en recopier le contenu.
+    const events = await db.gameEvent.findMany({ where: { gameId: game.id } });
+    expect(events[0]!.payload).toMatchObject({ candidat: { nom: 'Test', photo: true } });
+    expect(JSON.stringify(events[0]!.payload)).not.toContain('base64');
+    const without = await createGame(client);
+    expect(without.state.actors.joueur!.candidate.photo).toBeNull();
+    for (const photo of INVALID_PHOTOS) {
+      const response = await client.post('/api/games', {
+        ...newGame,
+        candidate: { ...candidate, photo },
+      });
+      expect(response.statusCode).toBe(400);
+      expect(response.json()).toMatchObject({ error: { code: 'requete_invalide' } });
+    }
   });
 
   it('applique le profil de départ choisi', async () => {

@@ -18,7 +18,9 @@ import {
   formatCount,
   formatDelta,
   formatEuros,
+  formatIndicatorDelta,
   formatResource,
+  INDICATOR_LABELS,
   PORTEE_LABELS,
   RESOURCE_LABELS,
 } from '../../labels';
@@ -236,6 +238,82 @@ function effectLines(action: ActionDefinition): string[] {
   ];
 }
 
+/**
+ * Règles propres aux actions du chef de l'État (phase 13) : fréquence, condition, effets sur
+ * l'économie et le Parlement, ministre qui en module l'effet, mobilisation pendant la campagne
+ * des législatives, source d'une règle ou d'un usage réel.
+ */
+function PresidentialDetails({ action, ruleset }: { action: ActionDefinition; ruleset: Ruleset }) {
+  const poste =
+    action.poste === undefined
+      ? null
+      : action.poste === null
+        ? 'le Premier ministre'
+        : `le ministre « ${ruleset.quinquennat.postes.find((p) => p.id === action.poste)?.libelle ?? action.poste} »`;
+  const source = action.sourceId ? ruleset.sources[action.sourceId] : undefined;
+  const rows: [string, string][] = [];
+  if (action.delaiSemaines !== undefined)
+    rows.push(['Fréquence', `une fois toutes les ${action.delaiSemaines} semaines au plus`]);
+  if (action.condition === 'crise-recente')
+    rows.push(['Condition', 'une crise dans les quatre dernières semaines']);
+  if (action.economie?.length)
+    rows.push([
+      'Économie',
+      action.economie
+        .map((e) => `${INDICATOR_LABELS[e.indicateur].label} ${formatIndicatorDelta(e.valeur)}`)
+        .join(' ; '),
+    ]);
+  if (action.parlement) {
+    const parts = [
+      action.parlement.apaisement > 0
+        ? `apaisement de ${action.parlement.apaisement} point(s) de tension, qui décroît ensuite`
+        : null,
+      action.parlement.fronde > 0
+        ? `fronde de la majorité réduite de ${Math.round(action.parlement.fronde * 100)} %`
+        : null,
+    ].filter((p): p is string => p !== null);
+    if (parts.length > 0) rows.push(['Parlement', parts.join(' ; ')]);
+  }
+  if (poste) rows.push(['Ministre', `l’effet est modulé par la compétence de ${poste}`]);
+  if (action.cible === 'departement')
+    rows.push([
+      'Législatives',
+      'pendant la campagne, mobilise votre camp dans le département visité (hypothèse de jeu)',
+    ]);
+  if (rows.length === 0 && !source) return null;
+  return (
+    <div className="space-y-2">
+      {rows.length > 0 && (
+        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2.5">
+          {rows.map(([term, text]) => (
+            <div key={term} className="contents">
+              <dt className="text-slate-500 dark:text-slate-400">{term}</dt>
+              <dd>{text}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+      {source && (
+        <p className="text-xs">
+          Source :{' '}
+          {source.url ? (
+            <a
+              href={source.url}
+              target="_blank"
+              rel="noreferrer"
+              className="font-medium text-republique-700 underline dark:text-republique-300"
+            >
+              {source.titre.split(' (')[0]}
+            </a>
+          ) : (
+            source.titre.split(' (')[0]
+          )}
+        </p>
+      )}
+    </div>
+  );
+}
+
 /** Fiche d'une action (tiroir de détail) : portée, coût, effets, risque, note. */
 function ActionDetails({
   action,
@@ -283,6 +361,7 @@ function ActionDetails({
               : `${Math.round(action.risque.probabilite * 100)} % : ${action.risque.libelle} (${action.risque.effets.map(describeEffect).join(' ; ')})`}
         </dd>
       </dl>
+      {presidency && <PresidentialDetails action={action} ruleset={ruleset} />}
       {action.note && <p className="text-xs text-slate-500 dark:text-slate-400">{action.note}</p>}
       <p className="text-xs text-slate-500 dark:text-slate-400">
         {plateau

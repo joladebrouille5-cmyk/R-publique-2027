@@ -1,6 +1,8 @@
 import {
   candidateName,
   competenceShift,
+  filledSeats,
+  membersMajority,
   postOfDomain,
   themeSupport,
   type Actor,
@@ -106,14 +108,8 @@ export function openParliament(
   };
 }
 
-export function filledSeats(parliament: Seats): number {
-  return Object.values(parliament.groupes).reduce((sum, g) => sum + g.sieges, 0);
-}
-
-/** Majorité des membres composant l'Assemblée (sièges pourvus) : 289 quand les 577 le sont. */
-export function membersMajority(parliament: Seats): number {
-  return Math.floor(filledSeats(parliament) / 2) + 1;
-}
+// Sièges pourvus et majorité des membres : formules partagées avec l'interface.
+export { filledSeats, membersMajority };
 
 /** Session ordinaire (année de son ouverture) d'une date du jeu. */
 export function sessionOf(ruleset: Ruleset, iso: string): number {

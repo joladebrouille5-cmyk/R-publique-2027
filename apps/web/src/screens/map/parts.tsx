@@ -319,8 +319,13 @@ export function TerritorySheet({
                 `${formatCount(info.result.votants)} (${formatRatio(info.result.votants, info.result.inscrits)})`,
               ],
               ['Exprimés', formatCount(info.result.exprimes)],
-              ['Blancs', formatCount(info.result.blancs)],
-              ['Nuls', formatCount(info.result.nuls)],
+              // Législatives : blancs et nuls ne sont pas distingués par circonscription.
+              ...(data.legislatives
+                ? [['Blancs et nuls', formatCount(info.result.blancs + info.result.nuls)]]
+                : [
+                    ['Blancs', formatCount(info.result.blancs)],
+                    ['Nuls', formatCount(info.result.nuls)],
+                  ]),
             ].map(([term, value]) => (
               <div
                 key={term}
@@ -332,6 +337,7 @@ export function TerritorySheet({
             ))}
           </dl>
           <ResultTable result={info.result} candidats={data.candidats} />
+          {data.legislatives && <LegislativeDetail info={info} data={data} />}
         </>
       ) : (
         data && (
@@ -347,6 +353,64 @@ export function TerritorySheet({
   );
 }
 
+/** Législatives (phase 13) : sièges par bloc et circonscriptions du département, sans nom. */
+function LegislativeDetail({ info, data }: { info: SheetInfo; data: SourceData }) {
+  const labels = new Map(data.candidats.map((c) => [c.key, c.label]));
+  const seats = data.legislatives!.sieges.get(info.code);
+  const districts = data.legislatives!.circonscriptions.get(info.code) ?? [];
+  if (info.level !== 'departement') return null;
+  const elected = Object.entries(seats ?? {}).filter(([, n]) => n > 0);
+  return (
+    <div className="space-y-3 text-sm">
+      <div className="space-y-1">
+        <h3 className="font-semibold">Sièges</h3>
+        {elected.length > 0 ? (
+          <ul className="flex flex-wrap gap-1.5">
+            {elected
+              .sort((a, b) => b[1] - a[1])
+              .map(([bloc, n]) => (
+                <li
+                  key={bloc}
+                  className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs dark:bg-slate-800"
+                >
+                  {labels.get(bloc) ?? bloc} : <strong className="tabular-nums">{n}</strong>
+                </li>
+              ))}
+          </ul>
+        ) : (
+          <p className="text-slate-600 dark:text-slate-400">Aucun élu à ce tour.</p>
+        )}
+      </div>
+      {districts.length > 0 && (
+        <div className="space-y-1">
+          <h3 className="font-semibold">Circonscriptions ({districts.length})</h3>
+          <ul className="divide-y divide-slate-100 text-xs dark:divide-slate-800">
+            {districts.map((d) => (
+              <li key={d.code} className="py-1">
+                <span className="font-medium">{d.libelle}</span>
+                <span className="block text-slate-600 dark:text-slate-400">
+                  {d.tete
+                    ? `En tête : ${labels.get(d.tete.bloc) ?? d.tete.bloc} (${Math.round(d.tete.part * 100)} %)`
+                    : 'Pas de vote à ce tour'}
+                  {d.elu
+                    ? ` · élu : ${labels.get(d.elu.bloc) ?? d.elu.bloc} (${d.elu.tour === 1 ? 'premier tour' : 'second tour'})`
+                    : ''}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      <p className="text-xs text-slate-500 dark:text-slate-400">
+        Résultats par bloc, sans aucun nom de candidat ;{' '}
+        {data.nature === 'reel'
+          ? 'nuances officielles de 2024 regroupées par bloc (hypothèse de jeu).'
+          : 'scrutin simulé par le jeu, jamais une prévision.'}
+      </p>
+    </div>
+  );
+}
+
 /** Territoires qui votent mais ne figurent pas sur la carte (§3.1, Q4). */
 export function OffMapList({ manifest, data }: { manifest: GeoManifest; data: SourceData | null }) {
   return (
@@ -357,6 +421,8 @@ export function OffMapList({ manifest, data }: { manifest: GeoManifest; data: So
       <p className="text-xs text-slate-600 dark:text-slate-400">
         Ces électeurs votent à la présidentielle et comptent dans le total national, mais leurs
         territoires ne sont pas cartographiés.
+        {data?.legislatives &&
+          ' Législatives : les Français de l’étranger élisent onze députés ; Saint-Barthélemy et Saint-Martin forment une seule circonscription, comptée ici avec Saint-Martin.'}
       </p>
       <ul className="divide-y divide-slate-100 text-sm dark:divide-slate-800">
         {manifest.horsCarte.map((area) => {
