@@ -904,6 +904,18 @@ Aucune modification du moteur, des règles ni du format de sauvegarde : la refon
 - **P16-05 faite** — sondages et résultats aux couleurs de la famille politique de chaque candidat (`colorOf`, convention du jeu ; nom écrit à côté, liseré clair pour les teintes sombres sur fond de nuit), portraits dans le tableau du dernier sondage ; options de décision et pop-ups dorés ; titres en Didone dans Pouvoir, la vue du mandat et le bilan ; habillage télévisé de la soirée électorale et des débats conservé en Archivo condensé.
 - **P16-06 faite** — e2e `refonte.spec.ts` (écran-titre, mouvement réduit, création, QG et débriefing en thème clair, cibles de 44 px, largeurs de 360 et 390 px), documentation (ce plan, ARCHITECTURE §8, README, apps/mobile/README), application **1.8.0** (`versionCode` 9).
 
+**Bilan (29/10/2026)** — les six tâches sont réalisées ; moteur, jeu de règles (16.0.0) et format de sauvegarde (19) inchangés ; application 1.8.0.
+
+| Vérification | Résultat |
+|---|---|
+| `pnpm check` (lint, format, types, tests unitaires) | 72 fichiers, 709 tests réussis |
+| `pnpm test:integration` | réussi |
+| `pnpm test:e2e` (bureau et mobile, axe-core) | 73 tests réussis, dont `refonte.spec.ts` (thèmes Soirée et Clair, mouvement réduit, cibles de 44 px, 360 et 390 px) |
+| `pnpm test:mobile` (paquet de l'APK, réseau coupé) | réussi |
+| APK 1.8.0 de débogage | construit localement (JDK 21, SDK Android 36) : `versionCode` 9, aucune permission réseau, polices embarquées, 7,1 Mo |
+
+Correctifs apportés pendant la vérification : la page du calendrier du débriefing bascule sans fondu (contraste entier pendant l'animation) ; le tableau d'évolution des sondages, défilant sur téléphone, se prend au clavier ; deux tests de bout en bout attendent la fin des fondus ou de la transition de vue avant de mesurer.
+
 **Limites** — les familles d'actions sont un regroupement d'affichage (le jeu de règles n'en porte pas) ; la couleur d'un candidat est celle de sa famille politique, partagée par deux candidats proches (le nom reste écrit) ; le décompte animé du débriefing interpole l'affichage jusqu'à la valeur servie, qu'il ne modifie pas ; la boussole est un raccourci de pointeur (les curseurs restent le contrôle au clavier) ; le formulaire de création reste long sur téléphone (les effets chiffrés des scénarios et orientations sont tous affichés, par transparence) ; les captures pleine page de longueur supérieure à 16 384 px sont tronquées par le navigateur (revue faite par morceaux).
 
 ---
