@@ -6,7 +6,9 @@ import {
   type Ruleset,
   type UtilityFactor,
 } from '@r2027/shared';
+import { orientationFactors } from '../campaign/orientation';
 import { credibility, programmeAppeal } from '../campaign/programme';
+import { supportFactors } from '../campaign/soutiens';
 import { compareStrings } from '../core/ledger';
 import { stream } from '../core/random';
 import { largestRemainder } from './apportion';
@@ -68,7 +70,8 @@ export function contendersFromState(state: GameState, round: Round): Contender[]
 
 /**
  * Facteurs de campagne (phase 5, §5.1) : attrait du programme pour le groupe, crédibilité du
- * programme, indice médiatique de la semaine passée et soutien des candidats ralliés.
+ * programme, indice médiatique de la semaine passée et soutien des candidats ralliés ; phase 15 :
+ * base électorale de départ du joueur (orientation) et soutiens des personnalités (simulés).
  */
 function campaignFactors(
   state: GameState,
@@ -96,6 +99,8 @@ function campaignFactors(
     },
     { label: 'Médias', value: model.medias * (state.medias?.indice[contender.id] ?? 0) },
     ...digitalFactors(ruleset, group, actor.resources),
+    ...orientationFactors(state, ruleset, group, contender.id),
+    ...supportFactors(state, ruleset, group, contender.id),
   ];
   for (const alliance of state.alliances) {
     if (alliance.vers !== contender.id) continue;

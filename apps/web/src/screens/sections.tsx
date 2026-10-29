@@ -4,6 +4,7 @@ import { spendingCapOf } from '../campaign';
 import { formatEuros, formatGameDate, formatIndicator } from '../labels';
 import { Bilan } from './Bilan';
 import { Candidates } from './Candidates';
+import { Conseil } from './Conseil';
 import { Crises } from './Crises';
 import { Economy } from './Economy';
 import { Finances } from './Finances';
@@ -28,6 +29,7 @@ export const SECTION_SCREENS: Record<string, ComponentType> = {
   sondages: Polls,
   resultats: Results,
   gouvernement: Government,
+  conseil: Conseil,
   parlement: Parliament,
   economie: Economy,
   crises: Crises,
@@ -87,6 +89,16 @@ export function sectionStatus(
       return q.gouvernement && ruleset
         ? `Premier ministre : ${memberInfo(state, ruleset, q.gouvernement.premierMinistre).name}`
         : 'Matignon vacant';
+    case 'conseil': {
+      const government = q?.gouvernement;
+      if (!government) return 'Se réunit pendant le quinquennat, une fois le gouvernement nommé';
+      const tracks = [government.premierMinistre, ...government.ministres]
+        .map((m) => q.suivi[m.ref])
+        .filter((t) => t !== undefined);
+      if (tracks.length === 0) return 'Premier Conseil des ministres à la fin de la semaine';
+      const loyalty = Math.round(tracks.reduce((sum, t) => sum + t.loyaute, 0) / tracks.length);
+      return `${plural(tracks.length, 'membre suivi', 'membres suivis')}, loyauté moyenne ${loyalty}/100`;
+    }
     case 'parlement':
       return state.parlement
         ? `${plural(state.parlement.textes.filter((b) => !b.issue).length, 'texte en cours', 'textes en cours')}, ${plural(state.parlement.reformes.filter((r) => r.appliquee).length, 'réforme en vigueur', 'réformes en vigueur')}`

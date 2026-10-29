@@ -20,6 +20,7 @@ import {
 } from '@r2027/shared';
 import { initialRelations } from '../ai/relations';
 import { openingAccount } from '../campaign/finances';
+import { orientationById } from '../campaign/orientation';
 import { emptyParrainages, initialPromises } from '../campaign/parrainages';
 import { FIRST_CYCLE } from '../presidency/dates';
 import { compareStrings } from './ledger';
@@ -40,6 +41,8 @@ export type CreateGameInput = {
   adversaires?: OpponentSet | undefined;
   /** Scénario de départ (phase 7) ; « standard » par défaut. */
   scenarioId?: string | undefined;
+  /** Orientation stratégique du mouvement du joueur (phase 15), facultative. */
+  orientationId?: string | undefined;
 };
 
 export class GameCreationError extends Error {
@@ -50,7 +53,9 @@ export class GameCreationError extends Error {
       | 'profil_inconnu'
       | 'personnalite_requise'
       | 'personnalite_inconnue'
-      | 'scenario_inconnu',
+      | 'scenario_inconnu'
+      | 'orientation_inconnue'
+      | 'orientation_sans_candidat',
     message: string,
   ) {
     super(message);
@@ -260,19 +265,31 @@ export function createRealActor(
   };
 }
 
-/** Promesses de parrainage de départ d'un candidat (jeu de règles, difficulté pour le joueur). */
+/**
+ * Promesses de parrainage de départ d'un candidat (jeu de règles, difficulté pour le joueur) ;
+ * pour le joueur, à la première présidentielle de la partie, plus celles de l'orientation de son
+ * mouvement (phase 15), jamais moins de zéro.
+ */
 function initialPromiseCount(state: GameState, ruleset: Ruleset, actor: Actor): number {
   const personalityId = actor.candidate.personnaliteId;
+  let count: number;
   if (personalityId) {
     const personality = findPersonality(ruleset, personalityId);
     const base = ruleset.personnalitesReelles.organisation[personality.moyens.organisation];
     const scale =
       actor.kind === 'joueur' ? playerScale(ruleset, state.meta.difficulty).promesses : 1;
-    return Math.round(base.promessesInitiales * scale);
+    count = Math.round(base.promessesInitiales * scale);
+  } else {
+    count =
+      actor.kind === 'joueur'
+        ? ruleset.jeu.promessesInitialesJoueur[state.meta.difficulty]
+        : (ruleset.candidatsFictifs.find((c) => c.id === actor.id)?.promessesInitiales ?? 0);
   }
-  return actor.kind === 'joueur'
-    ? ruleset.jeu.promessesInitialesJoueur[state.meta.difficulty]
-    : (ruleset.candidatsFictifs.find((c) => c.id === actor.id)?.promessesInitiales ?? 0);
+  const orientation =
+    actor.kind === 'joueur' && state.player.orientation && state.cycle.annee === FIRST_CYCLE.annee
+      ? orientationById(ruleset, state.player.orientation)
+      : undefined;
+  return Math.max(0, count + (orientation?.promesses ?? 0));
 }
 
 /**
@@ -325,6 +342,22 @@ export function createGame(input: CreateGameInput, ruleset: Ruleset): GameState 
       'Choisissez la personnalité que vous incarnez dans ce mode.',
     );
   }
+  // Orientation stratégique (phase 15) : seulement pour un candidat du joueur.
+  const orientation = input.orientationId
+    ? orientationById(ruleset, input.orientationId)
+    : undefined;
+  if (input.orientationId && !orientation) {
+    throw new GameCreationError(
+      'orientation_inconnue',
+      `Orientation stratégique inconnue : ${input.orientationId}`,
+    );
+  }
+  if (orientation && input.mode === 'observateur') {
+    throw new GameCreationError(
+      'orientation_sans_candidat',
+      'Le mode observateur n’a pas de mouvement à orienter : choisissez un candidat.',
+    );
+  }
   const scenarioId = input.scenarioId ?? 'standard';
   const scenario = ruleset.scenarios.find((s) => s.id === scenarioId);
   if (!scenario) {
@@ -366,6 +399,22 @@ export function createGame(input: CreateGameInput, ruleset: Ruleset): GameState 
   } else if (personality) {
     actors[PLAYER_ACTOR_ID] = createRealActor(personality, input.difficulty, ruleset, true);
   }
+  // Orientation du mouvement (phase 15) : écarts sur les moyens de départ du joueur (hypothèses).
+  const player = actors[PLAYER_ACTOR_ID];
+  if (orientation && player) {
+    const m = orientation.modificateurs;
+    player.resources = bounded(ruleset, {
+      ...player.resources,
+      budgetCentimes: player.resources.budgetCentimes + (m.budgetCentimes ?? 0),
+      militants: player.resources.militants + (m.militants ?? 0),
+      notoriete: player.resources.notoriete + (m.notoriete ?? 0),
+      popularite: player.resources.popularite + (m.popularite ?? 0),
+      jeunesse: player.resources.jeunesse + (m.jeunesse ?? 0),
+      dynamique: player.resources.dynamique + (m.dynamique ?? 0),
+    });
+    player.history = { popularite: [player.resources.popularite] };
+    player.finances = openingAccount(player.resources.budgetCentimes, ruleset);
+  }
   // Scénario de départ : écarts sur les moyens du joueur et de ses adversaires (hypothèses).
   for (const actor of Object.values(actors)) {
     const modifiers =
@@ -397,6 +446,7 @@ export function createGame(input: CreateGameInput, ruleset: Ruleset): GameState 
       mode: input.mode,
       actorId: input.mode === 'observateur' ? null : PLAYER_ACTOR_ID,
       adversaires,
+      orientation: orientation?.id ?? null,
     },
     actors,
     scheduled: [],
@@ -421,6 +471,8 @@ export function createGame(input: CreateGameInput, ruleset: Ruleset): GameState 
     consequences: [],
     numerique: { publications: [], passages: {} },
     debats: { seances: [] },
+    negociations: [],
+    succes: [],
   };
   distributeInitialPromises(state, ruleset);
   return state;

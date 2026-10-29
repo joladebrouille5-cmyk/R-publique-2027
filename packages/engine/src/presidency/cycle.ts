@@ -12,6 +12,7 @@ import { distributeInitialPromises, initialMeans } from '../core/createGame';
 import { compareStrings, type Ledger } from '../core/ledger';
 import { nextCycle, shiftToCycle } from './dates';
 import { endGovernment, snapshot } from './government';
+import { gradeMandate } from './objectifs';
 
 // Fin du quinquennat et poursuite de la partie (phase 6, P6-08). Le lundi où commence la
 // campagne du cycle suivant (date de départ de la partie décalée du cycle), le quinquennat est
@@ -24,8 +25,11 @@ import { endGovernment, snapshot } from './government';
 
 const IN_PROGRESS = new Set(['commission', 'seance', 'navette', 'lecture_definitive']);
 
-/** Bilan du quinquennat en cours, arrêté à la date de la partie. */
-export function reviewQuinquennat(state: GameState): QuinquennatReview {
+/**
+ * Bilan du quinquennat en cours, arrêté à la date de la partie ; phase 15 : note finale du
+ * mandat d'après ses objectifs (null sans objectifs fixés).
+ */
+export function reviewQuinquennat(state: GameState, ruleset: Ruleset): QuinquennatReview {
   const quinquennat = state.quinquennat!;
   const parliament = state.parlement;
   const start = quinquennat.depart.semaine;
@@ -59,6 +63,7 @@ export function reviewQuinquennat(state: GameState): QuinquennatReview {
     consequences: state.consequences
       .filter((c) => c.debut > start)
       .map(({ libelle, origine, debut, fin }) => ({ libelle, origine, debut, fin })),
+    note: gradeMandate(state, ruleset),
   };
 }
 
@@ -86,7 +91,7 @@ export function openNextCampaign(
   const week = state.meta.week;
 
   // 1. Bilan, puis archives de la présidentielle et du quinquennat.
-  const bilan = reviewQuinquennat(state);
+  const bilan = reviewQuinquennat(state, ruleset);
   endGovernment(quinquennat, state.meta.date, 'fin du quinquennat');
   state.historique.quinquennats.push({
     mandat,

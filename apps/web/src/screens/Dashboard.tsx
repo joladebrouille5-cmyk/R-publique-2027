@@ -1,6 +1,8 @@
 import {
   addDays,
   candidateName,
+  delegationHours,
+  isOptionalDecision,
   MAX_FAST_FORWARD_WEEKS,
   membersMajority,
   presidentialActionBlocked,
@@ -12,6 +14,7 @@ import {
 import {
   Activity,
   Armchair,
+  Award,
   CalendarClock,
   CalendarDays,
   ChartColumn,
@@ -34,7 +37,8 @@ import { useRef, useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { ApiRequestError, newIdempotencyKey } from '../api/client';
 import { nominationsClosed, presentationSummary, spendingCapOf } from '../campaign';
-import { useAdvance, useJournal, useRuleset } from '../api/hooks';
+import { useAdvance, useJournal, useRuleset, useSupports } from '../api/hooks';
+import { Achievements } from '../components/Achievements';
 import { Disclosure, Embedded } from '../components/Disclosure';
 import { Drawer } from '../components/Drawer';
 import { tensionLevel } from '../components/ParliamentGauges';
@@ -66,7 +70,10 @@ import { memberInfo } from './Government';
 import { ActionPlanner, remainingAfter } from './dashboard/ActionPlanner';
 import { CampaignPanel } from './dashboard/CampaignPanel';
 import { CalendarPanel } from './dashboard/CalendarPanel';
+import { DecisionSpotlight } from './dashboard/DecisionSpotlight';
 import { DecisionsPanel } from './dashboard/DecisionsPanel';
+import { ParrainagesRace } from './dashboard/ParrainagesRace';
+import { SupportsCard } from './dashboard/SupportsCard';
 import { DebatesPanel } from './dashboard/DebatesPanel';
 import { Overview, type OverviewTile } from './dashboard/Overview';
 import { ResourcesPanel } from './dashboard/ResourcesPanel';
@@ -134,6 +141,7 @@ const PANEL_TITLES: Partial<Record<Panel, string>> = {
 /** Sections repliées en bas du QG (le bilan de la semaine, puis les écrans du QG). */
 const QG_SECTIONS = [
   'bilan-semaine',
+  'succes',
   'ressources',
   'campagne-detail',
   'calendrier',
@@ -158,6 +166,9 @@ export function Dashboard() {
   const { open, toggle, show } = useOpenSections(QG_SECTIONS);
   // Une clé par tentative ; conservée si le réseau coupe, pour qu'un renvoi ne rejoue rien.
   const attemptKey = useRef<string | null>(null);
+  // Pop-up d'intervention (phase 15) : décision ouverte, et celles que le joueur a refermées.
+  const [spotlightId, setSpotlightId] = useState<string | null>(null);
+  const [dismissed, setDismissed] = useState<ReadonlySet<string>>(new Set());
 
   const { state } = game;
   const actor = state.player.actorId ? state.actors[state.player.actorId] : undefined;
@@ -183,9 +194,34 @@ export function Dashboard() {
           .sort((a, b) => b.value - a.value)
           .findIndex((r) => r.actorId === actor?.id) + 1
       : null;
+  // Une décision facultative (questions au gouvernement) ne bloque pas la semaine.
   const unanswered = observer
     ? []
-    : state.pendingDecisions.filter((decision) => !answers[decision.id]);
+    : state.pendingDecisions.filter(
+        (decision) => !answers[decision.id] && !isOptionalDecision(decision),
+      );
+  // Vivier des négociations de soutien (phase 15), calculé par le serveur pour la semaine.
+  const supports = useSupports(
+    game.id,
+    game.week,
+    campaigning && state.meta.phase !== 'presidence' && !blocked,
+  );
+  // Pop-up : la décision ouverte par le joueur, sinon la première urgence ou séance de questions
+  // au gouvernement sans réponse ni refermée (après le débriefing de la semaine).
+  const spotlight = observer
+    ? undefined
+    : spotlightId
+      ? state.pendingDecisions.find((d) => d.id === spotlightId)
+      : debrief
+        ? undefined
+        : state.pendingDecisions.find(
+            (d) =>
+              (d.kind === 'urgence' || d.kind === 'qag') && !answers[d.id] && !dismissed.has(d.id),
+          );
+  const closeSpotlight = () => {
+    if (spotlight) setDismissed((current) => new Set([...current, spotlight.id]));
+    setSpotlightId(null);
+  };
   const lastReport =
     advance.data?.report ??
     journal.data?.pages[0]?.entries.find((entry) => entry.report)?.report ??
@@ -198,8 +234,14 @@ export function Dashboard() {
       change(...args);
     };
   };
+  // Heures réservées avant les actions : propositions annoncées et délégations d'élus reçues
+  // (phase 15, même règle que le moteur).
   const reservedHours = ruleset.data
-    ? plan.ajouter.length * ruleset.data.programme.heuresParProposition
+    ? plan.ajouter.length * ruleset.data.programme.heuresParProposition +
+      delegationHours(
+        ruleset.data,
+        state.pendingDecisions.map((d) => ({ kind: d.kind, optionId: answers[d.id] })),
+      )
     : 0;
   const missingTargets = ruleset.data
     ? plan.actions.filter(
@@ -543,6 +585,7 @@ export function Dashboard() {
           state={state}
           gameId={game.id}
           eventFamily={(id) => data?.evenements.find((e) => e.id === id)?.famille ?? null}
+          achievement={(id) => data?.succes.liste.find((a) => a.id === id) ?? null}
           onClose={() => setDebrief(null)}
         />
       )}
@@ -609,6 +652,18 @@ export function Dashboard() {
         />
       )}
 
+      {spotlight && (
+        <DecisionSpotlight
+          key={spotlight.id}
+          decision={spotlight}
+          state={state}
+          ruleset={data}
+          answer={answers[spotlight.id]}
+          onAnswer={answer}
+          onClose={closeSpotlight}
+        />
+      )}
+
       {!observer && state.pendingDecisions.length > 0 && (
         <DecisionsPanel
           decisions={state.pendingDecisions}
@@ -616,6 +671,34 @@ export function Dashboard() {
           onAnswer={answer}
           state={state}
           ruleset={data}
+          onSpotlight={setSpotlightId}
+        />
+      )}
+
+      {data &&
+        actor &&
+        campaigning &&
+        !quinquennat &&
+        !blocked &&
+        state.campagne.parrainages === 'modelise' &&
+        !nominationsClosed(data, state.meta.date) && (
+          <ParrainagesRace state={state} actor={actor} ruleset={data} />
+        )}
+
+      {data && actor && campaigning && !quinquennat && !blocked && (
+        <SupportsCard
+          state={state}
+          actor={actor}
+          ruleset={data}
+          onNegotiate={
+            data.actions.some((a) => a.id === 'negocier-soutien') &&
+            plan.actions.length < data.jeu.actionsMaxParSemaine
+              ? () => {
+                  changePlan(plan.addAction)('negocier-soutien');
+                  requestAnimationFrame(() => reveal('titre-plan'));
+                }
+              : undefined
+          }
         />
       )}
 
@@ -680,6 +763,7 @@ export function Dashboard() {
             onRemove={changePlan(plan.removeAction)}
             onTarget={changePlan(plan.setTarget)}
             onPosture={changePlan(plan.setPosture)}
+            supports={{ prospects: supports.data, error: supports.isError }}
           />
           <section aria-labelledby="titre-engagements" className={`${card} space-y-2 text-sm`}>
             <h2 id="titre-engagements" className="text-lg font-bold">
@@ -732,7 +816,9 @@ export function Dashboard() {
           restriction={(action) =>
             !mandateStarted
               ? `Le mandat commence le ${formatGameDate(quinquennat.mandat.debut)}.`
-              : action.institution === 'remaniement' && !quinquennat.gouvernement
+              : (action.institution === 'remaniement' ||
+                    action.institution === 'remaniement-cible') &&
+                  !quinquennat.gouvernement
                 ? 'Aucun gouvernement en place à remanier.'
                 : action.institution === 'dissolution'
                   ? dissolutionRestriction(state, data)
@@ -747,6 +833,11 @@ export function Dashboard() {
           onAdd={changePlan(plan.addAction)}
           onRemove={changePlan(plan.removeAction)}
           onTarget={changePlan(plan.setTarget)}
+          ministries={(quinquennat.gouvernement?.ministres ?? []).map((m) => ({
+            posteId: m.posteId,
+            libelle: data.quinquennat.postes.find((p) => p.id === m.posteId)?.libelle ?? m.posteId,
+            ministre: memberInfo(state, data, m).name,
+          }))}
         />
       )}
 
@@ -830,7 +921,8 @@ export function Dashboard() {
           )}
           {missingTargets > 0 && (
             <p className="text-xs leading-snug font-semibold text-amber-800 sm:text-sm dark:text-amber-300">
-              Choisissez la cible (département ou média) de chaque action qui en demande une.
+              Choisissez la cible (département, média, personnalité ou ministère) de chaque action
+              qui en demande une.
             </p>
           )}
           {advance.isError && <ErrorMessage error={advance.error} />}
@@ -877,6 +969,19 @@ export function Dashboard() {
             </p>
           )}
         </Disclosure>
+
+        {data && actor && (
+          <Disclosure
+            id="succes"
+            title="Succès"
+            status={`${state.succes.length} débloqué(s) sur ${data.succes.liste.length}`}
+            open={open.has('succes')}
+            onToggle={() => toggle('succes')}
+            icon={<Award className="size-5" strokeWidth={2} />}
+          >
+            <Achievements state={state} ruleset={data} />
+          </Disclosure>
+        )}
 
         {data && actor && (
           <Disclosure

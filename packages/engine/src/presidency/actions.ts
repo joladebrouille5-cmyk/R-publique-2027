@@ -30,7 +30,8 @@ export { presidentialActionBlocked, recentCrisis };
 /**
  * Validation des actions du président, dans l'ordre soumis : rejet motivé avant l'investiture,
  * pour une cible manquante ou inconnue, faute de temps, ou pour un remaniement sans
- * gouvernement en place (un seul par semaine).
+ * gouvernement en place (un seul par semaine). Phase 15 : un remaniement ciblé vise un
+ * ministère pourvu, jamais la semaine d'un remaniement général.
  */
 export function validatePresidencyActions(
   state: GameState,
@@ -63,6 +64,27 @@ export function validatePresidencyActions(
       !(action.cible! in ruleset.parrainages.reservoir.departements)
     )
       reason = `Cible inconnue : ${action.cible}.`;
+    else if (definition.cible === 'poste' && action.cible === undefined)
+      reason = 'Choisissez le ministère concerné.';
+    else if (
+      definition.cible === 'poste' &&
+      !ruleset.quinquennat.postes.some((p) => p.id === action.cible)
+    )
+      reason = `Cible inconnue : ${action.cible}.`;
+    else if (
+      definition.institution === 'remaniement-cible' &&
+      !quinquennat.gouvernement?.ministres.some((m) => m.posteId === action.cible)
+    )
+      reason = 'Aucun ministre en place à ce poste.';
+    else if (
+      definition.institution === 'remaniement-cible' &&
+      planned.some(
+        (p) =>
+          ruleset.quinquennat.actions.find((a) => a.id === p.actionId)?.institution ===
+          'remaniement',
+      )
+    )
+      reason = 'Le remaniement général de la semaine remplace déjà tout le gouvernement.';
     else if (definition.cout.tempsHeures > time)
       reason = `Temps insuffisant : ${definition.cout.tempsHeures} h nécessaires, ${Math.max(0, time)} h restantes cette semaine.`;
     else if (definition.institution === 'remaniement' && quinquennat.gouvernement === null)
@@ -175,6 +197,9 @@ export function applyPresidentialEffects(
         for (const [id, n] of Object.entries(parliament.fronde))
           parliament.fronde[id] = Math.round(n * (1 - definition.parlement.fronde));
     }
+    // Trace des déplacements du président sur la carte (phase 15).
+    if (cible && definition.cible === 'departement')
+      quinquennat.deplacements[cible] = (quinquennat.deplacements[cible] ?? 0) + 1;
     const campagne = state.legislatives?.campagne;
     if (campagne && cible && definition.cible === 'departement') {
       const { parDeplacement, max } = ruleset.legislatives.alliances.mobilisation;
@@ -200,6 +225,8 @@ const AI_ADDRESS_PERIOD = 4;
 const AI_FRONDE = 8;
 /** Tension parlementaire à partir de laquelle il s'adresse au Congrès (phase 13). */
 const AI_TENSION = 60;
+/** Popularité prêtée d'un ministre sous laquelle le président IA le remplace (phase 15). */
+const AI_MINISTER_POPULARITY = 2_000;
 
 /**
  * Plan hebdomadaire du président IA (règle déterministe, hors cible tirée au sort) : un
@@ -228,6 +255,25 @@ export function planPresidentActions(
     governmentAgeWeeks(state) >= AI_RESHUFFLE_MIN_WEEKS
   )
     planned.push({ actionId: reshuffle.id });
+  // Remaniement ciblé (phase 15) : le ministre le moins populaire, s'il est en poste depuis
+  // assez longtemps et que sa popularité prêtée passe sous le seuil du jeu (hypothèse).
+  const targeted = actions.find((a) => a.institution === 'remaniement-cible');
+  if (targeted && !planned.length && presidentialActionBlocked(state, targeted) === null) {
+    const { semainesMin } = ruleset.quinquennat.suivi.depart;
+    const weakest = quinquennat.gouvernement.ministres
+      .map((m) => ({ m, track: quinquennat.suivi[m.ref] }))
+      .filter(
+        (x) =>
+          x.track &&
+          x.track.popularite < AI_MINISTER_POPULARITY &&
+          state.meta.week - x.track.depuis >= semainesMin,
+      )
+      .sort(
+        (a, b) =>
+          a.track!.popularite - b.track!.popularite || compareStrings(a.m.posteId, b.m.posteId),
+      )[0];
+    if (weakest) planned.push({ actionId: targeted.id, cible: weakest.m.posteId });
+  }
   const dissolve = actions.find((a) => a.institution === 'dissolution');
   const parliament = state.parlement;
   if (dissolve && parliament && dissolutionBlocked(state, ruleset) === null) {

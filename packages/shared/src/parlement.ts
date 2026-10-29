@@ -200,11 +200,11 @@ export const CoalitionSchema = z
 export type Coalition = z.infer<typeof CoalitionSchema>;
 
 /**
- * Parlement (format 17, phase 13) : textes du format 17, tension parlementaire, fronde de fond
- * des groupes qui soutiennent le président (nombres de députés, aucun nom), apaisement,
- * motions de censure spontanées et coalition de gouvernement.
+ * Parlement aux formats 17 et 18 (phase 13, figé) : textes du format 17, tension parlementaire,
+ * fronde de fond des groupes qui soutiennent le président (nombres de députés, aucun nom),
+ * apaisement, motions de censure spontanées et coalition de gouvernement.
  */
-export const ParliamentSchema = ParliamentShape.extend({
+export const ParliamentV18Schema = ParliamentShape.extend({
   textes: z.array(BillSchema),
   tension: ParliamentTensionSchema,
   /** Fronde de fond : députés de chaque groupe soutien prêts à voter contre le gouvernement. */
@@ -215,5 +215,39 @@ export const ParliamentSchema = ParliamentShape.extend({
   /** Motions spontanées de la session ordinaire en cours (art. 49 al. 2 : trois au plus). */
   motionsSession: z.object({ session: z.number().int().min(0), nombre: Count }).strict(),
   coalition: CoalitionSchema.nullable(),
+}).strict();
+export type ParliamentV18 = z.infer<typeof ParliamentV18Schema>;
+
+/**
+ * Séance de questions au gouvernement (phase 15 ; Constitution, art. 48 : une séance par semaine
+ * au moins est réservée aux questions des parlementaires et aux réponses du gouvernement) : un
+ * groupe d'opposition interpelle le gouvernement sur un thème ; la réplique est choisie par le
+ * président (joueur ou IA). Aucun député n'est nommé, aucun propos n'est rapporté. `tension` :
+ * points ajoutés à l'échauffement (positifs) ou à l'apaisement (négatifs) ; `popularite` :
+ * centièmes de point du président.
+ */
+export const QagSessionSchema = z
+  .object({
+    semaine: Week,
+    groupeId: Id,
+    themeId: Id,
+    reponseId: Id,
+    tension: z.number().int(),
+    popularite: z.number().int(),
+  })
+  .strict();
+export type QagSession = z.infer<typeof QagSessionSchema>;
+
+/** Nombre de séances de questions au gouvernement conservées dans l'état (les plus récentes). */
+export const QAG_HISTORY = 12;
+
+/**
+ * Parlement (format 19, phase 15) : en plus du format 18, l'échauffement de l'hémicycle (points
+ * de tension ajoutés par des échanges vifs, qui décroissent chaque semaine) et les dernières
+ * séances de questions au gouvernement.
+ */
+export const ParliamentSchema = ParliamentV18Schema.extend({
+  echauffement: z.number().int().min(0).max(100),
+  qag: z.array(QagSessionSchema).max(QAG_HISTORY),
 }).strict();
 export type Parliament = z.infer<typeof ParliamentSchema>;

@@ -22,6 +22,7 @@ import {
 } from './finances';
 import { gainPromises, type ParrainageBook } from './parrainages';
 import { isPlateau, scoredAlea, scorePrestation } from './prestations';
+import { negotiate, negotiationError } from './soutiens';
 
 export type ValidatedAction = {
   actorId: string;
@@ -52,6 +53,12 @@ export function targetLabel(ruleset: Ruleset, action: ActionDefinition, cible: s
     const outlet = outlets.find((o) => o.id === show.organeId);
     return outlet ? `${show.titre} (${outlet.libelle})` : show.titre;
   }
+  if (action.cible === 'personnalite') {
+    const figure = ruleset.figures.figures.find((f) => f.id === cible);
+    return figure ? `${figure.prenom} ${figure.nom}` : cible;
+  }
+  if (action.cible === 'poste')
+    return ruleset.quinquennat.postes.find((p) => p.id === cible)?.libelle ?? cible;
   return outlets.find((o) => o.id === cible)?.libelle ?? cible;
 }
 
@@ -59,6 +66,8 @@ const MISSING_TARGET = {
   departement: 'Choisissez le département de la rencontre.',
   media: 'Choisissez le média de l’interview.',
   emission: 'Choisissez l’émission politique.',
+  personnalite: 'Choisissez la personnalité à rencontrer.',
+  poste: 'Choisissez le ministère concerné.',
 } as const;
 
 function targetError(ruleset: Ruleset, definition: ActionDefinition, cible: string | undefined) {
@@ -71,7 +80,11 @@ function targetError(ruleset: Ruleset, definition: ActionDefinition, cible: stri
       ? cible in ruleset.parrainages.reservoir.departements
       : definition.cible === 'emission'
         ? ruleset.mediasReels.emissions.some((e) => e.id === cible)
-        : ruleset.mediasReels.organes.some((o) => o.id === cible);
+        : definition.cible === 'personnalite'
+          ? ruleset.figures.figures.some((f) => f.id === cible)
+          : definition.cible === 'poste'
+            ? ruleset.quinquennat.postes.some((p) => p.id === cible)
+            : ruleset.mediasReels.organes.some((o) => o.id === cible);
   return known ? null : `Cible inconnue : ${cible}.`;
 }
 
@@ -96,6 +109,8 @@ export function validateActions(
   let budget = resources.budgetCentimes;
   let time = resources.tempsHeures - reservedHours;
   let spent = actor.finances.depenses;
+  // Négociations de soutien déjà retenues dans le plan (phase 15).
+  const negotiations: string[] = [];
 
   planned.forEach((action, index) => {
     const definition = ruleset.actions.find((a) => a.id === action.actionId);
@@ -104,6 +119,9 @@ export function validateActions(
     else {
       const { cout, prerequis } = definition;
       reason = targetError(ruleset, definition, action.cible);
+      if (!reason && definition.campagne?.soutien && action.cible !== undefined) {
+        reason = negotiationError(state, ruleset, actorId, action.cible, negotiations);
+      }
       if (!reason && action.posture !== undefined && !isPlateau(ruleset, definition)) {
         reason = POSTURE_WITHOUT_PLATEAU;
       } else if (!reason && resources.militants < prerequis.militantsMin) {
@@ -135,6 +153,7 @@ export function validateActions(
     budget -= cout.budgetCentimes;
     time -= cout.tempsHeures;
     spent += cout.budgetCentimes;
+    if (definition.campagne?.soutien && cible) negotiations.push(cible);
     const plateau = isPlateau(ruleset, definition);
     validated.push({
       actorId,
@@ -232,9 +251,15 @@ export function resolveActionEffects(
   books: CampaignBooks,
   validated: readonly ValidatedAction[],
   step: number,
-): { risks: ReportEvent[]; incidents: Set<string>; prestations: Map<string, Prestation> } {
+): {
+  risks: ReportEvent[];
+  incidents: Set<string>;
+  prestations: Map<string, Prestation>;
+  supports: ReportEvent[];
+} {
   const week = state.meta.week;
   const risks: ReportEvent[] = [];
+  const supports: ReportEvent[] = [];
   const incidents = new Set<string>();
   const prestations = scorePlateaux(state, ruleset, validated);
   for (const { actorId, index, definition, cible } of validated) {
@@ -301,6 +326,11 @@ export function resolveActionEffects(
     if (campagne?.preparationDebat) {
       state.actors[actorId]!.preparationDebat += campagne.preparationDebat;
     }
+    if (campagne?.soutien && cible) {
+      supports.push(
+        negotiate(state, ruleset, ledger, actorId, cible, campagne.soutien.contrepartie, step),
+      );
+    }
     const risk = definition.risque;
     const happens = prestation ? prestation.incident : !!risk && rng.nextFloat() < risk.probabilite;
     if (risk && happens) {
@@ -334,7 +364,7 @@ export function resolveActionEffects(
     }
   }
   recordPassages(state, validated);
-  return { risks, incidents, prestations };
+  return { risks, incidents, prestations, supports };
 }
 
 /**

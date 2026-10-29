@@ -76,6 +76,14 @@ export const GAME_SCREENS: readonly GameScreen[] = [
     description: 'Président, mandat, Premier ministre, ministres et feuille de route.',
   },
   {
+    path: 'conseil',
+    label: 'Conseil des ministres',
+    phase: 15,
+    available: true,
+    description:
+      'Popularité prêtée et loyauté de chaque ministre, faits de la semaine, départs simulés et alertes.',
+  },
+  {
     path: 'parlement',
     label: 'Parlement',
     phase: 6,

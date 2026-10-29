@@ -9,11 +9,15 @@ import { WeeklyDebrief } from './WeeklyDebrief';
 
 // Débriefing de la semaine (phase 11) : un vrai bilan du moteur, rien de recalculé à l'écran.
 
-/** Seul l'événement « Salle comble » peut survenir, et il survient après un meeting. */
+/**
+ * Seul l'événement « Salle comble » peut survenir, et il survient après un meeting (aucun
+ * rendez-vous d'élus, phase 15).
+ */
 const RULES = (() => {
   const rules = JSON.parse(JSON.stringify(RULESET)) as Ruleset;
   for (const event of rules.evenements)
     event.probabiliteHebdomadaire = event.id === 'salle-comble' ? 1 : 0;
+  rules.parrainages.rendezVous.probabiliteHebdo = 0;
   return rules;
 })();
 

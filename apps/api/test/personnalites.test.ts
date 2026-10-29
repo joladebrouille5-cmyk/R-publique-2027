@@ -50,6 +50,7 @@ describe('personnalités réelles', () => {
       mode: 'candidat_reel',
       actorId: PLAYER_ACTOR_ID,
       adversaires: 'reels',
+      orientation: null,
     });
     expect(game.state.actors[PLAYER_ACTOR_ID]!.candidate).toMatchObject({
       nature: 'reel',

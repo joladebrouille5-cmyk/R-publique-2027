@@ -13,6 +13,7 @@ import { ErrorMessage } from '../components/ErrorMessage';
 import { buttonPrimary, card, input, label, screenTitle } from '../components/ui';
 import { DIFFICULTY_LABELS, MODE_LABELS, OPPONENT_SET_LABELS } from '../labels';
 import { CandidateForm, EMPTY_CANDIDATE, type CandidateDraft } from './new-game/CandidateForm';
+import { OrientationPicker } from './new-game/OrientationPicker';
 import { PersonalityPicker } from './new-game/PersonalityPicker';
 import { ScenarioPicker } from './new-game/ScenarioPicker';
 
@@ -59,6 +60,7 @@ export function NewGame() {
   const [personality, setPersonality] = useState<string | null>(null);
   const [opponents, setOpponents] = useState<OpponentSet>('fictifs');
   const [scenario, setScenario] = useState('standard');
+  const [orientation, setOrientation] = useState<string | null>(null);
   const [missing, setMissing] = useState<string | null>(null);
   const withCandidate = mode === 'candidat_personnalise';
   const withPersonality = mode === 'candidat_reel';
@@ -88,6 +90,9 @@ export function NewGame() {
         ...(withPersonality && personality ? { personnaliteId: personality } : {}),
         adversaires: opponents,
         scenarioId: scenario,
+        ...((withCandidate || withPersonality) && orientation
+          ? { orientationId: orientation }
+          : {}),
       },
       { onSuccess: (game) => void navigate(`/parties/${game.id}/tableau-de-bord`) },
     );
@@ -138,6 +143,9 @@ export function NewGame() {
 
         {withCandidate && <CandidateForm value={candidate} onChange={setCandidate} />}
         {withPersonality && <PersonalityPicker value={personality} onChange={setPersonality} />}
+        {(withCandidate || withPersonality) && (
+          <OrientationPicker value={orientation} onChange={setOrientation} />
+        )}
 
         <fieldset className="space-y-2">
           <legend className={label}>Adversaires</legend>

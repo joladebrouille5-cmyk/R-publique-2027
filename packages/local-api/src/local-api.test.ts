@@ -11,6 +11,7 @@ import {
   HealthResponseSchema,
   JournalPageSchema,
   SaveSummarySchema,
+  SupportProspectsSchema,
   type GameDetail,
 } from '@r2027/shared';
 import { describe, expect, it } from 'vitest';
@@ -120,6 +121,56 @@ describe('serveur local : parties et progression', () => {
     ).toBe('scenario_inconnu');
     expect(error(await call(api, 'GET', '/api/games/pas-un-uuid'))).toBe('requete_invalide');
     expect(error(await call(api, 'GET', `/api/games/${crypto.randomUUID()}`))).toBe('introuvable');
+  });
+
+  it('crée une partie avec une orientation stratégique (phase 15), mêmes refus que l’API', async () => {
+    const api = server();
+    const game = await newGame(api, { orientationId: 'elus-locaux' });
+    expect(game.state.player.orientation).toBe('elus-locaux');
+    const journal = JournalPageSchema.parse(
+      (await call(api, 'GET', `/api/games/${game.id}/journal`)).body,
+    );
+    expect(journal.entries.find((e) => e.type === 'partie_creee')!.details).toMatchObject({
+      orientation: 'elus-locaux',
+    });
+    expect(
+      error(
+        await call(api, 'POST', '/api/games', {
+          name: 'x',
+          mode: 'candidat_personnalise',
+          candidate,
+          orientationId: 'inconnue',
+        }),
+      ),
+    ).toBe('orientation_inconnue');
+    expect(
+      error(
+        await call(api, 'POST', '/api/games', {
+          name: 'x',
+          mode: 'observateur',
+          orientationId: 'camp',
+        }),
+      ),
+    ).toBe('requete_invalide');
+  });
+
+  it('sert le vivier des négociations calculé par le moteur, puis négocie par le plan', async () => {
+    const api = server();
+    const game = await newGame(api);
+    const response = await call(api, 'GET', `/api/games/${game.id}/soutiens`);
+    expect(response.status).toBe(200);
+    const prospects = SupportProspectsSchema.parse(response.body);
+    expect(prospects).toMatchObject({ annee: 2027, obtenus: 0, maximum: 6 });
+    const open = prospects.personnalites.find((p) => p.probabilites !== null)!;
+    const { report, game: next } = await advance(api, game, {
+      actions: [{ actionId: 'negocier-soutien', cible: open.figureId }],
+    });
+    expect(report.events.some((e) => e.refId === 'negociation-soutien')).toBe(true);
+    expect(next.state.negociations).toHaveLength(1);
+    const observer = await newGame(api, { mode: 'observateur', candidate: undefined });
+    const refused = await call(api, 'GET', `/api/games/${observer.id}/soutiens`);
+    expect(refused.status).toBe(409);
+    expect(error(refused)).toBe('soutiens_indisponibles');
   });
 
   it('fait progresser la partie de façon idempotente, avec verrou sur la semaine', async () => {

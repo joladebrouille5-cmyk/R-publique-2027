@@ -9,6 +9,7 @@ import { EconomyChangeSchema } from './economie';
 import { GamePhaseSchema, IsoDateSchema, PollSchema, RoundResultSchema } from './game';
 import { DigitalPostSchema } from './numerique';
 import { PrestationSchema } from './prestations';
+import { MEMBER_NATURES } from './quinquennat';
 import { ResourceKeySchema } from './resources';
 import { DataStatusSchema } from './ruleset';
 
@@ -167,6 +168,54 @@ export const StrategyNoteSchema = z
   .strict();
 export type StrategyNote = z.infer<typeof StrategyNoteSchema>;
 
+/** Variation d'une valeur suivie (popularité prêtée ou loyauté d'un ministre), avec ses facteurs. */
+const TrackChangeSchema = z
+  .object({
+    avant: z.number().int(),
+    apres: z.number().int(),
+    facteurs: z.array(z.object({ label: z.string().min(1), value: z.number().int() }).strict()),
+  })
+  .strict()
+  .refine((c) => c.facteurs.reduce((sum, f) => sum + f.value, 0) === c.apres - c.avant, {
+    message: 'La variation est la somme exacte de ses facteurs',
+  });
+
+/**
+ * Compte rendu du Conseil des ministres de la semaine (phase 15 ; Constitution, art. 9 : le
+ * président préside le Conseil des ministres ; rythme hebdomadaire : usage). Pour chaque membre
+ * du gouvernement : popularité prêtée et loyauté (hypothèses du jeu) avec leurs facteurs, faits
+ * de la semaine relevés par le moteur ; départs simulés et alertes. Aucun propos n'est rapporté.
+ */
+export const CouncilReportSchema = z
+  .object({
+    ministres: z.array(
+      z
+        .object({
+          nature: z.enum(MEMBER_NATURES),
+          ref: z.string().min(1),
+          /** Ministère ; null pour le Premier ministre. */
+          posteId: z.string().min(1).nullable(),
+          popularite: TrackChangeSchema,
+          loyaute: TrackChangeSchema,
+          faits: z.array(z.string().min(1)),
+        })
+        .strict(),
+    ),
+    departs: z.array(
+      z
+        .object({
+          nature: z.enum(MEMBER_NATURES),
+          ref: z.string().min(1),
+          posteId: z.string().min(1),
+          motif: z.string().min(1),
+        })
+        .strict(),
+    ),
+    alertes: z.array(z.string().min(1)),
+  })
+  .strict();
+export type CouncilReport = z.infer<typeof CouncilReportSchema>;
+
 export const WeeklyReportSchema = z
   .object({
     /** Semaine résolue et son lundi. */
@@ -222,6 +271,10 @@ export const WeeklyReportSchema = z
       .default(null),
     // Ajout de la phase 9 : publications simulées de la semaine (réseaux et nouveaux médias).
     numerique: z.array(DigitalPostSchema).default([]),
+    // Ajouts de la phase 15 : Conseil des ministres de la semaine (pendant un mandat) et succès
+    // débloqués dans la semaine (identifiants du jeu de règles).
+    conseil: CouncilReportSchema.nullable().default(null),
+    succes: z.array(z.string().min(1)).default([]),
   })
   .strict();
 export type WeeklyReport = z.infer<typeof WeeklyReportSchema>;

@@ -3,13 +3,16 @@ import {
   type ActionDefinition,
   type Actor,
   type CampaignEffect,
+  type Counterpart,
   type Effect,
   type PlannedAction,
   type Posture,
   type Ruleset,
+  type SupportProspects,
 } from '@r2027/shared';
 import { Clock, Crosshair, Info, Plus, Users, Wallet, X } from 'lucide-react';
 import { useId, useState } from 'react';
+import { Avatar } from '../../components/Avatar';
 import { Badge } from '../../components/Badge';
 import { Drawer } from '../../components/Drawer';
 import { MEDIA_TYPE_LABELS } from '../../components/RealMedia';
@@ -24,6 +27,7 @@ import {
   PORTEE_LABELS,
   RESOURCE_LABELS,
 } from '../../labels';
+import { portraitOfPersonality } from '../../portraits';
 import { actionIcon } from './actionIcons';
 import { PostureSelect, isPlateau } from './PostureSelect';
 
@@ -38,7 +42,7 @@ type Props = {
   mode?: 'campagne' | 'presidence';
   /** Motif commun d'indisponibilité (par exemple : mandat pas encore commencé). */
   restriction?: (action: ActionDefinition) => string | null;
-  /** Heures déjà réservées cette semaine (préparation des propositions du programme). */
+  /** Heures déjà réservées cette semaine (propositions du programme, délégations d’élus reçues). */
   reservedHours: number;
   /** Plafond légal des dépenses applicable à la campagne. */
   cap: number;
@@ -47,14 +51,37 @@ type Props = {
   onTarget: (index: number, cible: string) => void;
   /** Posture d'un passage dans les médias (campagne, phase 11). */
   onPosture?: (index: number, posture: Posture) => void;
+  /** Vivier des négociations de soutien (campagne, phase 15). */
+  supports?: SupportsView;
+  /** Ministères pourvus, cibles d'un remaniement ciblé (présidence, phase 15). */
+  ministries?: readonly MinistryChoice[];
 };
 
-const TARGET_LABELS = { departement: 'Département', media: 'Média', emission: 'Émission' } as const;
+const TARGET_LABELS = {
+  departement: 'Département',
+  media: 'Média',
+  emission: 'Émission',
+  personnalite: 'Personnalité',
+  poste: 'Ministère',
+} as const;
 const TARGET_PROMPTS = {
   departement: 'Choisir un département…',
   media: 'Choisir un média…',
   emission: 'Choisir une émission…',
+  personnalite: 'Choisir une personnalité…',
+  poste: 'Choisir un ministère…',
 } as const;
+
+/** Vivier des négociations de soutien servi par l'API (phase 15), ou son chargement. */
+export type SupportsView = { prospects: SupportProspects | undefined; error: boolean };
+/** Ministère pourvu, pour le remaniement ciblé (phase 15). */
+export type MinistryChoice = { posteId: string; libelle: string; ministre: string };
+
+const percent = (value: number) => `${Math.round(value * 100)} %`;
+
+/** Contrepartie offerte par une action de négociation (sans contrepartie par défaut). */
+const counterpartOf = (action: ActionDefinition): Counterpart =>
+  action.campagne?.soutien?.contrepartie ?? 'aucune';
 
 function describeEffect(effect: Effect): string {
   const amount = formatDelta(effect.ressource, effect.base);
@@ -89,6 +116,13 @@ export function describeCampaign(campagne: CampaignEffect | null): string[] {
   }
   if (campagne.preparationDebat) {
     lines.push(`Préparation des débats : +${campagne.preparationDebat} h`);
+  }
+  if (campagne.soutien) {
+    lines.push(
+      campagne.soutien.contrepartie === 'ministere'
+        ? 'Négociation simulée avec la personnalité choisie, contre la promesse d’un ministère : en cas d’accord, notoriété, militants et vote des électeurs proches d’elle ; elle sera proposée en tête à l’investiture (promesse non tenue : popularité perdue)'
+        : 'Négociation simulée avec la personnalité choisie, sans contrepartie : en cas d’accord, notoriété, militants et vote des électeurs proches d’elle ; aucun propos ne lui est attribué',
+    );
   }
   return lines;
 }
@@ -135,7 +169,114 @@ function unavailableReason(
   return null;
 }
 
-/** Choix de la cible d'une action programmée (département ou média). */
+/**
+ * Personnalités d'une négociation de soutien (phase 15) : celles dont l'accord est possible, de
+ * la plus à la moins probable (probabilités calculées par le serveur, hypothèses du jeu), puis
+ * celles qu'un motif exclut (désactivées). Sans vivier, toutes les personnalités, par nom.
+ */
+function personalityOptions(ruleset: Ruleset, action: ActionDefinition, supports?: SupportsView) {
+  const figures = new Map(ruleset.figures.figures.map((f) => [f.id, f]));
+  const label = (id: string) => {
+    const f = figures.get(id);
+    return f ? `${f.prenom} ${f.nom} — ${f.parti}` : id;
+  };
+  const prospects = supports?.prospects;
+  if (!prospects)
+    return (
+      <optgroup
+        label={
+          supports?.error
+            ? 'Vivier indisponible (accord non estimé)'
+            : 'Vivier en cours de chargement'
+        }
+      >
+        {[...ruleset.figures.figures]
+          .sort((a, b) => a.nom.localeCompare(b.nom, 'fr'))
+          .map((f) => (
+            <option key={f.id} value={f.id}>
+              {label(f.id)}
+            </option>
+          ))}
+      </optgroup>
+    );
+  const counterpart = counterpartOf(action);
+  const open = prospects.personnalites
+    .filter((p) => p.probabilites)
+    .sort((a, b) => b.probabilites![counterpart] - a.probabilites![counterpart]);
+  const closed = prospects.personnalites.filter((p) => !p.probabilites);
+  return (
+    <>
+      <optgroup label={`Accord possible (${open.length})`}>
+        {open.map((p) => (
+          <option key={p.figureId} value={p.figureId}>
+            {`${label(p.figureId)} · accord ${percent(p.probabilites![counterpart])}`}
+          </option>
+        ))}
+      </optgroup>
+      <optgroup label={`Accord exclu (${closed.length})`}>
+        {closed.map((p) => (
+          <option key={p.figureId} value={p.figureId} disabled>
+            {`${label(p.figureId)} · ${p.soutient ? 'soutient déjà un candidat' : 'exclue'}`}
+          </option>
+        ))}
+      </optgroup>
+    </>
+  );
+}
+
+/**
+ * Personnalité choisie pour une négociation : photo, parti, proximité et probabilités d'accord
+ * servies par l'API, ou le motif qui exclut l'accord. Aucun propos n'est attribué.
+ */
+function SupportHint({
+  ruleset,
+  action,
+  figureId,
+  supports,
+}: {
+  ruleset: Ruleset;
+  action: ActionDefinition;
+  figureId: string;
+  supports?: SupportsView;
+}) {
+  const figure = ruleset.figures.figures.find((f) => f.id === figureId);
+  if (!figure) return null;
+  const prospect = supports?.prospects?.personnalites.find((p) => p.figureId === figureId);
+  const counterpart = counterpartOf(action);
+  return (
+    <div className="flex w-full items-start gap-2.5 rounded-xl bg-white/70 p-2 text-xs dark:bg-slate-900/50">
+      <Avatar portrait={portraitOfPersonality(figure, ruleset)} size="sm" />
+      <p className="min-w-0 space-y-0.5">
+        <span className="block font-semibold">
+          {figure.prenom} {figure.nom} — {figure.parti}
+        </span>
+        {prospect ? (
+          prospect.probabilites ? (
+            <span className="block text-slate-600 dark:text-slate-400">
+              Proximité {prospect.proximite}/100 · probabilité d’accord (hypothèse du jeu){' '}
+              <strong className="text-slate-900 dark:text-slate-100">
+                {percent(prospect.probabilites[counterpart])}
+              </strong>
+              {counterpart === 'aucune'
+                ? ` sans contrepartie (${percent(prospect.probabilites.ministere)} en promettant un ministère)`
+                : ' avec la promesse d’un ministère'}
+              . Issue simulée, aucun propos attribué.
+            </span>
+          ) : (
+            <span className="block text-red-700 dark:text-red-300">{prospect.motif}</span>
+          )
+        ) : (
+          <span className="block text-slate-600 dark:text-slate-400">
+            Probabilité d’accord indisponible pour l’instant : le serveur l’évaluera à la
+            résolution.
+          </span>
+        )}
+      </p>
+    </div>
+  );
+}
+
+/** Choix de la cible d'une action programmée (département, média, personnalité, ministère). */
 function TargetSelect({
   ruleset,
   actor,
@@ -144,6 +285,8 @@ function TargetSelect({
   index,
   onChange,
   showSupport,
+  supports,
+  ministries,
 }: {
   ruleset: Ruleset;
   actor: Actor;
@@ -153,6 +296,8 @@ function TargetSelect({
   onChange: (cible: string) => void;
   /** Soutiens de parrainage par département (campagne seulement). */
   showSupport: boolean;
+  supports?: SupportsView | undefined;
+  ministries?: readonly MinistryChoice[] | undefined;
 }) {
   const id = useId();
   const departements = Object.entries(ruleset.parrainages.reservoir.departements).sort(
@@ -204,6 +349,13 @@ function TargetSelect({
               {show.presentateurs.join(', ')}
             </option>
           ))}
+        {action.cible === 'personnalite' && personalityOptions(ruleset, action, supports)}
+        {action.cible === 'poste' &&
+          (ministries ?? []).map((m) => (
+            <option key={m.posteId} value={m.posteId}>
+              {m.libelle} — {m.ministre}
+            </option>
+          ))}
       </select>
     </div>
   );
@@ -221,6 +373,8 @@ const TARGET_BADGES = {
   departement: 'Choix du département',
   emission: 'Choix de l’émission',
   media: 'Choix du média',
+  personnalite: 'Choix de la personnalité',
+  poste: 'Choix du ministère',
 } as const;
 
 /** Effets décrits en clair (fiche de détails). */
@@ -228,11 +382,15 @@ function effectLines(action: ActionDefinition): string[] {
   return [
     ...(action.institution === 'remaniement'
       ? ['Fin du gouvernement en place ; vous nommez un nouveau Premier ministre']
-      : action.institution === 'dissolution'
+      : action.institution === 'remaniement-cible'
         ? [
-            'Élections législatives 20 jours plus tard (577 circonscriptions, résultats simulés) ; travaux parlementaires suspendus ; nouveau gouvernement après le second tour',
+            'Le ministre choisi quitte le gouvernement ; le Premier ministre propose un remplaçant (experts du poste d’abord), que vous confirmez ou remplacez',
           ]
-        : []),
+        : action.institution === 'dissolution'
+          ? [
+              'Élections législatives 20 jours plus tard (577 circonscriptions, résultats simulés) ; travaux parlementaires suspendus ; nouveau gouvernement après le second tour',
+            ]
+          : []),
     ...action.effets.map(describeEffect),
     ...describeCampaign(action.campagne),
   ];
@@ -424,6 +582,8 @@ export function ActionPlanner({
   onRemove,
   onTarget,
   onPosture,
+  supports,
+  ministries,
 }: Props) {
   const presidency = mode === 'presidence';
   const catalog = presidency ? ruleset.quinquennat.actions : ruleset.actions;
@@ -499,6 +659,8 @@ export function ActionPlanner({
                         index={index}
                         onChange={(cible) => onTarget(index, cible)}
                         showSupport={!presidency}
+                        supports={supports}
+                        ministries={ministries}
                       />
                     )}
                     <button
@@ -510,6 +672,14 @@ export function ActionPlanner({
                       <X aria-hidden="true" className="size-5" />
                     </button>
                   </div>
+                  {action?.cible === 'personnalite' && planned.cible && (
+                    <SupportHint
+                      ruleset={ruleset}
+                      action={action}
+                      figureId={planned.cible}
+                      supports={supports}
+                    />
+                  )}
                   {plateau && (
                     <PostureSelect
                       ruleset={ruleset}

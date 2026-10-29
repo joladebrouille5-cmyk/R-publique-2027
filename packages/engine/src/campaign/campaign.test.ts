@@ -443,9 +443,10 @@ describe('médias et débats (§8)', () => {
   });
 
   it('les adversaires choisissent eux aussi des émissions réelles, selon les mêmes règles', () => {
+    // Six mois de campagne : les adversaires y mènent aussi parrainages et négociations de soutien.
     const { reports } = playUntil(
       newGame({ mode: 'observateur', adversaires: 'reels' }),
-      (s) => s.meta.week >= 12,
+      (s) => s.meta.week >= 24,
       QUIET,
     );
     const definition = RULESET.actions.find((a) => a.id === 'emission-politique')!;

@@ -33,6 +33,7 @@ import {
   GameStateV15Schema,
   GameStateV16Schema,
   GameStateV17Schema,
+  GameStateV18Schema,
   addDays,
   DIGITAL_HISTORY_WEEKS,
   daysFromCivil,
@@ -58,6 +59,7 @@ import {
   type GameStateV14,
   type GameStateV15,
   type GameStateV16,
+  type GameStateV18,
   type GameStateV17,
 } from '@r2027/shared';
 import { z } from 'zod';
@@ -104,7 +106,8 @@ const SCHEMAS: Record<number, z.ZodType> = {
   15: GameStateV15Schema,
   16: GameStateV16Schema,
   17: GameStateV17Schema,
-  18: GameStateSchema,
+  18: GameStateV18Schema,
+  19: GameStateSchema,
 };
 
 /** Jeux de règles des parties aux formats 2 (phase 2) et 3 (phase 3). */
@@ -694,7 +697,7 @@ function figureRefs(state: GameStateV17): Set<string> {
  * change ; les personnalités citées par la partie (gouvernements, refus, décisions en attente)
  * figurent toutes dans le vivier du jeu de règles 15, ce que la migration vérifie.
  */
-function migrateV17ToV18(v17: GameStateV17): GameState {
+function migrateV17ToV18(v17: GameStateV17): GameStateV18 {
   const known = new Set(getRuleset(CURRENT_RULESET_KEY).figures.figures.map((f) => f.id));
   const missing = [...figureRefs(v17)].filter((id) => !known.has(id));
   if (missing.length > 0)
@@ -710,6 +713,40 @@ function migrateV17ToV18(v17: GameStateV17): GameState {
       rulesetVersion: CURRENT_RULESET_KEY,
       saveSchemaVersion: 18,
     },
+  };
+}
+
+/**
+ * 18 → 19 (phase 15) : passage au jeu de règles 16 (orientations stratégiques, négociations de
+ * soutien, ministres vivants, urgences ministérielles, questions au gouvernement, objectifs de
+ * mandat, succès). Le joueur n'a pas d'orientation (moyens et base électorale de départ déjà
+ * fixés) ; aucune négociation ni aucun succès ; Parlement sans échauffement ni séance de QAG ;
+ * quinquennat sans suivi des ministres, objectifs ni déplacements (le moteur les établit à la
+ * semaine suivante) ; bilans archivés sans note.
+ */
+function migrateV18ToV19(v18: GameStateV18): GameState {
+  return {
+    ...v18,
+    meta: {
+      ...v18.meta,
+      engineVersion: ENGINE_VERSION,
+      rulesetVersion: CURRENT_RULESET_KEY,
+      saveSchemaVersion: 19,
+    },
+    player: { ...v18.player, orientation: null },
+    parlement: v18.parlement ? { ...v18.parlement, echauffement: 0, qag: [] } : null,
+    quinquennat: v18.quinquennat
+      ? { ...v18.quinquennat, suivi: {}, objectifs: [], deplacements: {} }
+      : null,
+    historique: {
+      ...v18.historique,
+      quinquennats: v18.historique.quinquennats.map((q) => ({
+        ...q,
+        bilan: { ...q.bilan, note: null },
+      })),
+    },
+    negociations: [],
+    succes: [],
   };
 }
 
@@ -731,6 +768,7 @@ const MIGRATIONS: Record<number, (state: never) => unknown> = {
   15: migrateV15ToV16,
   16: migrateV16ToV17,
   17: migrateV17ToV18,
+  18: migrateV18ToV19,
 };
 
 export type LoadedState = { state: GameState; stateHash: string; migratedFrom: number | null };

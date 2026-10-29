@@ -1,6 +1,7 @@
 import {
   Armchair,
   Award,
+  Briefcase,
   ChartColumn,
   Flag,
   Landmark,
@@ -73,9 +74,17 @@ export const HUBS: readonly Hub[] = [
     label: 'Pouvoir',
     titre: 'Pouvoir',
     intro:
-      'Gouvernement, Parlement, économie, crises, législatives et bilan du quinquennat : dépliez une section.',
+      'Gouvernement, Conseil des ministres, Parlement, économie, crises, législatives et bilan du quinquennat : dépliez une section.',
     icon: Landmark,
-    sections: ['gouvernement', 'parlement', 'economie', 'crises', 'legislatives', 'bilan'],
+    sections: [
+      'gouvernement',
+      'conseil',
+      'parlement',
+      'economie',
+      'crises',
+      'legislatives',
+      'bilan',
+    ],
   },
 ];
 
@@ -88,6 +97,7 @@ export const SECTION_ICONS: Record<string, LucideIcon> = {
   sondages: ChartColumn,
   resultats: Vote,
   gouvernement: Landmark,
+  conseil: Briefcase,
   parlement: Scale,
   economie: TrendingUp,
   crises: Siren,

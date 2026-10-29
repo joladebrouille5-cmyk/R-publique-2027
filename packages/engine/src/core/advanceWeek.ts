@@ -31,6 +31,7 @@ import {
   weeklyParrainages,
 } from '../campaign/parrainages';
 import { applyProgramme, programmeReport, validateProgrammeChange } from '../campaign/programme';
+import { drawRendezVous, meetingHours, RECEIVE_OPTION } from '../campaign/rendezvous';
 import { distribute, groupShares, summarize } from '../election/distribution';
 import { resolveWeekDebates, scheduleDebates } from '../election/debats';
 import { concludeRound, scrutinOfWeek } from '../election/flow';
@@ -43,6 +44,7 @@ import { advancePresidencyWeek } from '../presidency/week';
 import { nationalBaseline, type TerritorialBaseline } from '../territory/baseline';
 import { enterNextWeek } from './calendar';
 import { EngineInputError } from './errors';
+import { unlockAchievements } from './succes';
 import { WEEKLY_STEPS } from './steps';
 import { compareStrings, Ledger } from './ledger';
 
@@ -172,8 +174,13 @@ export function advanceWeek(
     const report = programmeReport(player.id, validation);
     if (report) programmeReports.push(report);
   }
+  // Délégations d'élus reçues (phase 15) : leurs heures passent avant les actions du joueur.
+  const meetings = playerActive
+    ? answers.filter((a) => a.decision.kind === 'parrainage' && a.optionId === RECEIVE_OPTION)
+    : [];
+  const meetingTime = meetingHours(ruleset, meetings);
   const own = playerActive
-    ? validateActions(state, playerId!, plan.actions, ruleset, programmeHours)
+    ? validateActions(state, playerId!, plan.actions, ruleset, programmeHours + meetingTime)
     : { outcomes: [], validated: [] };
   const rejected = own.outcomes.filter((o) => o.status === 'rejetee').length;
   const announced = programmeReports[0]?.ajoutees.length ?? 0;
@@ -196,10 +203,26 @@ export function advanceWeek(
       },
     ]);
   }
+  if (meetings.length > 0) {
+    ledger.apply(
+      playerId!,
+      'tempsHeures',
+      meetings.map(({ decision }) => ({
+        label: decision.label,
+        value: -ruleset.parrainages.rendezVous.tempsHeures,
+        source: 'decision' as const,
+        step: 2,
+      })),
+    );
+  }
   consumeActions(ledger, finances, own.validated, 2);
   const spent = own.validated.reduce((sum, v) => sum + v.definition.cout.budgetCentimes, 0);
   const hours = own.validated.reduce((sum, v) => sum + v.definition.cout.tempsHeures, 0);
-  set(2, true, `Dépenses : ${Math.round(spent / 100)} € et ${hours + programmeHours} h`);
+  set(
+    2,
+    true,
+    `Dépenses : ${Math.round(spent / 100)} € et ${hours + programmeHours + meetingTime} h`,
+  );
 
   // 3. Décisions adverses : analyse, stratégie, actions ciblées ; mêmes règles que le joueur.
   const plans = planOpponentActions(state, ruleset);
@@ -229,10 +252,10 @@ export function advanceWeek(
   );
 
   // 5. Décisions de la semaine passée, débats télévisés, effets des actions, nouveaux événements.
-  const decisions = applyDecisions(state, ruleset, ledger, finances, answers, 5);
+  const decisions = applyDecisions(state, ruleset, ledger, { finances, parrainages }, answers, 5);
   const debates = resolveWeekDebates(state, ruleset, ledger, 5);
   const allValidated = [...own.validated, ...opponentValidated];
-  const { risks, incidents, prestations } = resolveActionEffects(
+  const { risks, incidents, prestations, supports } = resolveActionEffects(
     state,
     ruleset,
     ledger,
@@ -242,10 +265,14 @@ export function advanceWeek(
   );
   const posts = publishDigital(state, ruleset, allValidated, risks, prestations);
   const events = drawEvents(state, ruleset, ledger, finances, 5);
+  // Rendez-vous d'élus (phase 15) : au plus un en attente, décision la semaine suivante.
+  const rendezVous = drawRendezVous(state, ruleset);
+  if (rendezVous) events.push(rendezVous);
   set(
     5,
     true,
     `${plural(events.length, 'événement')}, ${plural(risks.length, 'aléa')} d'action, ${plural(decisions.length, 'décision appliquée')}` +
+      (supports.length ? `, ${plural(supports.length, 'négociation')} de soutien` : '') +
       (posts.length ? `, ${plural(posts.length, 'publication')} sur les réseaux` : '') +
       (debates.length ? `, ${plural(debates.length, 'débat télévisé')}` : ''),
   );
@@ -331,6 +358,9 @@ export function advanceWeek(
       `${plural(notices.length, 'échéance')} dans les 4 semaines.`,
   );
 
+  // Succès du joueur débloqués cette semaine (phase 15).
+  const succes = unlockAchievements(state, ruleset, week);
+
   // 10. Journal ; 11. sauvegarde (API) ; 12. bilan.
   const changes = ledger.list();
   set(10, true, `${plural(changes.length, 'variation')} journalisée(s) avec leurs facteurs.`);
@@ -340,6 +370,7 @@ export function advanceWeek(
   const steps: StepSummary[] = WEEKLY_STEPS.map((s) => ({ ...s, ...summaries.get(s.step)! }));
   const allEvents = [
     ...events,
+    ...supports,
     ...allianceOutcome.events,
     ...debates,
     ...nominationEvents,
@@ -386,6 +417,8 @@ export function advanceWeek(
       economie: [],
       legislatives: null,
       numerique: posts,
+      conseil: null,
+      succes,
     },
   };
 }

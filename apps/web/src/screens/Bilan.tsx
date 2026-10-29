@@ -125,6 +125,35 @@ function Review({
         </p>
       )}
 
+      {bilan.note && (
+        <div className="space-y-1">
+          <h3 className="font-semibold">Note du mandat</h3>
+          <p className="flex flex-wrap items-baseline gap-2">
+            <span className="font-display text-3xl font-extrabold tabular-nums">
+              {bilan.note.valeur}/20
+            </span>
+            <span className="font-semibold">{bilan.note.mention}</span>
+          </p>
+          <ul className="space-y-0.5">
+            {bilan.note.objectifs.map((o) => (
+              <li key={o.id} className="flex flex-wrap items-center gap-2">
+                <Badge tone={o.atteint ? 'succes' : 'neutre'}>
+                  {o.atteint ? 'Atteint' : 'Manqué'}
+                </Badge>
+                <span>
+                  {ruleset.objectifs.catalogue.find((c) => c.id === o.id)?.libelle ?? o.id}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Objectifs fixés à la formation du premier gouvernement ; barème du jeu : 1 point par
+            objectif atteint, la moitié du chemin parcouru sinon (hypothèses, jamais des
+            prévisions).
+          </p>
+        </div>
+      )}
+
       <div className="space-y-1">
         <h3 className="font-semibold">Réformes</h3>
         <p>

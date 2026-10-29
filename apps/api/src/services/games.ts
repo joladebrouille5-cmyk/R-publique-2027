@@ -52,6 +52,7 @@ export async function createNewGame(
         personnaliteId: body.personnaliteId,
         adversaires: body.adversaires,
         scenarioId: body.scenarioId,
+        orientationId: body.orientationId,
       },
       getRuleset(CURRENT_RULESET_KEY),
     );
@@ -84,6 +85,7 @@ export async function createNewGame(
           seed,
           adversaires: state.player.adversaires,
           scenario: state.scenario,
+          orientation: state.player.orientation,
           startDate: state.meta.date,
           candidat: state.player.actorId
             ? candidateForJournal(state.actors[state.player.actorId]!.candidate)

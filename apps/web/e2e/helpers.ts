@@ -108,6 +108,7 @@ const SCREENS: Record<string, { espace: string; section?: string }> = {
   Sondages: { espace: 'Opinion', section: 'sondages' },
   Résultats: { espace: 'Opinion', section: 'resultats' },
   Gouvernement: { espace: 'Pouvoir', section: 'gouvernement' },
+  'Conseil des ministres': { espace: 'Pouvoir', section: 'conseil' },
   Parlement: { espace: 'Pouvoir', section: 'parlement' },
   Économie: { espace: 'Pouvoir', section: 'economie' },
   Crises: { espace: 'Pouvoir', section: 'crises' },
@@ -143,8 +144,11 @@ export async function resolveWeek(page: Page, week: number) {
   const decisions = page.getByRole('region', { name: 'Décisions à prendre' });
   if (await decisions.isVisible()) {
     // Une décision par fieldset (les groupes repliables d'une nomination sont aussi des « group »).
+    // Le bouton radio est masqué visuellement : on clique sur l'étiquette, comme un joueur.
     for (const decision of await decisions.locator('fieldset').all()) {
-      await decision.getByRole('radio').first().check();
+      const option = decision.locator('label', { has: page.getByRole('radio') }).first();
+      await option.click();
+      await expect(option.getByRole('radio')).toBeChecked();
     }
   }
   await page.getByRole('button', { name: `Résoudre la semaine ${week}` }).click();

@@ -11,7 +11,8 @@ export type EngineInputErrorCode =
   | 'debat_termine'
   | 'debat_non_invite'
   | 'sequence_perimee'
-  | 'carte_invalide';
+  | 'carte_invalide'
+  | 'soutiens_indisponibles';
 
 export class EngineInputError extends Error {
   constructor(
@@ -26,7 +27,12 @@ export class EngineInputError extends Error {
 /** Statut HTTP d'une entrée refusée (API et moteur local de l'application, même contrat). */
 export function inputErrorStatus(code: EngineInputErrorCode): number {
   if (code === 'debat_introuvable') return 404;
-  if (code === 'progression_bloquee' || code === 'debat_termine' || code === 'sequence_perimee')
+  if (
+    code === 'progression_bloquee' ||
+    code === 'debat_termine' ||
+    code === 'sequence_perimee' ||
+    code === 'soutiens_indisponibles'
+  )
     return 409;
   return 422;
 }

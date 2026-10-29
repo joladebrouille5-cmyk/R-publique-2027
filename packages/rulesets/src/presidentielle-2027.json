@@ -1,8 +1,8 @@
 {
   "id": "presidentielle-2027",
-  "version": "15.0.0",
+  "version": "16.0.0",
   "libelle": "Présidentielle 2027 et quinquennat — campagne, parrainages, financement, médias réels, présidence, gouvernement et figures réelles nominables, Parlement, économie, crises et législatives",
-  "verifieLe": "2026-10-27",
+  "verifieLe": "2026-10-28",
   "sources": {
     "elysee-cm-2026-07-01": {
       "titre": "Compte rendu du Conseil des ministres du mercredi 1er juillet 2026 — communication relative au calendrier électoral 2027",
@@ -103,6 +103,26 @@
       "titre": "Panthéon (Paris) — article Wikipédia (révision 240490285) : sous la Cinquième République, le choix d'une entrée au Panthéon revient au président de la République, « plus un état de fait qu'un véritable droit », aucun texte officiel n'en régissant les critères ni la cérémonie",
       "url": "https://fr.wikipedia.org/w/index.php?title=Panth%C3%A9on_(Paris)&oldid=240490285",
       "consulteLe": "2026-10-27"
+    },
+    "constitution-art-9": {
+      "titre": "Constitution du 4 octobre 1958, article 9 (« Le président de la République préside le Conseil des ministres ») — texte cité par l'article Wikipédia « Article 9 de la Constitution de la Cinquième République française » (révision 238940303 du 25/08/2026) ; texte de Légifrance non relu (accès refusé)",
+      "url": "https://fr.wikipedia.org/w/index.php?title=Article_9_de_la_Constitution_de_la_Cinqui%C3%A8me_R%C3%A9publique_fran%C3%A7aise&oldid=238940303",
+      "consulteLe": "2026-10-28"
+    },
+    "constitution-art-48": {
+      "titre": "Constitution du 4 octobre 1958, article 48 (« Une séance par semaine au moins, y compris pendant les sessions extraordinaires prévues à l'article 29, est réservée par priorité aux questions des membres du Parlement et aux réponses du Gouvernement ») — texte cité par l'article Wikipédia « Article 48 de la Constitution de la Cinquième République française » (révision 235009013 du 10/04/2026) ; texte de Légifrance non relu (accès refusé)",
+      "url": "https://fr.wikipedia.org/w/index.php?title=Article_48_de_la_Constitution_de_la_Cinqui%C3%A8me_R%C3%A9publique_fran%C3%A7aise&oldid=235009013",
+      "consulteLe": "2026-10-28"
+    },
+    "wikipedia-conseil-des-ministres": {
+      "titre": "Article Wikipédia « Conseil des ministres (France) » (révision 240570707 du 21/10/2026) : réunion hebdomadaire, le mercredi matin au palais de l'Élysée, sauf pendant une pause de deux ou trois semaines en août (usage)",
+      "url": "https://fr.wikipedia.org/w/index.php?title=Conseil_des_ministres_(France)&oldid=240570707",
+      "consulteLe": "2026-10-28"
+    },
+    "wikipedia-questions-au-gouvernement": {
+      "titre": "Article Wikipédia « Questions au gouvernement » (révision 236418454 du 22/05/2026) : à l'Assemblée nationale, séances de questions au gouvernement le mardi et le mercredi pendant la session parlementaire",
+      "url": "https://fr.wikipedia.org/w/index.php?title=Questions_au_gouvernement&oldid=236418454",
+      "consulteLe": "2026-10-28"
     }
   },
   "calendrier": {
@@ -947,6 +967,50 @@
       },
       "risque": null,
       "note": null
+    },
+    {
+      "id": "negocier-soutien",
+      "libelle": "Négocier le soutien d’une personnalité",
+      "description": "Rencontrer une personnalité réelle nominable pour obtenir son soutien, sans contrepartie : issue simulée selon votre proximité et vos intentions de vote ; aucun propos ne lui est attribué.",
+      "portee": "nationale",
+      "cible": "personnalite",
+      "cout": {
+        "budgetCentimes": 500000,
+        "tempsHeures": 4
+      },
+      "prerequis": {
+        "militantsMin": 0
+      },
+      "effets": [],
+      "campagne": {
+        "soutien": {
+          "contrepartie": "aucune"
+        }
+      },
+      "risque": null,
+      "note": "Négociation simulée (hypothèses du jeu, `negociations`) : une personnalité refuse si un candidat de son parti est en lice, si elle soutient déjà un candidat ou si elle est trop éloignée de vous."
+    },
+    {
+      "id": "negocier-soutien-ministere",
+      "libelle": "Négocier un soutien contre un ministère promis",
+      "description": "Rencontrer une personnalité réelle nominable et lui promettre un ministère si vous êtes élu(e) : acceptation plus probable ; une promesse non tenue au premier gouvernement coûte de la popularité. Issue simulée, aucun propos attribué.",
+      "portee": "nationale",
+      "cible": "personnalite",
+      "cout": {
+        "budgetCentimes": 500000,
+        "tempsHeures": 4
+      },
+      "prerequis": {
+        "militantsMin": 0
+      },
+      "effets": [],
+      "campagne": {
+        "soutien": {
+          "contrepartie": "ministere"
+        }
+      },
+      "risque": null,
+      "note": "Négociation simulée (hypothèses du jeu, `negociations`) ; la personnalité promise est proposée en tête pour un ministère à l’investiture."
     }
   ],
   "evenements": [
@@ -3377,6 +3441,100 @@
       }
     }
   ],
+  "orientations": {
+    "statut": "hypothese",
+    "note": "Orientations stratégiques du mouvement du joueur (phase 15) : paramètres de jeu (hypothèses), sans prétention de mesure. La base électorale de départ est un facteur du score latent dans certains groupes d’électeurs (le plus proche du candidat, ceux qui en sont proches, ceux éloignés du centre, ou tous) ; elle décroît linéairement et s’éteint après la durée indiquée.",
+    "dureeSemaines": 26,
+    "liste": [
+      {
+        "id": "rassemblement",
+        "libelle": "Rassembler au-delà de son camp",
+        "description": "Une candidature ouverte aux électeurs voisins : une base élargie mais peu intense, moins de militants au départ.",
+        "modificateurs": {
+          "militants": -100,
+          "notoriete": 100
+        },
+        "promesses": 0,
+        "base": {
+          "groupes": "proches",
+          "valeur": 0.25,
+          "distance": 0.6
+        }
+      },
+      {
+        "id": "camp",
+        "libelle": "Mobiliser son camp",
+        "description": "Tout pour son électorat naturel : une base solide dans le groupe le plus proche, des militants nombreux.",
+        "modificateurs": {
+          "militants": 250
+        },
+        "promesses": 20,
+        "base": {
+          "groupes": "plus-proche",
+          "valeur": 0.6
+        }
+      },
+      {
+        "id": "elus-locaux",
+        "libelle": "S’appuyer sur les élus locaux",
+        "description": "Un réseau de maires et d’élus : des promesses de parrainage d’avance, une notoriété nationale à construire.",
+        "modificateurs": {
+          "notoriete": -100,
+          "militants": 100
+        },
+        "promesses": 120,
+        "base": {
+          "groupes": "plus-proche",
+          "valeur": 0.2
+        }
+      },
+      {
+        "id": "numerique",
+        "libelle": "Mouvement numérique",
+        "description": "Une campagne née sur les réseaux : de l’écho chez les jeunes et de l’élan, moins d’élus.",
+        "modificateurs": {
+          "jeunesse": 800,
+          "dynamique": 300
+        },
+        "promesses": -40,
+        "base": {
+          "groupes": "tous",
+          "valeur": 0.08
+        }
+      },
+      {
+        "id": "rupture",
+        "libelle": "Candidature de rupture",
+        "description": "Contre le système : de l’élan et un écho dans les électorats éloignés du centre, une popularité plus clivante.",
+        "modificateurs": {
+          "dynamique": 500,
+          "popularite": -200
+        },
+        "promesses": 0,
+        "base": {
+          "groupes": "peripherie",
+          "valeur": 0.3,
+          "distance": 0.6
+        }
+      }
+    ]
+  },
+  "negociations": {
+    "statut": "hypothese",
+    "note": "Négociations de soutien avec les personnalités réelles nominables (phase 15) : l’issue est simulée (proximité avec le candidat, intentions de vote, contrepartie), jamais une prise de position réelle ; aucun propos n’est attribué. Une personnalité refuse si un candidat de son parti est en lice, si elle soutient déjà un autre candidat ou si elle est trop éloignée. Probabilité d’accepter : base + poids × (proximité − 50) / 100 + poids × intentions + bonus de la promesse d’un ministère, entre 5 % et 90 %.",
+    "proximiteMin": 35,
+    "probabiliteBase": 0.3,
+    "poidsProximite": 0.9,
+    "poidsIntentions": 1.2,
+    "bonusMinistere": 0.25,
+    "delaiApresRefus": 8,
+    "soutiensMax": 6,
+    "poids": 0.15,
+    "notoriete": [60, 120, 220],
+    "militants": [20, 50, 100],
+    "promesseNonTenue": 150,
+    "loyautePromesse": 10
+  },
   "programme": {
     "statut": "hypothese",
     "note": "Propositions, coûts (millions d’euros par an), délais, faisabilité et effets : estimations de conception du jeu, sans valeur de chiffrage officiel.",
@@ -4853,6 +5011,16 @@
       "envoiHebdo": 0.5,
       "tauxInvalidite": 0.015,
       "partImplantation": 0.7
+    },
+    "rendezVous": {
+      "statut": "hypothese",
+      "probabiliteHebdo": 0.45,
+      "delaiSemaines": 2,
+      "promesses": {
+        "min": 6,
+        "max": 14
+      },
+      "tempsHeures": 4
     }
   },
   "finances": {
@@ -6389,8 +6557,74 @@
         "risque": null,
         "note": "Impossible dans l'année qui suit les dernières élections législatives.",
         "institution": "dissolution"
+      },
+      {
+        "id": "remaniement-cible",
+        "libelle": "Remplacer un ministre",
+        "description": "Mettre fin aux fonctions d’un ministre : le Premier ministre propose un remplaçant (les experts du poste d’abord), que vous confirmez ou remplacez. Départ simulé, aucun propos attribué.",
+        "portee": "nationale",
+        "cible": "poste",
+        "cout": {
+          "budgetCentimes": 0,
+          "tempsHeures": 3
+        },
+        "prerequis": {
+          "militantsMin": 0
+        },
+        "effets": [
+          {
+            "ressource": "popularite",
+            "base": 0,
+            "ecart": 20,
+            "delaiSemaines": 0,
+            "saturation": false
+          }
+        ],
+        "campagne": null,
+        "risque": {
+          "probabilite": 0.15,
+          "libelle": "Remaniement jugé brutal",
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -40,
+              "ecart": 20,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        },
+        "note": "Effets : hypothèses de jeu. Un ministre remplacé ne revient pas au gouvernement pendant le délai qui suit un refus.",
+        "institution": "remaniement-cible",
+        "delaiSemaines": 4
       }
-    ]
+    ],
+    "suivi": {
+      "statut": "hypothese",
+      "note": "Ministres vivants (phase 15) : popularité prêtée (jamais un sondage) et loyauté envers le président de chaque membre du gouvernement, avec leurs facteurs ; départ simulé possible sous les seuils (motif neutre : usure au poste ou loyauté), sans propos ni scandale prêtés ; le Premier ministre propose aussitôt un remplaçant. Paramètres de jeu (hypothèses), sans prétention de mesure.",
+      "loyaute": {
+        "base": 55,
+        "poidsProximite": 0.6,
+        "premierMinistre": 10,
+        "rappel": 0.05,
+        "poidsPopularitePresident": 0.15,
+        "usureSemaines": 6
+      },
+      "popularite": {
+        "usureHebdomadaire": 5,
+        "rappel": 0.04,
+        "poidsPresident": 0.5,
+        "crise": 800,
+        "texte": 150
+      },
+      "depart": {
+        "loyauteMax": 25,
+        "populariteMax": 1800,
+        "probabilite": 0.15,
+        "semainesMin": 12,
+        "effetPresident": 150
+      }
+    }
   },
   "parlement": {
     "note": "Règles constitutionnelles citées (art. 28, 45 et 49) ; tout le reste — calendrier des textes, modèle de vote par groupe, concessions, Sénat simplifié, décision de censurer et effet des réformes sur la popularité — est un paramètre de jeu (hypothèse). Les votes sont ceux des groupes, simulés : aucun vote individuel n'est attribué à un député réel. Le Sénat n'est pas modélisé groupe par groupe : son accord est tiré au sort, l'Assemblée ayant le dernier mot en cas de désaccord. Phase 13 : tension parlementaire, frondeurs (nombres de députés, jamais de nom), interventions de l'opposition aux votes clés et motions de censure spontanées sont des paramètres de jeu (hypothèses).",
@@ -6490,6 +6724,111 @@
       "margeCle": 0.06,
       "effet": 0.12,
       "distanceMeneur": 0.6
+    },
+    "qag": {
+      "statut": "hypothese",
+      "sourceId": "constitution-art-48",
+      "note": "Questions au gouvernement (phase 15). Règle citée : une séance par semaine au moins est réservée par priorité aux questions des parlementaires et aux réponses du gouvernement (Constitution, art. 48) ; à l’Assemblée nationale, les séances ont lieu le mardi et le mercredi (article Wikipédia « Questions au gouvernement »). Le jeu en retient une interpellation emblématique par semaine de session ordinaire (octobre à juin, art. 28) ; les sessions extraordinaires ne sont pas simulées. Thèmes, répliques et effets : hypothèses du jeu. Un groupe d’opposition interpelle, choisi au prorata de ses sièges ; aucun député n’est nommé, aucun propos n’est rapporté.",
+      "moisSansSeance": [7, 8, 9],
+      "themes": [
+        {
+          "id": "pouvoir-achat",
+          "libelle": "le pouvoir d’achat",
+          "poste": "economie",
+          "indicateur": "pouvoirAchat"
+        },
+        {
+          "id": "emploi",
+          "libelle": "l’emploi et le chômage",
+          "poste": "travail",
+          "indicateur": "chomage"
+        },
+        {
+          "id": "comptes-publics",
+          "libelle": "la dette et les comptes publics",
+          "poste": "economie",
+          "indicateur": "deficit"
+        },
+        {
+          "id": "climat-social",
+          "libelle": "le climat social",
+          "poste": "travail",
+          "indicateur": "tensions"
+        },
+        {
+          "id": "confiance",
+          "libelle": "le moral des ménages",
+          "poste": null,
+          "indicateur": "confiance"
+        },
+        {
+          "id": "securite",
+          "libelle": "la sécurité du quotidien",
+          "poste": "interieur",
+          "indicateur": null
+        },
+        {
+          "id": "hopital",
+          "libelle": "l’hôpital et l’accès aux soins",
+          "poste": "sante",
+          "indicateur": null
+        },
+        {
+          "id": "ecole",
+          "libelle": "l’école",
+          "poste": "education",
+          "indicateur": null
+        },
+        {
+          "id": "climat",
+          "libelle": "le climat et l’énergie",
+          "poste": "transition-ecologique",
+          "indicateur": null
+        },
+        {
+          "id": "international",
+          "libelle": "la situation internationale",
+          "poste": "affaires-etrangeres",
+          "indicateur": null
+        }
+      ],
+      "poidsDegradation": 3,
+      "reponses": [
+        {
+          "id": "fond",
+          "libelle": "Répondre sur le fond",
+          "description": "Le gouvernement répond sur le fond (réplique simulée, aucun propos rapporté) : l’hémicycle se calme un peu ; l’effet sur l’opinion dépend de la compétence du ministre du thème.",
+          "tension": -2,
+          "popularite": 30,
+          "economie": [],
+          "modulation": 2
+        },
+        {
+          "id": "mesure",
+          "libelle": "Annoncer une mesure",
+          "description": "Le gouvernement annonce une mesure ciblée (simulée) : apaisement et gain d’opinion, au prix d’une dépense.",
+          "tension": -4,
+          "popularite": 60,
+          "economie": [
+            {
+              "indicateur": "deficit",
+              "valeur": -3
+            }
+          ],
+          "modulation": 1
+        },
+        {
+          "id": "contre-attaque",
+          "libelle": "Contre-attaquer",
+          "description": "Le gouvernement renvoie l’opposition à son propre bilan (simulé) : votre camp apprécie, mais l’hémicycle s’échauffe.",
+          "tension": 6,
+          "popularite": 10,
+          "economie": [],
+          "modulation": 0.5
+        }
+      ],
+      "reponseParDefaut": "fond",
+      "decroissanceEchauffement": 0.25
     }
   },
   "economie": {
@@ -8261,6 +8600,810 @@
       "poste": "affaires-etrangeres"
     }
   ],
+  "urgences": {
+    "statut": "hypothese",
+    "note": "Urgences ministérielles du quinquennat (phase 15) : situations sectorielles fictives, étiquetées comme telles, rattachées à un ministère ; au plus une par semaine, aucune tant qu’une urgence ou une crise attend la décision du président. Le ministre en charge est présenté (photo, nomination simulée) sans qu’aucun propos ne lui soit prêté. Effets de chaque choix : popularité du président (modulée par la compétence du ministre en charge : × (0,5 + compétence)), indicateurs économiques, popularité prêtée et loyauté du ministre. Paramètres de jeu (hypothèses).",
+    "liste": [
+      {
+        "id": "urgence-greve-transports",
+        "poste": "transition-ecologique",
+        "libelle": "Grève reconductible dans les transports",
+        "description": "Un mouvement de grève fictif paralyse une partie des transports publics ; le ministère en charge demande un arbitrage au président.",
+        "nature": "fictif",
+        "probabiliteHebdomadaire": 0.02,
+        "delaiMinEntreOccurrences": 26,
+        "occurrencesMax": 3,
+        "mois": null,
+        "choix": [
+          {
+            "id": "negocier",
+            "libelle": "Ouvrir une négociation salariale",
+            "description": "Dépense supplémentaire, retour progressif au calme.",
+            "popularite": 60,
+            "economie": [
+              {
+                "indicateur": "deficit",
+                "valeur": -5
+              },
+              {
+                "indicateur": "tensions",
+                "valeur": -150
+              }
+            ],
+            "ministre": {
+              "popularite": 100,
+              "loyaute": 2
+            }
+          },
+          {
+            "id": "fermete",
+            "libelle": "Tenir bon et assurer un service minimum",
+            "description": "Aucune dépense, mais la colère monte.",
+            "popularite": -40,
+            "economie": [
+              {
+                "indicateur": "tensions",
+                "valeur": 150
+              }
+            ],
+            "ministre": {
+              "popularite": -100,
+              "loyaute": 0
+            }
+          }
+        ],
+        "choixParDefaut": "negocier"
+      },
+      {
+        "id": "urgence-penurie-medicaments",
+        "poste": "sante",
+        "libelle": "Pénurie de médicaments en pharmacie",
+        "description": "Des ruptures de stock (fictives) touchent des médicaments courants ; le ministère de la Santé attend une décision.",
+        "nature": "fictif",
+        "probabiliteHebdomadaire": 0.02,
+        "delaiMinEntreOccurrences": 26,
+        "occurrencesMax": 3,
+        "mois": null,
+        "choix": [
+          {
+            "id": "importer",
+            "libelle": "Financer des importations d’urgence",
+            "description": "Coûteux, mais les pharmacies sont réapprovisionnées.",
+            "popularite": 50,
+            "economie": [
+              {
+                "indicateur": "deficit",
+                "valeur": -4
+              },
+              {
+                "indicateur": "tensions",
+                "valeur": -50
+              }
+            ],
+            "ministre": {
+              "popularite": 120,
+              "loyaute": 1
+            }
+          },
+          {
+            "id": "rationner",
+            "libelle": "Rationner et prioriser les patients",
+            "description": "Sans dépense, au prix d’un mécontentement.",
+            "popularite": -60,
+            "economie": [
+              {
+                "indicateur": "tensions",
+                "valeur": 80
+              }
+            ],
+            "ministre": {
+              "popularite": -120,
+              "loyaute": -2
+            }
+          }
+        ],
+        "choixParDefaut": "importer"
+      },
+      {
+        "id": "urgence-feux-de-foret",
+        "poste": "interieur",
+        "libelle": "Feux de forêt dans le Sud",
+        "description": "Des incendies (fictifs) menacent des communes ; la sécurité civile demande des renforts.",
+        "nature": "fictif",
+        "probabiliteHebdomadaire": 0.02,
+        "delaiMinEntreOccurrences": 26,
+        "occurrencesMax": 3,
+        "mois": [6, 7, 8, 9],
+        "choix": [
+          {
+            "id": "moyens-nationaux",
+            "libelle": "Mobiliser les moyens nationaux et européens",
+            "description": "Renforts aériens et colonnes de pompiers.",
+            "popularite": 80,
+            "economie": [
+              {
+                "indicateur": "deficit",
+                "valeur": -3
+              }
+            ],
+            "ministre": {
+              "popularite": 150,
+              "loyaute": 2
+            }
+          },
+          {
+            "id": "moyens-locaux",
+            "libelle": "Laisser la main aux préfets et aux moyens locaux",
+            "description": "Économe, mais la réponse paraît lente.",
+            "popularite": -50,
+            "economie": [
+              {
+                "indicateur": "tensions",
+                "valeur": 40
+              }
+            ],
+            "ministre": {
+              "popularite": -80,
+              "loyaute": 0
+            }
+          }
+        ],
+        "choixParDefaut": "moyens-nationaux"
+      },
+      {
+        "id": "urgence-cyberattaque",
+        "poste": "interieur",
+        "libelle": "Cyberattaque contre des hôpitaux",
+        "description": "Des systèmes informatiques hospitaliers (fictifs) sont bloqués par une attaque.",
+        "nature": "fictif",
+        "probabiliteHebdomadaire": 0.02,
+        "delaiMinEntreOccurrences": 26,
+        "occurrencesMax": 3,
+        "mois": null,
+        "choix": [
+          {
+            "id": "plan-cyber",
+            "libelle": "Déclencher un plan de cybersécurité d’urgence",
+            "description": "Équipes spécialisées et crédits exceptionnels.",
+            "popularite": 40,
+            "economie": [
+              {
+                "indicateur": "deficit",
+                "valeur": -3
+              }
+            ],
+            "ministre": {
+              "popularite": 100,
+              "loyaute": 1
+            }
+          },
+          {
+            "id": "restaurer",
+            "libelle": "Restaurer les systèmes sans moyens supplémentaires",
+            "description": "Pas de dépense, une reprise plus longue.",
+            "popularite": -30,
+            "economie": [
+              {
+                "indicateur": "tensions",
+                "valeur": 30
+              }
+            ],
+            "ministre": {
+              "popularite": -40,
+              "loyaute": 0
+            }
+          }
+        ],
+        "choixParDefaut": "plan-cyber"
+      },
+      {
+        "id": "urgence-colere-agricole",
+        "poste": "agriculture",
+        "libelle": "Colère des agriculteurs sur les prix",
+        "description": "Des barrages (fictifs) bloquent des routes ; la profession réclame des mesures sur les prix.",
+        "nature": "fictif",
+        "probabiliteHebdomadaire": 0.02,
+        "delaiMinEntreOccurrences": 26,
+        "occurrencesMax": 3,
+        "mois": null,
+        "choix": [
+          {
+            "id": "aides",
+            "libelle": "Débloquer des aides d’urgence",
+            "description": "Dépense immédiate, levée des barrages.",
+            "popularite": 40,
+            "economie": [
+              {
+                "indicateur": "deficit",
+                "valeur": -5
+              },
+              {
+                "indicateur": "tensions",
+                "valeur": -120
+              }
+            ],
+            "ministre": {
+              "popularite": 120,
+              "loyaute": 2
+            }
+          },
+          {
+            "id": "dialogue",
+            "libelle": "Ouvrir un dialogue sans aide immédiate",
+            "description": "Sans dépense, mais le conflit dure.",
+            "popularite": -30,
+            "economie": [
+              {
+                "indicateur": "tensions",
+                "valeur": 100
+              }
+            ],
+            "ministre": {
+              "popularite": -80,
+              "loyaute": -1
+            }
+          }
+        ],
+        "choixParDefaut": "aides"
+      },
+      {
+        "id": "urgence-greve-enseignants",
+        "poste": "education",
+        "libelle": "Grève des enseignants sur les salaires",
+        "description": "Un appel à la grève (fictif) est massivement suivi dans les écoles.",
+        "nature": "fictif",
+        "probabiliteHebdomadaire": 0.02,
+        "delaiMinEntreOccurrences": 26,
+        "occurrencesMax": 3,
+        "mois": null,
+        "choix": [
+          {
+            "id": "revalorisation",
+            "libelle": "Annoncer une revalorisation",
+            "description": "Coûteuse, elle apaise le conflit.",
+            "popularite": 50,
+            "economie": [
+              {
+                "indicateur": "deficit",
+                "valeur": -6
+              },
+              {
+                "indicateur": "tensions",
+                "valeur": -100
+              }
+            ],
+            "ministre": {
+              "popularite": 100,
+              "loyaute": 2
+            }
+          },
+          {
+            "id": "calendrier",
+            "libelle": "Renvoyer à une négociation au printemps",
+            "description": "Sans dépense, au prix d’un conflit prolongé.",
+            "popularite": -40,
+            "economie": [
+              {
+                "indicateur": "tensions",
+                "valeur": 90
+              }
+            ],
+            "ministre": {
+              "popularite": -100,
+              "loyaute": -2
+            }
+          }
+        ],
+        "choixParDefaut": "revalorisation"
+      },
+      {
+        "id": "urgence-tension-diplomatique",
+        "poste": "affaires-etrangeres",
+        "libelle": "Tension diplomatique avec un pays partenaire",
+        "description": "Un incident diplomatique (fictif) oppose la France à un pays partenaire.",
+        "nature": "fictif",
+        "probabiliteHebdomadaire": 0.02,
+        "delaiMinEntreOccurrences": 26,
+        "occurrencesMax": 3,
+        "mois": null,
+        "choix": [
+          {
+            "id": "fermete",
+            "libelle": "Rappeler l’ambassadeur pour consultations",
+            "description": "Une réponse ferme, appréciée de l’opinion.",
+            "popularite": 30,
+            "economie": [
+              {
+                "indicateur": "confiance",
+                "valeur": -30
+              }
+            ],
+            "ministre": {
+              "popularite": 60,
+              "loyaute": 1
+            }
+          },
+          {
+            "id": "discretion",
+            "libelle": "Privilégier la discrétion diplomatique",
+            "description": "Une désescalade discrète.",
+            "popularite": -20,
+            "economie": [],
+            "ministre": {
+              "popularite": 20,
+              "loyaute": 0
+            }
+          }
+        ],
+        "choixParDefaut": "discretion"
+      },
+      {
+        "id": "urgence-ressortissants",
+        "poste": "armees",
+        "libelle": "Ressortissants menacés à l’étranger",
+        "description": "Des Français sont menacés dans un pays en crise (fictif) ; l’état-major attend une décision.",
+        "nature": "fictif",
+        "probabiliteHebdomadaire": 0.02,
+        "delaiMinEntreOccurrences": 26,
+        "occurrencesMax": 3,
+        "mois": null,
+        "choix": [
+          {
+            "id": "evacuation",
+            "libelle": "Ordonner une opération d’évacuation",
+            "description": "Opération militaire coûteuse, saluée si elle réussit.",
+            "popularite": 100,
+            "economie": [
+              {
+                "indicateur": "deficit",
+                "valeur": -3
+              }
+            ],
+            "ministre": {
+              "popularite": 150,
+              "loyaute": 2
+            }
+          },
+          {
+            "id": "diplomatie",
+            "libelle": "Négocier une sortie par la voie diplomatique",
+            "description": "Plus lente et plus incertaine.",
+            "popularite": -50,
+            "economie": [],
+            "ministre": {
+              "popularite": -50,
+              "loyaute": 0
+            }
+          }
+        ],
+        "choixParDefaut": "evacuation"
+      },
+      {
+        "id": "urgence-prisons",
+        "poste": "justice",
+        "libelle": "Surpopulation carcérale : incidents en détention",
+        "description": "Des incidents (fictifs) éclatent dans un établissement surpeuplé.",
+        "nature": "fictif",
+        "probabiliteHebdomadaire": 0.02,
+        "delaiMinEntreOccurrences": 26,
+        "occurrencesMax": 3,
+        "mois": null,
+        "choix": [
+          {
+            "id": "places",
+            "libelle": "Annoncer des places de prison supplémentaires",
+            "description": "Un programme coûteux.",
+            "popularite": 30,
+            "economie": [
+              {
+                "indicateur": "deficit",
+                "valeur": -4
+              },
+              {
+                "indicateur": "tensions",
+                "valeur": -30
+              }
+            ],
+            "ministre": {
+              "popularite": 80,
+              "loyaute": 1
+            }
+          },
+          {
+            "id": "peines-alternatives",
+            "libelle": "Développer les peines alternatives",
+            "description": "Sans dépense, une mesure discutée.",
+            "popularite": -30,
+            "economie": [
+              {
+                "indicateur": "tensions",
+                "valeur": 40
+              }
+            ],
+            "ministre": {
+              "popularite": -40,
+              "loyaute": 0
+            }
+          }
+        ],
+        "choixParDefaut": "places"
+      },
+      {
+        "id": "urgence-plan-social",
+        "poste": "travail",
+        "libelle": "Plan social dans une grande usine",
+        "description": "Une entreprise (fictive) annonce des centaines de suppressions d’emplois.",
+        "nature": "fictif",
+        "probabiliteHebdomadaire": 0.02,
+        "delaiMinEntreOccurrences": 26,
+        "occurrencesMax": 3,
+        "mois": null,
+        "choix": [
+          {
+            "id": "reprise",
+            "libelle": "Soutenir un projet de reprise avec l’État",
+            "description": "Une aide publique pour sauver des emplois.",
+            "popularite": 60,
+            "economie": [
+              {
+                "indicateur": "deficit",
+                "valeur": -4
+              },
+              {
+                "indicateur": "chomage",
+                "valeur": -2
+              },
+              {
+                "indicateur": "tensions",
+                "valeur": -80
+              }
+            ],
+            "ministre": {
+              "popularite": 100,
+              "loyaute": 1
+            }
+          },
+          {
+            "id": "accompagnement",
+            "libelle": "Accompagner les salariés licenciés",
+            "description": "Moins coûteux, mais l’usine ferme.",
+            "popularite": -30,
+            "economie": [
+              {
+                "indicateur": "deficit",
+                "valeur": -2
+              },
+              {
+                "indicateur": "tensions",
+                "valeur": 60
+              }
+            ],
+            "ministre": {
+              "popularite": -40,
+              "loyaute": 0
+            }
+          }
+        ],
+        "choixParDefaut": "reprise"
+      },
+      {
+        "id": "urgence-prix-energie",
+        "poste": "economie",
+        "libelle": "Flambée des prix de l’énergie",
+        "description": "Les prix de l’électricité et du gaz s’envolent (choc fictif).",
+        "nature": "fictif",
+        "probabiliteHebdomadaire": 0.02,
+        "delaiMinEntreOccurrences": 26,
+        "occurrencesMax": 3,
+        "mois": null,
+        "choix": [
+          {
+            "id": "bouclier",
+            "libelle": "Instaurer un bouclier tarifaire temporaire",
+            "description": "Très coûteux, il protège tous les ménages.",
+            "popularite": 80,
+            "economie": [
+              {
+                "indicateur": "deficit",
+                "valeur": -8
+              },
+              {
+                "indicateur": "tensions",
+                "valeur": -120
+              }
+            ],
+            "ministre": {
+              "popularite": 80,
+              "loyaute": 1
+            }
+          },
+          {
+            "id": "aide-ciblee",
+            "libelle": "Cibler une aide sur les ménages modestes",
+            "description": "Moins coûteux, moins visible.",
+            "popularite": 10,
+            "economie": [
+              {
+                "indicateur": "deficit",
+                "valeur": -3
+              },
+              {
+                "indicateur": "tensions",
+                "valeur": -20
+              }
+            ],
+            "ministre": {
+              "popularite": 40,
+              "loyaute": 1
+            }
+          }
+        ],
+        "choixParDefaut": "aide-ciblee"
+      },
+      {
+        "id": "urgence-crues",
+        "poste": "transition-ecologique",
+        "libelle": "Crues et inondations",
+        "description": "Des crues (fictives) inondent plusieurs communes.",
+        "nature": "fictif",
+        "probabiliteHebdomadaire": 0.02,
+        "delaiMinEntreOccurrences": 26,
+        "occurrencesMax": 3,
+        "mois": [10, 11, 12, 1, 2, 3],
+        "choix": [
+          {
+            "id": "indemniser",
+            "libelle": "Reconnaître l’état de catastrophe naturelle et indemniser",
+            "description": "Une réponse rapide et coûteuse.",
+            "popularite": 60,
+            "economie": [
+              {
+                "indicateur": "deficit",
+                "valeur": -3
+              }
+            ],
+            "ministre": {
+              "popularite": 100,
+              "loyaute": 1
+            }
+          },
+          {
+            "id": "expertise",
+            "libelle": "Attendre l’expertise des dégâts",
+            "description": "Prudent, mais jugé lent.",
+            "popularite": -50,
+            "economie": [
+              {
+                "indicateur": "tensions",
+                "valeur": 50
+              }
+            ],
+            "ministre": {
+              "popularite": -80,
+              "loyaute": -1
+            }
+          }
+        ],
+        "choixParDefaut": "indemniser"
+      }
+    ]
+  },
+  "objectifs": {
+    "statut": "hypothese",
+    "note": "Objectifs de mandat (phase 15) : fixés à la formation du premier gouvernement du mandat d’après le programme du président (les domaines les plus représentés d’abord, puis l’ordre du catalogue) ; cibles = paramètres de jeu, jamais des prévisions. Note finale sur 20 : un objectif atteint compte pour 1 ; un objectif manqué, pour la moitié de la part du chemin parcourue vers la cible. Mentions : convention du jeu.",
+    "nombre": 4,
+    "catalogue": [
+      {
+        "id": "chomage",
+        "libelle": "Faire baisser le chômage d’un point",
+        "mesure": "indicateur",
+        "indicateur": "chomage",
+        "sens": "baisse",
+        "ecart": -100,
+        "domaines": ["emploi", "economie"]
+      },
+      {
+        "id": "deficit",
+        "libelle": "Réduire le déficit public d’un point de PIB",
+        "mesure": "indicateur",
+        "indicateur": "deficit",
+        "sens": "hausse",
+        "ecart": 100,
+        "domaines": ["economie", "institutions", "collectivites"]
+      },
+      {
+        "id": "pouvoir-achat",
+        "libelle": "Relever le pouvoir d’achat de 2 %",
+        "mesure": "indicateur",
+        "indicateur": "pouvoirAchat",
+        "sens": "hausse",
+        "ecart": 200,
+        "domaines": ["pouvoir-achat", "retraites", "logement"]
+      },
+      {
+        "id": "climat-social",
+        "libelle": "Apaiser le climat social (10 points de tensions en moins)",
+        "mesure": "indicateur",
+        "indicateur": "tensions",
+        "sens": "baisse",
+        "ecart": -1000,
+        "domaines": ["securite", "immigration", "justice", "agriculture"]
+      },
+      {
+        "id": "confiance",
+        "libelle": "Restaurer la confiance des ménages (5 points de plus)",
+        "mesure": "indicateur",
+        "indicateur": "confiance",
+        "sens": "hausse",
+        "ecart": 500,
+        "domaines": ["sante", "education", "environnement", "energie"]
+      },
+      {
+        "id": "reformes",
+        "libelle": "Faire adopter trois réformes",
+        "mesure": "reformes",
+        "sens": "hausse",
+        "valeur": 3,
+        "domaines": ["institutions", "defense", "diplomatie", "environnement", "energie"]
+      },
+      {
+        "id": "popularite",
+        "libelle": "Finir le mandat à moins de 5 points de sa popularité de départ",
+        "mesure": "popularite",
+        "sens": "hausse",
+        "ecart": -500,
+        "domaines": []
+      },
+      {
+        "id": "sans-censure",
+        "libelle": "Ne subir aucune censure",
+        "mesure": "censures",
+        "sens": "baisse",
+        "valeur": 0,
+        "domaines": []
+      }
+    ],
+    "mentions": [
+      {
+        "min": 16,
+        "libelle": "Mandat exemplaire"
+      },
+      {
+        "min": 12,
+        "libelle": "Mandat réussi"
+      },
+      {
+        "min": 8,
+        "libelle": "Mandat contrasté"
+      },
+      {
+        "min": 0,
+        "libelle": "Mandat décevant"
+      }
+    ]
+  },
+  "succes": {
+    "statut": "hypothese",
+    "note": "Succès de la partie (phase 15) : jalons débloqués une fois, évalués par le moteur à la fin de chaque semaine ; convention du jeu, sans valeur d’évaluation réelle.",
+    "liste": [
+      {
+        "id": "cap-des-500",
+        "libelle": "Cap des 500",
+        "description": "Réunir les 500 présentations validées requises pour être candidat(e).",
+        "condition": "parrainages-seuil"
+      },
+      {
+        "id": "france-entiere",
+        "libelle": "La France entière",
+        "description": "Recevoir des présentations validées d’élus de 60 départements.",
+        "condition": "parrainages-departements",
+        "seuil": 60
+      },
+      {
+        "id": "rassembleur",
+        "libelle": "Rassembleur",
+        "description": "Obtenir le soutien de trois personnalités (soutiens simulés).",
+        "condition": "soutiens",
+        "seuil": 3
+      },
+      {
+        "id": "ralliement",
+        "libelle": "Ralliement",
+        "description": "Obtenir le ralliement d’un candidat.",
+        "condition": "ralliement"
+      },
+      {
+        "id": "second-tour",
+        "libelle": "Au second tour",
+        "description": "Se qualifier pour le second tour.",
+        "condition": "qualifie"
+      },
+      {
+        "id": "elysee",
+        "libelle": "L’Élysée",
+        "description": "Être élu(e) président(e) de la République.",
+        "condition": "elu"
+      },
+      {
+        "id": "deuxieme-mandat",
+        "libelle": "Deuxième mandat",
+        "description": "Être réélu(e) président(e) de la République.",
+        "condition": "reelu"
+      },
+      {
+        "id": "gouvernement-experts",
+        "libelle": "Gouvernement d’experts",
+        "description": "Compter cinq ministres experts de leur poste.",
+        "condition": "gouvernement-experts",
+        "seuil": 5
+      },
+      {
+        "id": "majorite-absolue",
+        "libelle": "Majorité absolue",
+        "description": "Disposer de la majorité absolue des membres de l’Assemblée nationale.",
+        "condition": "majorite-absolue"
+      },
+      {
+        "id": "coalition",
+        "libelle": "Coalition",
+        "description": "Former une coalition de gouvernement.",
+        "condition": "coalition"
+      },
+      {
+        "id": "sans-49-3",
+        "libelle": "Sans 49.3",
+        "description": "Faire adopter un texte sans engager la responsabilité du gouvernement.",
+        "condition": "texte-sans-49-3"
+      },
+      {
+        "id": "jamais-censure",
+        "libelle": "Jamais censuré",
+        "description": "Achever un mandat sans motion de censure adoptée.",
+        "condition": "sans-censure"
+      },
+      {
+        "id": "sang-froid",
+        "libelle": "Sang-froid",
+        "description": "Répondre à cinq séances de questions au gouvernement sans contre-attaquer.",
+        "condition": "qag-sang-froid",
+        "seuil": 5
+      },
+      {
+        "id": "gestionnaire-de-crises",
+        "libelle": "Gestionnaire de crises",
+        "description": "Trancher cinq crises ou urgences ministérielles.",
+        "condition": "gestion-crises",
+        "seuil": 5
+      },
+      {
+        "id": "contrat-rempli",
+        "libelle": "Contrat rempli",
+        "description": "Atteindre tous les objectifs du mandat.",
+        "condition": "objectifs"
+      },
+      {
+        "id": "mandat-exemplaire",
+        "libelle": "Mandat exemplaire",
+        "description": "Obtenir au moins 16 sur 20 au bilan du mandat.",
+        "condition": "note",
+        "seuil": 16
+      },
+      {
+        "id": "etat-de-grace",
+        "libelle": "État de grâce",
+        "description": "Atteindre 50 % de popularité en tant que président(e).",
+        "condition": "popularite",
+        "seuil": 5000
+      },
+      {
+        "id": "tour-de-france",
+        "libelle": "Tour de France",
+        "description": "Se déplacer dans dix départements pendant le mandat.",
+        "condition": "deplacements",
+        "seuil": 10
+      }
+    ]
+  },
   "scenarios": [
     {
       "id": "standard",

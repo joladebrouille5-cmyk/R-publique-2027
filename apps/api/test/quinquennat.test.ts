@@ -4,6 +4,8 @@ import { hashState } from '@r2027/save-engine';
 import {
   AdvanceResponseSchema,
   GameDetailSchema,
+  isOptionalDecision,
+  type AdvanceResponse,
   type GameDetail,
   type GameState,
 } from '@r2027/shared';
@@ -94,6 +96,52 @@ function advanceVia(client: Client, game: Pick<GameDetail, 'id'>, body: object, 
   });
 }
 
+const parsed = async (response: Promise<{ json: () => unknown }>) =>
+  AdvanceResponseSchema.parse((await response).json());
+
+/** Décisions incidentes du mandat (phase 15 : urgences ; crises) : sans rapport avec le test. */
+const INCIDENTAL = new Set(['crise', 'urgence']);
+
+/**
+ * Avance rapide de `semaines` semaines : si elle s'arrête sur une décision incidente (urgence,
+ * crise), y répond par défaut et reprend pour les semaines restantes. Renvoie la dernière
+ * réponse, avec le décompte de toute l'avance.
+ */
+async function fastForward(
+  client: Client,
+  game: GameDetail,
+  semaines: number,
+  decisions: { decisionId: string; optionId: string }[] = [],
+): Promise<AdvanceResponse> {
+  let response = await parsed(
+    advanceVia(client, game, { expectedWeek: game.week, semaines, decisions }),
+  );
+  let resolved = response.avanceRapide!.resolues;
+  while (
+    resolved < semaines &&
+    response.avanceRapide!.arret === 'decision' &&
+    response.game.state.pendingDecisions
+      .filter((d) => !isOptionalDecision(d))
+      .every((d) => INCIDENTAL.has(d.kind))
+  ) {
+    response = await parsed(
+      advanceVia(client, response.game, {
+        expectedWeek: response.game.week,
+        semaines: semaines - resolved,
+        decisions: response.game.state.pendingDecisions.map((d) => ({
+          decisionId: d.id,
+          optionId: d.defaultOptionId,
+        })),
+      }),
+    );
+    resolved += response.avanceRapide!.resolues;
+  }
+  return {
+    ...response,
+    avanceRapide: { demandees: semaines, resolues: resolved, arret: response.avanceRapide!.arret },
+  };
+}
+
 describe('avance rapide pendant le quinquennat', () => {
   it('fait défiler jusqu’à 52 semaines du président IA, chacune journalisée', async () => {
     const client = new Client(app);
@@ -160,18 +208,16 @@ describe('avance rapide pendant le quinquennat', () => {
     // Le Premier ministre nommé, l'avance s'arrête sur les ministères régaliens à pourvoir.
     expect(second.avanceRapide).toEqual({ demandees: 10, resolues: 1, arret: 'decision' });
     expect(second.game.state.quinquennat!.gouvernement).toMatchObject({ numero: 1 });
-    const ministries = second.game.state.pendingDecisions;
+    // Questions au gouvernement (phase 15) : décisions facultatives, elles n'arrêtent rien.
+    const ministries = second.game.state.pendingDecisions.filter((d) => !isOptionalDecision(d));
     expect(ministries.map((d) => d.eventId)).toEqual(ministries.map(() => 'nomination-ministre'));
     expect(ministries.length).toBeGreaterThan(0);
 
-    const third = AdvanceResponseSchema.parse(
-      (
-        await advanceVia(client, second.game, {
-          expectedWeek: second.game.week,
-          semaines: 10,
-          decisions: ministries.map((d) => ({ decisionId: d.id, optionId: d.defaultOptionId })),
-        })
-      ).json(),
+    const third = await fastForward(
+      client,
+      second.game,
+      10,
+      ministries.map((d) => ({ decisionId: d.id, optionId: d.defaultOptionId })),
     );
     expect(third.avanceRapide).toEqual({ demandees: 10, resolues: 10, arret: null });
     expect(third.game.week).toBe(second.game.week + 10);
@@ -236,17 +282,14 @@ describe('dissolution et législatives', () => {
     expect(strategy.options[0]!.id).toBe('aucune');
 
     // Premier tour : événement majeur, l'avance rapide s'arrête ; l'état est sauvegardé.
-    const round1 = AdvanceResponseSchema.parse(
-      (
-        await advanceVia(client, afterDissolution.game, {
-          expectedWeek: afterDissolution.game.week,
-          semaines: 8,
-          decisions: afterDissolution.game.state.pendingDecisions.map((d) => ({
-            decisionId: d.id,
-            optionId: d.kind === 'alliance' ? 'front-republicain' : d.defaultOptionId,
-          })),
-        })
-      ).json(),
+    const round1 = await fastForward(
+      client,
+      afterDissolution.game,
+      8,
+      afterDissolution.game.state.pendingDecisions.map((d) => ({
+        decisionId: d.id,
+        optionId: d.kind === 'alliance' ? 'front-republicain' : d.defaultOptionId,
+      })),
     );
     expect(round1.avanceRapide!.arret).toBe('evenement_majeur');
     expect(round1.report.legislatives).toMatchObject({ tour: 1, siegesParBloc: null });
@@ -254,11 +297,7 @@ describe('dissolution et législatives', () => {
     expect((stored.state as GameState).legislatives!.premierTour).toHaveLength(577);
 
     // Second tour : nouvelle Assemblée de 577 sièges, nouveau gouvernement à nommer.
-    const round2 = AdvanceResponseSchema.parse(
-      (
-        await advanceVia(client, round1.game, { expectedWeek: round1.game.week, semaines: 8 })
-      ).json(),
-    );
+    const round2 = await fastForward(client, round1.game, 8);
     expect(round2.report.legislatives).toMatchObject({ tour: 2 });
     const legislatives = round2.game.state.legislatives!;
     expect(legislatives.derniere.motif).toBe('dissolution');

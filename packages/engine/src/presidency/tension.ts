@@ -10,7 +10,8 @@ import { censureVote, filledSeats, membersMajority, sessionOf } from './parliame
 // Tension parlementaire (phase 13), de 0 à 100 : somme de facteurs nommés (hypothèses du jeu
 // de règles), écrêtement compris — la même transparence que les registres. Elle nourrit la
 // propension à censurer, renchérit le 49.3 et peut provoquer des motions de censure spontanées.
-// La fronde de fond et l'apaisement décroissent chaque semaine.
+// La fronde de fond, l'apaisement et l'échauffement des questions au gouvernement (phase 15)
+// décroissent chaque semaine.
 
 const pct = (value: number) => `${Math.round(value / 100)} %`;
 
@@ -76,6 +77,8 @@ export function computeTension(state: GameState, ruleset: Ruleset): ParliamentTe
       ((social - 5_000) / 100) * rules.poidsTensionsSociales,
     );
   if (parliament.coalition) add('Coalition de gouvernement', -rules.coalition);
+  if (parliament.echauffement > 0)
+    add('Échauffement de l’hémicycle (questions au gouvernement)', parliament.echauffement);
   if (parliament.apaisement > 0)
     add(
       'Apaisement (discours, commémoration, sommet, réunion de la majorité)',
@@ -123,6 +126,10 @@ export function weeklyTension(state: GameState, ruleset: Ruleset): void {
   }
   parliament.apaisement = Math.floor(
     parliament.apaisement * (1 - ruleset.parlement.tension.decroissanceApaisement),
+  );
+  // Questions au gouvernement (phase 15) : l'échauffement de l'hémicycle retombe peu à peu.
+  parliament.echauffement = Math.floor(
+    parliament.echauffement * (1 - ruleset.parlement.qag.decroissanceEchauffement),
   );
   updateTension(state, ruleset);
 }

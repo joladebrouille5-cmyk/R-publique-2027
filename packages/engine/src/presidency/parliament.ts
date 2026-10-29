@@ -105,6 +105,8 @@ export function openParliament(
     motions: [],
     motionsSession: { session: 0, nombre: 0 },
     coalition: null,
+    echauffement: 0,
+    qag: [],
   };
 }
 

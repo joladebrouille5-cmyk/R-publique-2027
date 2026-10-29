@@ -1,5 +1,8 @@
 import {
+  mandateGrade,
   memberPostCompetence,
+  objectiveDefinition,
+  objectiveProgress,
   candidateName,
   groupOfActor,
   themeIndicatorEffects,
@@ -81,6 +84,69 @@ function Block({
       </div>
       {children}
     </section>
+  );
+}
+
+/** Valeur d'une mesure d'objectif, dans son unité (indicateur, popularité, nombre). */
+function measureText(ruleset: Ruleset, id: string, value: number): string {
+  const definition = objectiveDefinition(ruleset, id);
+  if (definition.mesure === 'indicateur' && definition.indicateur)
+    return formatIndicator(definition.indicateur, value);
+  if (definition.mesure === 'popularite') return `${Math.round(value / 100)} %`;
+  return String(value);
+}
+
+/**
+ * Objectifs du mandat (phase 15) : départ, valeur actuelle et cible de chacun, et la note qu'ils
+ * donneraient aujourd'hui — règles partagées avec le moteur (`@r2027/shared`), hypothèses du jeu.
+ */
+function Objectives({ state, ruleset }: { state: GameState; ruleset: Ruleset }) {
+  const grade = mandateGrade(state, ruleset);
+  if (!grade) return null;
+  return (
+    <Block id="mandat-objectifs" title="Objectifs du mandat">
+      <p className="flex flex-wrap items-baseline gap-2">
+        <span className="font-display text-2xl font-extrabold tabular-nums">{grade.valeur}/20</span>
+        <span className="text-xs text-slate-600 dark:text-slate-400">
+          note provisoire, si le mandat s’arrêtait aujourd’hui (la mention est donnée au bilan)
+        </span>
+      </p>
+      <ul className="space-y-2" aria-label="Objectifs du mandat">
+        {grade.objectifs.map((o) => {
+          const definition = objectiveDefinition(ruleset, o.id);
+          const progress = o.atteint ? 1 : objectiveProgress(ruleset, o, o.fin);
+          return (
+            <li key={o.id}>
+              <p className="flex flex-wrap items-baseline justify-between gap-x-2">
+                <span className="font-medium">{definition.libelle}</span>
+                <Badge tone={o.atteint ? 'succes' : 'neutre'}>
+                  {o.atteint ? 'Atteint' : 'En cours'}
+                </Badge>
+              </p>
+              <p className="text-xs text-slate-600 dark:text-slate-400">
+                Départ {measureText(ruleset, o.id, o.depart)} · aujourd’hui{' '}
+                {measureText(ruleset, o.id, o.fin)} · cible{' '}
+                {definition.sens === 'baisse' ? '≤' : '≥'} {measureText(ruleset, o.id, o.cible)}
+              </p>
+              <span
+                aria-hidden="true"
+                className="mt-1 block h-1.5 rounded-full bg-slate-200 dark:bg-slate-800"
+              >
+                <span
+                  className={`block h-full rounded-full ${o.atteint ? 'bg-emerald-500' : 'bg-republique-500'}`}
+                  style={{ width: `${progress * 100}%` }}
+                />
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+      <p className="text-xs text-slate-500 dark:text-slate-400">
+        Objectifs tirés de votre programme à la formation du gouvernement ; cibles et barème (1
+        point par objectif atteint, la moitié du chemin parcouru sinon) : hypothèses du jeu, jamais
+        des prévisions.
+      </p>
+    </Block>
   );
 }
 
@@ -349,6 +415,7 @@ export function MandateOverview({
         </Block>
 
         <div className="space-y-3">
+          <Objectives state={state} ruleset={ruleset} />
           {state.economie && (
             <Block
               id="mandat-economie"

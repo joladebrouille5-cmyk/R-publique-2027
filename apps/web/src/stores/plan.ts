@@ -45,6 +45,9 @@ export function useWeeklyPlan(gameId: string, week: number) {
   return {
     ...plan,
     addAction: (actionId: string) => update((p) => ({ actions: [...p.actions, { actionId }] })),
+    /** Action ajoutée avec sa cible (déplacement programmé depuis la carte, phase 15). */
+    addTargeted: (actionId: string, cible: string) =>
+      update((p) => ({ actions: [...p.actions, { actionId, cible }] })),
     removeAction: (index: number) =>
       update((p) => ({ actions: p.actions.filter((_, i) => i !== index) })),
     setTarget: (index: number, cible: string) =>

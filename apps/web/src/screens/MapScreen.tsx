@@ -1,4 +1,5 @@
 import {
+  addDays,
   DROM_LABELS,
   type DepartementInfo,
   type GeoManifest,
@@ -29,6 +30,7 @@ import {
 import { ElectionMap, type BBox, type Insets, type MapSelection } from '../map/ElectionMap';
 import { useMediaQuery, useMode } from '../map/useMode';
 import { useCurrentGame } from './GameLayout';
+import { TripPlanner } from './map/TripPlanner';
 import {
   Legend,
   LEVEL_LABELS,
@@ -428,6 +430,8 @@ export function MapScreen() {
   if (overview.isError)
     return <ErrorMessage error={overview.error} onRetry={() => void overview.refetch()} />;
 
+  // Trace des déplacements du président pendant le mandat (phase 15).
+  const trail = Object.keys(game.state.quinquennat?.deplacements ?? {});
   const mapProps = {
     level,
     colorOf,
@@ -437,7 +441,32 @@ export function MapScreen() {
     onSelect: selectOnMap,
     describe,
     mode,
+    trail,
   };
+  // Déplacement à programmer depuis la fiche d'un département : président joueur, mandat commencé.
+  const q = game.state.quinquennat;
+  const presiding =
+    q !== null &&
+    game.state.meta.phase === 'presidence' &&
+    q.mandat.presidentId === game.state.player.actorId &&
+    addDays(game.date, 6) >= q.mandat.debut;
+  const tripCode =
+    sheet && presiding && ruleset.data
+      ? sheet.level === 'departement'
+        ? sheet.code
+        : sheet.level === 'commune'
+          ? selectedDepartement
+          : null
+      : null;
+  const trip =
+    tripCode && ruleset.data ? (
+      <TripPlanner
+        game={game}
+        ruleset={ruleset.data}
+        code={tripCode}
+        nom={m.departements.find((d) => d.code === tripCode)?.nom ?? tripCode}
+      />
+    ) : null;
   const focusFor = (zone: MapZone) =>
     focus && focus.zone === zone
       ? {
@@ -770,7 +799,9 @@ export function MapScreen() {
               data={data}
               onClose={() => setSelected(null)}
               className="p-4 pt-3 sm:p-5"
-            />
+            >
+              {trip}
+            </TerritorySheet>
           </div>
         )}
       </div>
@@ -860,7 +891,9 @@ export function MapScreen() {
           />
           {sheet && (
             <div className="mt-2 max-h-[45vh] animate-feuille overflow-y-auto">
-              <TerritorySheet info={sheet} data={data} onClose={() => setSelected(null)} />
+              <TerritorySheet info={sheet} data={data} onClose={() => setSelected(null)}>
+                {trip}
+              </TerritorySheet>
             </div>
           )}
         </div>

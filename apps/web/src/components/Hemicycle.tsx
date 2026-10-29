@@ -40,6 +40,8 @@ export const GROUP_COLORS: Record<string, { fill: string; swatch: string }> = {
 };
 const FALLBACK = { fill: 'fill-slate-500', swatch: 'bg-slate-500' };
 const VACANT = 'fill-slate-200 dark:fill-slate-700';
+/** Opacité des autres sièges quand un groupe interpelle le gouvernement (phase 15). */
+const DIMMED = 0.28;
 export const colorOf = (id: string) => GROUP_COLORS[id] ?? FALLBACK;
 
 /** Rang de l'hémicycle (convention du jeu) : moyenne des deux axes, puis axe économique. */
@@ -114,6 +116,7 @@ export function Hemicycle({
   title,
   playerGroup = null,
   playerConvention = false,
+  speaker = null,
 }: {
   /** Groupes, de la gauche vers la droite (`seatingOrder`). */
   groups: HemicycleGroup[];
@@ -124,6 +127,8 @@ export function Hemicycle({
   playerGroup?: string | null;
   /** Groupe du joueur déduit de son positionnement (convention du jeu, signalée). */
   playerConvention?: boolean;
+  /** Groupe qui interpelle le gouvernement (questions au gouvernement, phase 15), ou null. */
+  speaker?: string | null;
 }) {
   const glow = useId().replace(/:/g, '');
   const seated = groups.filter((g) => g.sieges > 0);
@@ -147,6 +152,7 @@ export function Hemicycle({
     .filter((g) => g.alignement === 'soutien')
     .reduce((s, g) => s + g.sieges, 0);
   const player = groups.find((g) => g.id === playerGroup);
+  const speaking = groups.find((g) => g.id === speaker);
   const rebels = groups.reduce((s, g) => s + Math.min(g.sieges, g.fronde ?? 0), 0);
 
   // Sigle des groupes assez nombreux, au milieu de leur arc, à l'extérieur de l'hémicycle.
@@ -171,7 +177,9 @@ export function Hemicycle({
     total > filled ? `, ${total - filled} vacants` : ''
   }. Soutiens du président ${supporters}.${
     player ? ` Votre groupe : ${player.sigle} (${player.sieges} sièges).` : ''
-  }${rebels > 0 ? ` Frondeurs de la majorité : ${rebels}.` : ''}`;
+  }${rebels > 0 ? ` Frondeurs de la majorité : ${rebels}.` : ''}${
+    speaking ? ` Le groupe ${speaking.sigle} interpelle le gouvernement.` : ''
+  }`;
 
   return (
     <figure className="space-y-3">
@@ -197,6 +205,7 @@ export function Hemicycle({
                 cx={p.x.toFixed(2)}
                 cy={p.y.toFixed(2)}
                 r={dot.toFixed(2)}
+                opacity={speaking ? DIMMED : undefined}
                 className={VACANT}
               >
                 <title>Siège vacant</title>
@@ -204,8 +213,23 @@ export function Hemicycle({
             );
           const { group, frondeur } = slot;
           const mine = group.id === playerGroup;
+          const asking = group.id === speaker;
           return (
-            <g key={i} data-groupe={group.id} data-joueur={mine ? '' : undefined}>
+            <g
+              key={i}
+              data-groupe={group.id}
+              data-joueur={mine ? '' : undefined}
+              data-interpelle={asking ? '' : undefined}
+              opacity={speaking && !asking ? DIMMED : undefined}
+            >
+              {asking && (
+                <circle
+                  cx={p.x.toFixed(2)}
+                  cy={p.y.toFixed(2)}
+                  r={(dot * 1.22).toFixed(2)}
+                  className="fill-none stroke-amber-500 stroke-[0.6] dark:stroke-amber-300"
+                />
+              )}
               {mine && (
                 <circle
                   cx={p.x.toFixed(2)}
@@ -258,7 +282,9 @@ export function Hemicycle({
               className={`flex items-center gap-1.5 rounded-full px-1.5 py-0.5 ${
                 g.id === playerGroup
                   ? 'bg-cyan-50 ring-2 ring-cyan-400 dark:bg-cyan-950/40 dark:ring-cyan-300'
-                  : ''
+                  : g.id === speaker
+                    ? 'bg-amber-50 ring-2 ring-amber-400 dark:bg-amber-950/40 dark:ring-amber-300'
+                    : ''
               }`}
             >
               <span
@@ -272,6 +298,12 @@ export function Hemicycle({
                   <span className="font-semibold text-cyan-800 dark:text-cyan-200">
                     {' '}
                     · votre groupe{playerConvention ? ' (convention du jeu)' : ''}
+                  </span>
+                )}
+                {g.id === speaker && (
+                  <span className="font-semibold text-amber-800 dark:text-amber-200">
+                    {' '}
+                    · interpelle le gouvernement
                   </span>
                 )}
               </span>

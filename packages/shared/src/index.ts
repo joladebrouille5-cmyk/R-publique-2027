@@ -27,3 +27,6 @@ export * from './legislatives-etat';
 export * from './portrait';
 export * from './mandat';
 export * from './expertise';
+export * from './precampagne';
+export * from './succes';
+export * from './objectifs';

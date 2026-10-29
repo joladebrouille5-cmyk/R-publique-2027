@@ -109,12 +109,15 @@ export function WeeklyDebrief({
   state,
   gameId,
   eventFamily = () => null,
+  achievement = () => null,
   onClose,
 }: {
   report: WeeklyReport;
   state: GameState;
   gameId: string;
   eventFamily?: (refId: string) => EventFamily | null;
+  /** Libellé et description d'un succès du jeu de règles (phase 15). */
+  achievement?: (id: string) => { libelle: string; description: string } | null;
   onClose: () => void;
 }) {
   const titleId = useId();
@@ -194,6 +197,33 @@ export function WeeklyDebrief({
           tabIndex={0}
           className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4 text-sm outline-none focus-visible:ring-2 focus-visible:ring-republique-500 focus-visible:ring-inset sm:px-6"
         >
+          {report.succes.length > 0 && (
+            <section
+              aria-labelledby={`${titleId}-succes`}
+              className="space-y-2 rounded-card border-2 border-or-400 bg-or-50 p-4 dark:border-or-600 dark:bg-or-900/30"
+            >
+              <h3 id={`${titleId}-succes`} className={title}>
+                {report.succes.length > 1 ? 'Succès débloqués' : 'Succès débloqué'}
+              </h3>
+              <ul className="space-y-1">
+                {report.succes.map((id) => {
+                  const a = achievement(id);
+                  return (
+                    <li key={id}>
+                      <span className="font-semibold">{a?.libelle ?? id}</span>
+                      {a && (
+                        <span className="text-slate-600 dark:text-slate-400">
+                          {' '}
+                          — {a.description}
+                        </span>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          )}
+
           {playerId && (
             <section aria-labelledby={`${titleId}-actions`} className={section}>
               <h3 id={`${titleId}-actions`} className={title}>
@@ -249,7 +279,11 @@ export function WeeklyDebrief({
                 <li key={event.id} className="space-y-1">
                   <p className="flex flex-wrap items-center gap-2">
                     <Badge tone={event.nature === 'fictif' ? 'fictif' : 'simule'}>
-                      {event.kind === 'risque' ? 'Aléa simulé' : 'Événement fictif'}
+                      {event.kind === 'risque'
+                        ? 'Aléa simulé'
+                        : event.nature === 'fictif'
+                          ? 'Événement fictif'
+                          : 'Fait simulé'}
                     </Badge>
                     {eventFamily(event.refId) && (
                       <Badge>{EVENT_FAMILY_LABELS[eventFamily(event.refId)!]}</Badge>
@@ -281,6 +315,34 @@ export function WeeklyDebrief({
               </p>
             )}
           </section>
+
+          {report.conseil && (
+            <section aria-labelledby={`${titleId}-conseil`} className={section}>
+              <h3 id={`${titleId}-conseil`} className={title}>
+                Conseil des ministres
+              </h3>
+              <p className="text-slate-600 dark:text-slate-400">
+                {report.conseil.ministres.length} membre(s) du gouvernement suivi(s) : popularité
+                prêtée et loyauté (hypothèses du jeu).
+              </p>
+              {report.conseil.departs.length > 0 && (
+                <ul className="space-y-0.5">
+                  {report.conseil.departs.map((d) => (
+                    <li key={d.ref}>
+                      <Badge tone="danger">Départ</Badge> {d.motif}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {report.conseil.alertes.length > 0 && (
+                <ul className="space-y-0.5 text-amber-800 dark:text-amber-300">
+                  {report.conseil.alertes.map((a) => (
+                    <li key={a}>{a}</li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          )}
 
           {opponents.size > 0 && (
             <section aria-labelledby={`${titleId}-adversaires`} className={section}>

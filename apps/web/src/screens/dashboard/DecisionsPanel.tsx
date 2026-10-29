@@ -1,6 +1,8 @@
 import {
+  isOptionalDecision,
   MINISTER_DECISION_EVENT,
   type GameState,
+  type MemberRef,
   type PendingDecision,
   type Ruleset,
 } from '@r2027/shared';
@@ -11,6 +13,7 @@ import { Badge, type BadgeTone } from '../../components/Badge';
 import { BlocFaces, blocPeople } from '../../components/BlocFigures';
 import { FigureFilterBar, matchesFigure, NO_FILTER } from '../../components/FigureFilter';
 import { cardRaised } from '../../components/ui';
+import { memberInfo } from '../Government';
 import {
   portraitOf,
   portraitOfPersonality,
@@ -25,7 +28,16 @@ type Props = {
   /** État et jeu de règles : photos et filtres des nominations (phase 14), s'ils sont chargés. */
   state?: GameState | undefined;
   ruleset?: Ruleset | undefined;
+  /** Ouvre le pop-up d'une décision (urgence, questions au gouvernement, rendez-vous d'élus). */
+  onSpotlight?: (decisionId: string) => void;
 };
+
+/** Décisions présentées aussi en pop-up d'intervention (phase 15). */
+export const SPOTLIGHT_KINDS: ReadonlySet<PendingDecision['kind']> = new Set([
+  'urgence',
+  'qag',
+  'parrainage',
+]);
 
 /** Portrait de la personne d'une option de nomination (figure, profil ou acteur), ou null. */
 function optionPortrait(
@@ -42,14 +54,76 @@ function optionPortrait(
   return actor ? portraitOf(actor, ruleset) : null;
 }
 
-const KINDS: Record<PendingDecision['kind'], { badge: string; tone: BadgeTone; accent: string }> = {
+export const DECISION_KINDS: Record<
+  PendingDecision['kind'],
+  { badge: string; tone: BadgeTone; accent: string }
+> = {
   consigne: { badge: 'Consigne de vote', tone: 'simule', accent: 'bg-republique-500' },
   gouvernement: { badge: 'Nomination', tone: 'alerte', accent: 'bg-or-500' },
   texte: { badge: 'Parlement', tone: 'alerte', accent: 'bg-or-500' },
   crise: { badge: 'Crise fictive', tone: 'fictif', accent: 'bg-red-500' },
   evenement: { badge: 'Événement fictif', tone: 'fictif', accent: 'bg-violet-500' },
   alliance: { badge: 'Législatives', tone: 'simule', accent: 'bg-emerald-500' },
+  // Phase 15 : rendez-vous d'élus, urgences ministérielles, questions au gouvernement.
+  parrainage: { badge: 'Rendez-vous d’élus (fictif)', tone: 'fictif', accent: 'bg-emerald-500' },
+  urgence: { badge: 'Urgence ministérielle (fictive)', tone: 'fictif', accent: 'bg-orange-500' },
+  qag: { badge: 'Questions au gouvernement', tone: 'simule', accent: 'bg-sky-500' },
 };
+
+/**
+ * Membre du gouvernement en charge d'un poste (le Premier ministre sans poste ou si le poste est
+ * vacant) : lecture de l'état servi par l'API, comme le fait le moteur.
+ */
+export function memberInChargeOf(
+  state: GameState | undefined,
+  posteId: string | undefined,
+): MemberRef | null {
+  const government = state?.quinquennat?.gouvernement;
+  if (!government) return null;
+  return (
+    (posteId ? government.ministres.find((m) => m.posteId === posteId) : undefined) ??
+    government.premierMinistre
+  );
+}
+
+/** Ministre qui répond (urgence, questions au gouvernement) : photo, nom et poste. */
+export function ResponsibleMinister({
+  decision,
+  state,
+  ruleset,
+  size = 'md',
+}: {
+  decision: PendingDecision;
+  state: GameState | undefined;
+  ruleset: Ruleset | undefined;
+  size?: 'md' | 'lg';
+}) {
+  const member = memberInChargeOf(state, decision.posteId);
+  if (!member || !state || !ruleset) return null;
+  const info = memberInfo(state, ruleset, member);
+  const poste = decision.posteId
+    ? (ruleset.quinquennat.postes.find((p) => p.id === decision.posteId)?.libelle ??
+      decision.posteId)
+    : 'Premier ministre';
+  return (
+    <div className="flex items-center gap-3 rounded-2xl bg-slate-50 p-2.5 pr-4 dark:bg-slate-800/60">
+      {info.portrait && (
+        <Avatar portrait={info.portrait} size={size} ring alt={`Portrait de ${info.name}`} />
+      )}
+      <p className="min-w-0 text-sm leading-snug">
+        <span className="block font-bold">{info.name}</span>
+        <span className="block text-slate-600 dark:text-slate-400">
+          {decision.kind === 'qag' ? 'Répond pour le gouvernement' : 'En charge'} · {poste}
+        </span>
+        <span className="block text-xs text-slate-500 dark:text-slate-400">
+          {member.nature === 'profil'
+            ? 'Profil fictif'
+            : 'Nomination simulée : aucun propos ne lui est attribué'}
+        </span>
+      </p>
+    </div>
+  );
+}
 
 type Option = PendingDecision['options'][number];
 
@@ -182,17 +256,25 @@ function GroupedOptions({
 }
 
 /**
- * Décisions obligatoires (§2), présentées comme des dossiers posés sur le bureau : la semaine
- * ne peut pas être résolue sans réponse.
+ * Décisions (§2), présentées comme des dossiers posés sur le bureau : la semaine ne peut pas être
+ * résolue sans réponse, sauf pour une décision facultative (questions au gouvernement, phase 15 :
+ * le gouvernement répond alors sur le fond).
  */
-export function DecisionsPanel({ decisions, answers, onAnswer, state, ruleset }: Props) {
+export function DecisionsPanel({
+  decisions,
+  answers,
+  onAnswer,
+  state,
+  ruleset,
+  onSpotlight,
+}: Props) {
   return (
     <section aria-labelledby="titre-decisions" className="space-y-4">
       <h2 id="titre-decisions" tabIndex={-1} className="text-xl font-bold outline-none">
         Décisions à prendre
       </h2>
       {decisions.map((decision) => {
-        const kind = KINDS[decision.kind] ?? KINDS.evenement;
+        const kind = DECISION_KINDS[decision.kind] ?? DECISION_KINDS.evenement;
         return (
           <fieldset
             key={decision.id}
@@ -201,13 +283,31 @@ export function DecisionsPanel({ decisions, answers, onAnswer, state, ruleset }:
             <span aria-hidden="true" className={`absolute inset-x-0 top-0 h-1.5 ${kind.accent}`} />
             <legend className="sr-only">{decision.label}</legend>
             <div className="space-y-2">
-              <Badge tone={kind.tone}>{kind.badge}</Badge>
+              <p className="flex flex-wrap gap-1.5">
+                <Badge tone={kind.tone}>{kind.badge}</Badge>
+                {isOptionalDecision(decision) && (
+                  <Badge tone="neutre">Facultatif : réponse sur le fond par défaut</Badge>
+                )}
+              </p>
               <p className="font-display text-2xl leading-tight font-bold tracking-tight sm:text-3xl">
                 {decision.label}
               </p>
+              {(decision.kind === 'urgence' || decision.kind === 'qag') && (
+                <ResponsibleMinister decision={decision} state={state} ruleset={ruleset} />
+              )}
               <p className="max-w-prose text-slate-600 dark:text-slate-400">
                 {decision.description}
               </p>
+              {onSpotlight && SPOTLIGHT_KINDS.has(decision.kind) && (
+                <button
+                  type="button"
+                  className="text-sm font-semibold text-republique-700 underline-offset-2 hover:underline dark:text-republique-300"
+                  aria-haspopup="dialog"
+                  onClick={() => onSpotlight(decision.id)}
+                >
+                  {decision.kind === 'qag' ? 'Suivre la séance en direct' : 'Ouvrir le dossier'}
+                </button>
+              )}
             </div>
             {decision.kind === 'gouvernement' && decision.options.length > 6 ? (
               <GroupedOptions

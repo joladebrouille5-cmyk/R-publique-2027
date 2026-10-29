@@ -1,6 +1,7 @@
 import {
   daysFromCivil,
   DEPARTEMENT_MARQUE,
+  isOptionalDecision,
   parseIsoDate,
   type DecisionAnswer,
   type EventDefinition,
@@ -10,7 +11,9 @@ import {
   type Ruleset,
   type WeeklyReport,
 } from '@r2027/shared';
+import type { CampaignBooks } from '../campaign/actions';
 import { processDonations, type FinanceBook } from '../campaign/finances';
+import { answerRendezVous } from '../campaign/rendezvous';
 import { applyOrSchedule } from '../core/effects';
 import { EngineInputError } from '../core/errors';
 import { compareStrings, type Ledger } from '../core/ledger';
@@ -21,7 +24,8 @@ type ResolvedAnswer = { decision: PendingDecision; optionId: string; automatic: 
 
 /**
  * Étape 1 : chaque décision en attente doit recevoir une réponse valide avant de résoudre
- * la semaine. En mode observateur, l'option par défaut est retenue automatiquement.
+ * la semaine. En mode observateur, et pour une décision facultative (questions au
+ * gouvernement, phase 15), l'option par défaut est retenue automatiquement.
  */
 export function validateDecisionAnswers(
   state: GameState,
@@ -50,7 +54,8 @@ export function validateDecisionAnswers(
     .sort((a, b) => compareStrings(a.id, b.id))
     .map((decision) => {
       const answer = answers.find((a) => a.decisionId === decision.id);
-      if (!answer && !automatic) {
+      // Décision facultative (questions au gouvernement) : l'option par défaut s'applique.
+      if (!answer && !automatic && !isOptionalDecision(decision)) {
         throw new EngineInputError(
           'decision_requise',
           `Décision à prendre avant de continuer : « ${decision.label} ».`,
@@ -69,13 +74,25 @@ export function applyDecisions(
   state: GameState,
   ruleset: Ruleset,
   ledger: Ledger,
-  book: FinanceBook,
+  books: CampaignBooks,
   answers: readonly ResolvedAnswer[],
   step: number,
 ): AppliedDecision[] {
   const week = state.meta.week;
+  const book = books.finances;
   const applied: AppliedDecision[] = [];
   for (const { decision, optionId, automatic } of answers) {
+    if (decision.kind === 'parrainage') {
+      // Rendez-vous d'élus (phase 15) : promesses si la délégation est reçue (heures : étape 2).
+      applied.push({
+        decisionId: decision.id,
+        eventId: decision.eventId,
+        optionId,
+        label: answerRendezVous(state, ruleset, books.parrainages, decision, optionId),
+        automatic,
+      });
+      continue;
+    }
     if (decision.kind === 'consigne') {
       // Consigne de vote du joueur éliminé : pas d'effet sur les ressources, effet au second tour.
       const toActorId = optionId === 'aucune' ? null : optionId;

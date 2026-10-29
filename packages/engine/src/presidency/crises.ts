@@ -9,6 +9,7 @@ import type { FinanceBook } from '../campaign/finances';
 import { applyOrSchedule } from '../core/effects';
 import { compareStrings, type Ledger } from '../core/ledger';
 import { drawAlea, stream } from '../core/random';
+import type { CouncilBook } from './conseil';
 import { addConsequence, crisisMultiplier } from './consequences';
 import { scheduleEconomy, type EconomyBook } from './economy';
 import { memberInCharge, memberName, postCompetenceOf } from './members';
@@ -32,6 +33,8 @@ type Context = {
   book: EconomyBook;
   presidentId: string;
   step: number;
+  /** Faits de la semaine pour le Conseil des ministres (phase 15). */
+  council?: CouncilBook;
 };
 
 function eligible(
@@ -138,10 +141,14 @@ function crisisManagement(context: Context, crisis: CrisisDefinition): void {
   if (!member) return;
   const competence = postCompetenceOf(state, ruleset, member, crisis.poste);
   const value = Math.round(ruleset.quinquennat.equipe.crise * (competence - 0.5));
-  if (value === 0) return;
   const poste = crisis.poste
     ? (ruleset.quinquennat.postes.find((p) => p.id === crisis.poste)?.libelle ?? crisis.poste)
     : 'Premier ministre';
+  // Popularité prêtée du membre en charge (phase 15) : poids × (compétence − 0,5).
+  context.council?.note(member.ref, `Crise « ${crisis.libelle} » : gestion de la crise`, {
+    popularite: Math.round(ruleset.quinquennat.suivi.popularite.crise * (competence - 0.5)),
+  });
+  if (value === 0) return;
   ledger.apply(presidentId, 'popularite', [
     {
       label: `${crisis.libelle} : gestion par ${memberName(state, ruleset, member)} (${poste}, compétence ${Math.round(competence * 100)} %, hypothèse de jeu)`,

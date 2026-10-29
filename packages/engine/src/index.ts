@@ -1,6 +1,14 @@
 export { analyzeSituation, planOpponentActions, scoreAction } from './ai/opponents';
 export { initialRelations, proximity, weeksBeforeFirstRound } from './ai/relations';
 export { targetLabel } from './campaign/actions';
+export { orientationById } from './campaign/orientation';
+export { RENDEZ_VOUS_EVENT } from './campaign/rendezvous';
+export {
+  assessSupport,
+  playerSupportProspects,
+  supportProspects,
+  type SupportAssessment,
+} from './campaign/soutiens';
 export {
   emptyFinances,
   expectedReimbursementCap,

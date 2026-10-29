@@ -4,6 +4,7 @@ import {
   figureMainFunction,
   MINISTER_DECISION_EVENT,
   PRIME_MINISTER_POST,
+  promisedMinistries,
   type Actor,
   type GameState,
   type Government,
@@ -242,8 +243,32 @@ export function composeMinisters(
 ): Government['ministres'] {
   const { proximiteMin, ministresActeursMax } = ruleset.quinquennat.acceptation;
   const postes = ruleset.quinquennat.postes;
+  const chosen = new Map<string, MemberRef>();
+  const placed = new Set<string>();
+  // Ministères promis pendant la campagne (phase 15) : au premier gouvernement du mandat, ces
+  // personnalités sont placées d'abord, sur le poste où elles sont le plus pertinentes.
+  for (const ref of pendingPromises(state, president.id)) {
+    if (ref === primeMinister.ref) continue;
+    const member = { nature: 'figure' as const, ref };
+    const best = postes
+      .filter((p) => !chosen.has(p.id))
+      .map((poste, ordre) => ({
+        posteId: poste.id,
+        ordre,
+        bonus: postExpertise(ruleset, member, poste.id)?.bonus ?? 0,
+        competence: postCompetenceOf(state, ruleset, member, poste.id),
+      }))
+      .sort((a, b) => b.bonus - a.bonus || b.competence - a.competence || a.ordre - b.ordre)[0];
+    if (!best) break;
+    chosen.set(best.posteId, member);
+    placed.add(ref);
+  }
+  const promisedCount = placed.size;
   const allies = eligibleCandidates(state, ruleset, president).filter(
-    (c) => c.proximite >= proximiteMin && c.member.ref !== primeMinister.ref,
+    (c) =>
+      c.proximite >= proximiteMin &&
+      c.member.ref !== primeMinister.ref &&
+      !placed.has(c.member.ref),
   );
   const pairs = allies
     .flatMap((c, rang) =>
@@ -260,10 +285,8 @@ export function composeMinisters(
       (a, b) =>
         b.bonus - a.bonus || b.competence - a.competence || a.rang - b.rang || a.ordre - b.ordre,
     );
-  const chosen = new Map<string, MemberRef>();
-  const placed = new Set<string>();
   for (const pair of pairs) {
-    if (chosen.size >= ministresActeursMax) break;
+    if (chosen.size - promisedCount >= ministresActeursMax) break;
     if (chosen.has(pair.posteId) || placed.has(pair.member.ref)) continue;
     chosen.set(pair.posteId, pair.member);
     placed.add(pair.member.ref);
@@ -275,6 +298,27 @@ export function composeMinisters(
     if (member) return { ...member, posteId: poste.id };
     return { nature: 'profil' as const, ref: profiles[next++]!.profile.id, posteId: poste.id };
   });
+}
+
+/**
+ * Personnalités à qui le président a promis un ministère pendant la campagne qui l'a élu (phase
+ * 15), tant que le premier gouvernement de son mandat n'a pas été nommé, ou quand il l'est.
+ */
+function pendingPromises(state: GameState, presidentId: string): string[] {
+  const quinquennat = state.quinquennat;
+  if (!quinquennat || quinquennat.anciensGouvernements.length > 0) return [];
+  if (quinquennat.gouvernement && quinquennat.gouvernement.numero !== 1) return [];
+  return promisedMinistries(state, presidentId, state.cycle.annee);
+}
+
+/** Vrai si un ministère avait été promis à ce membre pendant la campagne du président. */
+export function wasPromised(state: GameState, member: MemberRef): boolean {
+  const presidentId = state.quinquennat?.mandat.presidentId;
+  return (
+    member.nature === 'figure' &&
+    presidentId !== undefined &&
+    pendingPromises(state, presidentId).includes(member.ref)
+  );
 }
 
 /** Popularité prêtée à un membre, comparée à la référence : effet de sa nomination. */
@@ -456,54 +500,97 @@ export function governmentDecision(state: GameState, ruleset: Ruleset): PendingD
 const ministerDecisionId = (week: number, posteId: string) => `g-${week}-${posteId}`;
 
 /**
+ * Décision du président joueur sur un ministère : confirmer le ministre proposé par le Premier
+ * ministre, ou nommer une autre personnalité (experts du poste d'abord). `intro` précède la
+ * description (départ, remaniement ciblé). Remplace une décision ouverte pour le même poste.
+ */
+export function requestMinisterDecision(
+  state: GameState,
+  ruleset: Ruleset,
+  posteId: string,
+  intro = '',
+): void {
+  const government = state.quinquennat?.gouvernement;
+  const current = government?.ministres.find((m) => m.posteId === posteId);
+  if (!government || !current) return;
+  const president = presidentOf(state);
+  const week = state.meta.week;
+  const members = new Set([government.premierMinistre, ...government.ministres].map((m) => m.ref));
+  const candidates = eligibleCandidates(state, ruleset, president).filter(
+    (c) => !members.has(c.member.ref),
+  );
+  const profiles = sortedProfiles(president, ruleset, members);
+  const id = ministerDecisionId(week, posteId);
+  state.pendingDecisions = state.pendingDecisions.filter((d) => d.id !== id);
+  const name = memberLabel(state, ruleset, current);
+  const libelle = ruleset.quinquennat.postes.find((p) => p.id === posteId)?.libelle ?? posteId;
+  // Personnalités expertes du poste d'abord (bonus), puis l'ordre de préférence habituel.
+  const forPost = candidates
+    .map((c, rang) => ({ c, rang, bonus: postExpertise(ruleset, c.member, posteId)?.bonus ?? 0 }))
+    .sort((a, b) => b.bonus - a.bonus || a.rang - b.rang)
+    .map(({ c }) => c);
+  const promise = wasPromised(state, current)
+    ? ` Ce ministère avait été promis à ${name} pendant la campagne : le lui retirer coûte ${ruleset.negociations.promesseNonTenue / 100} point(s) de popularité (promesse non tenue).`
+    : '';
+  state.pendingDecisions.push({
+    id,
+    kind: 'gouvernement',
+    eventId: MINISTER_DECISION_EVENT,
+    actorId: president.id,
+    createdWeek: week,
+    label: `Ministère : ${libelle}`,
+    description:
+      intro +
+      `Le Premier ministre propose ${name}. Confirmez, ou nommez une autre personnalité : une personnalité éloignée de vous peut refuser (refus simulé), et le ministère reste alors à ${name}. ` +
+      'La compétence du ministre sur son poste (expertise d’une fonction ministérielle passée ou présente comprise) pèse sur l’action du gouvernement et sur la gestion des crises de son domaine.' +
+      promise,
+    options: [
+      {
+        id: current.ref,
+        libelle: `Confirmer ${name}`,
+        description: `Proposition du Premier ministre. Compétence ${current.nature === 'figure' ? 'estimée' : 'prêtée'} : ${competenceText(state, ruleset, current, posteId)}.`,
+      },
+      ...forPost.map((c) => candidateOption(state, ruleset, president, c, posteId)),
+      ...profiles.map(({ profile }) => profileOption(president, profile)),
+    ],
+    defaultOptionId: current.ref,
+    posteId,
+  });
+}
+
+/**
  * Décisions du président joueur après la nomination du Premier ministre : confirmer ou
  * remplacer chaque ministre régalien proposé (une décision par ministère).
  */
 export function requestMinisters(state: GameState, ruleset: Ruleset): void {
   const government = state.quinquennat?.gouvernement;
   if (!government) return;
+  if (presidentOf(state).id !== state.player.actorId) return;
+  for (const posteId of ruleset.quinquennat.equipe.postesRegaliens)
+    requestMinisterDecision(state, ruleset, posteId);
+}
+
+/**
+ * Remplaçant proposé par le Premier ministre pour un ministère (départ, remaniement ciblé) :
+ * la personnalité proche du président (qui accepte) la plus pertinente pour le poste —
+ * expertise, compétence sur le poste, préférence habituelle —, sinon le meilleur profil fictif.
+ */
+export function proposeReplacement(state: GameState, ruleset: Ruleset, posteId: string): MemberRef {
+  const government = state.quinquennat!.gouvernement!;
   const president = presidentOf(state);
-  if (president.id !== state.player.actorId) return;
-  const week = state.meta.week;
   const members = new Set([government.premierMinistre, ...government.ministres].map((m) => m.ref));
-  const libelles = new Map(ruleset.quinquennat.postes.map((p) => [p.id, p.libelle]));
-  const candidates = eligibleCandidates(state, ruleset, president).filter(
-    (c) => !members.has(c.member.ref),
-  );
-  const profiles = sortedProfiles(president, ruleset, members);
-  for (const posteId of ruleset.quinquennat.equipe.postesRegaliens) {
-    const current = government.ministres.find((m) => m.posteId === posteId);
-    if (!current) continue;
-    const id = ministerDecisionId(week, posteId);
-    state.pendingDecisions = state.pendingDecisions.filter((d) => d.id !== id);
-    const name = memberLabel(state, ruleset, current);
-    // Personnalités expertes du poste d'abord (bonus), puis l'ordre de préférence habituel.
-    const forPost = candidates
-      .map((c, rang) => ({ c, rang, bonus: postExpertise(ruleset, c.member, posteId)?.bonus ?? 0 }))
-      .sort((a, b) => b.bonus - a.bonus || a.rang - b.rang)
-      .map(({ c }) => c);
-    state.pendingDecisions.push({
-      id,
-      kind: 'gouvernement',
-      eventId: MINISTER_DECISION_EVENT,
-      actorId: president.id,
-      createdWeek: week,
-      label: `Ministère : ${libelles.get(posteId) ?? posteId}`,
-      description:
-        `Le Premier ministre propose ${name}. Confirmez, ou nommez une autre personnalité : une personnalité éloignée de vous peut refuser (refus simulé), et le ministère reste alors à ${name}. ` +
-        'La compétence du ministre sur son poste (expertise d’une fonction ministérielle passée ou présente comprise) pèse sur l’action du gouvernement et sur la gestion des crises de son domaine.',
-      options: [
-        {
-          id: current.ref,
-          libelle: `Confirmer ${name}`,
-          description: `Proposition du Premier ministre. Compétence ${current.nature === 'figure' ? 'estimée' : 'prêtée'} : ${competenceText(state, ruleset, current, posteId)}.`,
-        },
-        ...forPost.map((c) => candidateOption(state, ruleset, president, c, posteId)),
-        ...profiles.map(({ profile }) => profileOption(president, profile)),
-      ],
-      defaultOptionId: current.ref,
-    });
-  }
+  const { proximiteMin } = ruleset.quinquennat.acceptation;
+  const best = eligibleCandidates(state, ruleset, president)
+    .filter((c) => !members.has(c.member.ref) && c.proximite >= proximiteMin)
+    .map((c, rang) => ({
+      member: c.member,
+      rang,
+      bonus: postExpertise(ruleset, c.member, posteId)?.bonus ?? 0,
+      competence: postCompetenceOf(state, ruleset, c.member, posteId),
+    }))
+    .sort((a, b) => b.bonus - a.bonus || b.competence - a.competence || a.rang - b.rang)[0];
+  if (best) return best.member;
+  return { nature: 'profil', ref: sortedProfiles(president, ruleset, members)[0]!.profile.id };
 }
 
 /** Le gouvernement est-il à nommer cette semaine (mandat commencé, Matignon vacant) ? */
@@ -622,6 +709,7 @@ export function answerMinister(
       `Proximité avec le président : ${proximity(president, asPositioned(state, ruleset, member))}/100. ${memberName(state, ruleset, current)} reste en fonction.`,
     );
   }
+  const broken = wasPromised(state, current);
   const index = government.ministres.indexOf(current);
   government.ministres[index] = { ...member, posteId };
   const value = nominationEffect(
@@ -630,16 +718,24 @@ export function answerMinister(
     member,
     ruleset.quinquennat.equipe.nomination.ministre,
   );
-  if (value !== 0) {
-    book.ledger.apply(president.id, 'popularite', [
-      {
-        label: `Nomination de ${name} (${poste}) : popularité prêtée, hypothèse de jeu`,
-        value,
-        source: 'decision',
-        step: book.step,
-      },
-    ]);
+  const factors = [
+    {
+      label: `Nomination de ${name} (${poste}) : popularité prêtée, hypothèse de jeu`,
+      value,
+      source: 'decision' as const,
+      step: book.step,
+    },
+  ];
+  // Ministère promis pendant la campagne et retiré au premier gouvernement : promesse non tenue.
+  if (broken) {
+    factors.push({
+      label: `Promesse de ministère non tenue : ${memberName(state, ruleset, current)} (hypothèse de jeu)`,
+      value: -ruleset.negociations.promesseNonTenue,
+      source: 'decision',
+      step: book.step,
+    });
   }
+  book.ledger.apply(president.id, 'popularite', factors);
   return governmentEvent(
     state,
     `ministre-${posteId}`,
@@ -724,6 +820,9 @@ export function openQuinquennat(state: GameState, ruleset: Ruleset, winnerId: st
       indicateurs: null,
     },
     usages: {},
+    suivi: {},
+    objectifs: [],
+    deplacements: {},
   };
   state.quinquennat = quinquennat;
   state.parlement = openParliament(ruleset, winner, state.parlement);

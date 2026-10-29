@@ -22,16 +22,20 @@ import {
 import { ConsequenceSchema } from './consequences';
 import { EconomyStateSchema } from './economie';
 import { LegislativesStateSchema, LegislativesStateV16Schema } from './legislatives-etat';
-import { ParliamentSchema, ParliamentV16Schema } from './parlement';
+import { ParliamentSchema, ParliamentV16Schema, ParliamentV18Schema } from './parlement';
+import { NegotiationSchema } from './precampagne';
 import {
   CycleSchema,
   QuinquennatSchema,
   QuinquennatSummarySchema,
+  QuinquennatSummaryV18Schema,
   QuinquennatV16Schema,
+  QuinquennatV18Schema,
   QuinquennatSummaryV12Schema,
   QuinquennatSummaryV8Schema,
   QuinquennatV8Schema,
 } from './quinquennat';
+import { AchievementSchema } from './succes';
 import { DebatesStateSchema } from './debats';
 import { PostureSchema } from './prestations';
 import { DigitalStateSchema, DigitalStateV14Schema } from './numerique';
@@ -114,8 +118,19 @@ export const OPPONENT_SETS = ['fictifs', 'reels'] as const;
 export const OpponentSetSchema = z.enum(OPPONENT_SETS);
 export type OpponentSet = z.infer<typeof OpponentSetSchema>;
 
-/** Joueur (format 6) : mode, campagne incarnée et jeu d'adversaires. */
-const PlayerSchema = PlayerV1Schema.extend({ adversaires: OpponentSetSchema }).strict();
+/** Joueur (formats 6 à 18, figé) : mode, campagne incarnée et jeu d'adversaires. */
+const PlayerV18Schema = PlayerV1Schema.extend({ adversaires: OpponentSetSchema }).strict();
+
+/**
+ * Joueur (format 19, phase 15) : en plus, l'orientation stratégique de son mouvement (jeu de
+ * règles, `orientations`), choisie à la création ; null sans candidat ou pour une partie migrée.
+ */
+const PlayerSchema = PlayerV18Schema.extend({
+  orientation: z
+    .string()
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+    .nullable(),
+}).strict();
 
 /**
  * Format de sauvegarde n° 1 (phase 1) : figé, ne jamais modifier. Sert à relire et migrer
@@ -304,11 +319,49 @@ export const PendingDecisionV16Schema = PendingDecisionV2Schema.extend({
 }).strict();
 
 /**
- * Décision obligatoire (format 17) : en plus, stratégie d'alliance pour les législatives et
- * coalition de gouvernement après des législatives sans majorité (phase 13).
+ * Décision obligatoire aux formats 17 et 18 (figée) : en plus, stratégie d'alliance pour les
+ * législatives et coalition de gouvernement après des législatives sans majorité (phase 13).
  */
-export const PendingDecisionSchema = PendingDecisionV2Schema.extend({
+export const PendingDecisionV18Schema = PendingDecisionV2Schema.extend({
   kind: z.enum(['evenement', 'consigne', 'gouvernement', 'texte', 'crise', 'alliance']),
+}).strict();
+
+/**
+ * Décision obligatoire (format 19, phase 15) : en plus, rendez-vous d'élus pendant la période
+ * des parrainages (`departement`), urgence ministérielle (`posteId` : ministère en charge) et
+ * questions au gouvernement (`groupeId` : groupe d'opposition qui interpelle ; `themeId` :
+ * thème ; `posteId` : ministère du thème, s'il y en a un). Aucun nom de député, d'élu ni de
+ * propos : ces décisions décrivent des faits de jeu simulés.
+ */
+export const DECISION_KINDS = [
+  'evenement',
+  'consigne',
+  'gouvernement',
+  'texte',
+  'crise',
+  'alliance',
+  'parrainage',
+  'urgence',
+  'qag',
+] as const;
+export type DecisionKind = (typeof DECISION_KINDS)[number];
+/**
+ * Décisions facultatives (phase 15) : sans réponse du joueur, l'option par défaut s'applique —
+ * les questions au gouvernement, auxquelles le gouvernement répond sur le fond. Elles n'arrêtent
+ * pas l'avance rapide. Règle commune au moteur, à l'API, au moteur local et à l'interface.
+ */
+export const OPTIONAL_DECISION_KINDS: readonly DecisionKind[] = ['qag'];
+export const isOptionalDecision = (decision: { kind: DecisionKind }) =>
+  OPTIONAL_DECISION_KINDS.includes(decision.kind);
+export const PendingDecisionSchema = PendingDecisionV2Schema.extend({
+  kind: z.enum(DECISION_KINDS),
+  departement: z
+    .string()
+    .regex(/^(\d{2}|2A|2B|97\d)$/)
+    .optional(),
+  posteId: Id.optional(),
+  groupeId: Id.optional(),
+  themeId: Id.optional(),
 }).strict();
 export type PendingDecision = z.infer<typeof PendingDecisionSchema>;
 
@@ -562,7 +615,7 @@ export type GameStateV5 = z.infer<typeof GameStateV5Schema>;
 /** État au format 6 (phase 5 bis), figé pour les migrations. */
 export const GameStateV6Schema = GameStateV5Schema.extend({
   meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(6) }).strict(),
-  player: PlayerSchema,
+  player: PlayerV18Schema,
   actors: z.record(Id, ActorV6Schema),
 }).strict();
 export type GameStateV6 = z.infer<typeof GameStateV6Schema>;
@@ -651,7 +704,7 @@ export const GameStateV13Schema = GameStateV12Schema.extend({
   historique: z
     .object({
       presidentielles: z.array(PresidentialArchiveSchema),
-      quinquennats: z.array(QuinquennatSummarySchema),
+      quinquennats: z.array(QuinquennatSummaryV18Schema),
     })
     .strict(),
 }).strict();
@@ -695,10 +748,10 @@ export type GameStateV16 = z.infer<typeof GameStateV16Schema>;
 export const GameStateV17Schema = GameStateV16Schema.extend({
   meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(17) }).strict(),
   actors: z.record(Id, ActorSchema),
-  pendingDecisions: z.array(PendingDecisionSchema),
-  parlement: ParliamentSchema.nullable(),
+  pendingDecisions: z.array(PendingDecisionV18Schema),
+  parlement: ParliamentV18Schema.nullable(),
   legislatives: LegislativesStateSchema.nullable(),
-  quinquennat: QuinquennatSchema.nullable(),
+  quinquennat: QuinquennatV18Schema.nullable(),
 }).strict();
 export type GameStateV17 = z.infer<typeof GameStateV17Schema>;
 
@@ -713,8 +766,39 @@ export type GameStateV17 = z.infer<typeof GameStateV17Schema>;
  * d'une migration (packages/save-engine). L'aléa ne figure pas dans l'état : chaque tirage est
  * dérivé de la graine, de la semaine et de son contexte.
  */
-export const GameStateSchema = GameStateV17Schema.extend({
+export const GameStateV18Schema = GameStateV17Schema.extend({
   meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(18) }).strict(),
+}).strict();
+export type GameStateV18 = z.infer<typeof GameStateV18Schema>;
+
+/**
+ * État complet d'une partie, format de sauvegarde n° 19 (phase 15) : jeu de règles 16
+ * (orientations stratégiques, rendez-vous d'élus, négociations de soutien, ministres vivants,
+ * remaniement ciblé, urgences ministérielles, questions au gouvernement, objectifs de mandat,
+ * succès). En plus du format 18 : orientation du mouvement du joueur ; négociations de soutien
+ * avec les personnalités réelles (issues simulées) ; succès débloqués ; décisions de rendez-vous
+ * d'élus, d'urgence et de QAG ; Parlement avec échauffement et séances de QAG ; quinquennat avec
+ * suivi des ministres (popularité prêtée, loyauté), objectifs et déplacements ; bilans avec la
+ * note du mandat. Toute évolution s'accompagne d'un nouveau numéro de format et d'une migration
+ * (packages/save-engine). L'aléa ne figure pas dans l'état : chaque tirage est dérivé de la
+ * graine, de la semaine et de son contexte.
+ */
+export const GameStateSchema = GameStateV18Schema.extend({
+  meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(19) }).strict(),
+  player: PlayerSchema,
+  pendingDecisions: z.array(PendingDecisionSchema),
+  parlement: ParliamentSchema.nullable(),
+  quinquennat: QuinquennatSchema.nullable(),
+  historique: z
+    .object({
+      presidentielles: z.array(PresidentialArchiveSchema),
+      quinquennats: z.array(QuinquennatSummarySchema),
+    })
+    .strict(),
+  /** Négociations de soutien avec les personnalités réelles (phase 15), toutes campagnes. */
+  negociations: z.array(NegotiationSchema),
+  /** Succès débloqués (phase 15), dans l'ordre. */
+  succes: z.array(AchievementSchema),
 }).strict();
 export type GameState = z.infer<typeof GameStateSchema>;
 

@@ -1,5 +1,5 @@
 /** Version du moteur, enregistrée dans chaque partie et chaque sauvegarde (§11). */
-export const ENGINE_VERSION = '0.17.0';
+export const ENGINE_VERSION = '0.18.0';
 
 /**
  * Version du format de `GameState` ; toute évolution s'accompagne d'une migration
@@ -16,6 +16,8 @@ export const ENGINE_VERSION = '0.17.0';
  * télévisés) ; 16 : phase 11 (jeu de règles 13 : réactions, événements, plateaux, gouvernement) ;
  * 17 : phase 13 (jeu de règles 14 : tension parlementaire, frondeurs, motions spontanées,
  * coalition, alliances législatives, actions du chef de l'État, photo du candidat) ; 18 : phase
- * 14 (jeu de règles 15 : vivier de personnalités réelles, expertise ministérielle).
+ * 14 (jeu de règles 15 : vivier de personnalités réelles, expertise ministérielle) ; 19 : phase
+ * 15 (jeu de règles 16 : orientation stratégique, négociations de soutien, ministres vivants,
+ * urgences ministérielles, questions au gouvernement, objectifs de mandat, succès).
  */
-export const SAVE_SCHEMA_VERSION = 18;
+export const SAVE_SCHEMA_VERSION = 19;

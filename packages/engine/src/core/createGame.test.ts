@@ -32,6 +32,7 @@ describe('createGame', () => {
       mode: 'candidat_personnalise',
       actorId: PLAYER_ACTOR_ID,
       adversaires: 'fictifs',
+      orientation: null,
     });
     expect(state.actors[PLAYER_ACTOR_ID]).toMatchObject({
       kind: 'joueur',
@@ -113,7 +114,12 @@ describe('createGame', () => {
 
   it('crée une partie sans candidat du joueur en mode observateur', () => {
     const state = createGame({ seed: 'obs', mode: 'observateur', difficulty: 'standard' }, ruleset);
-    expect(state.player).toEqual({ mode: 'observateur', actorId: null, adversaires: 'fictifs' });
+    expect(state.player).toEqual({
+      mode: 'observateur',
+      actorId: null,
+      adversaires: 'fictifs',
+      orientation: null,
+    });
     expect(Object.values(state.actors).every((a) => a.kind === 'adversaire')).toBe(true);
   });
 });

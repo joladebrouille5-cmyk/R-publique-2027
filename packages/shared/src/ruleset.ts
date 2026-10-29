@@ -19,7 +19,9 @@ import {
   PARTI_MARQUE,
   type FamillePolitique,
 } from './numerique';
+import { CounterpartSchema } from './precampagne';
 import { ResourceKeySchema, ResourcesV1Schema } from './resources';
+import { AchievementDefinitionSchema } from './succes';
 
 // Jeu de règles versionné (§2 : les dates électorales sont des paramètres versionnés vérifiés
 // auprès des sources officielles, pas des constantes dispersées dans le code).
@@ -134,6 +136,11 @@ export const CampaignEffectSchema = z
     exposition: z.number().int().min(0).max(10_000).optional(),
     /** Heures de préparation des débats. */
     preparationDebat: z.number().int().min(0).optional(),
+    /**
+     * Négociation du soutien d'une personnalité réelle (phase 15), avec ou sans contrepartie ;
+     * issue simulée par le moteur (`negociations`).
+     */
+    soutien: z.object({ contrepartie: CounterpartSchema }).strict().optional(),
   })
   .strict();
 export type CampaignEffect = z.infer<typeof CampaignEffectSchema>;
@@ -144,8 +151,11 @@ export const ActionDefinitionSchema = z
     libelle: z.string().min(1),
     description: z.string().min(1),
     portee: z.enum(['locale', 'regionale', 'nationale']),
-    /** Cible à choisir en programmant l'action, le cas échéant. */
-    cible: z.enum(['departement', 'media', 'emission']).nullable(),
+    /**
+     * Cible à choisir en programmant l'action, le cas échéant ; depuis la phase 15 : une
+     * personnalité réelle (négociation de soutien) ou un ministère (remaniement ciblé).
+     */
+    cible: z.enum(['departement', 'media', 'emission', 'personnalite', 'poste']).nullable(),
     cout: z
       .object({
         budgetCentimes: z.number().int().min(0),
@@ -168,8 +178,11 @@ export const ActionDefinitionSchema = z
       .strict()
       .nullable(),
     note: z.string().nullable(),
-    /** Acte institutionnel du président (phase 6) : remaniement, dissolution de l'Assemblée. */
-    institution: z.enum(['remaniement', 'dissolution']).optional(),
+    /**
+     * Acte institutionnel du président (phase 6) : remaniement, dissolution de l'Assemblée ;
+     * depuis la phase 15, remplacement d'un seul ministre (remaniement ciblé).
+     */
+    institution: z.enum(['remaniement', 'dissolution', 'remaniement-cible']).optional(),
     /** Format des réseaux et nouveaux médias (phase 9) : l'action produit une publication. */
     format: Id.optional(),
     // Actions du chef de l'État (phase 13) : paramètres de jeu (hypothèses), sauf la règle citée.
@@ -357,6 +370,60 @@ export const QuinquennatRulesSchema = z
       .strict(),
     /** Actions du président pendant le quinquennat (mêmes règles pour le joueur et l'IA). */
     actions: z.array(ActionDefinitionSchema).min(1),
+    /**
+     * Ministres vivants (phase 15) : popularité prêtée (centièmes) et loyauté envers le
+     * président (0 à 100) de chaque membre du gouvernement, et départs simulés. Paramètres de
+     * jeu (hypothèses) ; la popularité prêtée n'est jamais présentée comme un sondage.
+     */
+    suivi: z
+      .object({
+        statut: z.literal('hypothese'),
+        note: z.string().min(1),
+        loyaute: z
+          .object({
+            /** Loyauté de départ à une proximité de 50/100 avec le président. */
+            base: z.number().int().min(0).max(100),
+            /** Points de loyauté de départ par point de proximité au-dessus de 50. */
+            poidsProximite: z.number().min(0).max(2),
+            /** Loyauté de départ en plus pour le Premier ministre. */
+            premierMinistre: z.number().int().min(0).max(50),
+            /** Part de l'écart à la loyauté de départ résorbée chaque semaine. */
+            rappel: Fraction,
+            /** Points par point d'écart de la popularité du président à la référence. */
+            poidsPopularitePresident: z.number().min(0).max(2),
+            /** Un point de loyauté perdu toutes les n semaines au poste (usure). */
+            usureSemaines: z.number().int().min(1),
+          })
+          .strict(),
+        popularite: z
+          .object({
+            /** Perte hebdomadaire (centièmes) : usure au poste. */
+            usureHebdomadaire: z.number().int().min(0).max(500),
+            /** Part de l'écart à la popularité prêtée de départ résorbée chaque semaine. */
+            rappel: Fraction,
+            /** Part de l'écart hebdomadaire de popularité du président reportée sur ses ministres. */
+            poidsPresident: Fraction,
+            /** Crise de son domaine : poids × (compétence − 0,5) (centièmes). */
+            crise: z.number().int().min(0).max(2_000),
+            /** Texte de son domaine adopté (+) ou rejeté (−) (centièmes). */
+            texte: z.number().int().min(0).max(1_000),
+          })
+          .strict(),
+        depart: z
+          .object({
+            /** Départ possible en deçà de cette loyauté… */
+            loyauteMax: z.number().int().min(0).max(100),
+            /** …ou de cette popularité prêtée (centièmes). */
+            populariteMax: Points,
+            probabilite: Probability,
+            /** Semaines au poste avant un départ possible. */
+            semainesMin: z.number().int().min(0),
+            /** Popularité perdue par le président à chaque départ (centièmes). */
+            effetPresident: z.number().int().min(0).max(1_000),
+          })
+          .strict(),
+      })
+      .strict(),
   })
   .strict();
 export type QuinquennatRules = z.infer<typeof QuinquennatRulesSchema>;
@@ -529,6 +596,65 @@ export const ParliamentRulesSchema = z
         effet: Fraction,
         /** Distance (axes du jeu) maximale entre un candidat fictif battu et le groupe qu'il mène. */
         distanceMeneur: z.number().positive(),
+      })
+      .strict(),
+    /**
+     * Questions au gouvernement (phase 15). Règle citée (`sourceId`) : une séance par semaine
+     * au moins est réservée aux questions des parlementaires et aux réponses du gouvernement
+     * (Constitution, art. 48). Thèmes, répliques et effets : hypothèses du jeu. Un groupe
+     * d'opposition interpelle ; aucun député n'est nommé, aucun propos n'est rapporté.
+     */
+    qag: z
+      .object({
+        statut: z.literal('hypothese'),
+        sourceId: Id,
+        note: z.string().min(1),
+        /** Mois sans séance (intersession : la session ordinaire va d'octobre à juin, art. 28). */
+        moisSansSeance: z.array(z.number().int().min(1).max(12)),
+        themes: z
+          .array(
+            z
+              .object({
+                id: Id,
+                libelle: z.string().min(1),
+                /** Ministère du thème ; null : le Premier ministre. */
+                poste: Id.nullable(),
+                /** Indicateur dont la dégradation depuis le début du mandat rend le thème probable. */
+                indicateur: EconomicIndicatorSchema.nullable(),
+              })
+              .strict(),
+          )
+          .min(3),
+        /** Poids d'un thème dont l'indicateur s'est dégradé depuis le début du mandat. */
+        poidsDegradation: z.number().min(1).max(10),
+        reponses: z
+          .array(
+            z
+              .object({
+                id: Id,
+                libelle: z.string().min(1),
+                description: z.string().min(1),
+                /** Points de tension : positifs, échauffement ; négatifs, apaisement. */
+                tension: z.number().int().min(-20).max(20),
+                /** Popularité du président (centièmes), modulée par la compétence du ministre. */
+                popularite: z.number().int().min(-1_000).max(1_000),
+                economie: z
+                  .array(
+                    z
+                      .object({ indicateur: EconomicIndicatorSchema, valeur: z.number().int() })
+                      .strict(),
+                  )
+                  .default([]),
+                /** Poids de la compétence du ministre du thème : × (1 + poids × (compétence − 0,5)). */
+                modulation: z.number().min(0).max(4),
+              })
+              .strict(),
+          )
+          .min(2)
+          .max(4),
+        reponseParDefaut: Id,
+        /** Part de l'échauffement perdue chaque semaine. */
+        decroissanceEchauffement: Fraction,
       })
       .strict(),
   })
@@ -1093,6 +1219,110 @@ export const DigitalRulesSchema = z
   .strict();
 export type DigitalRules = z.infer<typeof DigitalRulesSchema>;
 
+/**
+ * Orientation stratégique du mouvement du joueur (phase 15), choisie à la création : moyens et
+ * promesses de parrainage de départ, et base électorale de départ (facteur du score latent dans
+ * certains groupes d'électeurs, qui décroît jusqu'à s'éteindre). Paramètres de jeu (hypothèses).
+ */
+export const OrientationSchema = z
+  .object({
+    id: Id,
+    libelle: z.string().min(1),
+    description: z.string().min(1),
+    modificateurs: z
+      .object({
+        budgetCentimes: z.number().int(),
+        militants: z.number().int(),
+        notoriete: z.number().int(),
+        popularite: z.number().int(),
+        jeunesse: z.number().int(),
+        dynamique: z.number().int(),
+      })
+      .partial()
+      .strict(),
+    /** Promesses de parrainage de départ en plus (ou en moins). */
+    promesses: z.number().int().min(-500).max(500),
+    base: z
+      .object({
+        /**
+         * Groupes concernés : le plus proche du candidat ; ceux à une distance d'au plus
+         * `distance` du candidat ; ceux à une distance d'au moins `distance` du centre ; tous.
+         */
+        groupes: z.enum(['plus-proche', 'proches', 'peripherie', 'tous']),
+        /** Facteur du score latent au départ (unités du modèle). */
+        valeur: z.number().min(0).max(2),
+        distance: z.number().min(0).max(3).optional(),
+      })
+      .strict(),
+  })
+  .strict();
+export type Orientation = z.infer<typeof OrientationSchema>;
+
+/**
+ * Urgence ministérielle (phase 15) : situation sectorielle fictive rattachée à un ministère,
+ * présentée au président (joueur, sinon l'IA retient le choix par défaut) avec deux choix à
+ * effet direct : popularité du président (centièmes, modulée par la compétence du ministre en
+ * charge), indicateurs économiques (déficit, tensions sociales…), popularité prêtée et loyauté
+ * du ministre. Aucun propos n'est prêté au ministre ni à quiconque.
+ */
+const UrgencyChoiceSchema = z
+  .object({
+    id: Id,
+    libelle: z.string().min(1),
+    description: z.string().min(1),
+    popularite: z.number().int().min(-1_000).max(1_000),
+    economie: z.array(
+      z.object({ indicateur: EconomicIndicatorSchema, valeur: z.number().int() }).strict(),
+    ),
+    ministre: z
+      .object({
+        popularite: z.number().int().min(-2_000).max(2_000),
+        loyaute: z.number().int().min(-30).max(30),
+      })
+      .strict(),
+  })
+  .strict();
+
+export const UrgencyDefinitionSchema = z
+  .object({
+    id: z.string().regex(/^urgence-[a-z0-9-]+$/),
+    poste: Id,
+    libelle: z.string().min(1),
+    description: z.string().min(1),
+    nature: z.literal('fictif'),
+    probabiliteHebdomadaire: Probability,
+    delaiMinEntreOccurrences: z.number().int().min(0),
+    occurrencesMax: z.number().int().min(1).nullable(),
+    /** Mois (1 à 12) où l'urgence peut survenir ; null : toute l'année. */
+    mois: z.array(z.number().int().min(1).max(12)).min(1).nullable(),
+    choix: z.tuple([UrgencyChoiceSchema, UrgencyChoiceSchema]),
+    choixParDefaut: Id,
+  })
+  .strict();
+export type UrgencyDefinition = z.infer<typeof UrgencyDefinitionSchema>;
+
+/**
+ * Objectif de mandat du catalogue (phase 15) : mesure (indicateur économique, popularité du
+ * président, réformes adoptées, censures), sens et cible (écart au départ ou valeur), domaines
+ * du programme qui le rendent prioritaire. Paramètres de jeu, jamais des prévisions.
+ */
+export const ObjectiveDefinitionSchema = z
+  .object({
+    id: Id,
+    libelle: z.string().min(1),
+    mesure: z.enum(['indicateur', 'popularite', 'reformes', 'censures']),
+    indicateur: EconomicIndicatorSchema.optional(),
+    /** baisse : la valeur de fin doit être au plus la cible ; hausse : au moins la cible. */
+    sens: z.enum(['baisse', 'hausse']),
+    /** Cible = départ + écart (indicateur, popularité). */
+    ecart: z.number().int().optional(),
+    /** Cible absolue (réformes, censures). */
+    valeur: z.number().int().min(0).optional(),
+    domaines: z.array(Id),
+  })
+  .strict();
+export type ObjectiveDefinition = z.infer<typeof ObjectiveDefinitionSchema>;
+
 export const RulesetSchema = z
   .object({
     id: Id,
@@ -1296,6 +1526,24 @@ export const RulesetSchema = z
             partImplantation: Fraction,
           })
           .strict(),
+        /**
+         * Rendez-vous d'élus (phase 15) : pendant la course aux parrainages, jusqu'à la semaine
+         * qui précède la clôture des présentations, une délégation d'élus d'un département
+         * (anonyme, fictive) propose des promesses au joueur (paramètres de jeu, hypothèses).
+         */
+        rendezVous: z
+          .object({
+            statut: z.literal('hypothese'),
+            probabiliteHebdo: Probability,
+            /** Semaines minimales entre deux rendez-vous. */
+            delaiSemaines: z.number().int().min(1),
+            promesses: z
+              .object({ min: z.number().int().min(1), max: z.number().int().min(1) })
+              .strict(),
+            /** Heures du candidat consacrées à la délégation s'il la reçoit. */
+            tempsHeures: z.number().int().min(0).max(40),
+          })
+          .strict(),
       })
       .strict(),
     finances: z
@@ -1391,6 +1639,81 @@ export const RulesetSchema = z
       })
       .strict(),
     profilsDeDepart: z.array(StartingProfileSchema).min(1),
+    /** Orientations stratégiques du mouvement du joueur (phase 15, hypothèses). */
+    orientations: z
+      .object({
+        statut: z.literal('hypothese'),
+        note: z.string().min(1),
+        /** Semaines de campagne au bout desquelles la base électorale de départ s'éteint. */
+        dureeSemaines: z.number().int().min(1),
+        liste: z.array(OrientationSchema).min(3),
+      })
+      .strict(),
+    /**
+     * Négociations de soutien avec les personnalités réelles nominables (phase 15) : issue
+     * simulée (probabilité selon la proximité, le rapport de forces et la contrepartie), effets
+     * du soutien obtenu. Paramètres de jeu (hypothèses) ; aucun propos n'est attribué.
+     */
+    negociations: z
+      .object({
+        statut: z.literal('hypothese'),
+        note: z.string().min(1),
+        /** Proximité (0 à 100) en deçà de laquelle la personnalité refuse toujours. */
+        proximiteMin: z.number().int().min(0).max(100),
+        /** Probabilité d'accepter à une proximité de 50, sans contrepartie. */
+        probabiliteBase: Probability,
+        /** Probabilité en plus par point de proximité au-dessus de 50 (× 100). */
+        poidsProximite: z.number().min(0).max(2),
+        /** Probabilité en plus par point d'intentions de vote du candidat (× 100). */
+        poidsIntentions: z.number().min(0).max(2),
+        /** Probabilité en plus quand un ministère est promis. */
+        bonusMinistere: Probability,
+        /** Semaines avant de solliciter de nouveau une personnalité qui a refusé. */
+        delaiApresRefus: z.number().int().min(1),
+        /** Soutiens au plus par candidat et par campagne. */
+        soutiensMax: z.number().int().min(1),
+        /** Poids du soutien dans le score latent des groupes proches de la personnalité. */
+        poids: z.number().min(0).max(3),
+        /** Notoriété et militants gagnés selon la notoriété de la personnalité (niveaux 1 à 3). */
+        notoriete: z.tuple([z.number().int(), z.number().int(), z.number().int()]),
+        militants: z.tuple([z.number().int(), z.number().int(), z.number().int()]),
+        /** Popularité perdue par ministère promis et non tenu au premier gouvernement. */
+        promesseNonTenue: z.number().int().min(0).max(2_000),
+        /** Loyauté de départ en plus pour un ministre à qui un ministère avait été promis. */
+        loyautePromesse: z.number().int().min(0).max(50),
+      })
+      .strict(),
+    /** Urgences ministérielles du quinquennat (phase 15) : au plus une par semaine. */
+    urgences: z
+      .object({
+        statut: z.literal('hypothese'),
+        note: z.string().min(1),
+        liste: z.array(UrgencyDefinitionSchema).min(4),
+      })
+      .strict(),
+    /** Objectifs de mandat et note finale (phase 15), paramètres de jeu (hypothèses). */
+    objectifs: z
+      .object({
+        statut: z.literal('hypothese'),
+        note: z.string().min(1),
+        nombre: z.number().int().min(1).max(6),
+        catalogue: z.array(ObjectiveDefinitionSchema).min(4),
+        /** Mentions, de la meilleure à la moins bonne : note minimale sur 20 et libellé. */
+        mentions: z
+          .array(
+            z.object({ min: z.number().int().min(0).max(20), libelle: z.string().min(1) }).strict(),
+          )
+          .min(2),
+      })
+      .strict(),
+    /** Succès de la partie (phase 15) : convention du jeu. */
+    succes: z
+      .object({
+        statut: z.literal('hypothese'),
+        note: z.string().min(1),
+        liste: z.array(AchievementDefinitionSchema).min(10),
+      })
+      .strict(),
     ia: z
       .object({
         statut: z.literal('hypothese'),
@@ -1558,7 +1881,11 @@ export const RulesetSchema = z
     for (const action of ruleset.quinquennat.actions) {
       if (action.cout.budgetCentimes !== 0 || action.campagne !== null)
         issue(`${action.id} : une action du président n'a ni coût budgétaire ni effet de campagne`);
-      if (action.cible !== null && action.cible !== 'departement')
+      // Phase 15 : un ministère est la cible du seul remaniement ciblé.
+      const posteTarget = action.institution === 'remaniement-cible';
+      if (posteTarget ? action.cible !== 'poste' : action.cible === 'poste')
+        issue(`${action.id} : la cible « ministère » est celle du seul remaniement ciblé`);
+      if (action.cible !== null && action.cible !== 'departement' && action.cible !== 'poste')
         issue(`${action.id} : seule une cible départementale est possible pour le président`);
       if (action.effets.length === 0 && !action.institution) issue(`${action.id} : aucun effet`);
       if (action.poste && !ruleset.quinquennat.postes.some((p) => p.id === action.poste))
@@ -1567,6 +1894,11 @@ export const RulesetSchema = z
         issue(`${action.id} : source inconnue ${action.sourceId}`);
     }
     for (const action of ruleset.actions) {
+      // Phase 15 : la négociation d'un soutien vise une personnalité, et elle seule.
+      if ((action.campagne?.soutien !== undefined) !== (action.cible === 'personnalite'))
+        issue(`${action.id} : une négociation de soutien vise une personnalité, et elle seule`);
+      if (action.cible === 'poste' || action.institution)
+        issue(`${action.id} : ministère et acte institutionnel réservés au président`);
       const presidential = [
         action.delaiSemaines,
         action.condition,
@@ -1580,6 +1912,71 @@ export const RulesetSchema = z
           `${action.id} : délai, condition, économie, Parlement et poste réservés au président`,
         );
     }
+    // Phase 15 : orientations, urgences, QAG, objectifs et succès.
+    unique(
+      'Orientation',
+      ruleset.orientations.liste.map((o) => o.id),
+    );
+    for (const o of ruleset.orientations.liste) {
+      const needsDistance = o.base.groupes === 'proches' || o.base.groupes === 'peripherie';
+      if (needsDistance !== (o.base.distance !== undefined))
+        issue(
+          `Orientation ${o.id} : distance requise pour « proches » et « périphérie » seulement`,
+        );
+    }
+    const posteIds = new Set(ruleset.quinquennat.postes.map((p) => p.id));
+    unique(
+      'Urgence',
+      ruleset.urgences.liste.map((u) => u.id),
+    );
+    for (const u of ruleset.urgences.liste) {
+      if (!posteIds.has(u.poste)) issue(`Urgence ${u.id} : poste inconnu ${u.poste}`);
+      if (u.choix[0].id === u.choix[1].id) issue(`Urgence ${u.id} : deux choix distincts attendus`);
+      if (!u.choix.some((c) => c.id === u.choixParDefaut))
+        issue(`Urgence ${u.id} : choix par défaut inconnu`);
+    }
+    const qag = ruleset.parlement.qag;
+    if (!sourceIds.has(qag.sourceId)) issue(`QAG : source inconnue ${qag.sourceId}`);
+    unique(
+      'Thème de QAG',
+      qag.themes.map((t) => t.id),
+    );
+    for (const t of qag.themes)
+      if (t.poste !== null && !posteIds.has(t.poste))
+        issue(`QAG ${t.id} : poste inconnu ${t.poste}`);
+    unique(
+      'Réplique de QAG',
+      qag.reponses.map((r) => r.id),
+    );
+    if (!qag.reponses.some((r) => r.id === qag.reponseParDefaut))
+      issue('QAG : réplique par défaut inconnue');
+    const obj = ruleset.objectifs;
+    unique(
+      'Objectif',
+      obj.catalogue.map((o) => o.id),
+    );
+    if (obj.catalogue.length < obj.nombre) issue('Objectifs : catalogue plus court que le nombre');
+    for (const o of obj.catalogue) {
+      const relative = o.mesure === 'indicateur' || o.mesure === 'popularite';
+      if (relative ? o.ecart === undefined : o.valeur === undefined)
+        issue(`Objectif ${o.id} : écart (indicateur, popularité) ou valeur (réformes, censures)`);
+      if ((o.mesure === 'indicateur') !== (o.indicateur !== undefined))
+        issue(`Objectif ${o.id} : indicateur requis pour la seule mesure « indicateur »`);
+      for (const d of o.domaines)
+        if (!ruleset.programme.domaines.some((x) => x.id === d))
+          issue(`Objectif ${o.id} : domaine inconnu ${d}`);
+    }
+    if (obj.mentions.some((m, i) => i > 0 && m.min >= obj.mentions[i - 1]!.min))
+      issue('Objectifs : mentions attendues de la meilleure à la moins bonne');
+    if (obj.mentions.at(-1)!.min !== 0) issue('Objectifs : la dernière mention commence à 0');
+    unique(
+      'Succès',
+      ruleset.succes.liste.map((a) => a.id),
+    );
+    const rv = ruleset.parrainages.rendezVous;
+    if (rv.promesses.min > rv.promesses.max)
+      issue('Rendez-vous d’élus : promesses minimales supérieures aux maximales');
+
     // Thèmes des ministres (phase 13) : postes et domaines connus, un thème par poste.
     unique(
       'Thème ministériel',

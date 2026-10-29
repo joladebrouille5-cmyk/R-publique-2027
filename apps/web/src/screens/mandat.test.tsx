@@ -117,7 +117,15 @@ describe('vue du mandat (phase 13)', () => {
     renderRoute(`/parties/${GAME_ID}/pouvoir`);
     await screen.findByRole('region', { name: 'Vue du mandat' });
     const user = userEvent.setup();
-    const ids = ['gouvernement', 'parlement', 'economie', 'crises', 'legislatives', 'bilan'];
+    const ids = [
+      'gouvernement',
+      'conseil',
+      'parlement',
+      'economie',
+      'crises',
+      'legislatives',
+      'bilan',
+    ];
     for (const id of ids) {
       const toggle = document.querySelector<HTMLButtonElement>(`section#${id} > h2 > button`)!;
       await user.click(toggle);
@@ -125,6 +133,7 @@ describe('vue du mandat (phase 13)', () => {
     }
     // Contenu de chaque section chargé.
     await screen.findByRole('region', { name: 'Personnalités nominables' });
+    await screen.findByRole('list', { name: 'Membres du gouvernement' });
     await screen.findByRole('region', { name: /Assemblée nationale \(17e législature\)/ });
     await screen.findByRole('listitem', { name: 'Taux de chômage' });
     await screen.findByRole('region', { name: 'Crises possibles (fictives)' });

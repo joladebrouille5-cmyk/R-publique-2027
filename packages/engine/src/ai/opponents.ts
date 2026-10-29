@@ -20,6 +20,7 @@ import {
   presentationWindow,
   projectedPresentations,
 } from '../campaign/parrainages';
+import { aiSupportTarget } from '../campaign/soutiens';
 import { formatFrenchDate } from '../core/calendar';
 import { compareStrings } from '../core/ledger';
 import { stream } from '../core/random';
@@ -43,6 +44,10 @@ const SCALE: Record<ResourceKey, number> = {
   dynamique: 100,
 };
 const PRIORITY_WEIGHT = 1.5;
+/** Poids de la probabilité d'obtenir un soutien dans la valeur d'une négociation (phase 15). */
+const SUPPORT_WEIGHT = 1;
+/** Semaines entre deux négociations de soutien d'un même adversaire (rythme de l'IA). */
+const NEGOTIATION_INTERVAL = 3;
 
 /** Importance que l'adversaire accorde à chaque ressource, selon sa situation. */
 function needs(actor: Actor): Record<ResourceKey, number> {
@@ -327,6 +332,13 @@ export function planOpponentActions(state: GameState, ruleset: Ruleset): Opponen
       const usedDeps = new Set<string>();
       const usedOutlets = new Set<string>();
       const planned: PlannedAction[] = [];
+      // Au plus une négociation de soutien toutes les trois semaines (phase 15).
+      let negotiating = state.negociations.some(
+        (n) =>
+          n.actorId === actor.id &&
+          n.annee === state.cycle.annee &&
+          state.meta.week - n.semaine < NEGOTIATION_INTERVAL,
+      );
       for (let k = 0; k < level.actionsParSemaine; k++) {
         const options = ruleset.actions
           .filter(
@@ -339,21 +351,37 @@ export function planOpponentActions(state: GameState, ruleset: Ruleset): Opponen
           )
           .map((action) => {
             let cible: string | undefined;
+            // Valeur d'une négociation : probabilité d'obtenir le soutien (phase 15).
+            let bonus = 0;
             if (action.cible === 'departement') {
               cible = bestDepartement(state, ruleset, actor, usedDeps, engaged) ?? undefined;
             } else if (action.cible === 'media') {
               cible = bestOutlet(ruleset, actor, usedOutlets);
             } else if (action.cible === 'emission') {
               cible = bestShow(ruleset, actor, usedOutlets);
+            } else if (
+              action.cible === 'personnalite' &&
+              action.campagne?.soutien &&
+              !negotiating
+            ) {
+              const target = aiSupportTarget(
+                state,
+                ruleset,
+                actor.id,
+                action.campagne.soutien.contrepartie,
+              );
+              cible = target?.cible;
+              bonus = target ? SUPPORT_WEIGHT * target.probabilite : 0;
             }
-            return { action, cible };
+            return { action, cible, bonus };
           })
           .filter(({ action, cible }) => action.cible === null || cible !== undefined);
         if (options.length === 0) break;
         const probabilities = softmax(
           options.map(
-            ({ action }) =>
+            ({ action, bonus }) =>
               (scoreAction(actor, action, budget) +
+                bonus +
                 PRIORITY_WEIGHT * relevance(action, strategie.priorite) +
                 objectiveBonus(actor, action) -
                 REPEAT_PENALTY * recentRepeats(state, actor.id, action, planned)) /
@@ -394,6 +422,7 @@ export function planOpponentActions(state: GameState, ruleset: Ruleset): Opponen
         if (choice.action.cible === 'departement' && choice.cible) usedDeps.add(choice.cible);
         if ((choice.action.cible === 'media' || choice.action.cible === 'emission') && choice.cible)
           usedOutlets.add(choice.cible);
+        if (choice.action.cible === 'personnalite') negotiating = true;
         budget -= choice.action.cout.budgetCentimes;
         spent += choice.action.cout.budgetCentimes;
         time -= choice.action.cout.tempsHeures;

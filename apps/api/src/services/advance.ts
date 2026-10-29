@@ -9,6 +9,7 @@ import { canonicalStringify, sha256, snapshotState } from '@r2027/save-engine';
 import {
   AdvanceResponseSchema,
   FAST_FORWARD_STOPS,
+  isOptionalDecision,
   type AdvanceRequestSchema,
   type AdvanceResponse,
   type Ruleset,
@@ -175,7 +176,7 @@ function stopAfter(result: AdvanceResult): FastForwardStop | null {
   if (result.report.election) return 'scrutin';
   if (result.report.phaseChange) return 'changement_de_phase';
   if (result.majorEvent) return 'evenement_majeur';
-  if (result.state.pendingDecisions.length > 0) return 'decision';
+  if (result.state.pendingDecisions.some((d) => !isOptionalDecision(d))) return 'decision';
   return null;
 }
 

@@ -1,7 +1,7 @@
 import type { GeoManifest, TerritoryLevel, TerritorySearchResult } from '@r2027/shared';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronDown, Search, X } from 'lucide-react';
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useState, type ReactNode } from 'react';
 import { Badge } from '../../components/Badge';
 import { ErrorMessage } from '../../components/ErrorMessage';
 import { card } from '../../components/ui';
@@ -264,11 +264,14 @@ export function TerritorySheet({
   data,
   onClose,
   className = card,
+  children,
 }: {
   info: SheetInfo;
   data: SourceData | null;
   onClose: () => void;
   className?: string;
+  /** Contenu ajouté en bas de la fiche (déplacement du président, phase 15). */
+  children?: ReactNode;
 }) {
   const leader = leaderOf(info.result);
   return (
@@ -349,6 +352,7 @@ export function TerritorySheet({
           </p>
         )
       )}
+      {children}
     </section>
   );
 }

@@ -53,9 +53,25 @@ export const CreateGameRequestSchema = z
       .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/)
       .max(60)
       .default('standard'),
+    /**
+     * Orientation stratégique du mouvement du joueur (phase 15, jeu de règles `orientations`) ;
+     * absente : aucune (moyens et base électorale de départ inchangés). Interdite en observateur.
+     */
+    orientationId: z
+      .string()
+      .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/)
+      .max(60)
+      .optional(),
   })
   .strict()
   .superRefine((body, ctx) => {
+    if (body.mode === 'observateur' && body.orientationId !== undefined) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['orientationId'],
+        message: 'Orientation stratégique réservée au joueur candidat',
+      });
+    }
     if (body.mode === 'candidat_personnalise' && !body.candidate) {
       ctx.addIssue({
         code: 'custom',
@@ -215,6 +231,35 @@ export const AdvanceRequestSchema = z
     { message: 'L’avance rapide ne permet pas de programmer d’actions.', path: ['semaines'] },
   );
 export type AdvanceRequest = z.input<typeof AdvanceRequestSchema>;
+
+/**
+ * Vivier des négociations de soutien du candidat du joueur (phase 15), calculé par le moteur :
+ * pour chaque personnalité nominable, proximité, candidat qu'elle soutient, motif factuel qui
+ * exclut un accord, ou probabilités d'accord (hypothèses du jeu) sans contrepartie et avec la
+ * promesse d'un ministère. L'interface l'affiche sans rien recalculer.
+ */
+export const SupportProspectsSchema = z
+  .object({
+    annee: z.number().int().min(2027),
+    obtenus: z.number().int().min(0),
+    maximum: z.number().int().min(1),
+    personnalites: z.array(
+      z
+        .object({
+          figureId: z.string().min(1),
+          proximite: z.number().int().min(0).max(100),
+          soutient: z.string().min(1).nullable(),
+          motif: z.string().min(1).nullable(),
+          probabilites: z
+            .object({ aucune: z.number().min(0).max(1), ministere: z.number().min(0).max(1) })
+            .strict()
+            .nullable(),
+        })
+        .strict(),
+    ),
+  })
+  .strict();
+export type SupportProspects = z.infer<typeof SupportProspectsSchema>;
 
 /** Motifs d'arrêt de l'avance rapide. */
 export const FAST_FORWARD_STOPS = [

@@ -8,6 +8,7 @@ import {
   GameCreationError,
   inputErrorStatus,
   playDebate,
+  playerSupportProspects,
   SAVE_SCHEMA_VERSION,
   type AdvanceResult,
 } from '@r2027/engine';
@@ -34,6 +35,7 @@ import {
   IDEMPOTENCY_HEADER,
   IdempotencyKeySchema,
   isBeforeCursor,
+  isOptionalDecision,
   journalCursor,
   JournalCursorSchema,
   RestoreSaveRequestSchema,
@@ -48,6 +50,7 @@ import {
   type JournalCursor,
   type JournalPage,
   type SaveSummary,
+  type SupportProspects,
 } from '@r2027/shared';
 import { z, ZodError } from 'zod';
 import type { LocalGeo } from './geo';
@@ -164,7 +167,7 @@ function stopAfter(result: AdvanceResult): FastForwardStop | null {
   if (result.report.election) return 'scrutin';
   if (result.report.phaseChange) return 'changement_de_phase';
   if (result.majorEvent) return 'evenement_majeur';
-  if (result.state.pendingDecisions.length > 0) return 'decision';
+  if (result.state.pendingDecisions.some((d) => !isOptionalDecision(d))) return 'decision';
   return null;
 }
 
@@ -273,6 +276,8 @@ export class LocalApi {
           request.body,
         ),
       );
+    if (method === 'GET' && (m = match(/^\/api\/games\/([^/]+)\/soutiens$/)))
+      return ok(await this.supports(GameId.parse(m[1])));
     if (method === 'GET' && (m = match(/^\/api\/games\/([^/]+)\/journal$/)))
       return ok(await this.journal(GameId.parse(m[1]), JournalQuery.parse(query)));
     if (method === 'GET' && (m = match(/^\/api\/games\/([^/]+)\/export$/))) {
@@ -491,6 +496,7 @@ export class LocalApi {
           personnaliteId: body.personnaliteId,
           adversaires: body.adversaires,
           scenarioId: body.scenarioId,
+          orientationId: body.orientationId,
         },
         getRuleset(CURRENT_RULESET_KEY),
       );
@@ -519,6 +525,7 @@ export class LocalApi {
         seed,
         adversaires: state.player.adversaires,
         scenario: state.scenario,
+        orientation: state.player.orientation,
         startDate: state.meta.date,
         candidat: state.player.actorId
           ? candidateForJournal(state.actors[state.player.actorId]!.candidate)
@@ -665,6 +672,18 @@ export class LocalApi {
   // --- Débats télévisés (phase 10) ---
 
   /** Même contrat que l'API : le moteur joue la demande, l'état est réenregistré s'il change. */
+  /** Vivier des négociations de soutien (phase 15) : même contrat que l'API. */
+  private async supports(gameId: string): Promise<SupportProspects> {
+    const { state } = await this.load(gameId);
+    try {
+      return playerSupportProspects(state, getRuleset(state.meta.rulesetVersion));
+    } catch (error) {
+      if (error instanceof EngineInputError)
+        throw new HttpError(inputErrorStatus(error.code), error.code, error.message);
+      throw error;
+    }
+  }
+
   private async playDebate(gameId: string, debatId: string, raw: unknown): Promise<GameDetail> {
     const body = DebateRequestSchema.parse(raw);
     const { row, state, stateHash } = await this.load(gameId);

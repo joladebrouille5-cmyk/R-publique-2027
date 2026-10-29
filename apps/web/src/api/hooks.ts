@@ -8,6 +8,7 @@ import {
   JournalPageSchema,
   RulesetSchema,
   SaveSummarySchema,
+  SupportProspectsSchema,
   type AdvanceRequest,
   type CreateGameRequest,
   type CreateSaveRequest,
@@ -24,6 +25,7 @@ export const queryKeys = {
   game: (id: string) => ['games', id] as const,
   saves: (id: string) => ['games', id, 'saves'] as const,
   journal: (id: string) => ['games', id, 'journal'] as const,
+  supports: (id: string, week: number) => ['games', id, 'soutiens', week] as const,
   ruleset: (key: string) => ['rulesets', key] as const,
 };
 
@@ -76,6 +78,19 @@ export function useCurrentRuleset() {
   return useQuery({
     queryKey: queryKeys.ruleset('courant'),
     queryFn: () => api.get('/api/rulesets/courant', RulesetSchema),
+    staleTime: Infinity,
+  });
+}
+
+/**
+ * Vivier des négociations de soutien du candidat du joueur (phase 15), calculé par le serveur
+ * (ou le moteur local) pour la semaine en cours : l'interface l'affiche sans rien recalculer.
+ */
+export function useSupports(gameId: string, week: number, enabled: boolean) {
+  return useQuery({
+    queryKey: queryKeys.supports(gameId, week),
+    queryFn: () => api.get(`/api/games/${gameId}/soutiens`, SupportProspectsSchema),
+    enabled,
     staleTime: Infinity,
   });
 }

@@ -42,6 +42,11 @@ type Props = {
    * d'être dépouillés) ; l'éclat se rejoue quand `key` change.
    */
   flash?: { codes: readonly string[]; key: string } | null;
+  /**
+   * Trace des déplacements du président pendant le mandat (phase 15) : départements soulignés
+   * d'un contour en pointillés, quel que soit le niveau affiché.
+   */
+  trail?: readonly string[];
   /** Vue demandée (recherche, clic, tableau) : la carte y vole quand `key` change. */
   focus?: { bbox: BBox; key: string; maxZoom?: number } | null;
   /** Zones recouvertes par l'interface, mesurées au moment de cadrer la vue. */
@@ -74,6 +79,8 @@ const MAX_PIXEL_RATIO = 2;
 /** Fondu de l'éclat des territoires qui viennent d'être dépouillés. */
 const FLASH_MS = 1_600;
 const FLASH = { light: '#2b46d9', dark: '#93aaff' };
+/** Trace des déplacements du président : ambre, lisible sur les couleurs de la carte. */
+const TRAIL = { light: '#b45309', dark: '#fbbf24' };
 const CAMERA_BUTTONS = [
   { kind: 'avant', name: 'Zoom avant', Icon: Plus },
   { kind: 'arriere', name: 'Zoom arrière', Icon: Minus },
@@ -230,6 +237,17 @@ export function ElectionMap(props: Props) {
           },
         });
       }
+      // Trace des déplacements du président (phase 15) : contour en pointillés.
+      map.addLayer({
+        id: 'trace-departement',
+        type: 'line',
+        source: 'departement',
+        paint: {
+          'line-color': TRAIL[latest.current.mode],
+          'line-width': ['case', ['boolean', ['feature-state', 'trace'], false], 2.2, 0],
+          'line-dasharray': [2, 1.2],
+        },
+      });
       setReady(true);
     });
     for (const level of LEVELS) {
@@ -344,7 +362,22 @@ export function ElectionMap(props: Props) {
       map.setPaintProperty(`selection-${level}`, 'line-color', SELECTED[props.mode]);
       map.setPaintProperty(`eclat-${level}`, 'line-color', FLASH[props.mode]);
     }
+    map.setPaintProperty('trace-departement', 'line-color', TRAIL[props.mode]);
   }, [ready, props.mode]);
+
+  // Trace des déplacements : un état d'entité par département visité.
+  const traced = useRef<readonly string[]>([]);
+  const trailKey = (props.trail ?? []).join(',');
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    for (const code of traced.current)
+      map.setFeatureState({ source: 'departement', id: code }, { trace: false });
+    const trail = latest.current.trail ?? [];
+    for (const code of trail)
+      map.setFeatureState({ source: 'departement', id: code }, { trace: true });
+    traced.current = trail;
+  }, [ready, layers, trailKey]);
 
   // Éclat : contour lumineux qui s'estompe (immobile si le mouvement réduit est demandé).
   const flashed = useRef<MapSelection[]>([]);

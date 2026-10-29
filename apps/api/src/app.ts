@@ -24,6 +24,7 @@ import type { Database } from './db';
 import { HttpError } from './errors';
 import { advanceGame } from './services/advance';
 import { playGameDebate } from './services/debates';
+import { gameSupports } from './services/supports';
 import { exportGame, importGame } from './services/exchange';
 import { ElectoralRepository, resultsDirectory } from './services/electoral';
 import { geoDirectories, GeoRepository } from './services/geo';
@@ -225,6 +226,12 @@ export async function buildApp({ config, db, geo }: AppOptions): Promise<Fastify
     const { gameId, debatId } = DebateParams.parse(request.params);
     const body = DebateRequestSchema.parse(request.body);
     return playGameDebate(db, await userOf(request, reply), gameId, debatId, body);
+  });
+
+  // Vivier des négociations de soutien du candidat du joueur (phase 15), calculé par le moteur.
+  app.get('/api/games/:gameId/soutiens', async (request) => {
+    const { gameId } = GameParams.parse(request.params);
+    return gameSupports(db, await readerOf(request), gameId);
   });
 
   app.get('/api/games/:gameId/journal', async (request) => {

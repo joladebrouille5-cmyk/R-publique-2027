@@ -95,11 +95,14 @@ export function TensionGauge({
   tension,
   seuilMotion,
   details = true,
+  compact = false,
 }: {
   tension: Parliament['tension'];
   seuilMotion: number;
   /** Liste des facteurs (vue détaillée) ; sinon la valeur et le niveau seuls. */
   details?: boolean;
+  /** Pop-up (phase 15) : valeur, jauge et niveau seuls, sans projection ni explication. */
+  compact?: boolean;
 }) {
   const level = tensionLevel(tension.valeur, seuilMotion);
   const Icon = level.icon;
@@ -134,18 +137,26 @@ export function TensionGauge({
       <p className={`flex items-center gap-1.5 text-xs font-semibold ${level.text}`}>
         <Icon aria-hidden="true" className="size-3.5 shrink-0" />
         {level.label}
+        {compact && (
+          <span className="font-normal text-slate-500 dark:text-slate-400">
+            · indicateur du jeu (hypothèses)
+          </span>
+        )}
       </p>
-      {tension.censure && (
+      {!compact && tension.censure && (
         <p className="text-xs text-slate-600 dark:text-slate-400">
           Censure projetée : {tension.censure.pour} voix pour {tension.censure.majorite} requises
           (projection du jeu, sans aléa).
         </p>
       )}
-      {details && <TensionFactors tension={tension} />}
-      <p className="text-xs text-slate-500 dark:text-slate-400">
-        Indicateur du jeu (hypothèses) : il renchérit le 49.3, nourrit la censure et, au-delà de{' '}
-        {seuilMotion}, peut provoquer des motions de censure spontanées (au plus trois par session).
-      </p>
+      {details && !compact && <TensionFactors tension={tension} />}
+      {!compact && (
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          Indicateur du jeu (hypothèses) : il renchérit le 49.3, nourrit la censure et, au-delà de{' '}
+          {seuilMotion}, peut provoquer des motions de censure spontanées (au plus trois par
+          session).
+        </p>
+      )}
     </div>
   );
 }

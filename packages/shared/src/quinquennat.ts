@@ -120,11 +120,49 @@ export const QuinquennatV16Schema = QuinquennatV8Schema.extend({
 export type QuinquennatV16 = z.infer<typeof QuinquennatV16Schema>;
 
 /**
- * Quinquennat en cours (format 17, phase 13) : semaine du dernier emploi de chaque action du
- * président, pour les délais entre deux emplois (discours devant le Congrès, panthéonisation…).
+ * Quinquennat aux formats 17 et 18 (phase 13, figé) : semaine du dernier emploi de chaque action
+ * du président, pour les délais entre deux emplois (discours devant le Congrès, panthéonisation…).
  */
-export const QuinquennatSchema = QuinquennatV16Schema.extend({
+export const QuinquennatV18Schema = QuinquennatV16Schema.extend({
   usages: z.record(Id, z.number().int().min(0)),
+}).strict();
+export type QuinquennatV18 = z.infer<typeof QuinquennatV18Schema>;
+
+/**
+ * Suivi d'un membre du gouvernement (format 19, phase 15) : popularité prêtée (centièmes de
+ * point ; hypothèse du jeu, jamais un sondage), loyauté envers le président (0 à 100 ; hypothèse
+ * du jeu) et semaine de sa nomination. Ce que fait la personnalité réelle nommée est simulé ;
+ * aucun propos ne lui est attribué.
+ */
+export const MinisterTrackSchema = z
+  .object({
+    popularite: z.number().int().min(0).max(10_000),
+    loyaute: z.number().int().min(0).max(100),
+    depuis: z.number().int().min(0),
+  })
+  .strict();
+export type MinisterTrack = z.infer<typeof MinisterTrackSchema>;
+
+/**
+ * Objectif du mandat (format 19, phase 15), fixé à l'ouverture du gouvernement : valeur de départ
+ * et cible (unités de la mesure du jeu de règles). Paramètre de jeu, jamais une prévision.
+ */
+export const MandateObjectiveSchema = z
+  .object({ id: Id, depart: z.number().int(), cible: z.number().int() })
+  .strict();
+export type MandateObjective = z.infer<typeof MandateObjectiveSchema>;
+
+const DepartementCode = z.string().regex(/^(\d{2}|2A|2B|97\d)$/);
+
+/**
+ * Quinquennat en cours (format 19, phase 15) : en plus du format 18, suivi des membres du
+ * gouvernement (par identifiant de la personnalité, du profil ou de l'acteur), objectifs du
+ * mandat et déplacements du président par département (trace de la carte).
+ */
+export const QuinquennatSchema = QuinquennatV18Schema.extend({
+  suivi: z.record(Id, MinisterTrackSchema),
+  objectifs: z.array(MandateObjectiveSchema),
+  deplacements: z.record(DepartementCode, z.number().int().min(1)),
 }).strict();
 export type Quinquennat = z.infer<typeof QuinquennatSchema>;
 
@@ -167,9 +205,37 @@ export const QuinquennatReviewV12Schema = z
   })
   .strict();
 
-/** Bilan d'un quinquennat (format 13, phase 7) : conséquences durables nées pendant le mandat. */
-export const QuinquennatReviewSchema = QuinquennatReviewV12Schema.extend({
+/** Bilan d'un quinquennat (formats 13 à 18, figé) : conséquences durables nées pendant le mandat. */
+export const QuinquennatReviewV18Schema = QuinquennatReviewV12Schema.extend({
   consequences: z.array(ConsequenceSummarySchema),
+}).strict();
+
+/**
+ * Note finale du mandat (format 19, phase 15) : objectifs atteints ou non (valeur de fin), note
+ * sur 20 et mention, selon le barème du jeu de règles (hypothèses).
+ */
+export const MandateGradeSchema = z
+  .object({
+    valeur: z.number().int().min(0).max(20),
+    mention: z.string().min(1),
+    objectifs: z.array(
+      z
+        .object({
+          id: Id,
+          depart: z.number().int(),
+          cible: z.number().int(),
+          fin: z.number().int(),
+          atteint: z.boolean(),
+        })
+        .strict(),
+    ),
+  })
+  .strict();
+export type MandateGrade = z.infer<typeof MandateGradeSchema>;
+
+/** Bilan d'un quinquennat (format 19) : en plus, la note finale du mandat (null sans objectifs). */
+export const QuinquennatReviewSchema = QuinquennatReviewV18Schema.extend({
+  note: MandateGradeSchema.nullable(),
 }).strict();
 export type QuinquennatReview = z.infer<typeof QuinquennatReviewSchema>;
 
@@ -185,6 +251,12 @@ export const QuinquennatSummaryV8Schema = z
 export const QuinquennatSummaryV12Schema = QuinquennatSummaryV8Schema.extend({
   bilan: QuinquennatReviewV12Schema,
 }).strict();
+
+/** Quinquennat achevé aux formats 13 à 18 (figé pour les migrations). */
+export const QuinquennatSummaryV18Schema = QuinquennatSummaryV8Schema.extend({
+  bilan: QuinquennatReviewV18Schema,
+}).strict();
+export type QuinquennatSummaryV18 = z.infer<typeof QuinquennatSummaryV18Schema>;
 
 /** Quinquennat achevé (archivé au début de la campagne présidentielle suivante), avec son bilan. */
 export const QuinquennatSummarySchema = QuinquennatSummaryV8Schema.extend({

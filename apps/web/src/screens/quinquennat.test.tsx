@@ -77,7 +77,10 @@ describe('quinquennat', () => {
     expect(within(catalog).getAllByRole('listitem')).toHaveLength(
       RULESET.quinquennat.actions.length,
     );
-    expect(within(catalog).getByText('Aucun gouvernement en place à remanier.')).toBeVisible();
+    // Remaniement général et remaniement ciblé (phase 15) : aucun gouvernement à remanier.
+    for (const reason of within(catalog).getAllByText('Aucun gouvernement en place à remanier.'))
+      expect(reason).toBeVisible();
+    expect(within(catalog).getAllByText('Aucun gouvernement en place à remanier.')).toHaveLength(2);
     for (const action of RULESET.quinquennat.actions.filter((a) => !a.institution && !a.condition))
       expect(screen.getByRole('button', { name: `Ajouter ${action.libelle}` })).toBeEnabled();
     // Phase 13 : le sommet de crise attend une crise récente (règle du moteur, motif affiché).
@@ -621,6 +624,14 @@ describe('quinquennat', () => {
     expect(
       within(review).getByText(/Aucune n’est une prévision|aucune n’est une prévision/),
     ).toBeVisible();
+    // Phase 15 : note du mandat sur 20, objectif par objectif (barème du jeu).
+    expect(bilan.note).not.toBeNull();
+    expect(within(review).getByRole('heading', { name: 'Note du mandat' })).toBeVisible();
+    expect(within(review).getByText(`${bilan.note!.valeur}/20`)).toBeVisible();
+    expect(within(review).getByText(bilan.note!.mention)).toBeVisible();
+    expect(within(review).getAllByText(/^(Atteint|Manqué)$/)).toHaveLength(
+      bilan.note!.objectifs.length,
+    );
     const archives = screen.getByRole('region', { name: 'Présidentielles précédentes' });
     expect(within(archives).getByText('2027')).toBeInTheDocument();
     cleanup();

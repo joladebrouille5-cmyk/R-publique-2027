@@ -10,18 +10,30 @@ import {
   type WeeklyReport,
 } from '@r2027/shared';
 import { departements, presentationWindow } from '../campaign/parrainages';
+import { RENDEZ_VOUS_EVENT } from '../campaign/rendezvous';
+import { QAG_EVENT } from '../presidency/qag';
 import { advanceWeek } from './advanceWeek';
 import { createGame, PLAYER_ACTOR_ID, type CreateGameInput } from './createGame';
 
 export const RULESET = getRuleset(CURRENT_RULESET_KEY);
 
-/** Copie du jeu de règles où seuls les événements listés peuvent survenir (probabilité donnée). */
+/**
+ * Copie du jeu de règles où seuls les événements listés peuvent survenir (probabilité donnée).
+ * Phase 15 : rendez-vous d'élus (`rendez-vous-elus`) et urgences ministérielles suivent la même
+ * règle ; les questions au gouvernement n'ont lieu que si `questions-au-gouvernement` est listé
+ * (sinon, aucun mois de séance).
+ */
 export function withEvents(
   probabilities: Record<string, number>,
   ruleset: Ruleset = RULESET,
 ): Ruleset {
   const copy = JSON.parse(JSON.stringify(ruleset)) as Ruleset;
   for (const event of copy.evenements) event.probabiliteHebdomadaire = probabilities[event.id] ?? 0;
+  copy.parrainages.rendezVous.probabiliteHebdo = probabilities[RENDEZ_VOUS_EVENT] ?? 0;
+  for (const urgency of copy.urgences.liste)
+    urgency.probabiliteHebdomadaire = probabilities[urgency.id] ?? 0;
+  if (!(QAG_EVENT in probabilities))
+    copy.parlement.qag.moisSansSeance = Array.from({ length: 12 }, (_, i) => i + 1);
   return copy;
 }
 export const QUIET = withEvents({});

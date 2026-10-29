@@ -32,13 +32,18 @@ import {
   needsCoalition,
   openLegislativeCampaign,
 } from './alliances';
+import { CouncilBook, holdCouncil, replaceMinister, type CouncilContext } from './conseil';
 import { applyConsequences } from './consequences';
 import { answerCrisis, drawCrises } from './crises';
 import { EconomyBook, weeklyEconomy } from './economy';
 import { dissolve, legislativeNotices, legislativeWeek } from './legislatives';
+import { ensureObjectives } from './objectifs';
 import { advanceParliament, refreshBillDecisions } from './parliament';
+import { answerQag, holdQag } from './qag';
 import { weeklyTension, updateTension } from './tension';
 import { ministerEffects } from './themes';
+import { answerUrgency, drawUrgencies } from './urgences';
+import { unlockAchievements } from '../core/succes';
 import { openNextCampaign } from './cycle';
 import { nextCampaignStart, weekReaches } from './dates';
 import {
@@ -105,6 +110,16 @@ export function advancePresidencyWeek(
     summaries.set(step, { active, summary });
   const events: ReportEvent[] = [];
   const economy = state.economie ? new EconomyBook(state.economie) : null;
+  // Conseil des ministres (phase 15) : faits de la semaine de chaque membre du gouvernement.
+  const council = new CouncilBook();
+  const councilContext = (step: number): CouncilContext => ({
+    state,
+    ruleset,
+    ledger,
+    book: council,
+    playerPresides,
+    step,
+  });
 
   // 1. Réponses aux décisions et actions du président joueur.
   const answers = validateDecisionAnswers(state, plan.decisions);
@@ -172,16 +187,18 @@ export function advancePresidencyWeek(
   set(4, false, 'Pas de campagne en cours : relations et ralliements inchangés.');
 
   // 5. Décisions, effets des actions, remaniement, Parlement.
-  const institutional = new Set(['gouvernement', 'texte', 'crise', 'alliance']);
+  const institutional = new Set(['gouvernement', 'texte', 'crise', 'alliance', 'urgence', 'qag']);
   const allianceAnswers = answers.filter((a) => a.decision.kind === 'alliance');
   const governmentAnswers = answers.filter((a) => a.decision.kind === 'gouvernement');
   const billAnswers = answers.filter((a) => a.decision.kind === 'texte');
   const crisisAnswers = answers.filter((a) => a.decision.kind === 'crise');
+  const urgencyAnswers = answers.filter((a) => a.decision.kind === 'urgence');
+  const qagAnswers = answers.filter((a) => a.decision.kind === 'qag');
   const decisions = applyDecisions(
     state,
     ruleset,
     ledger,
-    finances,
+    { finances, parrainages },
     answers.filter((a) => !institutional.has(a.decision.kind)),
     5,
   );
@@ -190,6 +207,8 @@ export function advancePresidencyWeek(
     ...governmentAnswers,
     ...billAnswers,
     ...crisisAnswers,
+    ...urgencyAnswers,
+    ...qagAnswers,
   ]) {
     const option = answer.decision.options.find((o) => o.id === answer.optionId)!;
     decisions.push({
@@ -229,6 +248,18 @@ export function advancePresidencyWeek(
   applyPresidentialEffects({ state, ruleset, ledger, economy, step: 5 }, validated);
   for (const action of validated)
     if (action.definition.institution === 'dissolution') events.push(dissolve(state, ruleset));
+  // Remaniement ciblé (phase 15) : le ministre quitte le gouvernement, le Premier ministre
+  // propose un remplaçant (décision du président joueur).
+  for (const action of validated) {
+    if (action.definition.institution !== 'remaniement-cible' || !action.cible) continue;
+    const event = replaceMinister(
+      councilContext(5),
+      action.cible,
+      'remplacé(e) par le président (remaniement ciblé)',
+      true,
+    );
+    if (event) events.push(event);
+  }
   for (const action of validated) {
     if (action.definition.institution !== 'remaniement') continue;
     const quinquennat = state.quinquennat!;
@@ -250,11 +281,37 @@ export function advancePresidencyWeek(
       );
   }
   const crisisContext = economy
-    ? { state, ruleset, ledger, finances, book: economy, presidentId: president.id, step: 5 }
+    ? {
+        state,
+        ruleset,
+        ledger,
+        finances,
+        book: economy,
+        presidentId: president.id,
+        step: 5,
+        council,
+      }
     : null;
   if (crisisContext)
     for (const answer of crisisAnswers)
       answerCrisis(crisisContext, answer.decision.eventId, answer.optionId);
+  // Urgences ministérielles et questions au gouvernement (phase 15) : réponses du président.
+  const urgencyContext = economy
+    ? { state, ruleset, ledger, economy, council, presidentId: president.id, step: 5 }
+    : null;
+  if (urgencyContext)
+    for (const answer of urgencyAnswers)
+      answerUrgency(urgencyContext, answer.decision.eventId, answer.optionId);
+  const qagContext = {
+    state,
+    ruleset,
+    ledger,
+    economy,
+    council,
+    presidentId: president.id,
+    step: 5,
+  };
+  for (const answer of qagAnswers) answerQag(qagContext, answer.decision, answer.optionId);
   const parliament = advanceParliament(
     { state, ruleset, ledger, economy, step: 5, playerPresides },
     billAnswers,
@@ -281,6 +338,13 @@ export function advancePresidencyWeek(
   if (playerPresides) requestGovernment(state, ruleset);
   if (crisisContext && weekReaches(date, state.quinquennat!.mandat.debut))
     events.push(...drawCrises(crisisContext, playerPresides));
+  if (
+    urgencyContext &&
+    state.quinquennat!.gouvernement &&
+    weekReaches(date, state.quinquennat!.mandat.debut)
+  )
+    events.push(...drawUrgencies(urgencyContext, playerPresides));
+  events.push(...holdQag(qagContext, playerPresides));
   // Tension parlementaire (phase 13) : fronde et apaisement décroissent, puis recalcul.
   weeklyTension(state, ruleset);
   set(
@@ -292,11 +356,17 @@ export function advancePresidencyWeek(
   // 6. Opinion : dynamique commune à tous, puis usure du pouvoir pour le président en fonction.
   weeklyDrift(state, ruleset, ledger, 6);
   const usure = ruleset.quinquennat.opinion.usureHebdomadaire;
+  let conseil: WeeklyReport['conseil'] = null;
   if (weekReaches(date, state.quinquennat!.mandat.debut)) {
     ledger.apply(president.id, 'popularite', [
       { label: 'Usure du pouvoir (hypothèse de jeu)', value: -usure, source: 'opinion', step: 6 },
     ]);
     governmentAction(state, ruleset, president.id, { ledger, step: 6 });
+    // Objectifs du mandat (phase 15), puis Conseil des ministres de la semaine.
+    ensureObjectives(state, ruleset);
+    const held = holdCouncil(councilContext(6));
+    conseil = held.report;
+    events.push(...held.events);
   }
   for (const actor of Object.values(state.actors)) {
     actor.history.popularite = [...actor.history.popularite, actor.resources.popularite].slice(
@@ -306,7 +376,8 @@ export function advancePresidencyWeek(
   set(
     6,
     true,
-    'Érosion, retour à la moyenne, attrition, usure du pouvoir et action du gouvernement appliquées.',
+    'Érosion, retour à la moyenne, attrition, usure du pouvoir et action du gouvernement appliquées' +
+      (conseil ? ' ; Conseil des ministres tenu.' : '.'),
   );
 
   // 7. Conséquences durables (phase 7), puis économie : effets différés, dynamique des
@@ -383,6 +454,9 @@ export function advancePresidencyWeek(
       (transition ? ' ; quinquennat clos, campagne présidentielle ouverte.' : '.'),
   );
 
+  // Succès du joueur débloqués cette semaine (phase 15).
+  const succes = unlockAchievements(state, ruleset, week);
+
   // 10. Journal ; 11. sauvegarde (API) ; 12. bilan.
   const changes = ledger.list();
   set(10, true, `${plural(changes.length, 'variation')} journalisée(s) avec leurs facteurs.`);
@@ -424,6 +498,8 @@ export function advancePresidencyWeek(
       economie: economy?.list() ?? [],
       legislatives: legislatives.report,
       numerique: [],
+      conseil,
+      succes,
     },
   };
 }
