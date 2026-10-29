@@ -68,6 +68,8 @@ export function useRuleset(key: string, cycle?: Cycle) {
   return useQuery({
     queryKey: queryKeys.ruleset(key),
     queryFn: () => api.get(`/api/rulesets/${encodeURIComponent(key)}`, RulesetSchema),
+    // Clé vide : la partie n'est pas encore chargée, rien à demander.
+    enabled: key !== '',
     staleTime: Infinity,
     select: (ruleset: Ruleset) => (cycle ? cycleRuleset(ruleset, cycle) : ruleset),
   });

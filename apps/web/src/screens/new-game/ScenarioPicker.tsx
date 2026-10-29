@@ -1,7 +1,7 @@
 import type { Ruleset, Scenario } from '@r2027/shared';
 import { useCurrentRuleset } from '../../api/hooks';
 import { Badge } from '../../components/Badge';
-import { label } from '../../components/ui';
+import { label, optionTile, radio } from '../../components/ui';
 import { formatDelta, formatIndicatorDelta, INDICATOR_LABELS, RESOURCE_LABELS } from '../../labels';
 
 // Choix du scénario de départ (phase 7). Chaque scénario non standard est une situation
@@ -57,23 +57,20 @@ export function ScenarioPicker({
   return (
     <fieldset className="space-y-2">
       <legend className={label}>Scénario de départ</legend>
-      <div className="grid gap-2">
+      <div className="grid gap-2.5 sm:grid-cols-2">
         {ruleset.data.scenarios.map((scenario) => (
-          <label
-            key={scenario.id}
-            className="flex cursor-pointer gap-3 rounded-lg border border-slate-200 p-3 dark:border-slate-800"
-          >
+          <label key={scenario.id} className={optionTile}>
             <input
               type="radio"
               name="scenario"
               value={scenario.id}
               checked={value === scenario.id}
               onChange={() => onChange(scenario.id)}
-              className="mt-1"
+              className={radio}
             />
             <span className="space-y-1">
               <span className="flex flex-wrap items-center gap-2">
-                <span className="font-medium">{scenario.libelle}</span>
+                <span className="font-semibold">{scenario.libelle}</span>
                 {scenario.nature === 'fictif' && <Badge tone="fictif">Scénario fictif</Badge>}
               </span>
               <span className="block text-xs text-slate-600 dark:text-slate-400">
@@ -88,7 +85,7 @@ export function ScenarioPicker({
           </label>
         ))}
       </div>
-      <p className="text-xs text-slate-500 dark:text-slate-400">
+      <p className="text-xs text-slate-600 dark:text-slate-400">
         Les écarts des scénarios sont des hypothèses de jeu ; ils ne changent ni les règles
         constitutionnelles ni le décompte des voix.
       </p>

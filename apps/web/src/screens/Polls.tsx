@@ -1,5 +1,7 @@
-import { candidateName, type GameState, type Poll } from '@r2027/shared';
+import { candidateName, type GameState, type Poll, type Ruleset } from '@r2027/shared';
 import { useState } from 'react';
+import { useRuleset } from '../api/hooks';
+import { Avatar } from '../components/Avatar';
 import { Badge } from '../components/Badge';
 import { ShareBar } from '../components/ShareBar';
 import { buttonSecondary, card } from '../components/ui';
@@ -11,6 +13,7 @@ import {
   POLL_KIND_LABELS,
   pollFactorLabel,
 } from '../labels';
+import { colorOf, portraitOf } from '../portraits';
 import { useCurrentGame } from './GameLayout';
 import { ScreenHeading } from '../components/Disclosure';
 
@@ -43,8 +46,19 @@ function Variation({ value }: { value: number | null }) {
   );
 }
 
-/** Résultats d'un sondage : valeur, écart, marge d'erreur et barre (la valeur écrite fait foi). */
-export function PollResults({ poll, state }: { poll: Poll; state: GameState }) {
+/**
+ * Résultats d'un sondage : valeur, écart, marge d'erreur et barre (la valeur écrite fait foi),
+ * chaque candidat à la couleur de sa famille politique (convention du jeu).
+ */
+export function PollResults({
+  poll,
+  state,
+  ruleset,
+}: {
+  poll: Poll;
+  state: GameState;
+  ruleset?: Ruleset;
+}) {
   const results = [...poll.results].sort((a, b) => b.value - a.value);
   const max = Math.max(...results.map((r) => r.value + r.margin));
   return (
@@ -73,10 +87,20 @@ export function PollResults({ poll, state }: { poll: Poll; state: GameState }) {
         {results.map((result) => {
           const player = result.actorId === state.player.actorId;
           return (
-            <tr key={result.actorId} className="border-t border-slate-100 dark:border-slate-800">
-              <td className={`py-1 pr-2 ${player ? 'font-semibold' : ''}`}>
-                {nameOf(state, result.actorId)}
-                {player && ' (vous)'}
+            <tr key={result.actorId} className="border-t border-slate-100 dark:border-white/[0.06]">
+              <td className={`py-1.5 pr-2 ${player ? 'font-semibold' : ''}`}>
+                <span className="flex items-center gap-2">
+                  {state.actors[result.actorId] && (
+                    <Avatar
+                      portrait={portraitOf(state.actors[result.actorId]!, ruleset)}
+                      size="xs"
+                    />
+                  )}
+                  <span className="min-w-0">
+                    {nameOf(state, result.actorId)}
+                    {player && ' (vous)'}
+                  </span>
+                </span>
               </td>
               <td className="py-1 pr-2 text-right whitespace-nowrap tabular-nums">
                 {formatShare(result.value)}
@@ -88,7 +112,13 @@ export function PollResults({ poll, state }: { poll: Poll; state: GameState }) {
                 ± {formatShare(result.margin).replace(' %', ' pt')}
               </td>
               <td className="py-1">
-                <ShareBar value={result.value} max={max} margin={result.margin} emphasis={player} />
+                <ShareBar
+                  value={result.value}
+                  max={max}
+                  margin={result.margin}
+                  emphasis={player}
+                  color={colorOf(state.actors[result.actorId], ruleset)}
+                />
               </td>
             </tr>
           );
@@ -194,6 +224,7 @@ function title(poll: Poll): string {
 export function Polls() {
   const game = useCurrentGame();
   const { state } = game;
+  const ruleset = useRuleset(game.rulesetVersion, state.cycle).data;
   const [shown, setShown] = useState(PAGE);
   const polls = [...state.polls].reverse();
   const round = state.meta.phase === 'entre_deux_tours' ? 'intentions_t2' : 'intentions_t1';
@@ -227,22 +258,27 @@ export function Polls() {
 
       {latest && (
         <section aria-labelledby="titre-dernier" className={`${card} space-y-3`}>
-          <h2 id="titre-dernier" className="text-lg font-semibold">
+          <h2 id="titre-dernier" className="text-2xl">
             Dernier sondage : {POLL_KIND_LABELS[latest.kind].toLowerCase()}
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400">
             {latest.institute}, terrain du {formatGameDate(latest.fieldStart)} au{' '}
             {formatGameDate(latest.fieldEnd)}, {formatCount(latest.sampleSize)} personnes. Le trait
-            noir indique la marge d’erreur à 95 %.
+            fin indique la marge d’erreur à 95 %.
           </p>
-          <PollResults poll={latest} state={state} />
+          <PollResults poll={latest} state={state} ruleset={ruleset} />
           <PollExplanation poll={latest} state={state} />
         </section>
       )}
 
       {evolution.length > 1 && (
-        <section aria-labelledby="titre-evolution" className={`${card} space-y-3 overflow-x-auto`}>
-          <h2 id="titre-evolution" className="text-lg font-semibold">
+        // Défilement horizontal possible sur téléphone : la zone se prend au clavier.
+        <section
+          aria-labelledby="titre-evolution"
+          tabIndex={0}
+          className={`${card} space-y-3 overflow-x-auto outline-none focus-visible:ring-2 focus-visible:ring-republique-500 dark:focus-visible:ring-dorure`}
+        >
+          <h2 id="titre-evolution" className="text-2xl">
             Évolution des intentions au premier tour
           </h2>
           <table className="w-full text-left text-sm">
@@ -273,7 +309,14 @@ export function Polls() {
                     scope="row"
                     className={`py-1 pr-2 text-left ${actorId === state.player.actorId ? 'font-semibold' : 'font-normal'}`}
                   >
-                    {nameOf(state, actorId)}
+                    <span className="flex items-center gap-2">
+                      <span
+                        aria-hidden="true"
+                        className="size-2.5 shrink-0 rounded-full ring-1 ring-white/30"
+                        style={{ backgroundColor: colorOf(state.actors[actorId], ruleset) }}
+                      />
+                      {nameOf(state, actorId)}
+                    </span>
                   </th>
                   {evolution.map((poll) => {
                     const result = poll.results.find((r) => r.actorId === actorId);
@@ -295,7 +338,7 @@ export function Polls() {
 
       {polls.length > 0 && (
         <section aria-labelledby="titre-tous" className="space-y-3">
-          <h2 id="titre-tous" className="text-lg font-semibold">
+          <h2 id="titre-tous" className="text-2xl">
             Tous les sondages publiés ({polls.length})
           </h2>
           <ol className="space-y-3">
@@ -309,7 +352,7 @@ export function Polls() {
                     </span>
                   </summary>
                   <div className="mt-3 space-y-3">
-                    <PollResults poll={poll} state={state} />
+                    <PollResults poll={poll} state={state} ruleset={ruleset} />
                     <PollExplanation poll={poll} state={state} />
                     <PollSheet poll={poll} />
                   </div>

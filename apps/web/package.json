@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@fontsource-variable/archivo": "5.3.0",
+    "@fontsource-variable/bodoni-moda": "5.3.0",
     "@fontsource-variable/hanken-grotesk": "5.3.0",
     "@r2027/shared": "workspace:*",
     "@tanstack/react-query": "5.104.5",

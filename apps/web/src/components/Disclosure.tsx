@@ -1,6 +1,6 @@
 import { ChevronDown } from 'lucide-react';
 import { createContext, useContext, type ReactNode } from 'react';
-import { screenTitle } from './ui';
+import { listPanel, screenTitle } from './ui';
 
 // Sections dépliables (phase 12) : un écran secondaire devient une section d'un espace, que l'on
 // déplie sur place. Motif « disclosure » : un titre (niveau 2) qui contient le bouton, avec sa
@@ -44,6 +44,14 @@ export function ScreenHeading({
   );
 }
 
+/**
+ * Groupe de sections dépliables (phase 16) : un seul panneau à filets, comme un sommaire de
+ * dossiers, plutôt qu'une pile de cartes identiques.
+ */
+export function DisclosureGroup({ children }: { children: ReactNode }) {
+  return <div className={listPanel}>{children}</div>;
+}
+
 export function Disclosure({
   id,
   title,
@@ -67,12 +75,17 @@ export function Disclosure({
   return (
     <section
       id={id}
-      className={`rounded-card border bg-white shadow-card transition-[border-color,box-shadow] duration-200 dark:bg-slate-900 ${
-        open
-          ? 'border-republique-300 dark:border-republique-400/50'
-          : 'border-slate-200/80 dark:border-slate-800'
+      className={`relative scroll-mt-40 transition-colors duration-200 ${
+        open ? 'bg-slate-50/80 dark:bg-white/[0.025]' : ''
       }`}
     >
+      {/* Section ouverte : liseré doré sur le bord, comme un signet. */}
+      <span
+        aria-hidden="true"
+        className={`absolute top-0 bottom-0 left-0 w-[3px] origin-top bg-or-400 transition-transform duration-300 ease-sortie dark:bg-dorure ${
+          open ? 'scale-y-100' : 'scale-y-0'
+        }`}
+      />
       <h2 className="m-0">
         <button
           id={buttonId}
@@ -80,22 +93,24 @@ export function Disclosure({
           aria-expanded={open}
           aria-controls={contentId}
           onClick={onToggle}
-          className="group flex min-h-16 w-full items-center gap-3 rounded-card px-4 py-3 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-republique-500 sm:px-5"
+          className="group flex min-h-16 w-full items-center gap-4 px-4 py-3.5 text-left hover:bg-slate-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-republique-500 sm:px-6 dark:hover:bg-white/[0.035] dark:focus-visible:outline-dorure"
         >
           {icon && (
             <span
               aria-hidden="true"
-              className={`inline-flex size-10 shrink-0 items-center justify-center rounded-2xl transition-colors ${
+              className={`inline-flex size-6 shrink-0 items-center justify-center transition-colors ${
                 open
-                  ? 'bg-republique-600 text-white dark:bg-republique-500'
-                  : 'bg-republique-50 text-republique-700 group-hover:bg-republique-100 dark:bg-republique-950 dark:text-republique-300'
+                  ? 'text-or-600 dark:text-dorure'
+                  : 'text-republique-600 group-hover:text-republique-700 dark:text-slate-400 dark:group-hover:text-slate-200'
               }`}
             >
               {icon}
             </span>
           )}
           <span className="min-w-0 flex-1">
-            <span className="block font-display text-xl leading-tight font-extrabold">{title}</span>
+            <span className="block font-display text-[1.35rem] leading-tight font-semibold tracking-[-0.01em]">
+              {title}
+            </span>
             {status && (
               <span className="mt-0.5 block font-sans text-sm font-normal text-slate-600 dark:text-slate-400">
                 {status}
@@ -104,7 +119,7 @@ export function Disclosure({
           </span>
           <ChevronDown
             aria-hidden="true"
-            className={`size-5 shrink-0 text-slate-500 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+            className={`size-5 shrink-0 text-slate-500 transition-transform duration-300 ease-sortie dark:text-slate-400 ${open ? 'rotate-180' : ''}`}
           />
         </button>
       </h2>
@@ -114,7 +129,7 @@ export function Disclosure({
         role="region"
         aria-labelledby={buttonId}
         hidden={!open}
-        className="border-t border-slate-200 px-4 pt-4 pb-5 sm:px-5 dark:border-slate-800"
+        className="px-4 pt-1 pb-6 sm:px-6"
       >
         {open && <Embedded>{children}</Embedded>}
       </div>

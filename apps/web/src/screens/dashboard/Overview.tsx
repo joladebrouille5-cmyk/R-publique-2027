@@ -33,46 +33,53 @@ export function Overview({
 }) {
   return (
     <section aria-labelledby="titre-ensemble" className="space-y-2.5">
-      <h2 id="titre-ensemble" className="text-lg font-bold">
+      <h2 id="titre-ensemble" className="text-xl sm:text-2xl">
         {title}
       </h2>
       {intro && <div className="space-y-1 text-sm">{intro}</div>}
-      <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-        {tiles.map((tile) => {
-          const Icon = tile.icon;
-          return (
-            <li key={tile.id} className="min-w-0">
-              <button
-                type="button"
-                onClick={tile.action.run}
-                aria-haspopup={tile.action.kind === 'tiroir' ? 'dialog' : undefined}
-                data-tuile={tile.id}
-                className="group flex h-full w-full flex-col items-start gap-0.5 rounded-card border border-slate-200/80 bg-white px-3 py-2 text-left sm:py-2.5 shadow-card transition duration-150 hover:-translate-y-0.5 hover:border-republique-300 hover:shadow-raised focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-republique-500 active:translate-y-0 active:scale-[0.98] dark:border-slate-800 dark:bg-slate-900 dark:hover:border-republique-400/60 dark:hover:shadow-neon"
+      {/* Tableau d'affichage : des cases séparées par des filets (bordures des cases, rognées
+          sur le pourtour par le cadre), sans carte par chiffre. */}
+      <div className="overflow-hidden rounded-dossier border border-slate-200/90 bg-white shadow-card dark:border-white/[0.08] dark:bg-slate-900/55 dark:shadow-none">
+        <ul className="-m-px grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+          {tiles.map((tile) => {
+            const Icon = tile.icon;
+            return (
+              <li
+                key={tile.id}
+                className="min-w-0 border-t border-l border-slate-200/90 dark:border-white/[0.07]"
               >
-                <span className="flex w-full items-center gap-1.5 text-[0.7rem] font-semibold text-slate-600 dark:text-slate-400">
-                  <Icon aria-hidden="true" className="size-3.5 shrink-0" strokeWidth={2.25} />
-                  <span className="min-w-0 flex-1 truncate">{tile.label}</span>
-                  <ChevronRight
-                    aria-hidden="true"
-                    className="size-3.5 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5"
-                  />
-                </span>
-                <span
-                  className={`w-full truncate font-display text-lg leading-tight font-extrabold tabular-nums sm:text-xl ${tile.tone ? TONES[tile.tone] : ''}`}
+                <button
+                  type="button"
+                  onClick={tile.action.run}
+                  aria-haspopup={tile.action.kind === 'tiroir' ? 'dialog' : undefined}
+                  data-tuile={tile.id}
+                  className="group flex h-full w-full flex-col items-start gap-0.5 px-3.5 py-2 text-left transition-colors duration-200 hover:bg-slate-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-republique-500 sm:px-4 sm:py-3 dark:hover:bg-white/[0.04] dark:focus-visible:outline-dorure"
                 >
-                  {tile.value}
-                </span>
-                {tile.detail && (
-                  <span className="w-full truncate text-xs leading-snug text-slate-600 sm:line-clamp-2 sm:whitespace-normal dark:text-slate-400">
-                    {tile.detail}
+                  <span className="flex w-full items-center gap-1.5 text-[0.7rem] font-semibold text-slate-600 dark:text-slate-400">
+                    <Icon aria-hidden="true" className="size-3.5 shrink-0" strokeWidth={2.25} />
+                    <span className="min-w-0 flex-1 truncate">{tile.label}</span>
+                    <ChevronRight
+                      aria-hidden="true"
+                      className="size-3.5 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 dark:text-slate-500"
+                    />
                   </span>
-                )}
-                <span className="sr-only">{tile.action.label}</span>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
+                  <span
+                    className={`w-full truncate font-display text-xl leading-tight font-bold tabular-nums sm:text-2xl ${tile.tone ? TONES[tile.tone] : 'text-slate-950 dark:text-white'}`}
+                  >
+                    {tile.value}
+                  </span>
+                  {tile.detail && (
+                    <span className="w-full truncate text-xs leading-snug text-slate-600 sm:line-clamp-2 sm:whitespace-normal dark:text-slate-400">
+                      {tile.detail}
+                    </span>
+                  )}
+                  <span className="sr-only">{tile.action.label}</span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
     </section>
   );
 }

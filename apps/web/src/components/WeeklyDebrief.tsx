@@ -23,7 +23,8 @@ import {
   RESOURCE_LABELS,
 } from '../labels';
 import { Badge } from './Badge';
-import { buttonPrimary, buttonSecondary } from './ui';
+import { buttonPrestige, buttonSecondary } from './ui';
+import { useCountUp } from './useCountUp';
 import { useModal } from './useModal';
 import { PrestationDetail } from './WeeklyReportView';
 
@@ -101,8 +102,42 @@ function Impacts({ impacts }: { impacts: Impact[] }) {
   );
 }
 
-const section = 'space-y-2 rounded-card border border-slate-200/80 p-4 dark:border-slate-800';
-const title = 'text-base font-bold';
+/**
+ * Variation d'une ressource en tête du débriefing : le chiffre défile jusqu'à la valeur du
+ * moteur (texte final seul lu par les lecteurs d'écran).
+ */
+function BriefDelta({ ressource, delta, index }: Impact & { index: number }) {
+  const progress = useCountUp(900, 250 + index * 90);
+  const text = formatDelta(ressource, Math.round(delta * progress));
+  // Le signe en caractères de l'interface : les filets du Didone l'effaceraient presque.
+  const sign = /^[+−-]/.test(text) ? text.charAt(0) : '';
+  return (
+    <>
+      <span className="sr-only">
+        {RESOURCE_LABELS[ressource]} {formatDelta(ressource, delta)}
+      </span>
+      <span
+        aria-hidden="true"
+        className="block truncate text-xs font-semibold text-slate-600 dark:text-slate-400"
+      >
+        {RESOURCE_LABELS[ressource]}
+      </span>{' '}
+      <span
+        aria-hidden="true"
+        className={`block font-display text-2xl leading-tight font-bold whitespace-nowrap tabular-nums ${
+          delta > 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'
+        }`}
+      >
+        <span className="mr-0.5 font-sans text-[0.8em] font-bold">{sign}</span>
+        {text.slice(sign.length)}
+      </span>
+    </>
+  );
+}
+
+const section =
+  'space-y-2 rounded-card border border-slate-200/90 p-4 dark:border-white/[0.08] dark:bg-white/[0.02]';
+const title = 'text-lg';
 
 export function WeeklyDebrief({
   report,
@@ -155,7 +190,7 @@ export function WeeklyDebrief({
 
   // Portail sur le corps du document : aucun parent animé ne peut le placer sous la navigation.
   return createPortal(
-    <div className="fixed inset-0 z-[60] flex animate-apparait items-stretch justify-center bg-slate-950/70 sm:items-center sm:p-6">
+    <div className="fixed inset-0 z-[60] flex animate-apparait items-stretch justify-center bg-slate-950/75 backdrop-blur-sm sm:items-center sm:p-6">
       <div
         ref={dialog}
         role="dialog"
@@ -163,28 +198,42 @@ export function WeeklyDebrief({
         aria-labelledby={titleId}
         tabIndex={-1}
         onKeyDown={onKeyDown}
-        className="flex w-full max-w-3xl animate-feuille flex-col bg-white outline-none sm:max-h-[90vh] sm:rounded-dossier sm:shadow-raised dark:bg-slate-900"
+        className="flex w-full max-w-3xl animate-feuille flex-col overflow-hidden bg-white outline-none sm:max-h-[90vh] sm:rounded-dossier sm:border sm:border-or-300/50 sm:shadow-raised dark:bg-slate-900 dark:sm:border-dorure/20"
       >
-        <header className="relative shrink-0 border-b border-slate-200 px-4 pt-[calc(1rem+var(--sat))] pb-4 sm:px-6 sm:pt-6 dark:border-slate-800">
+        <header className="relative shrink-0 border-b border-slate-200 bg-[linear-gradient(180deg,rgb(201_162_39/0.08),transparent)] px-4 pt-[calc(1.1rem+var(--sat))] pb-4 sm:px-6 sm:pt-7 dark:border-white/[0.08] dark:bg-[linear-gradient(180deg,rgb(227_196_108/0.08),transparent)]">
           <span aria-hidden="true" className="absolute inset-x-0 top-0 flex h-1.5">
-            <span className="flex-1 bg-republique-500" />
+            <span className="flex-1 bg-republique-600" />
             <span className="flex-1 bg-white" />
-            <span className="flex-1 bg-red-500" />
+            <span className="flex-1 bg-red-600" />
           </span>
-          <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">
-            Semaine du {formatGameDate(report.date)}
-          </p>
-          <h2 id={titleId} className="font-display text-3xl leading-tight font-extrabold">
-            Débriefing de la semaine {report.week}
-          </h2>
+          <div className="flex items-center gap-4">
+            {/* Page du calendrier, qui bascule à l'ouverture : la semaine qui vient de passer. */}
+            <span
+              aria-hidden="true"
+              className="flex w-[4.5rem] shrink-0 animate-bascule flex-col overflow-hidden rounded-xl bg-white text-center shadow-affiche ring-1 ring-slate-200 dark:bg-papier dark:ring-0"
+            >
+              <span className="bg-red-600 py-0.5 text-[0.65rem] font-bold text-white">Semaine</span>
+              <span className="py-1 font-display text-[2.5rem] leading-none font-bold text-slate-950">
+                {report.week}
+              </span>
+            </span>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+                Semaine du {formatGameDate(report.date)}
+              </p>
+              <h2 id={titleId} className="text-[1.75rem] leading-tight sm:text-4xl">
+                Débriefing de la semaine {report.week}
+              </h2>
+            </div>
+          </div>
           {summary.length > 0 && (
             <ul
               aria-label="Votre semaine en bref"
-              className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold"
+              className="mt-4 grid grid-cols-[repeat(auto-fill,minmax(8.5rem,1fr))] gap-x-5 gap-y-2"
             >
-              {summary.map((i) => (
-                <li key={i.ressource}>
-                  <Delta {...i} />
+              {summary.map((i, index) => (
+                <li key={i.ressource} className="min-w-0">
+                  <BriefDelta {...i} index={index} />
                 </li>
               ))}
             </ul>
@@ -200,7 +249,7 @@ export function WeeklyDebrief({
           {report.succes.length > 0 && (
             <section
               aria-labelledby={`${titleId}-succes`}
-              className="space-y-2 rounded-card border-2 border-or-400 bg-or-50 p-4 dark:border-or-600 dark:bg-or-900/30"
+              className="space-y-2 rounded-card border border-or-400 bg-or-50 p-4 shadow-dore dark:border-dorure/60 dark:bg-dorure/[0.08]"
             >
               <h3 id={`${titleId}-succes`} className={title}>
                 {report.succes.length > 1 ? 'Succès débloqués' : 'Succès débloqué'}
@@ -408,13 +457,13 @@ export function WeeklyDebrief({
           </section>
         </div>
 
-        <footer className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-t border-slate-200 px-4 pt-3 pb-[calc(0.75rem+var(--sab))] sm:px-6 sm:pb-4 dark:border-slate-800">
+        <footer className="flex shrink-0 flex-col gap-2 border-t border-slate-200 px-4 pt-3 pb-[calc(0.75rem+var(--sab))] sm:flex-row sm:items-center sm:justify-end sm:px-6 sm:pb-4 dark:border-white/[0.08]">
           {polls.length > 0 && (
             <Link to={`/parties/${gameId}/sondages`} className={buttonSecondary} onClick={onClose}>
               Pourquoi les sondages bougent
             </Link>
           )}
-          <button type="button" className={buttonPrimary} onClick={onClose}>
+          <button type="button" className={`${buttonPrestige} px-8`} onClick={onClose}>
             Continuer
           </button>
         </footer>

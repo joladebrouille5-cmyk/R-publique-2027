@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
-import { createGame, openSection } from './helpers';
+import { createGame, openSection, settled } from './helpers';
 
 // Passages dans les médias sans aléa (phase 11) : le joueur choisit la posture du passage ; le
 // bilan de la semaine en donne le niveau, le score et chacune de ses raisons.
@@ -13,6 +13,8 @@ test('la posture d’un passage se choisit au plan et s’explique au bilan', as
   await posture.getByText('Offensive', { exact: true }).click();
   await expect(posture.getByRole('radio', { name: 'Offensive' })).toBeChecked();
   await expect(posture.getByText('Posture peu adaptée au format.')).toBeVisible();
+  // Audits une fois les entrées en fondu terminées (contraste mesuré sur l'état final).
+  await settled(page);
   const audit = await new AxeBuilder({ page })
     .include('[aria-label="Actions programmées"]')
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
@@ -26,6 +28,7 @@ test('la posture d’un passage se choisit au plan et s’explique au bilan', as
     'Posture offensive, format « Décryptage »',
   );
   await expect(debrief.getByRole('region', { name: 'Sondages de la semaine' })).toBeVisible();
+  await settled(page);
   const overlay = await new AxeBuilder({ page })
     .include('[role="dialog"]')
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])

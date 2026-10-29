@@ -106,7 +106,7 @@ function Objectives({ state, ruleset }: { state: GameState; ruleset: Ruleset }) 
   return (
     <Block id="mandat-objectifs" title="Objectifs du mandat">
       <p className="flex flex-wrap items-baseline gap-2">
-        <span className="font-display text-2xl font-extrabold tabular-nums">{grade.valeur}/20</span>
+        <span className="font-display text-2xl font-bold tabular-nums">{grade.valeur}/20</span>
         <span className="text-xs text-slate-600 dark:text-slate-400">
           note provisoire, si le mandat s’arrêtait aujourd’hui (la mention est donnée au bilan)
         </span>
@@ -429,7 +429,7 @@ export function MandateOverview({
                     <dt className="text-xs text-slate-600 dark:text-slate-400">
                       {INDICATOR_LABELS[indicator].label.split(' (')[0]}
                     </dt>
-                    <dd className="font-display text-base font-extrabold tabular-nums">
+                    <dd className="font-display text-base font-bold tabular-nums">
                       {formatIndicator(indicator, state.economie!.indicateurs[indicator] ?? 0)}
                     </dd>
                   </div>

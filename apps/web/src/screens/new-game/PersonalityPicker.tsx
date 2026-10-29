@@ -6,7 +6,7 @@ import {
   PersonalityPhoto,
   SIMULATION_NOTICE,
 } from '../../components/RealPersonality';
-import { label } from '../../components/ui';
+import { optionTile, radio } from '../../components/ui';
 import { describePosition, formatGameDate, POSITION_METHOD_LABELS } from '../../labels';
 
 /**
@@ -27,33 +27,28 @@ export function PersonalityPicker({
   const { personnalites, verifieLe, nonIntegrees } = ruleset.data.personnalites;
   return (
     <fieldset className="space-y-3">
-      <legend className={label}>Personnalité incarnée</legend>
+      {/* Le titre du chapitre est visible au-dessus ; la légende nomme le groupe. */}
+      <legend className="sr-only">Personnalité incarnée</legend>
       <p className="text-sm text-slate-600 dark:text-slate-400">
         Candidatures déclarées à la présidentielle de 2027, relevées le {formatGameDate(verifieLe)}{' '}
         et retenues pour le jeu. {SIMULATION_NOTICE} Sources et crédits des photos : Paramètres.
       </p>
-      <ul className="grid gap-2 sm:grid-cols-2">
+      <ul className="grid gap-2.5 sm:grid-cols-2">
         {personnalites.map((p: RealPersonality) => (
           <li key={p.id}>
-            <label
-              className={`flex h-full cursor-pointer gap-3 rounded-lg border p-3 ${
-                value === p.id
-                  ? 'border-blue-600 ring-2 ring-blue-600/30'
-                  : 'border-slate-200 dark:border-slate-800'
-              }`}
-            >
+            <label className={`${optionTile} h-full`}>
               <input
                 type="radio"
                 name="personnalite"
                 value={p.id}
                 checked={value === p.id}
                 onChange={() => onChange(p.id)}
-                className="mt-1 self-start"
+                className={`${radio} self-start`}
                 aria-describedby={`fiche-${p.id}`}
               />
               <PersonalityPhoto personality={p} ruleset={ruleset.data} size="sm" />
               <span className="min-w-0 space-y-1">
-                <span className="block font-medium">
+                <span className="block font-semibold">
                   {p.prenom} {p.nom}
                 </span>
                 <span id={`fiche-${p.id}`} className="block space-y-1 text-xs">
@@ -68,7 +63,10 @@ export function PersonalityPicker({
         ))}
       </ul>
       {value && (
-        <div className="space-y-1 rounded-lg bg-slate-50 p-3 dark:bg-slate-900" aria-live="polite">
+        <div
+          className="space-y-1 rounded-2xl bg-slate-50 p-4 text-sm dark:bg-white/[0.04]"
+          aria-live="polite"
+        >
           {(() => {
             const chosen = personnalites.find((p) => p.id === value);
             return chosen ? <CandidacyLine personality={chosen} /> : null;

@@ -1,27 +1,35 @@
 @import 'tailwindcss' source('..');
 /* Polices embarquées (licence SIL OFL 1.1) : l'application fonctionne hors ligne. */
 @import '@fontsource-variable/archivo/wdth.css';
+@import '@fontsource-variable/bodoni-moda/opsz.css';
 @import '@fontsource-variable/hanken-grotesk/wght.css';
 
 /* Thème sombre piloté par la classe `dark` sur <html> (soirée électorale / clair / système). */
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
- * Design system « Soirée électorale » (phase 9) : un plateau de télévision un soir de scrutin.
- * - Nuit de plateau : neutres bleutés (remplacent la gamme slate de Tailwind, donc tous les
- *   écrans) ; bleu nuit très sombre par défaut, papier froid pour le thème clair.
- * - Néons tricolores, avec parcimonie : bleu Marianne vif (actions, sélection, halos), blanc
- *   lumière (chiffres), rouge tribune (alertes, risques, défaites) ; or de l'Élysée pour les
- *   moments de prestige (victoire, présidence).
- * - Titres et chiffres : Archivo condensé (axe de largeur), comme les bandeaux de résultats ;
- *   interface : Hanken Grotesk.
+ * Design system « Grand Soir » (phase 16, sur les jetons de la phase 9) : la République la nuit
+ * d'une élection.
+ * - Nuit : neutres bleutés (remplacent la gamme slate de Tailwind, donc tous les écrans) ; bleu
+ *   de nuit par défaut, papier froid pour le thème clair.
+ * - Bleu République pour agir, rouge velours (hémicycle) pour les risques et l'opposition,
+ *   dorure des salons de l'Élysée pour le prestige et le moment décisif (bouton doré).
+ * - Titres, noms sur les affiches et grands chiffres : Bodoni Moda, un Didone dans la lignée des
+ *   Didot (axe de taille optique : contraste fort en grand, adouci en petit) ; interface et
+ *   données : Hanken Grotesk ; habillage télévisé (soirée électorale, débats) : Archivo
+ *   condensé, élément du monde du jeu.
  */
 @theme {
   --font-sans:
     'Hanken Grotesk Variable', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue',
     Arial, sans-serif;
-  --font-display: 'Archivo Variable', 'Hanken Grotesk Variable', system-ui, sans-serif;
-  --font-display--font-variation-settings: 'wdth' 78;
+  --font-display: 'Bodoni Moda Variable', 'Bodoni 72', Didot, Georgia, serif;
+  --font-broadcast: 'Archivo Variable', 'Hanken Grotesk Variable', system-ui, sans-serif;
+  --font-broadcast--font-variation-settings: 'wdth' 78;
+
+  /* Papier des affiches et des bulletins ; dorure sur fond de nuit. */
+  --color-papier: #f7f8fb;
+  --color-dorure: #e3c46c;
 
   --color-slate-50: #f3f5fb;
   --color-slate-100: #e7ebf5;
@@ -73,6 +81,8 @@
   --radius-card: 1.25rem;
   --radius-dossier: 1.75rem;
 
+  --radius-affiche: 0.25rem;
+
   /* Ombres teintées de bleu nuit, jamais grises ; halos néon pour ce qui est actif. */
   --shadow-card: 0 1px 2px rgb(16 27 59 / 0.06), 0 8px 24px -14px rgb(16 27 59 / 0.22);
   --shadow-raised: 0 2px 6px rgb(16 27 59 / 0.08), 0 24px 48px -20px rgb(16 27 59 / 0.35);
@@ -80,6 +90,9 @@
   --shadow-neon: 0 0 0 1px rgb(98 134 255 / 0.55), 0 0 28px -6px rgb(98 134 255 / 0.65);
   --shadow-neon-rouge: 0 0 0 1px rgb(255 77 106 / 0.55), 0 0 28px -6px rgb(255 77 106 / 0.6);
   --shadow-lueur: 0 0 14px rgb(98 134 255 / 0.75);
+  /* Lumière dorée du bouton décisif et des affiches éclairées. */
+  --shadow-dore: 0 0 0 1px rgb(227 196 108 / 0.55), 0 12px 32px -14px rgb(227 196 108 / 0.7);
+  --shadow-affiche: 0 1px 1px rgb(5 10 28 / 0.25), 0 18px 36px -18px rgb(5 10 28 / 0.75);
 
   --ease-sortie: cubic-bezier(0.16, 1, 0.3, 1);
 
@@ -90,6 +103,9 @@
   --animate-volet: volet 420ms var(--ease-sortie) both;
   --animate-defile: defile 45s linear infinite;
   --animate-direct: direct 1.6s ease-in-out infinite;
+  --animate-colle: colle 700ms var(--ease-sortie) both;
+  --animate-bascule: bascule 620ms var(--ease-sortie) both;
+  --animate-titre: titre 900ms var(--ease-sortie) both;
 
   @keyframes monte {
     from {
@@ -133,6 +149,32 @@
       opacity: 0.3;
     }
   }
+  /* Affiche collée sur son panneau : elle se pose, légèrement de biais, puis se plaque. */
+  @keyframes colle {
+    from {
+      transform: translateY(-14px) rotate(-2.5deg) scale(1.04);
+      opacity: 0;
+    }
+    60% {
+      opacity: 1;
+    }
+  }
+  /* Page du calendrier qui bascule (nouvelle semaine) : rotation seule, sans fondu, pour que le
+     contraste du texte reste entier pendant l'animation. */
+  @keyframes bascule {
+    from {
+      transform: perspective(600px) rotateX(-80deg);
+      transform-origin: top;
+    }
+  }
+  /* Titre qui s'éclaire (écran-titre). */
+  @keyframes titre {
+    from {
+      opacity: 0;
+      letter-spacing: 0.06em;
+      filter: blur(6px);
+    }
+  }
 }
 
 @layer base {
@@ -163,7 +205,8 @@
   body {
     @apply bg-slate-50 text-slate-900 antialiased dark:bg-transparent dark:text-slate-100;
   }
-  /* Projecteurs du plateau : halos bleu et rouge, fixes, derrière le contenu. */
+  /* Grand soir : lumière dorée des lustres en haut, bleu de scène à gauche, velours en bas à
+     droite ; fixes, derrière le contenu. */
   html.dark body::before {
     content: '';
     position: fixed;
@@ -171,21 +214,36 @@
     z-index: -1;
     pointer-events: none;
     background:
-      radial-gradient(70rem 40rem at 0% -10%, rgb(61 87 230 / 0.3), transparent 60%),
-      radial-gradient(50rem 32rem at 105% 0%, rgb(229 51 75 / 0.15), transparent 60%),
-      radial-gradient(60rem 40rem at 50% 120%, rgb(61 87 230 / 0.14), transparent 60%);
+      radial-gradient(56rem 26rem at 50% -12%, rgb(227 196 108 / 0.11), transparent 70%),
+      radial-gradient(60rem 44rem at -12% 8%, rgb(61 87 230 / 0.24), transparent 62%),
+      radial-gradient(52rem 34rem at 112% 104%, rgb(184 29 58 / 0.13), transparent 62%);
+  }
+  /* Grain de papier très léger, sur les deux thèmes : la nuit n'est pas un aplat numérique. */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.5  0 0 0 0 0.5  0 0 0 0 0.6  0 0 0 1 0'/></filter><rect width='100%' height='100%' filter='url(%23g)'/></svg>");
   }
   h1,
   h2,
   h3 {
     font-family: var(--font-display);
-    font-variation-settings: 'wdth' 80;
-    font-weight: 800;
-    letter-spacing: -0.005em;
+    font-optical-sizing: auto;
+    font-weight: 700;
+    letter-spacing: -0.012em;
     text-wrap: balance;
   }
+
   :focus-visible {
-    @apply outline-2 outline-offset-2 outline-republique-500 dark:outline-republique-400;
+    @apply outline-2 outline-offset-2 outline-republique-500 dark:outline-dorure;
+  }
+  /* Grands chiffres : figures alignées du Didone (sondages, comptes à rebours, scores). */
+  .font-display {
+    font-variant-numeric: lining-nums;
   }
   ::selection {
     @apply bg-republique-500 text-white;
@@ -198,6 +256,21 @@
   }
 }
 
+/* Habillage télévisé (soirée électorale, débats) : bandeaux condensés de plateau. Hors couche,
+   pour primer sur l'utilitaire `font-display`. */
+.habillage-tele :is(h1, h2, h3, .font-display) {
+  font-family: var(--font-broadcast);
+  font-variation-settings: 'wdth' 80;
+  letter-spacing: -0.005em;
+}
+
+/* Transitions de vue entre les espaces de la partie (navigateurs qui les prennent en charge) :
+   fondu bref, le bandeau de la partie restant en place. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 180ms;
+}
+
 /* Mouvement réduit : aucune animation ni transition décorative (le bandeau ne défile plus). */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -207,5 +280,9 @@
     animation-iteration-count: 1 !important;
     transition-duration: 1ms !important;
     scroll-behavior: auto !important;
+  }
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
   }
 }

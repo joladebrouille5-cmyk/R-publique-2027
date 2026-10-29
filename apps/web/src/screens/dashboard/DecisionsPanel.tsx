@@ -326,9 +326,9 @@ export function DecisionsPanel({
                       key={option.id}
                       className={`relative flex min-h-24 cursor-pointer flex-col gap-1 rounded-card border-2 p-4 pr-12 transition duration-150 active:scale-[0.99] ${
                         checked
-                          ? 'border-republique-600 bg-republique-50 dark:border-republique-400 dark:bg-republique-950 dark:shadow-neon'
-                          : 'border-slate-200 bg-white hover:border-republique-300 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-republique-400/60'
-                      } has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-republique-500`}
+                          ? 'border-or-500 bg-or-50/80 dark:border-dorure/70 dark:bg-dorure/[0.08]'
+                          : 'border-slate-200 bg-white hover:border-or-300 dark:border-white/10 dark:bg-white/[0.03] dark:hover:border-dorure/40'
+                      } has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-republique-500 dark:has-[:focus-visible]:outline-dorure`}
                     >
                       <input
                         type="radio"
@@ -350,7 +350,7 @@ export function DecisionsPanel({
                         aria-hidden="true"
                         className={`absolute top-4 right-4 inline-flex size-6 items-center justify-center rounded-full border-2 transition-colors ${
                           checked
-                            ? 'border-republique-600 bg-republique-600 text-white'
+                            ? 'border-or-500 bg-or-500 text-white dark:border-dorure dark:bg-dorure dark:text-[#1d1503]'
                             : 'border-slate-300 dark:border-slate-600'
                         }`}
                       >

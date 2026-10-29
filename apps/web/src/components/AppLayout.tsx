@@ -35,18 +35,25 @@ function ServerStatus() {
   );
 }
 
-/** Marque : trois bandes inclinées, comme un bulletin glissé dans l'urne. */
+/** Écharpe tricolore : trois bandes en biais, comme l'écharpe des élus de la République. */
+export function Echarpe({ className = 'h-5 w-[1.15rem]' }: { className?: string }) {
+  return (
+    <span aria-hidden="true" className={`inline-flex -skew-x-[18deg] ${className}`}>
+      <span className="flex-1 bg-republique-600 dark:bg-republique-500" />
+      <span className="flex-1 bg-white ring-1 ring-slate-300/70 ring-inset dark:ring-0" />
+      <span className="flex-1 bg-red-600 dark:bg-red-500" />
+    </span>
+  );
+}
+
+/** Marque : l'écharpe et le nom du jeu en Didone, comme une raison sociale gravée. */
 function Brand() {
   return (
     <Link
       to="/"
-      className="flex items-center gap-2 rounded-full font-display text-base font-extrabold tracking-tight whitespace-nowrap sm:gap-2.5 sm:text-lg"
+      className="flex items-center gap-2.5 rounded-full py-1 font-display text-[1.05rem] font-bold tracking-[0.06em] whitespace-nowrap sm:text-lg"
     >
-      <span aria-hidden="true" className="flex h-5 -skew-x-12 overflow-hidden rounded-[3px]">
-        <span className="w-1.5 bg-republique-600" />
-        <span className="w-1.5 bg-slate-200 dark:bg-slate-100" />
-        <span className="w-1.5 bg-red-500" />
-      </span>
+      <Echarpe />
       RÉPUBLIQUE 2027
     </Link>
   );
@@ -69,14 +76,14 @@ export function AppLayout() {
         aria-hidden="true"
         className="fixed inset-x-0 top-0 z-40 h-(--sat) bg-slate-50 dark:bg-slate-950"
       />
-      <header className="bg-slate-50 pt-(--sat) pr-(--sar) pl-(--sal) dark:bg-slate-950">
+      <header className="pt-(--sat) pr-(--sar) pl-(--sal)">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 pt-3 pb-2 sm:gap-4">
           <Brand />
           <div className="flex items-center gap-1 sm:gap-2">
             <ThemeToggle />
             <Link
               to="/parametres"
-              className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-full px-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-full px-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/[0.07] dark:hover:text-white"
             >
               <Settings aria-hidden="true" className="size-5" />
               <span className="sr-only sm:not-sr-only">Paramètres</span>
@@ -88,7 +95,7 @@ export function AppLayout() {
         <Outlet />
       </main>
       <footer
-        className={`border-t border-slate-200 text-xs text-slate-600 dark:border-slate-800 dark:text-slate-400 ${inGame ? 'max-lg:pb-[calc(6rem+var(--sab))]' : ''}`}
+        className={`border-t border-slate-200 text-xs text-slate-600 dark:border-white/[0.07] dark:text-slate-400 ${inGame ? 'max-lg:pb-[calc(6rem+var(--sab))]' : ''}`}
       >
         <div className="mx-auto flex max-w-7xl flex-col gap-1 px-4 py-4 sm:flex-row sm:justify-between">
           <ServerStatus />

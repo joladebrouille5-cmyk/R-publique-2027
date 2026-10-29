@@ -29,7 +29,7 @@ export function Drawer({
   // Portail sur le corps du document : aucun parent animé ne peut le placer sous la navigation.
   return createPortal(
     <div
-      className="fixed inset-0 z-[60] flex animate-apparait items-end justify-end bg-slate-950/55 lg:items-stretch"
+      className="fixed inset-0 z-[60] flex animate-apparait items-end justify-end bg-slate-950/60 backdrop-blur-[2px] lg:items-stretch"
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
@@ -41,15 +41,15 @@ export function Drawer({
         aria-labelledby={titleId}
         tabIndex={-1}
         onKeyDown={onKeyDown}
-        className="flex max-h-[calc(100dvh-var(--sat)-0.75rem)] w-full animate-feuille flex-col rounded-t-dossier bg-white shadow-raised outline-none lg:h-full lg:max-h-none lg:w-[min(38rem,92vw)] lg:animate-volet lg:rounded-none lg:rounded-l-dossier lg:pt-(--sat) dark:bg-slate-900 dark:shadow-[0_0_0_1px_rgb(98_134_255/0.2),0_24px_48px_-20px_rgb(0_0_0/0.7)]"
+        className="flex max-h-[calc(100dvh-var(--sat)-0.75rem)] w-full animate-feuille flex-col rounded-t-dossier bg-white shadow-raised outline-none lg:h-full lg:max-h-none lg:w-[min(38rem,92vw)] lg:animate-volet lg:rounded-none lg:rounded-l-dossier lg:pt-(--sat) dark:bg-slate-900 dark:shadow-[0_0_0_1px_rgb(227_196_108/0.16),0_24px_48px_-20px_rgb(0_0_0/0.8)]"
       >
         <span
           aria-hidden="true"
           className="mx-auto mt-2.5 h-1.5 w-12 shrink-0 rounded-full bg-slate-300 lg:hidden dark:bg-slate-700"
         />
-        <div className="flex shrink-0 items-start gap-3 border-b border-slate-200 px-4 pt-3 pb-3 sm:px-6 dark:border-slate-800">
+        <div className="flex shrink-0 items-start gap-3 border-b border-slate-200 px-4 pt-3 pb-3 sm:px-6 dark:border-white/[0.08]">
           <div className="min-w-0 flex-1">
-            <h2 id={titleId} className="font-display text-2xl leading-tight font-extrabold">
+            <h2 id={titleId} className="font-display text-2xl leading-tight font-bold">
               {title}
             </h2>
             {subtitle && (
@@ -59,7 +59,7 @@ export function Drawer({
           <button
             type="button"
             onClick={onClose}
-            className="-mr-2 inline-flex size-11 shrink-0 items-center justify-center rounded-full text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+            className="-mr-2 inline-flex size-11 shrink-0 items-center justify-center rounded-full text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/[0.07]"
           >
             <X aria-hidden="true" className="size-5" />
             <span className="sr-only">Fermer</span>
@@ -77,7 +77,7 @@ export function Drawer({
           {children}
         </div>
         {footer && (
-          <div className="shrink-0 border-t border-slate-200 px-4 pt-3 pb-[calc(0.75rem+var(--sab))] sm:px-6 dark:border-slate-800">
+          <div className="shrink-0 border-t border-slate-200 px-4 pt-3 pb-[calc(0.75rem+var(--sab))] sm:px-6 dark:border-white/[0.08]">
             {footer}
           </div>
         )}

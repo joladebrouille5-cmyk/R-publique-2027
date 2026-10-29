@@ -73,7 +73,7 @@ export function DecisionSpotlight({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[70] flex animate-apparait items-end justify-center bg-slate-950/65 sm:items-center sm:p-6"
+      className="fixed inset-0 z-[70] flex animate-apparait items-end justify-center bg-slate-950/70 backdrop-blur-sm sm:items-center sm:p-6"
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
@@ -86,7 +86,7 @@ export function DecisionSpotlight({
         aria-describedby={descriptionId}
         tabIndex={-1}
         onKeyDown={onKeyDown}
-        className="relative max-h-[calc(100dvh-var(--sat)-0.5rem)] w-full max-w-2xl animate-feuille overflow-y-auto overscroll-contain rounded-t-dossier bg-white pb-[calc(1rem+var(--sab))] shadow-raised outline-none sm:animate-revele sm:rounded-dossier sm:pb-5 dark:bg-slate-900 dark:shadow-[0_0_0_1px_rgb(98_134_255/0.25),0_24px_48px_-20px_rgb(0_0_0/0.75)]"
+        className="relative max-h-[calc(100dvh-var(--sat)-0.5rem)] w-full max-w-2xl animate-feuille overflow-y-auto overscroll-contain rounded-t-dossier bg-white pb-[calc(1rem+var(--sab))] shadow-raised outline-none sm:animate-revele sm:rounded-dossier sm:pb-5 dark:bg-slate-900 dark:shadow-[0_0_0_1px_rgb(227_196_108/0.2),0_24px_48px_-20px_rgb(0_0_0/0.8)]"
       >
         <span aria-hidden="true" className={`block h-1.5 ${kind.accent}`} />
         <div className="space-y-4 px-4 pt-4 sm:px-6">
@@ -109,7 +109,7 @@ export function DecisionSpotlight({
               </p>
               <h2
                 id={titleId}
-                className="font-display text-2xl leading-tight font-extrabold tracking-tight sm:text-3xl"
+                className="font-display text-2xl leading-tight font-bold tracking-tight sm:text-3xl"
               >
                 {decision.label}
               </h2>
@@ -176,8 +176,8 @@ export function DecisionSpotlight({
                     onClick={() => choose(option.id)}
                     className={`relative flex w-full flex-col gap-1 rounded-card border-2 p-4 pr-12 text-left transition duration-150 active:scale-[0.99] ${
                       chosen
-                        ? 'border-republique-600 bg-republique-50 dark:border-republique-400 dark:bg-republique-950'
-                        : 'border-slate-200 bg-white hover:border-republique-300 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-republique-400/60'
+                        ? 'border-or-500 bg-or-50/80 dark:border-dorure/70 dark:bg-dorure/[0.08]'
+                        : 'border-slate-200 bg-white hover:border-or-300 dark:border-white/10 dark:bg-white/[0.03] dark:hover:border-dorure/40'
                     }`}
                   >
                     <span className="font-bold">{option.libelle}</span>
@@ -193,7 +193,7 @@ export function DecisionSpotlight({
                       aria-hidden="true"
                       className={`absolute top-4 right-4 inline-flex size-6 items-center justify-center rounded-full border-2 ${
                         chosen
-                          ? 'border-republique-600 bg-republique-600 text-white'
+                          ? 'border-or-500 bg-or-500 text-white dark:border-dorure dark:bg-dorure dark:text-[#1d1503]'
                           : 'border-slate-300 dark:border-slate-600'
                       }`}
                     >

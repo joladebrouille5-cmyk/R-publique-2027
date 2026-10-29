@@ -39,13 +39,13 @@ import { ApiRequestError, newIdempotencyKey } from '../api/client';
 import { nominationsClosed, presentationSummary, spendingCapOf } from '../campaign';
 import { useAdvance, useJournal, useRuleset, useSupports } from '../api/hooks';
 import { Achievements } from '../components/Achievements';
-import { Disclosure, Embedded } from '../components/Disclosure';
+import { Disclosure, DisclosureGroup, Embedded } from '../components/Disclosure';
 import { Drawer } from '../components/Drawer';
 import { tensionLevel } from '../components/ParliamentGauges';
 import { ErrorMessage } from '../components/ErrorMessage';
 import {
   buttonGhost,
-  buttonPrimary,
+  buttonPrestige,
   buttonSecondary,
   card,
   inputCompact,
@@ -706,7 +706,7 @@ export function Dashboard() {
 
       {!quinquennat && previousTerm && (
         <section aria-labelledby="titre-nouveau-cycle" className={`${card} space-y-2 text-sm`}>
-          <h2 id="titre-nouveau-cycle" className="text-xl font-bold">
+          <h2 id="titre-nouveau-cycle" className="text-2xl">
             Présidentielle {state.cycle.annee}
           </h2>
           <p>
@@ -766,7 +766,7 @@ export function Dashboard() {
             supports={{ prospects: supports.data, error: supports.isError }}
           />
           <section aria-labelledby="titre-engagements" className={`${card} space-y-2 text-sm`}>
-            <h2 id="titre-engagements" className="text-lg font-bold">
+            <h2 id="titre-engagements" className="text-xl">
               Programme et alliances cette semaine
             </h2>
             {plan.ajouter.length + plan.retirer.length > 0 ? (
@@ -844,11 +844,11 @@ export function Dashboard() {
       {/* Barre de résolution : toujours à portée de pouce, au-dessus de la navigation. */}
       <div className="sticky bottom-[calc(4.25rem+var(--sab))] z-20 lg:bottom-4">
         {/* Compacte sur téléphone : elle ne doit pas masquer les cartes d'actions qui défilent. */}
-        <div className="space-y-1.5 rounded-card border border-slate-200/80 bg-white/95 px-2.5 py-2 shadow-raised backdrop-blur-md sm:space-y-2 sm:p-3 dark:border-slate-700 dark:bg-slate-900/95">
+        <div className="space-y-1.5 rounded-dossier border border-or-300/60 bg-white/90 px-2.5 py-2 shadow-raised backdrop-blur-md sm:space-y-2 sm:p-3 dark:border-dorure/25 dark:bg-slate-950/85 dark:shadow-[inset_0_1px_0_rgb(227_196_108/0.12),0_24px_48px_-20px_rgb(0_0_0/0.85)]">
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
-              className={`${buttonPrimary} flex-1 sm:flex-none`}
+              className={`${buttonPrestige} flex-1 sm:flex-none sm:px-8`}
               disabled={blocked || advance.isPending || unanswered.length > 0 || missingTargets > 0}
               onClick={() => submit()}
             >
@@ -859,7 +859,7 @@ export function Dashboard() {
                 </>
               ) : (
                 <>
-                  <CalendarClock aria-hidden="true" className="size-4" />
+                  <CalendarClock aria-hidden="true" className="size-5" />
                   {`Résoudre la semaine ${game.week}`}
                 </>
               )}
@@ -937,7 +937,7 @@ export function Dashboard() {
       )}
 
       {/* Le reste du QG, replié : on déplie ce dont on a besoin. */}
-      <div className="space-y-3">
+      <DisclosureGroup>
         <Disclosure
           id="bilan-semaine"
           key={lastReport?.week ?? 'aucun'}
@@ -1070,7 +1070,7 @@ export function Dashboard() {
             </dl>
           </div>
         </Disclosure>
-      </div>
+      </DisclosureGroup>
     </section>
   );
 }

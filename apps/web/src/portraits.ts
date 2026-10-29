@@ -1,4 +1,11 @@
-import type { Actor, MinisterProfile, PhotoCredit, RealPersonality, Ruleset } from '@r2027/shared';
+import type {
+  Actor,
+  FictionalCandidate,
+  MinisterProfile,
+  PhotoCredit,
+  RealPersonality,
+  Ruleset,
+} from '@r2027/shared';
 
 // Portraits (phase 9, étendus en phase 13) : la photo importée par le joueur pour son candidat,
 // ou la photo sous licence libre d'une personnalité réelle ; à défaut, un portrait illustré
@@ -118,4 +125,32 @@ export function portraitOfProfile(
     famille: familyOf(profile.positionnement, ruleset),
     illustration: `profil:${profile.id}`,
   };
+}
+
+/**
+ * Portrait d'un candidat fictif du jeu de règles (mur d'affichage de l'écran-titre) : la même
+ * graine que dans la partie, donc le même visage.
+ */
+export function portraitOfFictional(
+  candidate: Pick<FictionalCandidate, 'prenom' | 'nom' | 'positionnement'>,
+  ruleset: Pick<Ruleset, 'electorat'> | undefined,
+): Portrait {
+  return {
+    prenom: candidate.prenom,
+    nom: candidate.nom,
+    photo: null,
+    famille: familyOf(candidate.positionnement, ruleset),
+    illustration: `fictif:${candidate.prenom} ${candidate.nom}`,
+  };
+}
+
+/**
+ * Couleur d'un candidat dans les graphiques (sondages, résultats) : celle de sa famille politique
+ * (convention du jeu, pas la couleur officielle d'un parti) ; le nom est toujours écrit à côté.
+ */
+export function colorOf(
+  actor: Pick<Actor, 'candidate'> | undefined,
+  ruleset: Pick<Ruleset, 'electorat'> | undefined,
+): string {
+  return (actor && familyOf(actor.candidate.positionnement, ruleset)?.fond) ?? NEUTRAL.fond;
 }

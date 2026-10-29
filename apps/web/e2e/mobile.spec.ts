@@ -140,7 +140,11 @@ test('aucun espace ne déborde en largeur, toutes sections dépliées (360 et 39
   for (const width of [360, 390]) {
     await page.setViewportSize({ width, height: 800 });
     for (const space of ['QG', 'Carte', 'Campagne', 'Opinion', 'Pouvoir']) {
-      await nav.getByRole('link', { name: space, exact: true }).click();
+      const tab = nav.getByRole('link', { name: space, exact: true });
+      await tab.click();
+      // Transition de vue (phase 16) : la page change un instant après le clic ; l'onglet n'est
+      // marqué courant qu'une fois la nouvelle page en place.
+      await expect(tab).toHaveAttribute('aria-current', 'page');
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
       const toggles = page.locator('main h2 > button[aria-controls$="-contenu"]');
       for (let i = 0; i < (await toggles.count()); i++) {

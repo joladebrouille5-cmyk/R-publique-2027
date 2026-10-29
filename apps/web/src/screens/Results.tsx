@@ -12,6 +12,7 @@ import {
   formatShare,
 } from '../labels';
 import { cancelledDebate, cancelledLabel } from './debat/parts';
+import { colorOf } from '../portraits';
 import { useCurrentGame } from './GameLayout';
 import { ScreenHeading } from '../components/Disclosure';
 
@@ -138,7 +139,12 @@ function RoundCard({
                     {formatRatio(voix, result.inscrits)}
                   </td>
                   <td className="py-1">
-                    <ShareBar value={voix} max={max} emphasis={player} />
+                    <ShareBar
+                      value={voix}
+                      max={max}
+                      emphasis={player}
+                      color={colorOf(state.actors[id], ruleset)}
+                    />
                   </td>
                 </tr>
               );

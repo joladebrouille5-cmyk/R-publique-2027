@@ -28,7 +28,7 @@ export function MajorityGauge({
     <div className="space-y-1.5">
       <p className="flex items-baseline justify-between gap-2 text-sm">
         <span className="font-semibold">Majorité des membres</span>
-        <span className="font-display text-lg font-extrabold tabular-nums">
+        <span className="font-display text-lg font-bold tabular-nums">
           {supporters}
           <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">
             {' '}
@@ -110,7 +110,7 @@ export function TensionGauge({
     <div className="space-y-1.5">
       <p className="flex items-baseline justify-between gap-2 text-sm">
         <span className="font-semibold">Tension parlementaire</span>
-        <span className="font-display text-lg font-extrabold tabular-nums">
+        <span className="font-display text-lg font-bold tabular-nums">
           {tension.valeur}
           <span className="text-sm font-semibold text-slate-500 dark:text-slate-400"> / 100</span>
         </span>

@@ -89,7 +89,7 @@ export function ParrainagesRace({
           <p className="flex items-center gap-2 rounded-2xl bg-slate-50 px-3 py-2 text-sm dark:bg-slate-800/60">
             <Hourglass aria-hidden="true" className="size-4 text-amber-600 dark:text-amber-300" />
             <span>
-              <span className="font-display text-xl font-extrabold tabular-nums">J−{left}</span>
+              <span className="font-display text-xl font-bold tabular-nums">J−{left}</span>
               <span className="block text-xs text-slate-600 dark:text-slate-400">
                 clôture le {formatGameDate(closing!)}
               </span>

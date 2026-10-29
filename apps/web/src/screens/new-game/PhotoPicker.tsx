@@ -58,6 +58,7 @@ export function PhotoPicker({
         <Avatar
           portrait={portrait}
           size="xl"
+          shape="affiche"
           ring
           alt={value ? 'Photo choisie pour le candidat' : ''}
         />
@@ -76,7 +77,7 @@ export function PhotoPicker({
           />
           <label
             htmlFor={`${id}-fichier`}
-            className={`${buttonGhost} cursor-pointer border border-slate-200 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-republique-500 dark:border-slate-700`}
+            className={`${buttonGhost} cursor-pointer border border-slate-300 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-republique-500 dark:border-white/15 dark:peer-focus-visible:outline-dorure`}
           >
             <ImagePlus aria-hidden="true" className="size-4" />
             {busy ? 'Préparation…' : value ? 'Changer de photo' : 'Importer une photo'}

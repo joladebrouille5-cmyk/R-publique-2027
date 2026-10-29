@@ -138,7 +138,7 @@ function Plateau({ session }: { session: DebateSession }) {
   }, [session.sequences, ruleset.data, state]);
 
   return (
-    <section aria-labelledby="titre-debat" className="space-y-5">
+    <section aria-labelledby="titre-debat" className="habillage-tele space-y-5">
       <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div className="space-y-2">
           {cancelled ? (

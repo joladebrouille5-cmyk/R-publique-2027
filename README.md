@@ -26,6 +26,7 @@ Simulation politique française : présidentielle, campagne et quinquennat. Jeu 
 | 13 | Mandat vivant : vue du mandat, hémicycle lisible, tension parlementaire, frondeurs, actions du chef de l'État, législatives avec alliances, photo du candidat et portraits | ✅ terminée |
 | 14 | Vivier de 108 personnalités réelles avec photo, expertise ministérielle, figures des blocs aux législatives | ✅ terminée |
 | 15 | Pré-campagne (orientation du mouvement, course aux parrainages, rendez-vous d'élus, négociations de soutien) ; urgences ministérielles et questions au gouvernement en pop-up, Conseil des ministres, remaniement ciblé, objectifs et note du mandat, succès, déplacements sur la carte | ✅ terminée |
+| 16 | Refonte « Grand Soir » de l'interface : écran-titre au mur d'affichage, création de partie en chapitres avec l'affiche en direct, QG et débriefing redessinés, sondages aux couleurs des candidats | ✅ terminée |
 
 **Ce qui fonctionne aujourd'hui** :
 - créer une partie avec son candidat (prénom, nom, parti, positionnement économique et sociétal, parcours, profil de départ, **photo** importée depuis l'appareil, recadrée et réduite sur place, sinon un portrait illustré généré) ou en observateur, avec difficulté, date de départ et graine ;

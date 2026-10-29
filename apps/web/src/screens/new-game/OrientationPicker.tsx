@@ -1,7 +1,7 @@
 import type { Orientation, ResourceKey } from '@r2027/shared';
 import { useCurrentRuleset } from '../../api/hooks';
 import { Badge } from '../../components/Badge';
-import { label } from '../../components/ui';
+import { label, optionTile, radio } from '../../components/ui';
 import { formatDelta, RESOURCE_LABELS } from '../../labels';
 
 // Orientation stratégique du mouvement (phase 15) : facultative, choisie à la création d'une
@@ -59,22 +59,19 @@ export function OrientationPicker({
   return (
     <fieldset className="space-y-2">
       <legend className={label}>Orientation stratégique du mouvement</legend>
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div className="grid gap-2.5 sm:grid-cols-2">
         {options.map((option) => (
-          <label
-            key={option.id ?? 'aucune'}
-            className="flex cursor-pointer gap-3 rounded-lg border border-slate-200 p-3 has-[:checked]:border-republique-500 has-[:checked]:bg-republique-50 dark:border-slate-800 dark:has-[:checked]:border-republique-400 dark:has-[:checked]:bg-republique-950"
-          >
+          <label key={option.id ?? 'aucune'} className={optionTile}>
             <input
               type="radio"
               name="orientation"
               value={option.id ?? ''}
               checked={value === option.id}
               onChange={() => onChange(option.id)}
-              className="mt-1"
+              className={radio}
             />
             <span className="space-y-1">
-              <span className="block font-medium">{option.libelle}</span>
+              <span className="block font-semibold">{option.libelle}</span>
               <span className="block text-xs text-slate-600 dark:text-slate-400">
                 {option.description}
               </span>
@@ -87,7 +84,7 @@ export function OrientationPicker({
           </label>
         ))}
       </div>
-      <p className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+      <p className="flex flex-wrap items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
         <Badge tone="alerte">Hypothèses du jeu</Badge>
         L’orientation ne vaut que pour la première campagne ; elle ne garantit aucun résultat.
       </p>

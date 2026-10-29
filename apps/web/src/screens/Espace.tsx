@@ -2,7 +2,7 @@ import type { GameDetail, Ruleset } from '@r2027/shared';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router';
 import { useRuleset } from '../api/hooks';
-import { Disclosure } from '../components/Disclosure';
+import { Disclosure, DisclosureGroup } from '../components/Disclosure';
 import { Unavailable } from '../components/Unavailable';
 import { screenTitle } from '../components/ui';
 import { useCurrentGame } from './GameLayout';
@@ -106,7 +106,7 @@ export function Espace({ hub }: { hub: Hub }) {
         <MandateOverview state={game.state} ruleset={ruleset.data} onShow={show} />
       )}
       <MandateOverviewShown.Provider value={overview}>
-        <div className="space-y-3">
+        <DisclosureGroup>
           {hub.sections.map((path) => (
             <ScreenSection
               key={path}
@@ -117,7 +117,7 @@ export function Espace({ hub }: { hub: Hub }) {
               onToggle={() => toggle(path)}
             />
           ))}
-        </div>
+        </DisclosureGroup>
       </MandateOverviewShown.Provider>
     </section>
   );

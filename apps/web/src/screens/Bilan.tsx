@@ -129,7 +129,7 @@ function Review({
         <div className="space-y-1">
           <h3 className="font-semibold">Note du mandat</h3>
           <p className="flex flex-wrap items-baseline gap-2">
-            <span className="font-display text-3xl font-extrabold tabular-nums">
+            <span className="font-display text-3xl font-bold tabular-nums">
               {bilan.note.valeur}/20
             </span>
             <span className="font-semibold">{bilan.note.mention}</span>

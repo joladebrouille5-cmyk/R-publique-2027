@@ -8,6 +8,8 @@ const SIZES = {
   md: 'size-12 text-base',
   lg: 'size-16 text-xl',
   xl: 'size-20 text-2xl',
+  /** Remplit son conteneur (portrait d'une affiche). */
+  plein: 'size-full text-[2.4em]',
 } as const;
 
 /**
@@ -20,21 +22,31 @@ export function Avatar({
   portrait,
   size = 'md',
   ring = false,
+  shape = 'rond',
   alt = '',
   className = '',
 }: {
   portrait: Portrait;
   size?: keyof typeof SIZES;
   ring?: boolean;
+  /**
+   * Médaillon rond, portrait d'affiche (angles à peine arrondis, liseré doré), ou carré nu
+   * (portrait d'une affiche, cadré par elle).
+   */
+  shape?: 'rond' | 'affiche' | 'carre';
   /** Texte de la photo quand elle porte une information (« Portrait de … ») ; décorative sinon. */
   alt?: string;
   className?: string;
 }) {
   const [failed, setFailed] = useState(false);
   const color = portrait.famille ?? { fond: '#5d6886', texte: '#ffffff' };
-  const frame = `${SIZES[size]} relative inline-flex shrink-0 overflow-hidden rounded-full ${
-    ring ? 'ring-2 ring-white shadow-card dark:ring-slate-900' : ''
-  } ${className}`;
+  const outline =
+    shape === 'carre'
+      ? ''
+      : shape === 'affiche'
+        ? `rounded-affiche ${ring ? 'shadow-affiche ring-1 ring-or-400/70 dark:ring-dorure/60' : ''}`
+        : `rounded-full ${ring ? 'ring-2 ring-white shadow-card dark:ring-slate-900' : ''}`;
+  const frame = `${SIZES[size]} relative inline-flex shrink-0 overflow-hidden ${outline} ${className}`;
   if (portrait.photo && !failed) {
     return (
       <span className={frame} data-avatar="photo">

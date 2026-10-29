@@ -390,7 +390,7 @@ function Night({ result }: { result: RoundResult }) {
   const nextEstimate = Math.min(SOIREE_MINUTES, (now.tranche + 1) * SOIREE_PAS);
 
   return (
-    <section aria-labelledby="titre-soiree" className="space-y-4">
+    <section aria-labelledby="titre-soiree" className="habillage-tele space-y-4">
       <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div className="space-y-2">
           {done ? (
