@@ -42,6 +42,7 @@ import { ApiRequestError, newIdempotencyKey } from '../api/client';
 import { nominationsClosed, presentationSummary, spendingCapOf } from '../campaign';
 import { useAdvance, useJournal, useRuleset, useSupports } from '../api/hooks';
 import { Achievements } from '../components/Achievements';
+import { DifficultySheet } from '../components/DifficultySheet';
 import { Disclosure, DisclosureGroup, Embedded } from '../components/Disclosure';
 import { Drawer } from '../components/Drawer';
 import { tensionLevel } from '../components/ParliamentGauges';
@@ -1097,6 +1098,11 @@ export function Dashboard() {
               </div>
             ))}
           </dl>
+          {data && (
+            <div className="mt-4">
+              <DifficultySheet ruleset={data} difficulty={game.difficulty} mode={game.mode} />
+            </div>
+          )}
           {/* Phase 13 : à plat, sans volet dans la section dépliée. */}
           <div className="mt-3 border-t border-slate-200 pt-3 dark:border-slate-800">
             <h3 className="font-semibold">Paramètres techniques</h3>

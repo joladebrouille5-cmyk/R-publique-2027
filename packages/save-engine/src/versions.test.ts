@@ -2,11 +2,12 @@ import {
   advanceWeek,
   createGame,
   ENGINE_VERSION,
+  playDebate,
   PLAYER_ACTOR_ID,
   SAVE_SCHEMA_VERSION,
 } from '@r2027/engine';
 import { CURRENT_RULESET_KEY, getRuleset } from '@r2027/rulesets';
-import { GameStateSchema, type GameState } from '@r2027/shared';
+import { debateAwaitingPlayer, GameStateSchema, type GameState } from '@r2027/shared';
 import { describe, expect, it } from 'vitest';
 import { canonicalStringify, hashState, sha256 } from './canonical';
 import { buildExport, readExport } from './exchange';
@@ -27,6 +28,7 @@ import V15 from './fixtures/v15-phase-10.json' with { type: 'json' };
 import V16 from './fixtures/v16-phase-12.json' with { type: 'json' };
 import V17 from './fixtures/v17-phase-13.json' with { type: 'json' };
 import V18 from './fixtures/v18-phase-14.json' with { type: 'json' };
+import V19 from './fixtures/v19-phase-17.json' with { type: 'json' };
 import { loadStoredState, MIGRATED_CANDIDATE, SaveFormatError, upgradeState } from './versions';
 
 const ruleset = getRuleset(CURRENT_RULESET_KEY);
@@ -1056,6 +1058,55 @@ describe('migrations de sauvegarde', () => {
     expect(later.quinquennat!.objectifs).toHaveLength(ruleset.objectifs.nombre);
   });
 
+  it('passe au jeu de règles 17 sans rien perdre (format 19, campagne au niveau expert)', () => {
+    const { state, migratedFrom } = loadStoredState(V19.state, V19.stateHash, 19);
+    expect(migratedFrom).toBe(19);
+    expect(state.meta).toMatchObject({
+      week: V19.state.meta.week,
+      date: V19.state.meta.date,
+      difficulty: 'expert',
+      saveSchemaVersion: SAVE_SCHEMA_VERSION,
+      engineVersion: ENGINE_VERSION,
+      rulesetVersion: CURRENT_RULESET_KEY,
+    });
+    // La difficulté est figée à la création : ni le niveau ni les moyens des candidats ne
+    // changent à la migration.
+    const { meta: _meta, ...rest } = state;
+    const { meta: _m, ...restBefore } = V19.state;
+    expect(rest).toEqual(restBefore);
+    // La campagne continue avec le jeu de règles 17, débats compris, de façon déterministe.
+    const play = () => {
+      let current = state;
+      for (let i = 0; i < 6; i++) {
+        for (
+          let debate = debateAwaitingPlayer(current);
+          debate;
+          debate = debateAwaitingPlayer(current)
+        )
+          current = playDebate(current, ruleset, debate.id, {
+            action: 'finir',
+            sequence: debate.enCours?.index ?? 0,
+          }).state;
+        current = advanceWeek(
+          current,
+          {
+            actions: [],
+            decisions: current.pendingDecisions.map((d) => ({
+              decisionId: d.id,
+              optionId: d.defaultOptionId,
+            })),
+          },
+          { ruleset },
+        ).state;
+      }
+      return current;
+    };
+    const later = play();
+    expect(later.meta.week).toBe(state.meta.week + 6);
+    expect(GameStateSchema.parse(later)).toEqual(later);
+    expect(play()).toEqual(later);
+  });
+
   it('refuse un état qui cite une personnalité absente du vivier courant', () => {
     const altered = JSON.parse(JSON.stringify(V17.state)) as typeof V17.state;
     altered.quinquennat.gouvernement.ministres[0]!.ref = 'figure-inconnue';
@@ -1091,6 +1142,7 @@ describe('migrations de sauvegarde', () => {
     expect(errorCode(() => upgradeState(V16.state, 17))).toBe('etat_invalide');
     expect(errorCode(() => upgradeState(V17.state, 18))).toBe('etat_invalide');
     expect(errorCode(() => upgradeState(V18.state, 19))).toBe('etat_invalide');
+    expect(errorCode(() => upgradeState(V19.state, 20))).toBe('etat_invalide');
   });
 
   it('refuse un jeu de règles inconnu', () => {

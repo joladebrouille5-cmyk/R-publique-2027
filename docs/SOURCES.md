@@ -266,7 +266,7 @@ Jeu de règles `presidentielle-2027@3.0.0` :
 | Apport personnel initial (20 % du budget de départ), taux et conditions d'emprunt | paramètres de jeu | `hypothese` | conception du jeu ; les emprunts sont comptés en apport personnel et la banque ne prête que dans la limite du remboursement attendu |
 | Programme : 17 domaines, 51 propositions, coûts, délais, faisabilité, effets | estimations de jeu | `hypothese` | conception du jeu ; sans valeur de chiffrage officiel, affiché « Estimations de jeu » |
 | Médias : six organes **fictifs** (audience, crédibilité, priorités) | paramètres de jeu | `hypothese` | conception du jeu ; aucun média réel représenté |
-| Débats (poids des composantes), alliances (fenêtre de 10 semaines, seuils), IA (budget, actions, température par difficulté) | paramètres de jeu | `hypothese` | conception du jeu |
+| Débats (poids des composantes), alliances (fenêtre de 10 semaines, seuils), IA (budget, notoriété de départ, actions, température par difficulté ; cinq niveaux depuis la phase 18), moyens et promesses de départ du joueur par niveau | paramètres de jeu | `hypothese` | conception du jeu |
 
 Les valeurs `officiel` et `deduit` sont vérifiées par les tests du jeu de règles ; aucune n'a été inventée pour combler les sources inaccessibles (Légifrance, CNCCFP et INSEE refusés par le proxy de l'environnement cloud le 21/10/2026 : les valeurs reprises sont celles relevées en phases 0 et 4).
 

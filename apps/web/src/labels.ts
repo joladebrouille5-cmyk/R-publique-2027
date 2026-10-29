@@ -36,9 +36,30 @@ export const POSITION_METHOD_LABELS: Record<PositionMethod, string> = {
 };
 
 export const DIFFICULTY_LABELS: Record<Difficulty, string> = {
+  decouverte: 'Découverte',
   accessible: 'Accessible',
   standard: 'Standard',
   expert: 'Expert',
+  legende: 'Légende',
+};
+
+/** Niveaux de difficulté (phase 18) : un mot sur la tuile, une phrase en tête de la fiche. */
+export const DIFFICULTY_TAGLINES: Record<Difficulty, string> = {
+  decouverte: 'Pour apprendre',
+  accessible: 'Indulgent',
+  standard: 'Recommandé',
+  expert: 'Exigeant',
+  legende: 'Sans filet',
+};
+
+export const DIFFICULTY_DESCRIPTIONS: Record<Difficulty, string> = {
+  decouverte:
+    'Pour découvrir le jeu : des moyens confortables face à des adversaires plus discrets.',
+  accessible: 'Une campagne indulgente : adversaires moins efficaces, gestion plus souple.',
+  standard: 'L’équilibre recommandé : la campagne telle que le jeu l’a pensée.',
+  expert: 'Adversaires redoutables, ressources plus contraintes.',
+  legende:
+    'Sans filet : des moyens maigres, des adversaires impitoyables et plus connus au départ.',
 };
 
 export const PHASE_LABELS: Record<GamePhase, string> = {

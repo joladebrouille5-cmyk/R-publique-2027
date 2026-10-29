@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import {
   addDays,
   daysFromCivil,
+  DIFFICULTIES,
   figureExpertise,
   FREE_LICENSES,
   isoWeekday,
@@ -160,6 +161,49 @@ describe('jeu de règles presidentielle-2027', () => {
     }
     for (const institute of ruleset.sondages.instituts)
       expect(institute.libelle).toMatch(/\(fictif\)$/);
+  });
+
+  it('ordonne les cinq niveaux de difficulté, de Découverte à Légende (hypothèses)', () => {
+    expect(DIFFICULTIES).toEqual(['decouverte', 'accessible', 'standard', 'expert', 'legende']);
+    expect(ruleset.ia.statut).toBe('hypothese');
+    for (let i = 1; i < DIFFICULTIES.length; i++) {
+      const facile = DIFFICULTIES[i - 1]!;
+      const dur = DIFFICULTIES[i]!;
+      // Le joueur part avec moins à chaque niveau…
+      const [avant, apres] = [
+        ruleset.jeu.ressourcesInitiales[facile],
+        ruleset.jeu.ressourcesInitiales[dur],
+      ];
+      for (const ressource of ['budgetCentimes', 'militants', 'notoriete', 'popularite'] as const)
+        expect(apres[ressource]).toBeLessThan(avant[ressource]);
+      expect(ruleset.jeu.promessesInitialesJoueur[dur]).toBeLessThan(
+        ruleset.jeu.promessesInitialesJoueur[facile],
+      );
+      // … et ses adversaires sont plus riches, plus actifs, plus précis et jamais moins connus.
+      const [ia, iaDur] = [ruleset.ia[facile], ruleset.ia[dur]];
+      expect(iaDur.multiplicateurBudget).toBeGreaterThan(ia.multiplicateurBudget);
+      expect(iaDur.multiplicateurNotoriete).toBeGreaterThanOrEqual(ia.multiplicateurNotoriete);
+      expect(iaDur.actionsParSemaine).toBeGreaterThan(ia.actionsParSemaine);
+      expect(iaDur.temperature).toBeLessThan(ia.temperature);
+      expect(ruleset.debats.ia.difficulte[dur]).toBeGreaterThan(
+        ruleset.debats.ia.difficulte[facile],
+      );
+    }
+    // Les trois niveaux historiques gardent leurs valeurs du jeu de règles 16.
+    expect(ruleset.jeu.ressourcesInitiales.standard).toEqual({
+      budgetCentimes: 300_000_000,
+      militants: 400,
+      notoriete: 600,
+      popularite: 3000,
+    });
+    for (const niveau of ['accessible', 'standard', 'expert'] as const)
+      expect(ruleset.ia[niveau].multiplicateurNotoriete).toBe(1);
+    expect(ruleset.ia.expert).toEqual({
+      multiplicateurBudget: 1.4,
+      multiplicateurNotoriete: 1,
+      actionsParSemaine: 4,
+      temperature: 0.3,
+    });
   });
 
   it('reprend les inscrits proclamés en 2022, étiquetés comme estimation pour 2027', () => {

@@ -45,7 +45,16 @@ export const GAME_MODES = ['candidat_reel', 'candidat_personnalise', 'observateu
 export const GameModeSchema = z.enum(GAME_MODES);
 export type GameMode = z.infer<typeof GameModeSchema>;
 
-export const DIFFICULTIES = ['accessible', 'standard', 'expert'] as const;
+/** Niveaux des formats de sauvegarde 1 à 19 (figés). */
+const DIFFICULTIES_V19 = ['accessible', 'standard', 'expert'] as const;
+const DifficultyV19Schema = z.enum(DIFFICULTIES_V19);
+
+/**
+ * Niveaux de difficulté (phase 18), du plus facile au plus difficile, figés à la création de la
+ * partie. Leurs effets (moyens du joueur, adversaires, débats) sont des paramètres du jeu de
+ * règles (hypothèses) ; aucun ne touche aux règles constitutionnelles ni au décompte des voix.
+ */
+export const DIFFICULTIES = ['decouverte', 'accessible', 'standard', 'expert', 'legende'] as const;
 export const DifficultySchema = z.enum(DIFFICULTIES);
 export type Difficulty = z.infer<typeof DifficultySchema>;
 
@@ -99,7 +108,7 @@ const MetaV1Schema = z
     date: IsoDateSchema,
     startDate: IsoDateSchema,
     phase: GamePhaseSchema,
-    difficulty: DifficultySchema,
+    difficulty: DifficultyV19Schema,
     engineVersion: z.string().min(1),
     rulesetVersion: z.string().min(1),
     saveSchemaVersion: z.number().int().positive(),
@@ -783,7 +792,7 @@ export type GameStateV18 = z.infer<typeof GameStateV18Schema>;
  * (packages/save-engine). L'aléa ne figure pas dans l'état : chaque tirage est dérivé de la
  * graine, de la semaine et de son contexte.
  */
-export const GameStateSchema = GameStateV18Schema.extend({
+export const GameStateV19Schema = GameStateV18Schema.extend({
   meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(19) }).strict(),
   player: PlayerSchema,
   pendingDecisions: z.array(PendingDecisionSchema),
@@ -799,6 +808,21 @@ export const GameStateSchema = GameStateV18Schema.extend({
   negociations: z.array(NegotiationSchema),
   /** Succès débloqués (phase 15), dans l'ordre. */
   succes: z.array(AchievementSchema),
+}).strict();
+export type GameStateV19 = z.infer<typeof GameStateV19Schema>;
+
+/**
+ * État complet d'une partie, format de sauvegarde n° 20 (phase 18) : jeu de règles 17, cinq
+ * niveaux de difficulté (Découverte et Légende en plus d'Accessible, Standard et Expert). Mêmes
+ * champs que le format 19, que la migration reprend sans perte. Toute évolution s'accompagne
+ * d'un nouveau numéro de format et d'une migration (packages/save-engine). L'aléa ne figure pas
+ * dans l'état : chaque tirage est dérivé de la graine, de la semaine et de son contexte.
+ */
+export const GameStateSchema = GameStateV19Schema.extend({
+  meta: MetaV1Schema.extend({
+    difficulty: DifficultySchema,
+    saveSchemaVersion: z.literal(20),
+  }).strict(),
 }).strict();
 export type GameState = z.infer<typeof GameStateSchema>;
 

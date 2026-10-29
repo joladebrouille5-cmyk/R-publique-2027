@@ -7,6 +7,7 @@ import {
   ApiErrorSchema,
   CommuneResultsResponseSchema,
   debateAwaitingPlayer,
+  DIFFICULTIES,
   GameDetailSchema,
   GameSummarySchema,
   HealthResponseSchema,
@@ -122,6 +123,31 @@ describe('serveur local : parties et progression', () => {
     ).toBe('scenario_inconnu');
     expect(error(await call(api, 'GET', '/api/games/pas-un-uuid'))).toBe('requete_invalide');
     expect(error(await call(api, 'GET', `/api/games/${crypto.randomUUID()}`))).toBe('introuvable');
+  });
+
+  it('crée une partie à chacun des cinq niveaux ; même refus que l’API (phase 18)', async () => {
+    const api = server();
+    const games: GameDetail[] = [];
+    for (const difficulty of DIFFICULTIES) {
+      const game = await newGame(api, { difficulty });
+      expect(game.difficulty).toBe(difficulty);
+      expect(game.state.meta.difficulty).toBe(difficulty);
+      games.push(game);
+    }
+    const budgets = games.map((g) => g.state.actors.joueur!.resources.budgetCentimes);
+    expect([...budgets].sort((a, b) => b - a)).toEqual(budgets);
+    expect(new Set(budgets).size).toBe(DIFFICULTIES.length);
+    const list = GameSummarySchema.array().parse((await call(api, 'GET', '/api/games')).body);
+    expect(list.map((g) => g.difficulty).sort()).toEqual([...DIFFICULTIES].sort());
+    expect(
+      error(
+        await call(api, 'POST', '/api/games', {
+          name: 'x',
+          mode: 'observateur',
+          difficulty: 'impossible',
+        }),
+      ),
+    ).toBe('requete_invalide');
   });
 
   it('crée une partie avec une orientation stratégique (phase 15), mêmes refus que l’API', async () => {

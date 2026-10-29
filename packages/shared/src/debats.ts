@@ -155,7 +155,13 @@ export const DebateRulesSchema = z
         erreurAngle: Probability,
         /** Bonus de maîtrise des adversaires selon la difficulté. */
         difficulte: z
-          .object({ accessible: z.number(), standard: z.number(), expert: z.number() })
+          .object({
+            decouverte: z.number(),
+            accessible: z.number(),
+            standard: z.number(),
+            expert: z.number(),
+            legende: z.number(),
+          })
           .strict(),
         /** Un favori qui devance le deuxième d'au moins `ecartMin` (centièmes) peut refuser. */
         refus: z.object({ ecartMin: z.number().int().min(0), probabilite: Probability }).strict(),

@@ -1,6 +1,6 @@
 {
   "id": "presidentielle-2027",
-  "version": "16.0.0",
+  "version": "17.0.0",
   "libelle": "Présidentielle 2027 et quinquennat — campagne, parrainages, financement, médias réels, présidence, gouvernement et figures réelles nominables, Parlement, économie, crises et législatives",
   "verifieLe": "2026-10-28",
   "sources": {
@@ -212,6 +212,12 @@
       "semaines": 3
     },
     "ressourcesInitiales": {
+      "decouverte": {
+        "budgetCentimes": 1000000000,
+        "militants": 2000,
+        "notoriete": 3500,
+        "popularite": 4200
+      },
       "accessible": {
         "budgetCentimes": 600000000,
         "militants": 800,
@@ -229,6 +235,12 @@
         "militants": 150,
         "notoriete": 300,
         "popularite": 2500
+      },
+      "legende": {
+        "budgetCentimes": 100000000,
+        "militants": 100,
+        "notoriete": 250,
+        "popularite": 2300
       }
     },
     "opinion": {
@@ -241,9 +253,11 @@
     },
     "equipeJoueur": 0.5,
     "promessesInitialesJoueur": {
+      "decouverte": 480,
       "accessible": 320,
       "standard": 160,
-      "expert": 60
+      "expert": 60,
+      "legende": 30
     }
   },
   "actions": [
@@ -9865,9 +9879,11 @@
       "petitePhrase": 0.15,
       "erreurAngle": 0.25,
       "difficulte": {
+        "decouverte": -0.2,
         "accessible": -0.1,
         "standard": 0,
-        "expert": 0.1
+        "expert": 0.1,
+        "legende": 0.2
       },
       "refus": {
         "ecartMin": 800,
@@ -10120,20 +10136,35 @@
   },
   "ia": {
     "statut": "hypothese",
+    "decouverte": {
+      "multiplicateurBudget": 0.4,
+      "multiplicateurNotoriete": 0.5,
+      "actionsParSemaine": 1,
+      "temperature": 1.2
+    },
     "accessible": {
       "multiplicateurBudget": 0.6,
+      "multiplicateurNotoriete": 1,
       "actionsParSemaine": 2,
       "temperature": 0.8
     },
     "standard": {
       "multiplicateurBudget": 1,
+      "multiplicateurNotoriete": 1,
       "actionsParSemaine": 3,
       "temperature": 0.5
     },
     "expert": {
       "multiplicateurBudget": 1.4,
+      "multiplicateurNotoriete": 1,
       "actionsParSemaine": 4,
       "temperature": 0.3
+    },
+    "legende": {
+      "multiplicateurBudget": 1.7,
+      "multiplicateurNotoriete": 1.15,
+      "actionsParSemaine": 5,
+      "temperature": 0.2
     }
   },
   "personnalitesReelles": {

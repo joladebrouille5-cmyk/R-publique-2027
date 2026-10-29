@@ -1,4 +1,4 @@
-import type { Actor } from '@r2027/shared';
+import { DIFFICULTIES, type Actor, type Difficulty } from '@r2027/shared';
 import { describe, expect, it } from 'vitest';
 import { validateActions } from '../campaign/actions';
 import { advance, newGame, RULESET } from '../core/testing';
@@ -17,13 +17,14 @@ describe('IA adverse', () => {
     }
   });
 
-  it('agit davantage au niveau expert qu’au niveau accessible', () => {
-    const count = (difficulty: 'accessible' | 'expert') =>
+  it('agit davantage à chaque niveau, de Découverte à Légende', () => {
+    const count = (difficulty: Difficulty) =>
       planOpponentActions(newGame({ difficulty }), RULESET).reduce(
         (n, p) => n + p.planned.length,
         0,
       );
-    expect(count('expert')).toBeGreaterThan(count('accessible'));
+    const counts = DIFFICULTIES.map(count);
+    for (let i = 1; i < counts.length; i++) expect(counts[i]).toBeGreaterThan(counts[i - 1]!);
   });
 
   it('un adversaire prudent évite davantage les actions risquées qu’un adversaire offensif', () => {

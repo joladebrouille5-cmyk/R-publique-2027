@@ -1,5 +1,6 @@
 import { hashState } from '@r2027/save-engine';
 import {
+  DIFFICULTIES,
   GameDetailSchema,
   GameSummarySchema,
   HealthResponseSchema,
@@ -155,6 +156,30 @@ describe('création de partie', () => {
       expect(response.statusCode).toBe(400);
       expect(response.json()).toMatchObject({ error: { code: 'requete_invalide' } });
     }
+  });
+
+  it('crée une partie à chacun des cinq niveaux de difficulté ; refuse un niveau inconnu (phase 18)', async () => {
+    const client = new Client(app);
+    const games: GameDetail[] = [];
+    for (const difficulty of DIFFICULTIES) {
+      const game = await createGame(client, { ...newGame, difficulty });
+      expect(game.difficulty).toBe(difficulty);
+      expect(game.state.meta.difficulty).toBe(difficulty);
+      expect(game.stateHash).toBe(hashState(game.state));
+      games.push(game);
+    }
+    // Moyens du joueur décroissants, de Découverte à Légende.
+    const budgets = games.map((g) => g.state.actors.joueur!.resources.budgetCentimes);
+    expect([...budgets].sort((a, b) => b - a)).toEqual(budgets);
+    expect(new Set(budgets).size).toBe(DIFFICULTIES.length);
+    // Le niveau est enregistré en base et relu tel quel dans la liste des parties.
+    const stored = await db.game.findMany({ select: { difficulty: true } });
+    expect(stored.map((g) => g.difficulty).sort()).toEqual([...DIFFICULTIES].sort());
+    const list = GameSummarySchema.array().parse((await client.get('/api/games')).json());
+    expect(list.map((g) => g.difficulty).sort()).toEqual([...DIFFICULTIES].sort());
+    const refused = await client.post('/api/games', { ...newGame, difficulty: 'impossible' });
+    expect(refused.statusCode).toBe(400);
+    expect(refused.json()).toMatchObject({ error: { code: 'requete_invalide' } });
   });
 
   it('applique le profil de départ choisi', async () => {

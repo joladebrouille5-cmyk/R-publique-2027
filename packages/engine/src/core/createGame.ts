@@ -139,7 +139,10 @@ export function createPlayerActor(
   };
 }
 
-/** Adversaires fictifs du jeu de règles ; leurs moyens dépendent de la difficulté (§1.3). */
+/**
+ * Adversaires fictifs du jeu de règles ; leurs moyens dépendent de la difficulté (§1.3) : budget
+ * et, depuis la phase 18, notoriété de départ (moins connus en Découverte, plus en Légende).
+ */
 export function createOpponents(difficulty: Difficulty, ruleset: Ruleset): Record<string, Actor> {
   const level = ruleset.ia[difficulty];
   const opponents: Record<string, Actor> = {};
@@ -147,6 +150,7 @@ export function createOpponents(difficulty: Difficulty, ruleset: Ruleset): Recor
     const resources = bounded(ruleset, {
       ...c.ressources,
       budgetCentimes: Math.round(c.ressources.budgetCentimes * level.multiplicateurBudget),
+      notoriete: Math.round(c.ressources.notoriete * level.multiplicateurNotoriete),
       tempsHeures: ruleset.jeu.tempsHebdomadaireHeures,
     });
     opponents[c.id] = {
@@ -221,10 +225,14 @@ export function createRealActor(
   const scale = asPlayer
     ? playerScale(ruleset, difficulty)
     : { budget: ruleset.ia[difficulty].multiplicateurBudget, militants: 1, promesses: 1 };
+  const notoriete = params.notoriete[personality.moyens.notoriete - 1]!;
   const resources = bounded(ruleset, {
     budgetCentimes: Math.round(means.budgetCentimes * scale.budget),
     militants: Math.round(means.militants * scale.militants),
-    notoriete: params.notoriete[personality.moyens.notoriete - 1]!,
+    // Adversaire : notoriété de sa fiche, selon le niveau de difficulté (phase 18).
+    notoriete: asPlayer
+      ? notoriete
+      : Math.round(notoriete * ruleset.ia[difficulty].multiplicateurNotoriete),
     popularite: asPlayer
       ? ruleset.jeu.ressourcesInitiales[difficulty].popularite
       : params.popularite,

@@ -1,5 +1,5 @@
 /** Version du moteur, enregistrée dans chaque partie et chaque sauvegarde (§11). */
-export const ENGINE_VERSION = '0.19.0';
+export const ENGINE_VERSION = '0.20.0';
 
 /**
  * Version du format de `GameState` ; toute évolution s'accompagne d'une migration
@@ -18,6 +18,7 @@ export const ENGINE_VERSION = '0.19.0';
  * coalition, alliances législatives, actions du chef de l'État, photo du candidat) ; 18 : phase
  * 14 (jeu de règles 15 : vivier de personnalités réelles, expertise ministérielle) ; 19 : phase
  * 15 (jeu de règles 16 : orientation stratégique, négociations de soutien, ministres vivants,
- * urgences ministérielles, questions au gouvernement, objectifs de mandat, succès).
+ * urgences ministérielles, questions au gouvernement, objectifs de mandat, succès) ; 20 : phase
+ * 18 (jeu de règles 17 : cinq niveaux de difficulté, Découverte et Légende en plus).
  */
-export const SAVE_SCHEMA_VERSION = 19;
+export const SAVE_SCHEMA_VERSION = 20;

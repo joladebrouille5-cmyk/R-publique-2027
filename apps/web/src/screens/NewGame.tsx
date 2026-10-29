@@ -26,6 +26,7 @@ import {
 import { DIFFICULTY_LABELS, formatGameDate, MODE_LABELS, OPPONENT_SET_LABELS } from '../labels';
 import { familyOf } from '../portraits';
 import { CandidateForm, EMPTY_CANDIDATE, type CandidateDraft } from './new-game/CandidateForm';
+import { DifficultyPicker } from './new-game/DifficultyPicker';
 import { OrientationPicker } from './new-game/OrientationPicker';
 import { PersonalityPicker } from './new-game/PersonalityPicker';
 import { ScenarioPicker } from './new-game/ScenarioPicker';
@@ -63,20 +64,6 @@ const OPPONENTS: { value: OpponentSet; description: string }[] = [
   },
 ];
 
-const DIFFICULTIES: { value: Difficulty; description: string; niveau: number }[] = [
-  {
-    value: 'accessible',
-    description: 'Adversaires moins efficaces, gestion plus souple.',
-    niveau: 1,
-  },
-  { value: 'standard', description: 'Équilibre recommandé.', niveau: 2 },
-  {
-    value: 'expert',
-    description: 'Adversaires redoutables, ressources plus contraintes.',
-    niveau: 3,
-  },
-];
-
 /** Chapitre du formulaire : numéro doré, titre en Didone, une ligne d'explication. */
 function Chapitre({
   numero,
@@ -108,21 +95,6 @@ function Chapitre({
       </header>
       <div className={`${card} space-y-7`}>{children}</div>
     </section>
-  );
-}
-
-/** Jauge de difficulté : un à trois traits. */
-function Niveau({ value }: { value: number }) {
-  return (
-    <span aria-hidden="true" className="ml-auto flex items-end gap-0.5 self-start pt-1">
-      {[1, 2, 3].map((step) => (
-        <span
-          key={step}
-          className={`w-1.5 rounded-full ${step <= value ? 'bg-or-500 dark:bg-dorure' : 'bg-slate-200 dark:bg-white/10'}`}
-          style={{ height: `${0.45 + step * 0.3}rem` }}
-        />
-      ))}
-    </span>
   );
 }
 
@@ -329,34 +301,7 @@ export function NewGame() {
               </div>
             </fieldset>
 
-            <fieldset className="space-y-2">
-              <legend className={label}>Difficulté</legend>
-              <div className="grid gap-2.5 sm:grid-cols-3">
-                {DIFFICULTIES.map((option) => (
-                  <label key={option.value} className={optionTile}>
-                    <input
-                      type="radio"
-                      name="difficulte"
-                      value={option.value}
-                      checked={difficulty === option.value}
-                      onChange={() => setDifficulty(option.value)}
-                      className={radio}
-                    />
-                    <span>
-                      <span className="font-semibold">{DIFFICULTY_LABELS[option.value]}</span>
-                      <span className="block text-sm text-slate-600 dark:text-slate-400">
-                        {option.description}
-                      </span>
-                    </span>
-                    <Niveau value={option.niveau} />
-                  </label>
-                ))}
-              </div>
-              <p className="text-xs text-slate-600 dark:text-slate-400">
-                La difficulté ne modifie jamais les règles constitutionnelles ni le décompte des
-                voix.
-              </p>
-            </fieldset>
+            <DifficultyPicker value={difficulty} onChange={setDifficulty} mode={mode} />
 
             <ScenarioPicker value={scenario} onChange={setScenario} />
           </Chapitre>

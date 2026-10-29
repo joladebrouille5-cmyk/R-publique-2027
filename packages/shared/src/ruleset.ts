@@ -985,6 +985,18 @@ export type EventDefinition = z.infer<typeof EventDefinitionSchema>;
 
 /** Ressources de départ par difficulté ; Jeunesse et Dynamique viennent de `numerique.initial`. */
 const DifficultyResources = ResourcesV1Schema.omit({ tempsHeures: true });
+
+/** Une valeur par niveau de difficulté (phase 18 : cinq niveaux, du plus facile au plus dur). */
+export const byDifficulty = <T extends z.ZodType>(value: T) =>
+  z
+    .object({
+      decouverte: value,
+      accessible: value,
+      standard: value,
+      expert: value,
+      legende: value,
+    })
+    .strict();
 const Coefficient = z.number().min(0).max(100);
 const ResourceModifiers = z
   .object({
@@ -1093,6 +1105,11 @@ export const InstituteSchema = z
 const AiLevel = z
   .object({
     multiplicateurBudget: z.number().min(0).max(10),
+    /**
+     * Notoriété de départ des adversaires (phase 18), relative à celle de leur fiche : moins
+     * connus en Découverte, davantage en Légende.
+     */
+    multiplicateurNotoriete: z.number().positive().max(3),
     actionsParSemaine: z.number().int().min(0),
     /** Finesse des choix : plus elle est basse, plus l'IA retient l'action la mieux évaluée. */
     temperature: z.number().positive().max(5),
@@ -1353,20 +1370,8 @@ export const RulesetSchema = z
         /** Qualité de l'équipe du candidat du joueur (0 à 1). */
         equipeJoueur: Fraction,
         /** Promesses de parrainage dont dispose le joueur au départ, selon la difficulté. */
-        promessesInitialesJoueur: z
-          .object({
-            accessible: z.number().int().min(0),
-            standard: z.number().int().min(0),
-            expert: z.number().int().min(0),
-          })
-          .strict(),
-        ressourcesInitiales: z
-          .object({
-            accessible: DifficultyResources,
-            standard: DifficultyResources,
-            expert: DifficultyResources,
-          })
-          .strict(),
+        promessesInitialesJoueur: byDifficulty(z.number().int().min(0)),
+        ressourcesInitiales: byDifficulty(DifficultyResources),
         opinion: z
           .object({
             erosionNotoriete: Fraction,
@@ -1717,9 +1722,11 @@ export const RulesetSchema = z
     ia: z
       .object({
         statut: z.literal('hypothese'),
+        decouverte: AiLevel,
         accessible: AiLevel,
         standard: AiLevel,
         expert: AiLevel,
+        legende: AiLevel,
       })
       .strict(),
     /**

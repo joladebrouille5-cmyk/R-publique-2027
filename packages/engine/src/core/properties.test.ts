@@ -1,5 +1,11 @@
 import { CURRENT_RULESET_KEY, getRuleset } from '@r2027/rulesets';
-import { RESOURCE_BOUNDS, type Difficulty, type GameState, type WeeklyReport } from '@r2027/shared';
+import {
+  DIFFICULTIES,
+  RESOURCE_BOUNDS,
+  type Difficulty,
+  type GameState,
+  type WeeklyReport,
+} from '@r2027/shared';
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { advanceWeek } from './advanceWeek';
@@ -23,7 +29,7 @@ const ACTION_IDS = [
 const HEAVY = { timeout: 60_000 };
 
 const seedArb = fc.stringMatching(/^[a-z0-9-]{1,16}$/);
-const difficultyArb = fc.constantFrom<Difficulty>('accessible', 'standard', 'expert');
+const difficultyArb = fc.constantFrom<Difficulty>(...DIFFICULTIES);
 const weekPlanArb = fc.record({
   actions: fc.array(fc.constantFrom(...ACTION_IDS), { maxLength: 6 }),
   choice: fc.nat({ max: 5 }),

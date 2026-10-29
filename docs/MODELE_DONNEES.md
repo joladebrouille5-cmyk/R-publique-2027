@@ -1,6 +1,6 @@
 # Modèle de données — RÉPUBLIQUE 2027
 
-> Statut : **phases 1 à 7 réalisées** pour les tables techniques (`User`, `Game`, `GameSave`, `GameAdvance`, `GameAction`, `GameEvent`, `SimulationLog`) — schéma réel : [`apps/api/prisma/schema.prisma`](../apps/api/prisma/schema.prisma) ; état de partie réel (format 19) : [`packages/shared/src/game.ts`](../packages/shared/src/game.ts). Depuis la phase 4, le référentiel territorial et les résultats historiques sont des **fichiers versionnés** produits par `packages/data-import` (décision D9), et non des tables. Le reste du schéma ci-dessous reste indicatif et sera complété phase par phase.
+> Statut : **phases 1 à 7 réalisées** pour les tables techniques (`User`, `Game`, `GameSave`, `GameAdvance`, `GameAction`, `GameEvent`, `SimulationLog`) — schéma réel : [`apps/api/prisma/schema.prisma`](../apps/api/prisma/schema.prisma) ; état de partie réel (format 20) : [`packages/shared/src/game.ts`](../packages/shared/src/game.ts). Depuis la phase 4, le référentiel territorial et les résultats historiques sont des **fichiers versionnés** produits par `packages/data-import` (décision D9), et non des tables. Le reste du schéma ci-dessous reste indicatif et sera complété phase par phase.
 > Voir aussi [ARCHITECTURE.md §7](./ARCHITECTURE.md#7-persistance-et-sauvegardes-12).
 
 ## 1. Principe : trois familles de données
@@ -132,6 +132,10 @@ Stocker des valeurs par commune dans chaque instantané hebdomadaire serait proh
 >
 > Migration 18 → 19 : joueur sans orientation (moyens et base électorale de départ déjà fixés) ; aucune négociation ni aucun succès ; Parlement sans échauffement ni séance ; quinquennat sans suivi, objectifs ni déplacements (le moteur établit suivi et objectifs au Conseil des ministres suivant) ; bilans archivés sans note. Métadonnées passées au moteur 0.18.0 et au jeu de règles 16.0.0. Fixture de non-régression : un état réel du format 18 (`packages/save-engine/src/fixtures/v18-phase-14.json`, moteur de la phase 14).
 >
+> **Phase 18 — format 20** (implémenté, jeu de règles 17.0.0, moteur 0.20.0) : `meta.difficulty` accepte cinq niveaux (`decouverte`, `accessible`, `standard`, `expert`, `legende`) ; le format 19 reste figé à trois niveaux. Énumération `Difficulty` de la base étendue par la migration Prisma `20261029130524_phase18_difficulte`.
+>
+> Migration 19 → 20 : métadonnées passées au moteur 0.20.0 et au jeu de règles 17.0.0 ; rien d'autre ne change (le niveau est fixé à la création : ni le niveau, ni les moyens des candidats ne sont recalculés). Fixture de non-régression : un état réel du format 19 (`packages/save-engine/src/fixtures/v19-phase-17.json`, moteur de la phase 17, niveau Expert, semaine 22).
+>
 > L'esquisse ci-dessous décrit la cible des phases suivantes.
 
 ```ts
@@ -175,7 +179,7 @@ Chaque valeur affichable qui n'est pas issue d'une source officielle porte `natu
 enum DataNature    { reel estimation sondage projection simule fictif systeme }  // systeme : événement technique (création, sauvegarde)
 enum TerritoryType { pays region departement commune collectivite_outre_mer etranger }
 enum GameMode      { candidat_reel candidat_personnalise observateur }
-enum Difficulty    { accessible standard expert }
+enum Difficulty    { decouverte accessible standard expert legende }  // phase 18 : cinq niveaux
 enum SaveKind      { auto manuelle avant_evenement import }
 enum ActionStatus  { validee rejetee }
 enum ResultLevel   { national region departement commune hors_carte }
