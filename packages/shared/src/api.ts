@@ -264,6 +264,8 @@ export type SupportProspects = z.infer<typeof SupportProspectsSchema>;
 /** Motifs d'arrêt de l'avance rapide. */
 export const FAST_FORWARD_STOPS = [
   'decision',
+  /** Débat télévisé à jouer cette semaine (phase 17). */
+  'debat',
   'scrutin',
   'changement_de_phase',
   'evenement_majeur',

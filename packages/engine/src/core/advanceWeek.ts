@@ -1,5 +1,6 @@
 import {
   cycleRuleset,
+  debateAwaitingPlayer,
   type AlliancePlan,
   type DecisionAnswer,
   type GameState,
@@ -110,6 +111,15 @@ export function advanceWeek(
     throw new EngineInputError(
       'progression_bloquee',
       input.calendar.blockedMessage ?? 'La partie ne peut pas avancer davantage pour l’instant.',
+    );
+  }
+  // Débat obligatoire (phase 17) : la semaine attend que le joueur l'ait joué, simulé jusqu'à la
+  // fin depuis le plateau, ou refusé (chaise vide).
+  const debate = debateAwaitingPlayer(input);
+  if (debate) {
+    throw new EngineInputError(
+      'debat_requis',
+      `${debate.libelle} : le débat vous attend. Jouez-le (ou refusez-le) avant de résoudre la semaine.`,
     );
   }
   if (input.meta.phase === 'presidence') {

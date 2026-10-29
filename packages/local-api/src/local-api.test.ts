@@ -6,6 +6,7 @@ import {
   AdvanceResponseSchema,
   ApiErrorSchema,
   CommuneResultsResponseSchema,
+  debateAwaitingPlayer,
   GameDetailSchema,
   GameSummarySchema,
   HealthResponseSchema,
@@ -330,6 +331,63 @@ describe('serveur local : débats télévisés (phase 10)', () => {
     // Campagne jouée jusqu'au premier débat (une trentaine de semaines) : plus que le délai par
     // défaut de 5 s quand toute la suite tourne en parallèle.
   }, 30_000);
+});
+
+describe('serveur local : débat obligatoire (phase 17)', () => {
+  it('arrête l’avance rapide avant le débat et refuse la semaine tant qu’il n’est pas joué', async () => {
+    const api = server();
+    const rules = (await call(api, 'GET', '/api/rulesets/courant')).body as {
+      parrainages: { reservoir: { departements: Record<string, unknown> } };
+      calendrier: { echeances: { id: string; date: string }[] };
+    };
+    const deps = Object.keys(rules.parrainages.reservoir.departements).sort();
+    const closing = rules.calendrier.echeances.find((e) => e.id === 'presentation-candidatures')!;
+    let game = await newGame(api, { seed: 'debat-local' });
+    // Parrainages jusqu'à la clôture des présentations, puis avance rapide.
+    while (game.date < closing.date) {
+      const actions = [0, 1].map((k) => ({
+        actionId: 'elus-locaux',
+        cible: deps[(game.week * 2 + k) % deps.length]!,
+      }));
+      game = (await advance(api, game, { actions })).game;
+    }
+    let stop: string | null = null;
+    for (let i = 0; i < 20 && stop !== 'debat'; i++) {
+      const fast = await advance(api, game, { semaines: 52 });
+      game = fast.game;
+      stop = fast.avanceRapide!.arret;
+    }
+    expect(stop).toBe('debat');
+    const debate = debateAwaitingPlayer(game.state)!;
+    expect(debate.invites).toContain(game.state.player.actorId);
+
+    const refused = await call(
+      api,
+      'POST',
+      `/api/games/${game.id}/advance`,
+      {
+        expectedWeek: game.week,
+        actions: [],
+        decisions: game.state.pendingDecisions.map((d) => ({
+          decisionId: d.id,
+          optionId: d.defaultOptionId,
+        })),
+      },
+      'cle-debat-requis',
+    );
+    expect([refused.status, error(refused)]).toEqual([422, 'debat_requis']);
+
+    // Fin simulée depuis le plateau : la semaine se résout.
+    const finished = await call(api, 'POST', `/api/games/${game.id}/debats/${debate.id}`, {
+      action: 'finir',
+      sequence: debate.enCours!.index,
+    });
+    expect(finished.status).toBe(200);
+    game = GameDetailSchema.parse(finished.body);
+    expect(debateAwaitingPlayer(game.state)).toBeUndefined();
+    expect((await advance(api, game)).game.week).toBe(game.week + 1);
+    // Campagne jouée jusqu'au débat : plus que le délai par défaut de 5 s.
+  }, 60_000);
 });
 
 describe('serveur local : photo du candidat (phase 13)', () => {

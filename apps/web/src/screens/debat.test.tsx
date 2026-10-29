@@ -4,6 +4,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeAll, describe, expect, it } from 'vitest';
 import {
+  concludeDebates,
   GAME_ID,
   gameFixture,
   healthHandler,
@@ -47,6 +48,31 @@ function handlers(start: GameState) {
 const session = (s: GameState) => s.debats.seances.find((d) => d.id === 'debat-t1-tous')!;
 
 describe('débats télévisés', () => {
+  it('bloque la résolution de la semaine tant que le débat attend le joueur (phase 17)', async () => {
+    mockApi(handlers(state));
+    renderRoute(`/parties/${GAME_ID}/tableau-de-bord`);
+    const user = userEvent.setup();
+    const callout = await screen.findByRole('region', { name: 'Débat de tous les candidats' });
+    expect(within(callout).getByRole('link', { name: 'Aller sur le plateau' })).toHaveAttribute(
+      'href',
+      `/parties/${GAME_ID}/debat/debat-t1-tous`,
+    );
+    expect(screen.getByRole('button', { name: /^Résoudre la semaine/ })).toBeDisabled();
+    expect(
+      screen.getByText(/vous attend : jouez-le \(ou refusez-le\) avant de résoudre la semaine/),
+    ).toBeInTheDocument();
+    // Chaise vide : un choix explicite du joueur lève le blocage.
+    const panel = await screen.findByRole('region', { name: 'Débats télévisés' });
+    await user.click(within(panel).getByRole('button', { name: 'Refuser ce débat' }));
+    await user.click(within(panel).getByRole('button', { name: 'Confirmer la chaise vide' }));
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('region', { name: 'Débat de tous les candidats' }),
+      ).not.toBeInTheDocument(),
+    );
+    expect(screen.queryByText(/vous attend : jouez-le/)).not.toBeInTheDocument();
+  });
+
   it('annonce le débat de la semaine au tableau de bord et permet la chaise vide', async () => {
     const calls = mockApi(handlers(state));
     renderRoute(`/parties/${GAME_ID}/tableau-de-bord`);
@@ -152,9 +178,9 @@ describe('débats télévisés', () => {
         RULESET,
       ),
     );
-    // Débat mené à son terme à la résolution de la semaine (fin simulée si le joueur y est).
+    // Débat mené à son terme (fin simulée depuis le plateau si le joueur y est), puis la semaine.
     const done = advanceWeek(
-      reels,
+      concludeDebates(reels),
       {
         actions: [],
         decisions: reels.pendingDecisions.map((d) => ({

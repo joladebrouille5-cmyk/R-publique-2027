@@ -2,6 +2,7 @@ import { CURRENT_RULESET_KEY, getRuleset } from '@r2027/rulesets';
 import {
   AdvanceResponseSchema,
   ApiErrorSchema,
+  debateAwaitingPlayer,
   GameDetailSchema,
   type GameDetail,
 } from '@r2027/shared';
@@ -133,4 +134,67 @@ describe('débats télévisés (API)', () => {
     const stranger = await new Client(app).post(url, { action: 'ouvrir' });
     expect(stranger.statusCode).toBe(404);
   });
+});
+
+describe('débat obligatoire (phase 17)', () => {
+  const advance = (client: Client, game: GameDetail, extra: object = {}) =>
+    client.request({
+      method: 'POST',
+      url: `/api/games/${game.id}/advance`,
+      headers: { 'idempotency-key': `cle-debat-${++keys}` },
+      payload: {
+        expectedWeek: game.week,
+        actions: [],
+        decisions: game.state.pendingDecisions.map((d) => ({
+          decisionId: d.id,
+          optionId: d.defaultOptionId,
+        })),
+        ...extra,
+      },
+    });
+
+  it('arrête l’avance rapide avant le débat et refuse la semaine tant qu’il n’est pas joué', async () => {
+    const client = new Client(app);
+    const created = await client.post('/api/games', {
+      name: 'Débat obligatoire',
+      mode: 'candidat_personnalise',
+      seed: 'debat-api',
+      candidate,
+    });
+    let game = GameDetailSchema.parse(created.json());
+    while (game.date < closing.date) {
+      const actions = [0, 1].map((k) => ({
+        actionId: 'elus-locaux',
+        cible: departements[(game.week * 2 + k) % departements.length]!,
+      }));
+      const response = await advance(client, game, { actions });
+      expect(response.statusCode, response.body).toBe(200);
+      game = AdvanceResponseSchema.parse(response.json()).game;
+    }
+    let stop: string | null = null;
+    for (let i = 0; i < 20 && stop !== 'debat'; i++) {
+      const response = await advance(client, game, { semaines: 52 });
+      expect(response.statusCode, response.body).toBe(200);
+      const body = AdvanceResponseSchema.parse(response.json());
+      game = body.game;
+      stop = body.avanceRapide!.arret;
+    }
+    expect(stop).toBe('debat');
+    const debate = debateAwaitingPlayer(game.state)!;
+    expect(debate.invites).toContain(game.state.player.actorId);
+
+    const refused = await advance(client, game);
+    expect(refused.statusCode).toBe(422);
+    expect(code(refused)).toBe('debat_requis');
+
+    const finished = await client.post(`/api/games/${game.id}/debats/${debate.id}`, {
+      action: 'finir',
+      sequence: debate.enCours!.index,
+    });
+    expect(finished.statusCode).toBe(200);
+    game = GameDetailSchema.parse(finished.json());
+    const next = await advance(client, game);
+    expect(next.statusCode, next.body).toBe(200);
+    expect(AdvanceResponseSchema.parse(next.json()).game.week).toBe(game.week + 1);
+  }, 60_000);
 });

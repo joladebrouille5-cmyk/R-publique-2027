@@ -36,7 +36,7 @@ import {
   QuinquennatV8Schema,
 } from './quinquennat';
 import { AchievementSchema } from './succes';
-import { DebatesStateSchema } from './debats';
+import { DebatesStateSchema, type DebateSession } from './debats';
 import { PostureSchema } from './prestations';
 import { DigitalStateSchema, DigitalStateV14Schema } from './numerique';
 import { ResourceKeySchema, ResourcesSchema, ResourcesV1Schema } from './resources';
@@ -801,6 +801,38 @@ export const GameStateSchema = GameStateV18Schema.extend({
   succes: z.array(AchievementSchema),
 }).strict();
 export type GameState = z.infer<typeof GameStateSchema>;
+
+/**
+ * Le joueur est-il sur le plateau d'un débat : invité, sans chaise vide, toujours en lice ?
+ * Règle commune au moteur et à l'interface (phase 10, partagée depuis la phase 17).
+ */
+export function playerOnDebateStage(
+  state: Pick<GameState, 'player' | 'actors'>,
+  session: Pick<DebateSession, 'invites' | 'refus'>,
+): boolean {
+  const id = state.player.actorId;
+  if (!id || !session.invites.includes(id) || session.refus.includes(id)) return false;
+  const status = state.actors[id]?.status;
+  return status === 'candidat' || status === 'qualifie';
+}
+
+/**
+ * Débat obligatoire (phase 17) : débat télévisé de la semaine en cours qui compte le joueur sur
+ * le plateau et n'est pas terminé. Tant qu'il y en a un, la semaine ne se résout pas (moteur),
+ * l'avance rapide s'arrête avant (API, moteur local) et l'interface mène le joueur au plateau.
+ * Le blocage se lève par un choix du joueur : débat joué jusqu'au bout, fin simulée depuis le
+ * plateau, ou refus avant le premier échange (chaise vide).
+ */
+export function debateAwaitingPlayer(
+  state: Pick<GameState, 'player' | 'actors' | 'debats' | 'meta'>,
+): DebateSession | undefined {
+  return state.debats.seances.find(
+    (session) =>
+      session.semaine === state.meta.week &&
+      session.statut !== 'termine' &&
+      playerOnDebateStage(state, session),
+  );
+}
 
 /**
  * Action programmée pour la semaine en cours, avec sa cible si l'action en demande une

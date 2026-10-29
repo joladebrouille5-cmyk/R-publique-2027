@@ -135,7 +135,7 @@ function DebateRow({
         Vous êtes invité(e) avec {session.invites.length - 1} autre(s) candidat(s).{' '}
         {session.statut === 'en_cours'
           ? `Séquence ${session.sequences.length + 1} sur ${session.themes.length} à jouer.`
-          : 'Si vous n’entrez pas sur le plateau, vos interventions seront choisies automatiquement à la résolution de la semaine.'}
+          : 'Débat obligatoire : la semaine ne se résout qu’une fois ce débat joué (ou sa fin simulée depuis le plateau), ou refusé.'}
       </p>
       <div className="flex flex-wrap gap-2">
         <Link to={`../debat/${session.id}`} className={buttonPrimary}>

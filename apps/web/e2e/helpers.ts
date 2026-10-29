@@ -1,7 +1,12 @@
 // Outils partagés des scénarios Playwright.
 import { randomUUID } from 'node:crypto';
 import { expect, type Page } from '@playwright/test';
-import { AdvanceResponseSchema, GameDetailSchema, type GameDetail } from '@r2027/shared';
+import {
+  AdvanceResponseSchema,
+  debateAwaitingPlayer,
+  GameDetailSchema,
+  type GameDetail,
+} from '@r2027/shared';
 
 export async function createGame(page: Page, name: string, seed = 'e2e-boucle') {
   await page.goto('/');
@@ -20,6 +25,24 @@ export async function createGame(page: Page, name: string, seed = 'e2e-boucle') 
 export const gameIdOf = (page: Page) => /\/parties\/([0-9a-f-]{36})\//.exec(page.url())![1]!;
 
 /**
+ * Débat obligatoire (phase 17) : fin simulée, demandée par l'API comme depuis le plateau, de
+ * chaque débat de la semaine qui attend le joueur.
+ */
+export async function concludeDebatesViaApi(page: Page, game: GameDetail): Promise<GameDetail> {
+  let current = game;
+  for (let i = 0; i < 4; i++) {
+    const debate = debateAwaitingPlayer(current.state);
+    if (!debate) break;
+    const response = await page.request.post(`/api/games/${current.id}/debats/${debate.id}`, {
+      data: { action: 'finir', sequence: debate.enCours?.index ?? 0 },
+    });
+    expect(response.status(), await response.text()).toBe(200);
+    current = GameDetailSchema.parse(await response.json());
+  }
+  return current;
+}
+
+/**
  * Fait avancer la partie par l'API (même session que le navigateur) jusqu'à ce que `done`
  * soit vrai ou que la partie se bloque, en répondant aux décisions par l'option par défaut.
  */
@@ -32,6 +55,7 @@ export async function advanceViaApi(
   const id = gameIdOf(page);
   let game = GameDetailSchema.parse(await (await page.request.get(`/api/games/${id}`)).json());
   for (let i = 0; i < 60 && !done(game) && !game.state.calendar.blockedBy; i++) {
+    game = await concludeDebatesViaApi(page, game);
     const response = await page.request.post(`/api/games/${id}/advance`, {
       headers: { 'idempotency-key': randomUUID().replaceAll('-', '') },
       data: {
@@ -69,6 +93,7 @@ export async function advanceAsCandidate(
   const departements = Object.keys(ruleset.parrainages.reservoir.departements).sort();
   const closing = ruleset.calendrier.echeances.find((e) => e.id === 'presentation-candidatures')!;
   for (let i = 0; i < 60 && !done(game) && !game.state.calendar.blockedBy; i++) {
+    game = await concludeDebatesViaApi(page, game);
     const actions =
       game.date < closing.date
         ? [0, 1].map((k) => ({

@@ -8,7 +8,7 @@ import {
 import { describe, expect, it } from 'vitest';
 import { advanceWeek } from '../core/advanceWeek';
 import { initialMeans, PLAYER_ACTOR_ID } from '../core/createGame';
-import { newGame, playToEnd, QUIET, sponsorship } from '../core/testing';
+import { concludeDebates, newGame, playToEnd, QUIET, sponsorship } from '../core/testing';
 import { presidentOf } from './government';
 
 // Phase 6 (P6-08) : fin du quinquennat, bilan et présidentielle suivante avec le même moteur.
@@ -29,6 +29,7 @@ function play(
   let state = start;
   const reports: WeeklyReport[] = [];
   for (let i = 0; i < 400 && !until(state) && !state.calendar.blockedBy; i++) {
+    state = concludeDebates(state, ruleset);
     const player = state.player.actorId ? state.actors[state.player.actorId] : undefined;
     const active = player?.status === 'candidat' || player?.status === 'qualifie';
     const result = advanceWeek(

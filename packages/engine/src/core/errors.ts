@@ -2,6 +2,7 @@
 export type EngineInputErrorCode =
   | 'progression_bloquee'
   | 'decision_requise'
+  | 'debat_requis'
   | 'decision_inconnue'
   | 'option_inconnue'
   | 'decision_en_double'

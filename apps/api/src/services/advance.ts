@@ -9,6 +9,7 @@ import { canonicalStringify, sha256, snapshotState } from '@r2027/save-engine';
 import {
   AdvanceResponseSchema,
   FAST_FORWARD_STOPS,
+  debateAwaitingPlayer,
   isOptionalDecision,
   type AdvanceRequestSchema,
   type AdvanceResponse,
@@ -176,6 +177,8 @@ function stopAfter(result: AdvanceResult): FastForwardStop | null {
   if (result.report.election) return 'scrutin';
   if (result.report.phaseChange) return 'changement_de_phase';
   if (result.majorEvent) return 'evenement_majeur';
+  // Débat obligatoire (phase 17) : la semaine suivante ne se résout qu'une fois le débat joué.
+  if (debateAwaitingPlayer(result.state)) return 'debat';
   if (result.state.pendingDecisions.some((d) => !isOptionalDecision(d))) return 'decision';
   return null;
 }

@@ -17,6 +17,7 @@ import {
   type ReportEvent,
   type Ruleset,
   type UtilityFactor,
+  playerOnDebateStage,
 } from '@r2027/shared';
 import { credibility } from '../campaign/programme';
 import { EngineInputError } from '../core/errors';
@@ -97,12 +98,9 @@ export function invitedTo(state: GameState, rule: DebateSessionRule): string[] {
 const present = (session: DebateSession) =>
   session.invites.filter((id) => !session.refus.includes(id));
 
-/** Le joueur est-il sur le plateau (invité, présent et toujours en lice) ? */
+/** Le joueur est-il sur le plateau (invité, présent et toujours en lice) ? Règle partagée. */
 function playerOnStage(state: GameState, session: DebateSession): string | null {
-  const id = state.player.actorId;
-  if (!id || !present(session).includes(id)) return null;
-  const status = state.actors[id]?.status;
-  return status === 'candidat' || status === 'qualifie' ? id : null;
+  return playerOnDebateStage(state, session) ? state.player.actorId : null;
 }
 
 /**

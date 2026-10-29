@@ -2,12 +2,19 @@ import {
   advanceWeek,
   createGame,
   ENGINE_VERSION,
+  playDebate,
   presentationWindow,
   SAVE_SCHEMA_VERSION,
   type TerritorialBaseline,
 } from '@r2027/engine';
 import { CURRENT_RULESET_KEY, getRuleset } from '@r2027/rulesets';
-import type { GameDetail, GameState, SaveSummary, WeeklyReport } from '@r2027/shared';
+import {
+  debateAwaitingPlayer,
+  type GameDetail,
+  type GameState,
+  type SaveSummary,
+  type WeeklyReport,
+} from '@r2027/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
@@ -59,6 +66,20 @@ function sponsorship(state: GameState) {
 }
 
 /**
+ * Débat obligatoire (phase 17) : mène à son terme, par la fin simulée que le joueur demande
+ * depuis le plateau, chaque débat de la semaine qui l'attend (vrai moteur).
+ */
+export function concludeDebates(state: GameState): GameState {
+  let current = state;
+  for (let debate = debateAwaitingPlayer(current); debate; debate = debateAwaitingPlayer(current))
+    current = playDebate(current, RULESET, debate.id, {
+      action: 'finir',
+      sequence: debate.enCours?.index ?? 0,
+    }).state;
+  return current;
+}
+
+/**
  * Fait avancer le vrai moteur jusqu'à `done(state)` (décisions par défaut, parrainages), sur la
  * base électorale nationale ou, si elle est fournie, sur une base territoriale.
  */
@@ -69,6 +90,7 @@ export function playedState(
 ): GameState {
   let state = start;
   for (let i = 0; i < 80 && !done(state) && !state.calendar.blockedBy; i++) {
+    state = concludeDebates(state);
     const decisions = state.pendingDecisions.map((d) => ({
       decisionId: d.id,
       optionId: d.defaultOptionId,

@@ -33,6 +33,13 @@ test('le débat de tous les candidats se joue carte par carte sur le plateau', a
   expect(session.invites).toContain(game.state.player.actorId);
   await page.reload();
 
+  // Débat obligatoire (phase 17) : la semaine ne se résout pas tant que le débat attend.
+  const callout = page.getByRole('region', { name: 'Débat de tous les candidats' });
+  await expect(callout.getByRole('link', { name: 'Aller sur le plateau' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Résoudre la semaine/ })).toBeDisabled();
+  await expect(page.getByText(/vous attend : jouez-le \(ou refusez-le\)/)).toBeVisible();
+  await audit(page, 'débat obligatoire');
+
   // Tableau de bord : le débat de la semaine, l'entrée sur le plateau.
   const panel = page.getByRole('region', { name: 'Débats télévisés' });
   await expect(panel.getByText('Débat de tous les candidats')).toBeVisible();
@@ -82,6 +89,12 @@ test('le débat de tous les candidats se joue carte par carte sur le plateau', a
   const results = page.getByRole('region', { name: 'Débats télévisés' });
   await expect(results.getByText('Débat de tous les candidats')).toBeVisible();
   await expect(results.getByRole('link', { name: 'Revoir' }).first()).toBeVisible();
+
+  // Débat terminé : la semaine se résout de nouveau.
+  await openScreen(page, 'Tableau de bord');
+  await expect(page.getByRole('heading', { name: 'Tableau de bord' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Débat de tous les candidats' })).toHaveCount(0);
+  await expect(page.getByText(/vous attend : jouez-le/)).toHaveCount(0);
 });
 
 test('le débat de l’entre-deux-tours oppose les deux finalistes et se revoit ensuite', async ({

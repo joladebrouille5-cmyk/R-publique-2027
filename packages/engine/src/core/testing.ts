@@ -2,6 +2,7 @@
 import { CURRENT_RULESET_KEY, getRuleset } from '@r2027/rulesets';
 import {
   cycleRuleset,
+  debateAwaitingPlayer,
   type DecisionAnswer,
   type GameState,
   type PlannedAction,
@@ -10,6 +11,7 @@ import {
   type WeeklyReport,
 } from '@r2027/shared';
 import { departements, presentationWindow } from '../campaign/parrainages';
+import { playDebate } from '../election/debats';
 import { RENDEZ_VOUS_EVENT } from '../campaign/rendezvous';
 import { QAG_EVENT } from '../presidency/qag';
 import { advanceWeek } from './advanceWeek';
@@ -114,6 +116,23 @@ export function deepFreeze<T>(value: T): T {
 }
 
 /**
+ * Débat obligatoire (phase 17) : mène à son terme, par la fin simulée que le joueur demande
+ * depuis le plateau, chaque débat de la semaine qui l'attend.
+ */
+export function concludeDebates(state: GameState, ruleset: Ruleset = RULESET): GameState {
+  let current = state;
+  for (let i = 0; i < 4; i++) {
+    const debate = debateAwaitingPlayer(current);
+    if (!debate) return current;
+    current = playDebate(current, ruleset, debate.id, {
+      action: 'finir',
+      sequence: debate.enCours?.index ?? 0,
+    }).state;
+  }
+  return current;
+}
+
+/**
  * Joue jusqu'à ce que `done(state)` soit vrai (ou que la partie soit bloquée), en répondant
  * aux décisions par l'option par défaut ; `plan(state)` fournit les actions du joueur.
  */
@@ -126,6 +145,7 @@ export function playUntil(
   let state = start;
   const reports: WeeklyReport[] = [];
   for (let i = 0; i < 80 && !state.calendar.blockedBy && !done(state); i++) {
+    state = concludeDebates(state, ruleset);
     const decisions = state.pendingDecisions.map((d) => ({
       decisionId: d.id,
       optionId: d.defaultOptionId,

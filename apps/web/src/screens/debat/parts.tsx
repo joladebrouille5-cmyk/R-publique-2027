@@ -1,5 +1,6 @@
 import {
   candidateName,
+  playerOnDebateStage,
   type DebateAngle,
   type DebateCard,
   type DebateMove,
@@ -32,10 +33,8 @@ export const nameOf = (state: GameState, id: string) =>
 
 /** Le joueur est-il sur le plateau (invité, présent, toujours en lice) ? */
 export function playerOnStage(state: GameState, session: DebateSession): boolean {
-  const id = state.player.actorId;
-  if (!id || !session.invites.includes(id) || session.refus.includes(id)) return false;
-  const status = state.actors[id]?.status;
-  return status === 'candidat' || status === 'qualifie';
+  // Règle partagée avec le moteur (phase 17) : la même décide du débat obligatoire.
+  return playerOnDebateStage(state, session);
 }
 
 /**

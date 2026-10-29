@@ -1,6 +1,7 @@
 import {
   addDays,
   candidateName,
+  debateAwaitingPlayer,
   delegationHours,
   isOptionalDecision,
   MAX_FAST_FORWARD_WEEKS,
@@ -18,6 +19,7 @@ import {
   CalendarClock,
   CalendarDays,
   ChartColumn,
+  Clapperboard,
   Flame,
   Gavel,
   Hourglass,
@@ -29,6 +31,7 @@ import {
   Stamp,
   TrendingUp,
   TriangleAlert,
+  Tv,
   Users,
   Vote,
   Wallet,
@@ -46,8 +49,10 @@ import { ErrorMessage } from '../components/ErrorMessage';
 import {
   buttonGhost,
   buttonPrestige,
+  buttonPrimary,
   buttonSecondary,
   card,
+  cardRaised,
   inputCompact,
   screenTitle,
 } from '../components/ui';
@@ -100,6 +105,7 @@ function dissolutionRestriction(state: GameState, ruleset: Ruleset): string | nu
 
 const FAST_FORWARD_STOP_LABELS = {
   decision: 'une décision vous attend',
+  debat: 'un débat télévisé vous attend',
   scrutin: 'un scrutin a eu lieu',
   changement_de_phase: 'la partie change de phase',
   evenement_majeur: 'un événement majeur est survenu',
@@ -195,6 +201,8 @@ export function Dashboard() {
           .findIndex((r) => r.actorId === actor?.id) + 1
       : null;
   // Une décision facultative (questions au gouvernement) ne bloque pas la semaine.
+  // Débat obligatoire (phase 17, règle partagée avec le moteur) : la semaine attend le débat.
+  const debateDue = observer ? undefined : debateAwaitingPlayer(state);
   const unanswered = observer
     ? []
     : state.pendingDecisions.filter(
@@ -640,6 +648,29 @@ export function Dashboard() {
         </div>
       )}
 
+      {debateDue && (
+        <section
+          aria-labelledby="titre-debat-requis"
+          className={`${cardRaised} flex flex-wrap items-center gap-4`}
+        >
+          <Tv aria-hidden="true" className="size-9 shrink-0 text-or-600 dark:text-dorure" />
+          <div className="min-w-0 flex-1 space-y-1">
+            <h2 id="titre-debat-requis" className="text-2xl">
+              {debateDue.libelle}
+            </h2>
+            <p className="text-sm text-slate-700 dark:text-slate-300">
+              Débat télévisé de la semaine : vous êtes sur le plateau. La semaine ne se résout
+              qu’une fois le débat joué jusqu’au bout (ou sa fin simulée depuis le plateau), ou
+              refusé avant le premier échange (chaise vide, malus de popularité).
+            </p>
+          </div>
+          <Link to={`../debat/${debateDue.id}`} className={buttonPrimary}>
+            <Clapperboard aria-hidden="true" className="size-4" />
+            {debateDue.statut === 'en_cours' ? 'Reprendre le débat' : 'Aller sur le plateau'}
+          </Link>
+        </section>
+      )}
+
       {tiles.length > 0 && (
         <Overview
           title={
@@ -849,7 +880,13 @@ export function Dashboard() {
             <button
               type="button"
               className={`${buttonPrestige} flex-1 sm:flex-none sm:px-8`}
-              disabled={blocked || advance.isPending || unanswered.length > 0 || missingTargets > 0}
+              disabled={
+                blocked ||
+                advance.isPending ||
+                debateDue !== undefined ||
+                unanswered.length > 0 ||
+                missingTargets > 0
+              }
               onClick={() => submit()}
             >
               {advance.isPending ? (
@@ -912,6 +949,15 @@ export function Dashboard() {
               {advance.data.avanceRapide.arret
                 ? ` — arrêt : ${FAST_FORWARD_STOP_LABELS[advance.data.avanceRapide.arret]}.`
                 : '.'}
+            </p>
+          )}
+          {debateDue && (
+            <p className="text-xs leading-snug font-semibold text-amber-800 sm:text-sm dark:text-amber-300">
+              {debateDue.libelle} vous attend : jouez-le (ou refusez-le) avant de résoudre la
+              semaine.{' '}
+              <Link to={`../debat/${debateDue.id}`} className="underline">
+                Le plateau
+              </Link>
             </p>
           )}
           {unanswered.length > 0 && (

@@ -1,8 +1,16 @@
-import type { GameState } from '@r2027/shared';
+import { debateAwaitingPlayer, type GameState } from '@r2027/shared';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { advanceWeek } from '../core/advanceWeek';
 import { PLAYER_ACTOR_ID } from '../core/createGame';
-import { deepFreeze, newGame, playUntil, RULESET, sponsorship } from '../core/testing';
+import { EngineInputError } from '../core/errors';
+import {
+  concludeDebates,
+  deepFreeze,
+  newGame,
+  playUntil,
+  RULESET,
+  sponsorship,
+} from '../core/testing';
 import { angleHolds, playDebate } from './debats';
 import { distribute, summarize } from './distribution';
 
@@ -267,11 +275,83 @@ describe('débats télévisés (phase 10)', () => {
     const state = JSON.parse(JSON.stringify(allCandidates)) as GameState;
     state.actors[PLAYER_ACTOR_ID]!.preparationDebat = 40;
     const { state: next } = advanceWeek(
-      state,
+      concludeDebates(state),
       { actions: [], decisions: decisionsOf(state) },
       { ruleset: RULESET },
     );
     expect(next.actors[PLAYER_ACTOR_ID]!.preparationDebat).toBe(36);
+  });
+});
+
+describe('débat obligatoire (phase 17)', () => {
+  const advanceRefusal = (state: GameState) => {
+    try {
+      advanceWeek(state, { actions: [], decisions: decisionsOf(state) }, { ruleset: RULESET });
+      return null;
+    } catch (error) {
+      return error instanceof EngineInputError ? error.code : String(error);
+    }
+  };
+
+  it('bloque la semaine tant que le débat attend le joueur sur le plateau', () => {
+    expect(debateAwaitingPlayer(allCandidates)?.id).toBe('debat-t1-tous');
+    expect(advanceRefusal(allCandidates)).toBe('debat_requis');
+    // Une carte jouée ne suffit pas : le débat doit aller jusqu'au bout.
+    const session = sessionOf(allCandidates, 'debat-t1-tous');
+    const started = playDebate(allCandidates, RULESET, 'debat-t1-tous', {
+      action: 'jouer',
+      sequence: session.enCours!.index,
+      carte: session.enCours!.cartes[0]!.carte,
+    }).state;
+    expect(sessionOf(started, 'debat-t1-tous').statut).toBe('en_cours');
+    expect(advanceRefusal(started)).toBe('debat_requis');
+  });
+
+  it('se lève par un choix du joueur : débat joué, fin simulée ou chaise vide', () => {
+    const played = playFirstCards(allCandidates, 'debat-t1-tous');
+    expect(debateAwaitingPlayer(played)).toBeUndefined();
+    expect(advanceRefusal(played)).toBeNull();
+
+    const simulated = concludeDebates(allCandidates);
+    expect(sessionOf(simulated, 'debat-t1-tous').statut).toBe('termine');
+    expect(advanceRefusal(simulated)).toBeNull();
+
+    const refused = playDebate(allCandidates, RULESET, 'debat-t1-tous', {
+      action: 'refuser',
+    }).state;
+    expect(sessionOf(refused, 'debat-t1-tous').refus).toContain(PLAYER_ACTOR_ID);
+    expect(debateAwaitingPlayer(refused)).toBeUndefined();
+    const after = advanceWeek(
+      refused,
+      { actions: [], decisions: decisionsOf(refused) },
+      { ruleset: RULESET },
+    );
+    // Chaise vide : le débat se tient sans le joueur, qui en paie le malus.
+    expect(sessionOf(after.state, 'debat-t1-tous').statut).toBe('termine');
+    expect(
+      after.report.changes
+        .find((c) => c.actorId === PLAYER_ACTOR_ID && c.ressource === 'popularite')!
+        .factors.some((f) => f.label.endsWith(': chaise vide')),
+    ).toBe(true);
+  });
+
+  it('ne bloque ni l’observateur, ni le joueur absent du plateau ou éliminé', () => {
+    const observer = untilDebate(
+      newGame({ seed: 'debats-1', mode: 'observateur' }),
+      'debat-t1-tous',
+    );
+    expect(sessionOf(observer, 'debat-t1-tous')).toBeDefined();
+    expect(debateAwaitingPlayer(observer)).toBeUndefined();
+    expect(advanceRefusal(observer)).toBeNull();
+
+    const notInvited = JSON.parse(JSON.stringify(allCandidates)) as GameState;
+    const session = sessionOf(notInvited, 'debat-t1-tous');
+    session.invites = session.invites.filter((id) => id !== PLAYER_ACTOR_ID);
+    expect(advanceRefusal(notInvited)).toBeNull();
+
+    const eliminated = JSON.parse(JSON.stringify(allCandidates)) as GameState;
+    eliminated.actors[PLAYER_ACTOR_ID]!.status = 'elimine';
+    expect(debateAwaitingPlayer(eliminated)).toBeUndefined();
   });
 });
 
@@ -281,9 +361,9 @@ describe('débats et personnalités réelles', () => {
       newGame({ seed: 'debats-reels', adversaires: 'reels' }),
       'debat-t1-tous',
     );
-    // Débat mené à son terme à la résolution de la semaine (fin simulée pour le joueur).
+    // Débat mené à son terme par la fin simulée demandée depuis le plateau, puis la semaine.
     const done = advanceWeek(
-      state,
+      concludeDebates(state),
       { actions: [], decisions: decisionsOf(state) },
       { ruleset: RULESET },
     ).state;
