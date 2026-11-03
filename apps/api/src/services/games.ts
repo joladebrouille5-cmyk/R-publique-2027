@@ -4,6 +4,10 @@ import { CURRENT_RULESET_KEY, getRuleset } from '@r2027/rulesets';
 import { snapshotState } from '@r2027/save-engine';
 import {
   candidateForJournal,
+  CreationRefusal,
+  creationParameters,
+  mayBeLocked,
+  parisDate,
   type CreateGameRequestSchema,
   type GameDetail,
   type GameState,
@@ -12,6 +16,7 @@ import {
 import type { z } from 'zod';
 import type { Database } from '../db';
 import { HttpError } from '../errors';
+import { progressionOf } from './progression';
 import { gameColumns, loadOwnedGame, toGameDetail, toGameSummary } from './state';
 
 type CreateGameBody = z.output<typeof CreateGameRequestSchema>;
@@ -37,8 +42,22 @@ export async function getGame(db: Database, userId: string, gameId: string): Pro
 export async function createNewGame(
   db: Database,
   userId: string,
-  body: CreateGameBody,
+  request: CreateGameBody,
+  now: Date = new Date(),
 ): Promise<GameDetail> {
+  // Phase 20 : défi du jour (paramètres imposés), graine réservée, contenus verrouillés.
+  const ruleset = getRuleset(CURRENT_RULESET_KEY);
+  let body: CreateGameBody;
+  const progression = mayBeLocked(request, ruleset.progression)
+    ? await progressionOf(db, userId, now)
+    : { deblocages: [] };
+  try {
+    body = creationParameters(request, ruleset.progression, parisDate(now), () => progression);
+  } catch (error) {
+    if (error instanceof CreationRefusal)
+      throw new HttpError(error.status, error.code, error.message);
+    throw error;
+  }
   const seed = body.seed ?? randomSeed();
   let initial: GameState;
   try {
@@ -55,7 +74,7 @@ export async function createNewGame(
         orientationId: body.orientationId,
         format: body.format,
       },
-      getRuleset(CURRENT_RULESET_KEY),
+      ruleset,
     );
   } catch (error) {
     if (error instanceof GameCreationError) throw new HttpError(422, error.code, error.message);
@@ -87,6 +106,7 @@ export async function createNewGame(
           adversaires: state.player.adversaires,
           scenario: state.scenario,
           orientation: state.player.orientation,
+          defi: body.defi,
           startDate: state.meta.date,
           candidat: state.player.actorId
             ? candidateForJournal(state.actors[state.player.actorId]!.candidate)

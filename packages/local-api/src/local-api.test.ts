@@ -2,6 +2,9 @@ import { readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { IDBFactory } from 'fake-indexeddb';
+import { advanceWeek } from '@r2027/engine';
+import { CURRENT_RULESET_KEY, getRuleset } from '@r2027/rulesets';
+import { hashState } from '@r2027/save-engine';
 import {
   AdvanceResponseSchema,
   ApiErrorSchema,
@@ -12,6 +15,7 @@ import {
   GameSummarySchema,
   HealthResponseSchema,
   JournalPageSchema,
+  ProgressionSchema,
   SaveSummarySchema,
   SupportProspectsSchema,
   type GameDetail,
@@ -104,8 +108,8 @@ describe('serveur local : parties et progression', () => {
 
   it('crée, liste et relit une partie ; refuse une requête invalide', async () => {
     const api = server();
-    const game = await newGame(api, { scenarioId: 'outsider' });
-    expect(game.state.scenario).toBe('outsider');
+    const game = await newGame(api, { scenarioId: 'colere-sociale' });
+    expect(game.state.scenario).toBe('colere-sociale');
     const list = GameSummarySchema.array().parse((await call(api, 'GET', '/api/games')).body);
     expect(list.map((g) => g.id)).toEqual([game.id]);
     expect(GameDetailSchema.parse((await call(api, 'GET', `/api/games/${game.id}`)).body)).toEqual(
@@ -128,7 +132,18 @@ describe('serveur local : parties et progression', () => {
   it('crée une partie à chacun des cinq niveaux ; même refus que l’API (phase 18)', async () => {
     const api = server();
     const games: GameDetail[] = [];
-    for (const difficulty of DIFFICULTIES) {
+    // Phase 20 : Légende se débloque par une victoire ; refusée ici, comme par l'API.
+    const open = DIFFICULTIES.filter((d) => d !== 'legende');
+    expect(
+      error(
+        await call(api, 'POST', '/api/games', {
+          name: 'x',
+          mode: 'observateur',
+          difficulty: 'legende',
+        }),
+      ),
+    ).toBe('verrouille');
+    for (const difficulty of open) {
       const game = await newGame(api, { difficulty });
       expect(game.difficulty).toBe(difficulty);
       expect(game.state.meta.difficulty).toBe(difficulty);
@@ -136,9 +151,9 @@ describe('serveur local : parties et progression', () => {
     }
     const budgets = games.map((g) => g.state.actors.joueur!.resources.budgetCentimes);
     expect([...budgets].sort((a, b) => b - a)).toEqual(budgets);
-    expect(new Set(budgets).size).toBe(DIFFICULTIES.length);
+    expect(new Set(budgets).size).toBe(open.length);
     const list = GameSummarySchema.array().parse((await call(api, 'GET', '/api/games')).body);
-    expect(list.map((g) => g.difficulty).sort()).toEqual([...DIFFICULTIES].sort());
+    expect(list.map((g) => g.difficulty).sort()).toEqual([...open].sort());
     expect(
       error(
         await call(api, 'POST', '/api/games', {
@@ -681,5 +696,63 @@ describe('stockage IndexedDB de l’appareil', () => {
       ]),
     ).rejects.toBeTruthy();
     expect(await store.events('g')).toEqual([]);
+  });
+});
+
+describe('serveur local : progression (phase 20)', () => {
+  it('suit les mêmes règles que l’API : verrous, graine réservée, défi du jour, déblocage', async () => {
+    const store = new MemoryStore();
+    const api = server(store);
+    const start = ProgressionSchema.parse((await call(api, 'GET', '/api/progression')).body);
+    expect(start).toMatchObject({ parties: 0, victoires: 0, niveau: { numero: 1 } });
+    expect(start.defi).toMatchObject({ date: '2026-10-21', graine: 'defi-2026-10-21' });
+    const body = { name: 'Verrou', mode: 'candidat_personnalise', candidate };
+    const locked = await call(api, 'POST', '/api/games', { ...body, difficulty: 'legende' });
+    expect(locked.status).toBe(403);
+    expect(error(locked)).toBe('verrouille');
+    expect(error(await call(api, 'POST', '/api/games', { ...body, scenarioId: 'outsider' }))).toBe(
+      'verrouille',
+    );
+    const reserved = await call(api, 'POST', '/api/games', { ...body, seed: 'defi-2026-10-21' });
+    expect([reserved.status, error(reserved)]).toEqual([422, 'graine_reservee']);
+
+    // Défi du jour : graine du jour de l'appareil, paramètres imposés.
+    const defi = GameDetailSchema.parse(
+      (await call(api, 'POST', '/api/games', { ...body, defi: true, difficulty: 'expert' })).body,
+    );
+    expect(defi).toMatchObject({ seed: 'defi-2026-10-21', difficulty: 'standard' });
+    expect(defi.state.player.format).toBe('court');
+
+    // Une présidentielle gagnée (état du moteur, joueur déclaré vainqueur) débloque Légende.
+    let state = (await newGame(api, { seed: 'local-victoire' })).state;
+    const id = (await store.games()).find((g) => g.seed === 'local-victoire')!.id;
+    while (!state.elections.t2)
+      state = advanceWeek(
+        state,
+        {
+          actions: [],
+          decisions: state.pendingDecisions.map((d) => ({
+            decisionId: d.id,
+            optionId: d.defaultOptionId,
+          })),
+        },
+        { ruleset: getRuleset(CURRENT_RULESET_KEY) },
+      ).state;
+    state.elections.t2.winner = state.player.actorId;
+    const row = (await store.game(id))!;
+    await store.commit([
+      {
+        kind: 'put',
+        table: 'games',
+        value: { ...row, state, stateHash: hashState(state), week: state.meta.week },
+      },
+    ]);
+    const after = ProgressionSchema.parse((await call(api, 'GET', '/api/progression')).body);
+    expect(after.victoires).toBe(1);
+    expect(after.defi.tentatives).toBe(1);
+    expect(after.deblocages.every((d) => d.debloque)).toBe(true);
+    expect((await call(api, 'POST', '/api/games', { ...body, difficulty: 'legende' })).status).toBe(
+      201,
+    );
   });
 });

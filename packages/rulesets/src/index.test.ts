@@ -178,6 +178,27 @@ describe('jeu de règles presidentielle-2027', () => {
     for (const event of ruleset.evenements) expect(event.nature).toBe('fictif');
   });
 
+  it('verrouille Légende et le scénario d’outsider jusqu’à une victoire ; défi jamais verrouillé (phase 20)', () => {
+    const { progression } = ruleset;
+    expect(progression.statut).toBe('hypothese');
+    expect(progression.deblocages.map((d) => [d.difficulte ?? d.scenarioId, d.victoires])).toEqual([
+      ['legende', 1],
+      ['outsider', 1],
+    ]);
+    expect(progression.defi).toEqual({
+      difficulte: 'standard',
+      format: 'court',
+      scenarioId: 'standard',
+    });
+    expect(progression.niveaux[0]).toMatchObject({ numero: 1, points: 0 });
+    const badScenario = full();
+    badScenario.progression.deblocages[1]!.scenarioId = 'absent';
+    expect(RulesetSchema.safeParse(badScenario).success).toBe(false);
+    const lockedDefi = full();
+    lockedDefi.progression.defi.difficulte = 'legende';
+    expect(RulesetSchema.safeParse(lockedDefi).success).toBe(false);
+  });
+
   it('enchaîne des événements et prête des coups simulés aux adversaires (phase 20)', () => {
     const chained = ruleset.evenements.filter((e) => e.suites.length > 0);
     expect(chained.length).toBeGreaterThanOrEqual(6);

@@ -3,6 +3,7 @@ import { useCurrentRuleset } from '../../api/hooks';
 import { DifficultyGauge, DifficultySheet } from '../../components/DifficultySheet';
 import { label, optionTile, radio } from '../../components/ui';
 import { DIFFICULTY_LABELS, DIFFICULTY_TAGLINES } from '../../labels';
+import { LockNote } from './LockNote';
 
 // Choix de la difficulté (phase 18) : cinq niveaux en escalier, de Découverte à Légende, puis la
 // fiche du niveau choisi (moyens de départ, adversaires, débats), lue dans le jeu de règles.
@@ -11,10 +12,13 @@ export function DifficultyPicker({
   value,
   onChange,
   mode,
+  locks = {},
 }: {
   value: Difficulty;
   onChange: (difficulty: Difficulty) => void;
   mode: GameMode;
+  /** Phase 20 : niveaux verrouillés, avec la condition de leur déblocage. */
+  locks?: Partial<Record<Difficulty, string>>;
 }) {
   const ruleset = useCurrentRuleset();
   return (
@@ -45,6 +49,7 @@ export function DifficultyPicker({
               <span className="block text-xs text-slate-600 dark:text-slate-400">
                 {DIFFICULTY_TAGLINES[difficulty]}
               </span>
+              {locks[difficulty] && <LockNote condition={locks[difficulty]} />}
             </span>
           </label>
         ))}

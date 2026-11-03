@@ -3,7 +3,8 @@ import { mountApp } from '../../web/src/app';
 import { setPlatform } from '../../web/src/platform';
 import { requestPersistentStorage, startLocalBackend } from './backend';
 import { readEmbeddedGeo } from './geo-files';
-import { onAppActiveChange, saveOrShareFile } from './native';
+import { useRappels } from '../../web/src/stores/rappels';
+import { onAppActiveChange, reminders, saveOrShareFile } from './native';
 
 // Entrée de l'application Android (phase 8) : le moteur tourne sur l'appareil, les parties
 // sont enregistrées dans IndexedDB ; aucune connexion réseau n'est nécessaire ni effectuée.
@@ -34,8 +35,12 @@ async function start() {
       storageNotice: await requestPersistentStorage(navigator.storage),
       // Son (phase 19) : la musique se coupe quand l'application passe en arrière-plan.
       onActiveChange: onAppActiveChange,
+      // Phase 20 : rappel quotidien du défi du jour, reprogrammé à chaque ouverture.
+      reminders,
     });
     mountApp(root);
+    const { actif, heure } = useRappels.getState();
+    if (actif) void reminders.schedule(heure).catch(() => undefined);
   } catch (error) {
     showStartupError(root, error);
   }

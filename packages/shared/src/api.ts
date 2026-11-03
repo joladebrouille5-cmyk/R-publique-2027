@@ -65,9 +65,28 @@ export const CreateGameRequestSchema = z
       .optional(),
     /** Format de la partie (phase 20) : complet, ou court (fin au soir de la présidentielle). */
     format: GameFormatSchema.default('complet'),
+    /**
+     * Défi du jour (phase 20) : graine du jour, niveau, format et scénario imposés par le jeu de
+     * règles ; la graine, la date de départ et ces paramètres ne se choisissent pas.
+     */
+    defi: z.boolean().default(false),
   })
   .strict()
   .superRefine((body, ctx) => {
+    if (body.defi && body.mode === 'observateur') {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['defi'],
+        message: 'Le défi du jour se joue avec un candidat',
+      });
+    }
+    if (body.defi && (body.seed !== undefined || body.startDate !== undefined)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['defi'],
+        message: 'La graine et la date de départ du défi du jour sont imposées',
+      });
+    }
     if (body.mode === 'observateur' && body.orientationId !== undefined) {
       ctx.addIssue({
         code: 'custom',

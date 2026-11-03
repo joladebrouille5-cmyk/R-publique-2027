@@ -1,6 +1,7 @@
 import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { Directory, Encoding, Filesystem } from '@capacitor/filesystem';
+import { LocalNotifications } from '@capacitor/local-notifications';
 import { Share } from '@capacitor/share';
 import { browserDownload } from '../../web/src/platform';
 
@@ -41,3 +42,37 @@ export function onAppActiveChange(listener: (active: boolean) => void): () => vo
   const subscription = App.addListener('appStateChange', ({ isActive }) => listener(isActive));
   return () => void subscription.then((handle) => handle.remove());
 }
+
+/** Identifiant fixe du rappel quotidien : reprogrammer remplace le précédent. */
+export const REMINDER_ID = 2027;
+
+/**
+ * Rappel quotidien du défi du jour (phase 20) : notification locale répétée chaque jour à
+ * l'heure choisie, programmée sur l'appareil (aucun réseau). Seule la permission
+ * POST_NOTIFICATIONS est demandée ; l'alarme n'est pas exacte (pas de SCHEDULE_EXACT_ALARM) et
+ * le rappel est reprogrammé à chaque ouverture de l'application (pas de RECEIVE_BOOT_COMPLETED).
+ */
+export const reminders = {
+  async schedule(hour: number): Promise<boolean> {
+    if (!Capacitor.isNativePlatform()) return false;
+    let { display } = await LocalNotifications.checkPermissions();
+    if (display !== 'granted') ({ display } = await LocalNotifications.requestPermissions());
+    if (display !== 'granted') return false;
+    await LocalNotifications.cancel({ notifications: [{ id: REMINDER_ID }] });
+    await LocalNotifications.schedule({
+      notifications: [
+        {
+          id: REMINDER_ID,
+          title: 'Défi du jour',
+          body: 'La campagne du jour vous attend : même départ pour tous, votre score au premier tour.',
+          schedule: { on: { hour, minute: 0 }, allowWhileIdle: false },
+        },
+      ],
+    });
+    return true;
+  },
+  async cancel(): Promise<void> {
+    if (!Capacitor.isNativePlatform()) return;
+    await LocalNotifications.cancel({ notifications: [{ id: REMINDER_ID }] });
+  },
+};

@@ -2,6 +2,7 @@ import type { Ruleset, Scenario } from '@r2027/shared';
 import { useCurrentRuleset } from '../../api/hooks';
 import { Badge } from '../../components/Badge';
 import { label, optionTile, radio } from '../../components/ui';
+import { LockNote } from './LockNote';
 import { formatDelta, formatIndicatorDelta, INDICATOR_LABELS, RESOURCE_LABELS } from '../../labels';
 
 // Choix du scénario de départ (phase 7). Chaque scénario non standard est une situation
@@ -48,9 +49,12 @@ function effects(scenario: Scenario, ruleset: Ruleset): string[] {
 export function ScenarioPicker({
   value,
   onChange,
+  locks = {},
 }: {
   value: string;
   onChange: (id: string) => void;
+  /** Phase 20 : scénarios verrouillés, avec la condition de leur déblocage. */
+  locks?: Record<string, string>;
 }) {
   const ruleset = useCurrentRuleset();
   if (!ruleset.data) return null;
@@ -76,6 +80,7 @@ export function ScenarioPicker({
               <span className="block text-xs text-slate-600 dark:text-slate-400">
                 {scenario.description}
               </span>
+              {locks[scenario.id] && <LockNote condition={locks[scenario.id]!} />}
               {effects(scenario, ruleset.data).map((line) => (
                 <span key={line} className="block text-xs text-slate-600 dark:text-slate-400">
                   {line}

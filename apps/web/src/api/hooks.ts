@@ -6,6 +6,7 @@ import {
   HealthResponseSchema,
   IDEMPOTENCY_HEADER,
   JournalPageSchema,
+  ProgressionSchema,
   RulesetSchema,
   SaveSummarySchema,
   SupportProspectsSchema,
@@ -27,7 +28,16 @@ export const queryKeys = {
   journal: (id: string) => ['games', id, 'journal'] as const,
   supports: (id: string, week: number) => ['games', id, 'soutiens', week] as const,
   ruleset: (key: string) => ['rulesets', key] as const,
+  progression: ['progression'] as const,
 };
+
+/** Palmarès, niveau, déblocages et défi du jour (phase 20), calculés par le serveur. */
+export function useProgression() {
+  return useQuery({
+    queryKey: queryKeys.progression,
+    queryFn: () => api.get('/api/progression', ProgressionSchema),
+  });
+}
 
 export function useHealth() {
   return useQuery({
@@ -117,6 +127,7 @@ export function useCreateGame() {
     onSuccess: (game) => {
       queryClient.setQueryData(queryKeys.game(game.id), game);
       void queryClient.invalidateQueries({ queryKey: queryKeys.games, exact: true });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.progression });
     },
   });
 }
@@ -176,6 +187,7 @@ export function useAdvance(gameId: string) {
       void queryClient.invalidateQueries({ queryKey: queryKeys.games, exact: true });
       void queryClient.invalidateQueries({ queryKey: queryKeys.saves(gameId) });
       void queryClient.invalidateQueries({ queryKey: queryKeys.journal(gameId) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.progression });
     },
   });
 }

@@ -33,6 +33,7 @@ import { createNewGame, getGame, listGames } from './services/games';
 import { journalPage } from './services/journal';
 import { createManualSave, listSaves, restoreSave } from './services/saves';
 import { existingUserId, resolveUserId } from './session';
+import { progressionOf } from './services/progression';
 import { API_VERSION } from './version';
 
 export type AppOptions = {
@@ -41,6 +42,8 @@ export type AppOptions = {
   db: Database;
   /** Référentiel cartographique ; chargé selon GEO_DATA_DIR s'il n'est pas fourni. */
   geo?: GeoRepository;
+  /** Horloge du serveur (date du défi du jour, phase 20) ; remplaçable dans les tests. */
+  clock?: () => Date;
 };
 
 const TourParams = z.object({
@@ -79,7 +82,12 @@ function errorBody(code: string, message: string, details?: unknown): ApiError {
   return { error: details === undefined ? { code, message } : { code, message, details } };
 }
 
-export async function buildApp({ config, db, geo }: AppOptions): Promise<FastifyInstance> {
+export async function buildApp({
+  config,
+  db,
+  geo,
+  clock = () => new Date(),
+}: AppOptions): Promise<FastifyInstance> {
   const territories = geo ?? GeoRepository.load(geoDirectories(config.GEO_DATA_DIR));
   const electoral = ElectoralRepository.load(
     territories,
@@ -186,9 +194,14 @@ export async function buildApp({ config, db, geo }: AppOptions): Promise<Fastify
 
   app.get('/api/games', async (request) => listGames(db, await readerOf(request)));
 
+  // Phase 20 : palmarès, niveau, déblocages et défi du jour du joueur.
+  app.get('/api/progression', async (request) =>
+    progressionOf(db, await readerOf(request), clock()),
+  );
+
   app.post('/api/games', writeLimit, async (request, reply) => {
     const body = CreateGameRequestSchema.parse(request.body);
-    const game = await createNewGame(db, await userOf(request, reply), body);
+    const game = await createNewGame(db, await userOf(request, reply), body, clock());
     return reply.code(201).send(game);
   });
 

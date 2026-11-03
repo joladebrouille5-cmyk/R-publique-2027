@@ -3,12 +3,22 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <!--
-      RÉPUBLIQUE 2027 fonctionne entièrement hors ligne : aucune permission n'est demandée, pas
-      même INTERNET. L'interface est servie depuis l'APK (https://localhost, interceptée par
-      Capacitor) ; les liens vers les sources s'ouvrent dans le navigateur de l'appareil.
+      RÉPUBLIQUE 2027 fonctionne entièrement hors ligne : pas même la permission INTERNET.
+      L'interface est servie depuis l'APK (https://localhost, interceptée par Capacitor) ; les
+      liens vers les sources s'ouvrent dans le navigateur de l'appareil. Seule permission
+      (phase 20, choix de l'utilisateur) : POST_NOTIFICATIONS, pour le rappel quotidien du défi
+      du jour, désactivé par défaut et demandé seulement quand le joueur l'active. Les trois
+      autres permissions de l'extension de notifications locales sont retirées : l'alarme n'a
+      pas besoin d'être exacte (SCHEDULE_EXACT_ALARM), l'extension ne tient aucun verrou de
+      réveil (WAKE_LOCK) et le rappel est reprogrammé à chaque ouverture de l'application
+      (RECEIVE_BOOT_COMPLETED).
       Les sauvegardes automatiques d'Android (allowBackup) conservent les parties lors d'un
       changement d'appareil : elles ne contiennent aucune donnée personnelle ni secret.
     -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" tools:node="remove" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" tools:node="remove" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" tools:node="remove" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"

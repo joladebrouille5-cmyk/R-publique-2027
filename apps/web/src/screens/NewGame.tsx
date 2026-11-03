@@ -19,8 +19,8 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
-import { useNavigate } from 'react-router';
-import { useCreateGame, useCurrentRuleset } from '../api/hooks';
+import { useNavigate, useSearchParams } from 'react-router';
+import { useCreateGame, useCurrentRuleset, useProgression } from '../api/hooks';
 import { Affiche } from '../components/Affiche';
 import { ErrorMessage } from '../components/ErrorMessage';
 import { PersonalityPhoto, SIMULATION_NOTICE } from '../components/RealPersonality';
@@ -232,6 +232,17 @@ export function NewGame() {
   const navigate = useNavigate();
   const createGame = useCreateGame();
   const ruleset = useCurrentRuleset();
+  // Phase 20 : verrous (lus dans la progression servie) et défi du jour (`?defi=1`).
+  const progression = useProgression();
+  const [searchParams] = useSearchParams();
+  const defi = searchParams.get('defi') === '1' ? (progression.data?.defi ?? null) : null;
+  const locks = (progression.data?.deblocages ?? []).filter((d) => !d.debloque);
+  const difficultyLocks = Object.fromEntries(
+    locks.filter((d) => d.difficulte !== null).map((d) => [d.difficulte!, d.condition]),
+  ) as Partial<Record<Difficulty, string>>;
+  const scenarioLocks = Object.fromEntries(
+    locks.filter((d) => d.scenarioId !== null).map((d) => [d.scenarioId!, d.condition]),
+  );
   const [name, setName] = useState('');
   const [mode, setMode] = useState<GameMode>('candidat_personnalise');
   const [difficulty, setDifficulty] = useState<Difficulty>('standard');
@@ -248,13 +259,16 @@ export function NewGame() {
   const withCandidate = mode === 'candidat_personnalise';
   const withPersonality = mode === 'candidat_reel';
 
+  // Le défi impose niveau, scénario et format : pas d'étape « Le format ».
   const steps: StepId[] =
     mode === 'observateur'
       ? ['partie', 'terrain', 'format']
-      : ['partie', 'candidat', 'parcours', 'terrain', 'format'];
+      : defi
+        ? ['partie', 'candidat', 'parcours', 'terrain']
+        : ['partie', 'candidat', 'parcours', 'terrain', 'format'];
   const index = Math.min(step, steps.length - 1);
   const current = steps[index]!;
-  const last = current === 'format';
+  const last = index === steps.length - 1;
 
   const chosenPersonality = ruleset.data?.personnalites.personnalites.find(
     (p) => p.id === personality,
@@ -276,6 +290,12 @@ export function NewGame() {
       return 'Indiquez au moins le nom du candidat et son parti.';
     if (id === 'candidat' && withPersonality && !personality)
       return 'Choisissez la personnalité que vous incarnez.';
+    if (id === 'partie' && defi && mode === 'observateur')
+      return 'Le défi du jour se joue avec un candidat : choisissez un candidat personnalisé ou réel.';
+    if (id === 'terrain' && !defi) {
+      const lock = locks.find((d) => d.difficulte === difficulty || d.scenarioId === scenario);
+      if (lock) return `${lock.libelle} : contenu verrouillé. ${lock.condition} pour le débloquer.`;
+    }
     return null;
   };
 
@@ -298,41 +318,60 @@ export function NewGame() {
     const { economie, societe, ...identity } = candidate;
     createGame.mutate(
       {
-        name: name.trim() || suggestedName,
+        name:
+          name.trim() || (defi ? `Défi du jour du ${formatGameDate(defi.date)}` : suggestedName),
         mode,
-        difficulty,
-        startDate,
-        ...(seed.trim() ? { seed: seed.trim() } : {}),
+        // Défi du jour : graine, date, niveau, scénario et format imposés par le serveur.
+        ...(defi
+          ? { defi: true }
+          : {
+              difficulty,
+              startDate,
+              scenarioId: scenario,
+              format,
+              ...(seed.trim() ? { seed: seed.trim() } : {}),
+            }),
         ...(withCandidate
           ? { candidate: { ...identity, positionnement: { economie, societe } } }
           : {}),
         ...(withPersonality && personality ? { personnaliteId: personality } : {}),
         adversaires: opponents,
-        scenarioId: scenario,
         ...((withCandidate || withPersonality) && orientation
           ? { orientationId: orientation }
           : {}),
-        format,
       },
       { onSuccess: (game) => void navigate(`/parties/${game.id}/tableau-de-bord`) },
     );
   };
 
-  const recap: [string, string][] = [
-    ['Mode', MODE_LABELS[mode]],
-    ['Adversaires', OPPONENT_SET_LABELS[opponents]],
-    ['Difficulté', DIFFICULTY_LABELS[difficulty]],
-    ['Scénario', ruleset.data?.scenarios.find((s) => s.id === scenario)?.libelle ?? scenario],
-    ['Format', FORMAT_LABELS[format]],
-    ['Départ', validDate(startDate) ? formatGameDate(startDate) : 'date à préciser'],
-  ];
+  const scenarioLabel = (id: string) =>
+    ruleset.data?.scenarios.find((s) => s.id === id)?.libelle ?? id;
+  const recap: [string, string][] = defi
+    ? [
+        ['Mode', MODE_LABELS[mode]],
+        ['Adversaires', OPPONENT_SET_LABELS[opponents]],
+        ['Défi', formatGameDate(defi.date)],
+        ['Difficulté', DIFFICULTY_LABELS[defi.difficulte]],
+        ['Scénario', scenarioLabel(defi.scenarioId)],
+        ['Format', FORMAT_LABELS[defi.format]],
+      ]
+    : [
+        ['Mode', MODE_LABELS[mode]],
+        ['Adversaires', OPPONENT_SET_LABELS[opponents]],
+        ['Difficulté', DIFFICULTY_LABELS[difficulty]],
+        ['Scénario', scenarioLabel(scenario)],
+        ['Format', FORMAT_LABELS[format]],
+        ['Départ', validDate(startDate) ? formatGameDate(startDate) : 'date à préciser'],
+      ];
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:py-10">
       <header className="mb-10 max-w-2xl">
-        <h1 className={screenTitle}>Nouvelle partie</h1>
+        <h1 className={screenTitle}>{defi ? 'Défi du jour' : 'Nouvelle partie'}</h1>
         <p className="mt-3 text-base text-slate-700 sm:text-lg dark:text-slate-300">
-          Composez votre candidature, choisissez le terrain, puis entrez en campagne.
+          {defi
+            ? `La même campagne pour tous ce ${formatGameDate(defi.date)} : niveau ${DIFFICULTY_LABELS[defi.difficulte]}, format ${FORMAT_LABELS[defi.format].toLocaleLowerCase('fr-FR')}, situation de départ imposée. Votre score : votre part des voix au premier tour.`
+            : 'Composez votre candidature, choisissez le terrain, puis entrez en campagne.'}
         </p>
       </header>
       <form
@@ -346,7 +385,7 @@ export function NewGame() {
               <Tiles
                 name="mode"
                 legend="Mode de jeu"
-                options={MODES}
+                options={defi ? MODES.filter((m) => m.value !== 'observateur') : MODES}
                 value={mode}
                 onChange={(next) => {
                   setMode(next);
@@ -383,8 +422,17 @@ export function NewGame() {
                   labelOf={(v) => OPPONENT_SET_LABELS[v]}
                   columns="sm:grid-cols-2"
                 />
-                <DifficultyPicker value={difficulty} onChange={setDifficulty} mode={mode} />
-                <ScenarioPicker value={scenario} onChange={setScenario} />
+                {!defi && (
+                  <>
+                    <DifficultyPicker
+                      value={difficulty}
+                      onChange={setDifficulty}
+                      mode={mode}
+                      locks={difficultyLocks}
+                    />
+                    <ScenarioPicker value={scenario} onChange={setScenario} locks={scenarioLocks} />
+                  </>
+                )}
               </>
             )}
             {current === 'format' && (
@@ -479,7 +527,7 @@ export function NewGame() {
             )}
             {last ? (
               <button type="submit" className={buttonPrestige} disabled={createGame.isPending}>
-                {createGame.isPending ? 'Création…' : 'Créer la partie'}
+                {createGame.isPending ? 'Création…' : defi ? 'Relever le défi' : 'Créer la partie'}
               </button>
             ) : (
               <button type="submit" className={buttonPrestige}>

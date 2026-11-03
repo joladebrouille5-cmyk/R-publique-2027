@@ -13,6 +13,18 @@ export type Platform = {
    * plateforme le signale (application Android) ; renvoie de quoi se désabonner.
    */
   onActiveChange?: (listener: (active: boolean) => void) => () => void;
+  /**
+   * Rappel quotidien du défi du jour (phase 20) par une notification locale, quand la plateforme
+   * en dispose (application Android) ; absent dans le navigateur.
+   */
+  reminders?: Reminders;
+};
+
+/** Notification locale quotidienne, programmée sur l'appareil (aucun serveur, aucun réseau). */
+export type Reminders = {
+  /** Programme (ou reprogramme) le rappel à `hour` h ; false si l'autorisation est refusée. */
+  schedule: (hour: number) => Promise<boolean>;
+  cancel: () => Promise<void>;
 };
 
 /** Téléchargement dans le navigateur (lien temporaire vers un Blob). */

@@ -4,6 +4,7 @@ import { useCurrentRuleset, useHealth } from '../api/hooks';
 import { ErrorMessage } from '../components/ErrorMessage';
 import { LogoCreditLine } from '../components/RealMedia';
 import { PhotoCreditLine } from '../components/RealPersonality';
+import { ReminderSettings } from '../components/ReminderSettings';
 import { MusicCredits, SoundSettings } from '../components/SoundSettings';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { card, screenTitle } from '../components/ui';
@@ -374,6 +375,10 @@ export function Parametres() {
 
       <Section id="titre-son" title="Son">
         <SoundSettings />
+      </Section>
+
+      <Section id="titre-rappels" title="Rappels">
+        <ReminderSettings />
       </Section>
 
       {ruleset.data ? (

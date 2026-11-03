@@ -16,7 +16,9 @@ async function audit(page: Page, label: string) {
   ).toEqual([]);
 }
 
-test('cinq niveaux, fiche du niveau choisi, partie créée en Légende', async ({ page }) => {
+test('cinq niveaux, fiche du niveau choisi, Légende verrouillée, partie créée en Expert', async ({
+  page,
+}) => {
   test.setTimeout(120_000);
   await page.goto('/');
   await expect(page.getByText(/Serveur connecté/)).toBeVisible();
@@ -45,15 +47,22 @@ test('cinq niveaux, fiche du niveau choisi, partie créée en Légende', async (
   }
   await page.setViewportSize({ width: 1280, height: 800 });
 
+  // Phase 20 : Légende se consulte, mais se débloque par une première victoire.
   await group.getByRole('radio', { name: /Légende/ }).check();
   await expect(group.getByRole('region', { name: /Niveau Légende/ })).toBeVisible();
-  await expect(page.getByRole('complementary', { name: 'Récapitulatif' })).toContainText('Légende');
-  await finishWizard(page, { name: 'Sans filet', seed: 'e2e-legende' });
+  await expect(
+    group.getByText('Verrouillé : gagner une présidentielle pour le débloquer').first(),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Suivant' }).click();
+  await expect(page.getByRole('alert')).toContainText('Niveau Légende : contenu verrouillé.');
+  await group.getByRole('radio', { name: /Expert/ }).check();
+  await expect(page.getByRole('complementary', { name: 'Récapitulatif' })).toContainText('Expert');
+  await finishWizard(page, { name: 'Sans filet', seed: 'e2e-expert' });
   await expect(page.getByRole('heading', { name: 'Tableau de bord' })).toBeVisible();
 
   // Le niveau est celui de l'état produit par le serveur ; il ne se change plus.
   await openSection(page, 'partie');
-  const sheet = page.getByRole('region', { name: /Niveau Légende/ });
+  const sheet = page.getByRole('region', { name: /Niveau Expert/ });
   await expect(sheet).toBeVisible();
   await expect(
     sheet.getByText('Le niveau est fixé à la création de la partie.', { exact: false }),

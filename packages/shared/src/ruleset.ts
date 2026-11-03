@@ -9,6 +9,7 @@ import { EconomicIndicatorSchema } from './economie';
 import { RealEconomySchema } from './economie-reelle';
 import { RealLegislativesSchema } from './legislatives';
 import { RealMediaSchema } from './medias';
+import { ProgressionRulesSchema } from './progression';
 import { GovernmentFiguresSchema } from './figures';
 import { RealPersonalitiesSchema } from './personalities';
 import { MinisterProfileSchema } from './quinquennat';
@@ -1674,6 +1675,8 @@ export const RulesetSchema = z
       })
       .strict(),
     mediasReels: RealMediaSchema,
+    /** Phase 20 : palmarès, niveaux, déblocages et défi du jour (hypothèses de jeu). */
+    progression: ProgressionRulesSchema,
     numerique: DigitalRulesSchema,
     quinquennat: QuinquennatRulesSchema,
     parlement: ParliamentRulesSchema,
@@ -2205,6 +2208,25 @@ export const RulesetSchema = z
     if (ruleset.modele.blancsNuls.blancsT2Min > ruleset.modele.blancsNuls.blancsT2Max) {
       issue('Blancs au second tour : min > max');
     }
+
+    // Phase 20 : progression (déblocages et défi visant des contenus existants).
+    const { progression } = ruleset;
+    if (!(progression.sourceId in ruleset.sources))
+      issue(`Progression : source inconnue ${progression.sourceId}`);
+    const scenarioIds = new Set(ruleset.scenarios.map((sc) => sc.id));
+    for (const d of progression.deblocages)
+      if (d.scenarioId !== undefined && !scenarioIds.has(d.scenarioId))
+        issue(`Déblocage ${d.id} : scénario inconnu ${d.scenarioId}`);
+    if (!scenarioIds.has(progression.defi.scenarioId))
+      issue(`Défi du jour : scénario inconnu ${progression.defi.scenarioId}`);
+    if (
+      progression.deblocages.some(
+        (d) =>
+          d.difficulte === progression.defi.difficulte ||
+          d.scenarioId === progression.defi.scenarioId,
+      )
+    )
+      issue('Défi du jour : ses paramètres ne peuvent pas être verrouillés');
 
     // Phase 20 : période électorale de l'Arcom, rattachée à une échéance et à une source.
     const periode = ruleset.medias.periodeElectorale;

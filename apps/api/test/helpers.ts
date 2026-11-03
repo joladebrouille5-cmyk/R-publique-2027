@@ -26,9 +26,11 @@ export async function resetDatabase(db: Database): Promise<void> {
 export async function testApp(
   db: Database,
   overrides: Partial<AppOptions['config']> = {},
+  clock?: AppOptions['clock'],
 ): Promise<FastifyInstance> {
   const app = await buildApp({
     db,
+    ...(clock ? { clock } : {}),
     config: {
       NODE_ENV: 'test',
       SESSION_SECRET: TEST_SECRET,

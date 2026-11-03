@@ -161,22 +161,27 @@ describe('création de partie', () => {
   it('crée une partie à chacun des cinq niveaux de difficulté ; refuse un niveau inconnu (phase 18)', async () => {
     const client = new Client(app);
     const games: GameDetail[] = [];
-    for (const difficulty of DIFFICULTIES) {
+    // Phase 20 : Légende se débloque par une victoire (tests de la progression) ; refusée ici.
+    const locked = await client.post('/api/games', { ...newGame, difficulty: 'legende' });
+    expect(locked.statusCode).toBe(403);
+    expect(locked.json()).toMatchObject({ error: { code: 'verrouille' } });
+    const open = DIFFICULTIES.filter((d) => d !== 'legende');
+    for (const difficulty of open) {
       const game = await createGame(client, { ...newGame, difficulty });
       expect(game.difficulty).toBe(difficulty);
       expect(game.state.meta.difficulty).toBe(difficulty);
       expect(game.stateHash).toBe(hashState(game.state));
       games.push(game);
     }
-    // Moyens du joueur décroissants, de Découverte à Légende.
+    // Moyens du joueur décroissants, de Découverte à Expert.
     const budgets = games.map((g) => g.state.actors.joueur!.resources.budgetCentimes);
     expect([...budgets].sort((a, b) => b - a)).toEqual(budgets);
-    expect(new Set(budgets).size).toBe(DIFFICULTIES.length);
+    expect(new Set(budgets).size).toBe(open.length);
     // Le niveau est enregistré en base et relu tel quel dans la liste des parties.
     const stored = await db.game.findMany({ select: { difficulty: true } });
-    expect(stored.map((g) => g.difficulty).sort()).toEqual([...DIFFICULTIES].sort());
+    expect(stored.map((g) => g.difficulty).sort()).toEqual([...open].sort());
     const list = GameSummarySchema.array().parse((await client.get('/api/games')).json());
-    expect(list.map((g) => g.difficulty).sort()).toEqual([...DIFFICULTIES].sort());
+    expect(list.map((g) => g.difficulty).sort()).toEqual([...open].sort());
     const refused = await client.post('/api/games', { ...newGame, difficulty: 'impossible' });
     expect(refused.statusCode).toBe(400);
     expect(refused.json()).toMatchObject({ error: { code: 'requete_invalide' } });
@@ -221,13 +226,15 @@ describe('création de partie', () => {
 
   it('crée une partie dans un scénario de départ fictif (phase 7)', async () => {
     const client = new Client(app);
-    const game = await createGame(client, { ...newGame, scenarioId: 'outsider' });
-    expect(game.state.scenario).toBe('outsider');
+    const game = await createGame(client, { ...newGame, scenarioId: 'colere-sociale' });
+    expect(game.state.scenario).toBe('colere-sociale');
     expect(game.state.consequences).toEqual([]);
     const standard = await createGame(client, { ...newGame, seed: game.seed });
     expect(standard.state.scenario).toBe('standard');
-    expect(game.state.actors.joueur!.resources.budgetCentimes).toBeLessThan(
-      standard.state.actors.joueur!.resources.budgetCentimes,
+    // Phase 20 : « Candidature d'outsider » se débloque par une victoire ; « Colère sociale »
+    // abaisse la popularité de départ.
+    expect(game.state.actors.joueur!.resources.popularite).toBeLessThan(
+      standard.state.actors.joueur!.resources.popularite,
     );
   });
 

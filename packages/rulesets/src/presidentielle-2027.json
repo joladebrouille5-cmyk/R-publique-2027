@@ -1,6 +1,6 @@
 {
   "id": "presidentielle-2027",
-  "version": "19.0.0",
+  "version": "20.0.0",
   "libelle": "Présidentielle 2027 et quinquennat — campagne, parrainages, financement, médias réels, présidence, gouvernement et figures réelles nominables, Parlement, économie, crises et législatives",
   "verifieLe": "2026-11-03",
   "sources": {
@@ -11040,5 +11040,72 @@
     "style": "equilibre",
     "toleranceRisque": 0.5,
     "objectif": "victoire"
+  },
+  "progression": {
+    "statut": "hypothese",
+    "sourceId": "conception-du-jeu",
+    "points": {
+      "partie": 10,
+      "premierTour": 20,
+      "secondTour": 30,
+      "victoire": 100,
+      "defi": 5
+    },
+    "niveaux": [
+      {
+        "numero": 1,
+        "titre": "Militant",
+        "points": 0
+      },
+      {
+        "numero": 2,
+        "titre": "Colleur d’affiches",
+        "points": 50
+      },
+      {
+        "numero": 3,
+        "titre": "Conseiller municipal",
+        "points": 150
+      },
+      {
+        "numero": 4,
+        "titre": "Maire",
+        "points": 300
+      },
+      {
+        "numero": 5,
+        "titre": "Député",
+        "points": 500
+      },
+      {
+        "numero": 6,
+        "titre": "Ministre",
+        "points": 800
+      },
+      {
+        "numero": 7,
+        "titre": "Chef de l’État",
+        "points": 1200
+      }
+    ],
+    "deblocages": [
+      {
+        "id": "niveau-legende",
+        "libelle": "Niveau Légende",
+        "difficulte": "legende",
+        "victoires": 1
+      },
+      {
+        "id": "scenario-outsider",
+        "libelle": "Scénario « Candidature d’outsider »",
+        "scenarioId": "outsider",
+        "victoires": 1
+      }
+    ],
+    "defi": {
+      "difficulte": "standard",
+      "format": "court",
+      "scenarioId": "standard"
+    }
   }
 }

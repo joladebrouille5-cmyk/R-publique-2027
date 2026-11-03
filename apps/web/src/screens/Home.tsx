@@ -4,6 +4,7 @@ import { Link } from 'react-router';
 import { useCurrentRuleset, useGame, useGames, useRuleset } from '../api/hooks';
 import { Affiche } from '../components/Affiche';
 import { ErrorMessage } from '../components/ErrorMessage';
+import { Palmares } from '../components/Palmares';
 import { buttonPrestige, buttonSecondary, cardRaised, listPanel } from '../components/ui';
 import { formatGameDate, formatTimestamp, MODE_LABELS, PHASE_LABELS } from '../labels';
 import { portraitOf, portraitOfFictional } from '../portraits';
@@ -209,6 +210,14 @@ export function Home() {
           </div>
         </div>
         <MurDAffichage ruleset={ruleset.data} />
+      </section>
+
+      {/* Phase 20 : niveau, palmarès, déblocages et défi du jour. */}
+      <section aria-labelledby="titre-palmares" className="mx-auto mt-14 max-w-6xl space-y-4 px-4">
+        <h2 id="titre-palmares" className="text-3xl">
+          Votre palmarès
+        </h2>
+        <Palmares />
       </section>
 
       <section aria-labelledby="titre-parties" className="mx-auto mt-14 max-w-6xl space-y-4 px-4">

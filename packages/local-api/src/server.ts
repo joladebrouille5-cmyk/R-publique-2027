@@ -28,6 +28,12 @@ import {
   AdvanceResponseSchema,
   candidateForJournal,
   CreateGameRequestSchema,
+  CreationRefusal,
+  creationParameters,
+  computeProgression,
+  deviceDate,
+  mayBeLocked,
+  type Progression,
   CreateSaveRequestSchema,
   DebateIdSchema,
   DebateRequestSchema,
@@ -258,6 +264,7 @@ export class LocalApi {
     if (method === 'GET' && path === '/api/health') return ok(this.health());
     if (method === 'GET' && path === '/api/session') return ok({ userId: 'appareil' });
     if (path === '/api/games' && method === 'GET') return ok(await this.listGames());
+    if (path === '/api/progression' && method === 'GET') return ok(await this.progression());
     if (path === '/api/games' && method === 'POST')
       return ok(await this.createGame(request.body), 201);
     if (path === '/api/games/import' && method === 'POST')
@@ -484,8 +491,40 @@ export class LocalApi {
     return this.detail(row, state, stateHash);
   }
 
+  /**
+   * Progression entre les parties (phase 20), comme l'API : même calcul (`computeProgression`),
+   * date du défi lue sur l'horloge de l'appareil.
+   */
+  private async progression(): Promise<Progression> {
+    const rows = await this.store.games();
+    const games = rows.map((row) => ({
+      seed: row.seed,
+      state: this.readStored(row.state, row.stateHash, row.saveSchemaVersion, `partie ${row.id}`)
+        .state,
+    }));
+    return computeProgression(games, getRuleset(CURRENT_RULESET_KEY), deviceDate(this.clock()));
+  }
+
   private async createGame(raw: unknown): Promise<GameDetail> {
-    const body = CreateGameRequestSchema.parse(raw);
+    const request = CreateGameRequestSchema.parse(raw);
+    // Phase 20 : défi du jour, graine réservée, contenus verrouillés (mêmes règles que l'API).
+    const ruleset = getRuleset(CURRENT_RULESET_KEY);
+    const progression = mayBeLocked(request, ruleset.progression)
+      ? await this.progression()
+      : { deblocages: [] };
+    let body: typeof request;
+    try {
+      body = creationParameters(
+        request,
+        ruleset.progression,
+        deviceDate(this.clock()),
+        () => progression,
+      );
+    } catch (error) {
+      if (error instanceof CreationRefusal)
+        throw new HttpError(error.status, error.code, error.message);
+      throw error;
+    }
     const seed = body.seed ?? randomSeed();
     let initial: GameState;
     try {
@@ -502,7 +541,7 @@ export class LocalApi {
           orientationId: body.orientationId,
           format: body.format,
         },
-        getRuleset(CURRENT_RULESET_KEY),
+        ruleset,
       );
     } catch (error) {
       if (error instanceof GameCreationError) throw new HttpError(422, error.code, error.message);
@@ -530,6 +569,7 @@ export class LocalApi {
         adversaires: state.player.adversaires,
         scenario: state.scenario,
         orientation: state.player.orientation,
+        defi: body.defi,
         startDate: state.meta.date,
         candidat: state.player.actorId
           ? candidateForJournal(state.actors[state.player.actorId]!.candidate)
