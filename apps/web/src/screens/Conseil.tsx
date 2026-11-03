@@ -23,8 +23,7 @@ const signed = (value: number, unit = '') =>
 
 function Variation({ track, unit, scale }: { track: Track; unit: string; scale: number }) {
   const delta = (track.apres - track.avant) / scale;
-  if (delta === 0)
-    return <span className="text-xs text-slate-500 dark:text-slate-400">stable</span>;
+  if (delta === 0) return <span className="text-xs text-encre-3">stable</span>;
   const Icon = delta > 0 ? TrendingUp : TrendingDown;
   return (
     <span
@@ -80,7 +79,7 @@ function Content({
   const { loyauteMax, populariteMax } = ruleset.quinquennat.suivi.depart;
   return (
     <div className="space-y-4">
-      <p className="text-sm text-slate-600 dark:text-slate-400">
+      <p className="text-sm text-encre-2">
         {report
           ? 'Compte rendu du dernier Conseil des ministres. '
           : Object.keys(q.suivi).length > 0
@@ -128,7 +127,7 @@ function Content({
                 {info.portrait && <Avatar portrait={info.portrait} size="md" />}
                 <div className="min-w-0 flex-1">
                   <p className="font-semibold">{info.name}</p>
-                  <p className="text-xs text-slate-600 dark:text-slate-400">
+                  <p className="text-xs text-encre-2">
                     {posteId ? postes.get(posteId) : 'Premier ministre'}
                     {track ? ` · en poste depuis la semaine ${track.depuis}` : ''}
                   </p>
@@ -137,9 +136,7 @@ function Content({
               {track ? (
                 <dl className="grid grid-cols-2 gap-2">
                   <div>
-                    <dt className="text-xs text-slate-500 dark:text-slate-400">
-                      Popularité prêtée
-                    </dt>
+                    <dt className="text-xs text-encre-3">Popularité prêtée</dt>
                     <dd className="flex items-center gap-1.5">
                       <span className="font-display text-lg font-bold tabular-nums">
                         {Math.round(track.popularite / 100)} %
@@ -157,7 +154,7 @@ function Content({
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-xs text-slate-500 dark:text-slate-400">Loyauté</dt>
+                    <dt className="text-xs text-encre-3">Loyauté</dt>
                     <dd className="flex items-center gap-1.5">
                       <span className="font-display text-lg font-bold tabular-nums">
                         {track.loyaute}/100
@@ -176,12 +173,12 @@ function Content({
                   </div>
                 </dl>
               ) : (
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-encre-3">
                   Suivi ouvert au prochain Conseil des ministres.
                 </p>
               )}
               {entry && entry.faits.length > 0 && (
-                <ul className="space-y-0.5 text-xs text-slate-600 dark:text-slate-400">
+                <ul className="space-y-0.5 text-xs text-encre-2">
                   {entry.faits.map((fait) => (
                     <li key={fait}>• {fait}</li>
                   ))}
@@ -194,7 +191,7 @@ function Content({
           );
         })}
       </ul>
-      <p className="text-xs text-slate-500 dark:text-slate-400">
+      <p className="text-xs text-encre-3">
         Constitution, art. 9 : le président de la République préside le Conseil des ministres ; son
         rythme hebdomadaire est un usage. Nominations, départs et faits sont simulés ; aucun propos
         n’est attribué aux personnalités réelles.

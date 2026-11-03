@@ -45,7 +45,7 @@ function Rows({ rows }: { rows: [string, string][] }) {
     <dl className="mt-2 divide-y divide-slate-200/80 border-y border-slate-200/80 text-sm dark:divide-white/[0.07] dark:border-white/[0.07]">
       {rows.map(([term, value]) => (
         <div key={term} className="flex items-baseline justify-between gap-4 py-1.5">
-          <dt className="text-slate-600 dark:text-slate-400">{term}</dt>
+          <dt className="text-encre-2">{term}</dt>
           <dd className="text-right font-semibold tabular-nums">{value}</dd>
         </div>
       ))}
@@ -104,7 +104,7 @@ export function DifficultySheet({
                 ],
               ]}
             />
-            <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">
+            <p className="mt-2 text-xs text-encre-2">
               {mode === 'candidat_reel'
                 ? 'Personnalité incarnée : sa notoriété réelle est conservée ; son budget, ses militants et ses promesses suivent la même proportion par rapport au niveau Standard.'
                 : 'Candidat personnalisé, avant le profil, l’orientation et le scénario.'}
@@ -124,12 +124,12 @@ export function DifficultySheet({
               ['Maîtrise au débat', debateMastery(ruleset.debats.ia.difficulte[difficulty])],
             ]}
           />
-          <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">
+          <p className="mt-2 text-xs text-encre-2">
             Par rapport à leur fiche. Moins il y a de hasard, plus ils jouent la meilleure action.
           </p>
         </div>
       </div>
-      <p className="mt-4 text-xs text-slate-600 dark:text-slate-400">
+      <p className="mt-4 text-xs text-encre-2">
         Le niveau est fixé à la création de la partie. Quel que soit le niveau : mêmes règles
         constitutionnelles, même seuil de parrainages, mêmes plafonds de dépenses, même décompte des
         voix. Valeurs : hypothèses de jeu (jeu de règles {ruleset.version}).

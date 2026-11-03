@@ -108,9 +108,7 @@ export function DecisionSpotlight({
                   </span>
                 )}
                 <Badge tone={kind.tone}>{kind.badge}</Badge>
-                <span className="text-xs text-slate-500 dark:text-slate-400">
-                  {formatGameDate(state.meta.date)}
-                </span>
+                <span className="text-xs text-encre-3">{formatGameDate(state.meta.date)}</span>
               </p>
               <h2
                 id={titleId}
@@ -139,7 +137,7 @@ export function DecisionSpotlight({
                 <span>
                   En séance à l’Assemblée nationale
                   {group && (
-                    <span className="font-normal text-slate-600 dark:text-slate-400">
+                    <span className="font-normal text-encre-2">
                       {' '}
                       · {group.libelle}
                       {seats !== undefined ? ` (${seats} sièges)` : ''} interpelle le gouvernement
@@ -186,11 +184,9 @@ export function DecisionSpotlight({
                     }`}
                   >
                     <span className="font-bold">{option.libelle}</span>
-                    <span className="text-sm text-slate-600 dark:text-slate-400">
-                      {option.description}
-                    </span>
+                    <span className="text-sm text-encre-2">{option.description}</span>
                     {option.id === decision.defaultOptionId && (
-                      <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                      <span className="text-xs font-semibold text-encre-3">
                         {isOptionalDecision(decision) ? 'Réponse par défaut' : 'Choix proposé'}
                       </span>
                     )}
@@ -211,7 +207,7 @@ export function DecisionSpotlight({
           </ul>
 
           <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 pt-3 dark:border-slate-800">
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-encre-3">
               {decision.kind === 'qag'
                 ? 'Séance simulée : aucun député n’est nommé, aucun propos n’est rapporté.'
                 : 'Situation fictive ; effets : hypothèses du jeu.'}

@@ -20,14 +20,11 @@ function Progress({ label, value, goal }: { label: string; value: number; goal: 
   const ratio = Math.max(0, Math.min(1, value / Math.max(1, goal)));
   return (
     <div>
-      <p className="flex items-baseline justify-between gap-2 text-xs font-semibold text-slate-600 dark:text-slate-400">
+      <p className="flex items-baseline justify-between gap-2 text-xs font-semibold text-encre-2">
         <span>{label}</span>
         <span className="font-display text-base font-bold text-slate-900 tabular-nums dark:text-slate-100">
           {formatCount(value)}
-          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-            {' '}
-            / {formatCount(goal)}
-          </span>
+          <span className="text-xs font-semibold text-encre-3"> / {formatCount(goal)}</span>
         </span>
       </p>
       <span
@@ -78,7 +75,7 @@ export function ParrainagesRace({
             />
             Course aux parrainages
           </h2>
-          <p className="max-w-prose text-sm text-slate-600 dark:text-slate-400">
+          <p className="max-w-prose text-sm text-encre-2">
             Il faut {mine.seuil} présentations d’élus de {mine.departementsMin} départements au
             moins (au plus {mine.cap} comptées par département). Rencontrez les élus locaux et
             recevez les délégations qui se présentent : chaque promesse devient une intention, puis
@@ -90,7 +87,7 @@ export function ParrainagesRace({
             <Hourglass aria-hidden="true" className="size-4 text-amber-600 dark:text-amber-300" />
             <span>
               <span className="font-display text-xl font-bold tabular-nums">J−{left}</span>
-              <span className="block text-xs text-slate-600 dark:text-slate-400">
+              <span className="block text-xs text-encre-2">
                 clôture le {formatGameDate(closing!)}
               </span>
             </span>
@@ -107,7 +104,7 @@ export function ParrainagesRace({
         ) : (
           <Badge tone="alerte">Seuil non atteint</Badge>
         )}
-        <span className="text-slate-600 dark:text-slate-400">
+        <span className="text-encre-2">
           En réserve : {formatCount(mine.promesses)} promesse(s), {formatCount(mine.intentions)}{' '}
           intention(s)
           {opening && today < opening ? ` ; envois à partir du ${formatGameDate(opening)}` : ''}.
@@ -123,7 +120,7 @@ export function ParrainagesRace({
           Classement des candidats
           {rank > 0 ? ` — vous êtes ${rank === 1 ? '1er' : `${rank}e`}` : ''}
         </h3>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
+        <p className="text-xs text-encre-3">
           Présentations comptées, puis promesses et intentions en réserve.
         </p>
         <ol className="mt-2 space-y-1.5">
@@ -139,11 +136,8 @@ export function ParrainagesRace({
               <span className="min-w-0 flex-1 truncate">{candidateName(a.candidate)}</span>
               <span className="shrink-0 text-right tabular-nums">
                 {formatCount(summary.comptees)}
-                <span className="text-xs text-slate-500 dark:text-slate-400">
-                  {' '}
-                  · {summary.departements} dép.
-                </span>
-                <span className="block text-xs font-normal text-slate-500 dark:text-slate-400">
+                <span className="text-xs text-encre-3"> · {summary.departements} dép.</span>
+                <span className="block text-xs font-normal text-encre-3">
                   {formatCount(summary.promesses + summary.intentions)} en réserve
                 </span>
               </span>

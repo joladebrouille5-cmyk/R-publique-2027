@@ -609,7 +609,7 @@ export function MapScreen() {
         Motifs (daltonisme, impression)
       </label>
       {motifs && (coloring.kind === 'score' || coloring.kind === 'participation') && (
-        <p className="text-xs text-slate-600 dark:text-slate-400">
+        <p className="text-xs text-encre-2">
           Ce dégradé se lit par sa clarté ; les motifs distinguent les candidats en tête et les deux
           camps d’un écart.
         </p>
@@ -806,7 +806,7 @@ export function MapScreen() {
         )}
       </div>
 
-      <p className="flex items-start gap-2 text-xs text-slate-600 dark:text-slate-400">
+      <p className="flex items-start gap-2 text-xs text-encre-2">
         <Info aria-hidden="true" className="mt-px size-3.5 shrink-0" />
         <span>
           {m.effectifs.communes === m.effectifs.communesDuReferentiel
@@ -903,7 +903,7 @@ export function MapScreen() {
         <h2 id="titre-tableau-carte" className="text-xl font-bold">
           Tableau des territoires ({LEVEL_LABELS[level].toLowerCase()}s)
         </h2>
-        <p className="text-xs text-slate-600 dark:text-slate-400">
+        <p className="text-xs text-encre-2">
           Équivalent textuel de la carte, utilisable au clavier.
           {level === 'commune' &&
             !selectedDepartement &&
@@ -924,7 +924,7 @@ export function MapScreen() {
           <table className="w-full text-left text-sm">
             <caption className="sr-only">Territoires et candidat en tête</caption>
             <thead>
-              <tr className="text-xs text-slate-600 dark:text-slate-400">
+              <tr className="text-xs text-encre-2">
                 <th scope="col" className="py-1 font-medium">
                   Territoire
                 </th>
@@ -946,10 +946,7 @@ export function MapScreen() {
                 return (
                   <tr key={row.code} className="border-t border-slate-100 dark:border-slate-800">
                     <th scope="row" className="py-1 pr-2 text-left font-normal">
-                      {row.nom}{' '}
-                      <span className="text-xs text-slate-600 dark:text-slate-400">
-                        ({row.code})
-                      </span>
+                      {row.nom} <span className="text-xs text-encre-2">({row.code})</span>
                     </th>
                     <td className="py-1 pr-2">
                       {leader !== null && data

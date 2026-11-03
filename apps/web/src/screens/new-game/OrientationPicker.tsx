@@ -72,11 +72,9 @@ export function OrientationPicker({
             />
             <span className="space-y-1">
               <span className="block font-semibold">{option.libelle}</span>
-              <span className="block text-xs text-slate-600 dark:text-slate-400">
-                {option.description}
-              </span>
+              <span className="block text-xs text-encre-2">{option.description}</span>
               {option.lines.map((line) => (
-                <span key={line} className="block text-xs text-slate-600 dark:text-slate-400">
+                <span key={line} className="block text-xs text-encre-2">
                   {line}
                 </span>
               ))}
@@ -84,7 +82,7 @@ export function OrientationPicker({
           </label>
         ))}
       </div>
-      <p className="flex flex-wrap items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
+      <p className="flex flex-wrap items-center gap-2 text-xs text-encre-2">
         <Badge tone="alerte">Hypothèses du jeu</Badge>
         L’orientation ne vaut que pour la première campagne ; elle ne garantit aucun résultat.
       </p>

@@ -91,7 +91,7 @@ export function CandidateForm({ value, onChange }: Props) {
         className="w-full accent-republique-600 dark:accent-dorure"
         aria-valuetext={`${value[key]} (${value[key] < 0 ? left : value[key] > 0 ? right : 'centre'})`}
       />
-      <span className="flex justify-between text-xs text-slate-600 dark:text-slate-400">
+      <span className="flex justify-between text-xs text-encre-2">
         <span>−100 : {left}</span>
         <span>+100 : {right}</span>
       </span>
@@ -129,7 +129,7 @@ export function CandidateForm({ value, onChange }: Props) {
           {slider('societe', 'Positionnement sociétal', 'progressiste', 'conservateur')}
         </div>
       </div>
-      <p className="text-sm text-slate-600 dark:text-slate-400">
+      <p className="text-sm text-encre-2">
         {describePosition({ economie: value.economie, societe: value.societe })}
         {ruleset.data && (
           <>
@@ -192,7 +192,7 @@ export function ProfilePicker({
               <span className="font-semibold">
                 {profile?.libelle ?? 'Sans parcours particulier'}
               </span>
-              <span className="block text-xs text-slate-600 dark:text-slate-400">
+              <span className="block text-xs text-encre-2">
                 {profile
                   ? `${profile.description} ${Object.entries(profile.modificateurs)
                       .map(

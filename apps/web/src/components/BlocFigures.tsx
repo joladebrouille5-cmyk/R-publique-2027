@@ -70,9 +70,7 @@ export function BlocFaces({ people, max = 6 }: { people: readonly BlocPerson[]; 
           <Avatar key={p.id} portrait={p.portrait} size="xs" ring />
         ))}
       </span>
-      {rest > 0 && (
-        <span className="ml-1.5 text-xs text-slate-600 dark:text-slate-400">+{rest}</span>
-      )}
+      {rest > 0 && <span className="ml-1.5 text-xs text-encre-2">+{rest}</span>}
     </span>
   );
 }
@@ -90,7 +88,7 @@ export function BlocFigures({ ruleset }: { ruleset: Ruleset }) {
       <h2 id="titre-figures-blocs" className="text-lg font-semibold">
         Figures des blocs
       </h2>
-      <p className="text-slate-600 dark:text-slate-400">
+      <p className="text-encre-2">
         Personnalités réelles des partis rattachés à chaque bloc : candidats à la présidentielle de
         la partie et personnalités nominables au gouvernement, avec une fonction relevée dans les
         sources. Aucune candidature dans une circonscription ni aucun propos ne leur est prêté.
@@ -103,7 +101,7 @@ export function BlocFigures({ ruleset }: { ruleset: Ruleset }) {
             <li key={b.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 py-2">
               <span className="min-w-0 basis-full sm:basis-0 sm:flex-1">
                 <span className="block font-semibold">{b.libelle}</span>
-                <span className="block text-xs text-slate-600 dark:text-slate-400">
+                <span className="block text-xs text-encre-2">
                   {members.length === 0
                     ? 'Aucune personnalité du jeu rattachée à ce bloc.'
                     : `${members.length} personnalité${members.length > 1 ? 's' : ''}`}
@@ -144,7 +142,7 @@ export function BlocFigures({ ruleset }: { ruleset: Ruleset }) {
                     </span>
                     {p.candidat && <Badge tone="reel">Candidat(e) de la partie</Badge>}
                   </span>
-                  <span className="block text-xs text-slate-600 dark:text-slate-400">
+                  <span className="block text-xs text-encre-2">
                     {p.parti}
                     {p.fonction && ` — ${p.fonction}`}
                   </span>

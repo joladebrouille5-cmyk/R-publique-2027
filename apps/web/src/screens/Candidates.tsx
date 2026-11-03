@@ -102,7 +102,7 @@ export function Candidates() {
           {SIMULATION_NOTICE} Sources et méthode : Paramètres → Crédits.
         </p>
       )}
-      <p className="text-sm text-slate-600 dark:text-slate-400">
+      <p className="text-sm text-encre-2">
         {hasFictional && (
           <>
             Les adversaires fictifs sont des <strong>personnages inventés</strong> : toute
@@ -172,7 +172,7 @@ export function Candidates() {
                 <span className="font-medium">{actor.candidate.parti}</span>
                 {families.get(actor.id) && ` — ${families.get(actor.id)}`}
               </p>
-              <p className="text-sm text-slate-600 dark:text-slate-400">
+              <p className="text-sm text-encre-2">
                 {describePosition(actor.candidate.positionnement)}
               </p>
               {actor.candidate.parcours && <p className="text-sm">{actor.candidate.parcours}</p>}
@@ -229,13 +229,13 @@ export function Candidates() {
               </p>
               <dl className="grid grid-cols-2 gap-2 text-sm">
                 <div>
-                  <dt className="text-xs text-slate-500 dark:text-slate-400">Notoriété</dt>
+                  <dt className="text-xs text-encre-3">Notoriété</dt>
                   <dd className="font-semibold">
                     {formatResource('notoriete', actor.resources.notoriete)}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-slate-500 dark:text-slate-400">Popularité</dt>
+                  <dt className="text-xs text-encre-3">Popularité</dt>
                   <dd className="font-semibold">
                     {formatResource('popularite', actor.resources.popularite)}
                   </dd>
@@ -246,7 +246,7 @@ export function Candidates() {
                   <summary className="cursor-pointer text-sm font-medium">
                     Pourquoi les électeurs le choisissent (ou non)
                   </summary>
-                  <p className="my-2 text-xs text-slate-500 dark:text-slate-400">
+                  <p className="my-2 text-xs text-encre-3">
                     Contribution moyenne de chaque facteur au score du candidat dans le modèle de
                     vote simulé (semaine {state.opinion!.week}), pondérée par le poids des groupes
                     d’électeurs. Plus le total est élevé, plus le candidat est choisi.

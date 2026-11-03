@@ -40,14 +40,10 @@ export function PhotoCreditLine({
 }) {
   const { photo } = personality;
   if (!photo) {
-    return (
-      <p className="text-xs text-slate-500 dark:text-slate-400">
-        Sans photo : {personality.photoAbsente}
-      </p>
-    );
+    return <p className="text-xs text-encre-3">Sans photo : {personality.photoAbsente}</p>;
   }
   return (
-    <p className="text-xs text-slate-500 dark:text-slate-400">
+    <p className="text-xs text-encre-3">
       Photo : {photo.auteur},{' '}
       {photo.licenceUrl ? (
         <a href={photo.licenceUrl} className="underline" target="_blank" rel="noreferrer">

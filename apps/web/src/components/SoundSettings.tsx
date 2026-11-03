@@ -120,14 +120,12 @@ export function SoundSettings() {
                 <Play aria-hidden="true" className="size-4" />
                 Écouter « {JINGLES[cue].libelle} »
               </button>
-              <span className="text-sm text-slate-600 dark:text-slate-400">
-                {JINGLES[cue].quand}
-              </span>
+              <span className="text-sm text-encre-2">{JINGLES[cue].quand}</span>
             </li>
           ))}
         </ul>
       </fieldset>
-      <p className="text-xs text-slate-600 dark:text-slate-400">
+      <p className="text-xs text-encre-2">
         {coupe ? 'Le son est coupé : rétablissez-le pour écouter les jingles. ' : ''}
         Le son démarre à votre premier geste et se coupe quand le jeu passe en arrière-plan. La
         musique vient de fichiers sous licence libre, embarqués dans le jeu (crédits ci-dessous) ;
@@ -143,7 +141,7 @@ const external = { target: '_blank', rel: 'noreferrer', className: 'underline' }
 export function MusicCredits() {
   return (
     <div className="space-y-2 text-sm">
-      <p className="text-slate-600 dark:text-slate-400">{MUSIC.note}</p>
+      <p className="text-encre-2">{MUSIC.note}</p>
       <ul className="space-y-2">
         {MUSIC.morceaux.map((track) => (
           <li key={track.id}>

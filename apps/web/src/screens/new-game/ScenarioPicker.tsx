@@ -77,12 +77,10 @@ export function ScenarioPicker({
                 <span className="font-semibold">{scenario.libelle}</span>
                 {scenario.nature === 'fictif' && <Badge tone="fictif">Scénario fictif</Badge>}
               </span>
-              <span className="block text-xs text-slate-600 dark:text-slate-400">
-                {scenario.description}
-              </span>
+              <span className="block text-xs text-encre-2">{scenario.description}</span>
               {locks[scenario.id] && <LockNote condition={locks[scenario.id]!} />}
               {effects(scenario, ruleset.data).map((line) => (
-                <span key={line} className="block text-xs text-slate-600 dark:text-slate-400">
+                <span key={line} className="block text-xs text-encre-2">
                   {line}
                 </span>
               ))}
@@ -90,7 +88,7 @@ export function ScenarioPicker({
           </label>
         ))}
       </div>
-      <p className="text-xs text-slate-600 dark:text-slate-400">
+      <p className="text-xs text-encre-2">
         Les écarts des scénarios sont des hypothèses de jeu ; ils ne changent ni les règles
         constitutionnelles ni le décompte des voix.
       </p>

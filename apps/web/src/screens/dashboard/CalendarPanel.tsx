@@ -40,7 +40,7 @@ export function CalendarPanel({ ruleset, today }: { ruleset: Ruleset; today: str
           return (
             <li key={item.id} className={inDays < 0 ? 'opacity-60' : ''}>
               <p className="font-medium">{item.libelle}</p>
-              <p className="flex flex-wrap items-center gap-2 text-slate-600 dark:text-slate-400">
+              <p className="flex flex-wrap items-center gap-2 text-encre-2">
                 <span>
                   {formatGameDate(item.date)}
                   {item.heure ? ` à ${item.heure.replace(':', ' h ')}` : ''}

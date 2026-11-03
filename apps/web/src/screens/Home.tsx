@@ -66,7 +66,7 @@ function MurDAffichage({ ruleset }: { ruleset: Ruleset | undefined }) {
       </ol>
       {/* Le trottoir : un filet d'encre. */}
       <span aria-hidden="true" className="block h-[3px] bg-slate-900 dark:bg-slate-300" />
-      <figcaption className="mt-3 text-center text-xs text-slate-600 dark:text-slate-400">
+      <figcaption className="mt-3 text-center text-xs text-encre-2">
         Candidats fictifs du jeu : noms, mouvements et visages sont inventés.
       </figcaption>
     </figure>
@@ -100,7 +100,7 @@ function Reprendre({ summary }: { summary: GameSummary }) {
           <p className="mt-0.5 truncate text-sm text-slate-700 dark:text-slate-300">
             Partie « {summary.name} »
           </p>
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+          <p className="mt-2 text-sm text-encre-2">
             {PHASE_LABELS[summary.phase]}, semaine {summary.week}
           </p>
           {ballot && (
@@ -108,9 +108,7 @@ function Reprendre({ summary }: { summary: GameSummary }) {
               <span className="font-display text-3xl leading-none font-black text-red-600 dark:text-red-400">
                 {ballot.jours === 0 ? 'Aujourd’hui' : `J−${ballot.jours}`}
               </span>
-              <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
-                {ballot.libelle}
-              </span>
+              <span className="text-xs font-semibold text-encre-2">{ballot.libelle}</span>
             </p>
           )}
         </div>
@@ -138,11 +136,11 @@ function GameList({ games }: { games: GameSummary[] }) {
           >
             <span className="flex w-12 shrink-0 flex-col items-center">
               <span className="font-display text-3xl leading-none font-bold">{game.week}</span>
-              <span className="text-[0.7rem] text-slate-600 dark:text-slate-400">semaine</span>
+              <span className="text-[0.7rem] text-encre-2">semaine</span>
             </span>
             <span className="min-w-0 flex-1">
               <span className="block truncate font-semibold">{game.name}</span>
-              <span className="block text-sm text-slate-600 dark:text-slate-400">
+              <span className="block text-sm text-encre-2">
                 {MODE_LABELS[game.mode]}, {PHASE_LABELS[game.phase].toLocaleLowerCase('fr-FR')}
                 <span className="hidden sm:inline"> — {formatGameDate(game.date)}</span>
               </span>
@@ -217,9 +215,7 @@ export function Home() {
         {games.isPending && <p>Chargement des parties…</p>}
         {games.isError && <ErrorMessage error={games.error} onRetry={() => void games.refetch()} />}
         {games.data?.length === 0 && (
-          <p className="text-slate-600 dark:text-slate-400">
-            Aucune partie pour l’instant. Créez-en une pour commencer.
-          </p>
+          <p className="text-encre-2">Aucune partie pour l’instant. Créez-en une pour commencer.</p>
         )}
         {sorted.length > 0 && <GameList games={sorted} />}
       </section>

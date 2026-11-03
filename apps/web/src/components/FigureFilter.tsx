@@ -124,7 +124,7 @@ export function FigureFilterBar({
           </select>
         </div>
       </div>
-      <p className="text-xs text-slate-600 dark:text-slate-400" aria-live="polite">
+      <p className="text-xs text-encre-2" aria-live="polite">
         {shown === total ? `${total} personnalités` : `${shown} sur ${total} personnalités`}
       </p>
     </div>

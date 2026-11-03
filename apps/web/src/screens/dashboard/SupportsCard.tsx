@@ -56,7 +56,7 @@ export function SupportsCard({
                   <span className="font-semibold">
                     {figure.prenom} {figure.nom}
                   </span>
-                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                  <span className="text-xs text-encre-3">
                     {' '}
                     · {figure.parti}
                     {s.contrepartie === 'ministere' ? ' · ministère promis' : ''}
@@ -67,12 +67,12 @@ export function SupportsCard({
           })}
         </ul>
       ) : (
-        <p className="text-slate-600 dark:text-slate-400">
+        <p className="text-encre-2">
           Aucun soutien pour l’instant. Négociez avec les personnalités proches de vous : une
           personnalité ne soutient qu’un candidat et refuse si un candidat de son parti est en lice.
         </p>
       )}
-      <p className="text-xs text-slate-500 dark:text-slate-400">
+      <p className="text-xs text-encre-3">
         {refusals > 0 ? `${refusals} refus pendant cette campagne. ` : ''}Soutiens et refus simulés
         (hypothèses du jeu) : aucun propos n’est attribué aux personnalités réelles.
       </p>

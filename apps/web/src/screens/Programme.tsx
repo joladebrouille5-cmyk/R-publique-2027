@@ -67,7 +67,7 @@ export function Programme() {
         <ScreenHeading id="titre-programme">Programme</ScreenHeading>
         <Badge tone="alerte">Estimations de jeu</Badge>
       </div>
-      <p className="text-sm text-slate-600 dark:text-slate-400">{rules.programme.note}</p>
+      <p className="text-sm text-encre-2">{rules.programme.note}</p>
 
       {actor && (
         <section aria-labelledby="titre-mon-programme" className={`${card} space-y-2 text-sm`}>
@@ -100,7 +100,7 @@ export function Programme() {
             </p>
           )}
           {!editable && (
-            <p className="text-slate-600 dark:text-slate-400">
+            <p className="text-encre-2">
               Le programme ne peut plus évoluer : vous n’êtes plus en campagne.
             </p>
           )}
@@ -120,7 +120,7 @@ export function Programme() {
             <details key={domaine.id} className={card} open={mine > 0}>
               <summary className="cursor-pointer font-semibold">
                 {domaine.libelle}{' '}
-                <span className="font-normal text-slate-600 dark:text-slate-400">
+                <span className="font-normal text-encre-2">
                   — {mine} retenue(s) sur {items.length}
                 </span>
               </summary>
@@ -153,35 +153,33 @@ export function Programme() {
                         {toAdd && <Badge tone="alerte">Annonce prévue</Badge>}
                         {toRemove && <Badge tone="danger">Retrait prévu</Badge>}
                       </div>
-                      <p className="text-slate-600 dark:text-slate-400">{p.description}</p>
+                      <p className="text-encre-2">{p.description}</p>
                       <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
-                        <dt className="text-slate-500 dark:text-slate-400">Coût</dt>
+                        <dt className="text-encre-3">Coût</dt>
                         <dd>{formatAnnualCost(p.coutMillionsEuros)}</dd>
-                        <dt className="text-slate-500 dark:text-slate-400">Délai</dt>
+                        <dt className="text-encre-3">Délai</dt>
                         <dd>{p.delaiMois} mois</dd>
-                        <dt className="text-slate-500 dark:text-slate-400">Faisabilité</dt>
+                        <dt className="text-encre-3">Faisabilité</dt>
                         <dd>{Math.round(p.faisabilite * 100)} %</dd>
-                        <dt className="text-slate-500 dark:text-slate-400">Confiance</dt>
+                        <dt className="text-encre-3">Confiance</dt>
                         <dd>{CONFIDENCE_LABELS[p.confiance]}</dd>
-                        <dt className="text-slate-500 dark:text-slate-400">Électeurs sensibles</dt>
+                        <dt className="text-encre-3">Électeurs sensibles</dt>
                         <dd>{p.publics.map((g) => groups.get(g) ?? g).join(', ') || '—'}</dd>
                         {p.dependances.length > 0 && (
                           <>
-                            <dt className="text-slate-500 dark:text-slate-400">Suppose</dt>
+                            <dt className="text-encre-3">Suppose</dt>
                             <dd>{p.dependances.map(label).join(', ')}</dd>
                           </>
                         )}
                         {p.incompatibilites.length > 0 && (
                           <>
-                            <dt className="text-slate-500 dark:text-slate-400">
-                              Incompatible avec
-                            </dt>
+                            <dt className="text-encre-3">Incompatible avec</dt>
                             <dd>{p.incompatibilites.map(label).join(', ')}</dd>
                           </>
                         )}
                         {parties.length > 0 && (
                           <>
-                            <dt className="text-slate-500 dark:text-slate-400">Portée par</dt>
+                            <dt className="text-encre-3">Portée par</dt>
                             <dd>{parties.join(', ')}</dd>
                           </>
                         )}
@@ -215,9 +213,7 @@ export function Programme() {
                             </button>
                           )}
                           {!toAdd && !inProgramme && blocker && (
-                            <span className="text-xs text-slate-500 dark:text-slate-400">
-                              {blocker}
-                            </span>
+                            <span className="text-xs text-encre-3">{blocker}</span>
                           )}
                         </div>
                       )}
@@ -240,7 +236,7 @@ export function Programme() {
               <p className="font-semibold">
                 {candidateName(o.candidate)} ({o.candidate.parti})
               </p>
-              <p className="text-slate-600 dark:text-slate-400">
+              <p className="text-encre-2">
                 {o.candidate.nature === 'reel'
                   ? 'Personnalité réelle : le jeu ne lui prête aucune proposition.'
                   : o.programme.propositions.map(label).join(' · ') || 'Aucune proposition'}

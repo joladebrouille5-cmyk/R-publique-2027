@@ -81,7 +81,7 @@ function RoundCard({
       <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
         {facts.map(([label, value]) => (
           <div key={label}>
-            <dt className="text-xs text-slate-500 dark:text-slate-400">{label}</dt>
+            <dt className="text-xs text-encre-3">{label}</dt>
             <dd className="font-semibold tabular-nums">{value}</dd>
           </div>
         ))}
@@ -91,7 +91,7 @@ function RoundCard({
         <table className="w-full text-left text-sm">
           <caption className="sr-only">{`${roundLabel} : voix par candidat`}</caption>
           <thead>
-            <tr className="text-xs text-slate-500 dark:text-slate-400">
+            <tr className="text-xs text-encre-3">
               <th scope="col" className="py-1 pr-2 font-medium">
                 Candidat
               </th>
@@ -126,7 +126,7 @@ function RoundCard({
                   >
                     {nameOf(state, id)}
                     {player && ' (vous)'}
-                    <span className="block text-xs text-slate-500 dark:text-slate-400">
+                    <span className="block text-xs text-encre-3">
                       {state.actors[id]?.candidate.parti}
                       {outcome && ` · ${outcome}`}
                     </span>
@@ -160,7 +160,7 @@ function RoundCard({
           <table className="w-full text-left text-xs">
             <caption className="sr-only">{`${roundLabel} : résultats par groupe d’électeurs`}</caption>
             <thead>
-              <tr className="text-slate-500 dark:text-slate-400">
+              <tr className="text-encre-3">
                 <th scope="col" className="py-1 pr-2 font-medium">
                   Groupe
                 </th>
@@ -214,7 +214,7 @@ export function Results() {
   return (
     <section aria-labelledby="titre-resultats" className="space-y-6">
       <ScreenHeading id="titre-resultats">Résultats</ScreenHeading>
-      <p className="text-sm text-slate-600 dark:text-slate-400">
+      <p className="text-sm text-encre-2">
         Résultats <strong>simulés</strong> par le moteur de jeu, à partir de groupes d’électeurs
         nationaux (hypothèse de jeu). Les inscrits reprennent le chiffre officiel du second tour de
         2022 (
@@ -310,7 +310,7 @@ export function Results() {
                 Composantes de la prestation au débat (0 à 1)
               </caption>
               <thead>
-                <tr className="text-slate-500 dark:text-slate-400">
+                <tr className="text-encre-3">
                   <th scope="col" className="py-1 font-medium">
                     Finaliste
                   </th>
@@ -337,7 +337,7 @@ export function Results() {
               </tbody>
             </table>
           )}
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-encre-3">
             Une consigne de vote ne transfère qu’une partie des électeurs du candidat éliminé. La
             prestation au débat combine la préparation (heures consacrées), la maîtrise (notoriété
             et équipe), la cohérence du programme et la qualité des réponses (part d’aléa).

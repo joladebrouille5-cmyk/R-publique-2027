@@ -107,7 +107,7 @@ function Objectives({ state, ruleset }: { state: GameState; ruleset: Ruleset }) 
     <Block id="mandat-objectifs" title="Objectifs du mandat">
       <p className="flex flex-wrap items-baseline gap-2">
         <span className="font-display text-2xl font-bold tabular-nums">{grade.valeur}/20</span>
-        <span className="text-xs text-slate-600 dark:text-slate-400">
+        <span className="text-xs text-encre-2">
           note provisoire, si le mandat s’arrêtait aujourd’hui (la mention est donnée au bilan)
         </span>
       </p>
@@ -123,7 +123,7 @@ function Objectives({ state, ruleset }: { state: GameState; ruleset: Ruleset }) 
                   {o.atteint ? 'Atteint' : 'En cours'}
                 </Badge>
               </p>
-              <p className="text-xs text-slate-600 dark:text-slate-400">
+              <p className="text-xs text-encre-2">
                 Départ {measureText(ruleset, o.id, o.depart)} · aujourd’hui{' '}
                 {measureText(ruleset, o.id, o.fin)} · cible{' '}
                 {definition.sens === 'baisse' ? '≤' : '≥'} {measureText(ruleset, o.id, o.cible)}
@@ -141,7 +141,7 @@ function Objectives({ state, ruleset }: { state: GameState; ruleset: Ruleset }) 
           );
         })}
       </ul>
-      <p className="text-xs text-slate-500 dark:text-slate-400">
+      <p className="text-xs text-encre-3">
         Objectifs tirés de votre programme à la formation du gouvernement ; cibles et barème (1
         point par objectif atteint, la moitié du chemin parcouru sinon) : hypothèses du jeu, jamais
         des prévisions.
@@ -190,7 +190,7 @@ export function MandateOverview({
         <h2 id="titre-mandat" className="text-xl font-bold">
           Vue du mandat
         </h2>
-        <p className="text-sm text-slate-600 dark:text-slate-400">
+        <p className="text-sm text-encre-2">
           {presiding
             ? 'Vous présidez'
             : `${president ? candidateName(president.candidate) : 'Le président'} préside`}{' '}
@@ -263,7 +263,7 @@ export function MandateOverview({
                     </li>
                   ))}
                 </ul>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-encre-3">
                   Somme exacte des facteurs calculés par le moteur (hypothèses du jeu).
                 </p>
               </InfoPopover>
@@ -288,7 +288,7 @@ export function MandateOverview({
                 </Link>
               </p>
             ) : inProgress.length === 0 ? (
-              <p className="text-slate-600 dark:text-slate-400">Aucun texte en cours d’examen.</p>
+              <p className="text-encre-2">Aucun texte en cours d’examen.</p>
             ) : null}
             {inProgress.length > 0 && (
               <ul className="space-y-1" aria-label="Textes en cours">
@@ -297,7 +297,7 @@ export function MandateOverview({
                     <span className="font-medium">
                       {proposals.get(b.propositionId) ?? b.propositionId}
                     </span>
-                    <span className="text-xs text-slate-600 dark:text-slate-400">
+                    <span className="text-xs text-encre-2">
                       {STAGES[b.etape as keyof typeof STAGES]}, semaine {b.echeance}
                     </span>
                   </li>
@@ -305,7 +305,7 @@ export function MandateOverview({
               </ul>
             )}
             {lastVote && (
-              <p className="text-xs text-slate-600 dark:text-slate-400">
+              <p className="text-xs text-encre-2">
                 Dernier vote (semaine {lastVote.vote.semaine}) :{' '}
                 {proposals.get(lastVote.bill.propositionId) ?? lastVote.bill.propositionId}{' '}
                 {lastVote.vote.adopte ? 'adopté' : 'rejeté'} ({lastVote.vote.pour} pour,{' '}
@@ -314,7 +314,7 @@ export function MandateOverview({
               </p>
             )}
             {lastMotion && (
-              <p className="text-xs text-slate-600 dark:text-slate-400">
+              <p className="text-xs text-encre-2">
                 Dernière motion de censure (semaine {lastMotion.semaine}) :{' '}
                 {lastMotion.adoptee ? 'adoptée' : 'rejetée'}, {lastMotion.pour} voix pour{' '}
                 {lastMotion.majorite} requises.
@@ -337,7 +337,7 @@ export function MandateOverview({
                 <span className="font-semibold">
                   {memberInfo(state, ruleset, government.premierMinistre).name}
                 </span>{' '}
-                <span className="text-slate-600 dark:text-slate-400">
+                <span className="text-encre-2">
                   Premier ministre · gouvernement n° {government.numero}
                 </span>
               </p>
@@ -376,7 +376,7 @@ export function MandateOverview({
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="font-medium">{info.name}</span>{' '}
-                        <span className="text-xs text-slate-600 dark:text-slate-400">
+                        <span className="text-xs text-encre-2">
                           compétence {Math.round(competence * 100)} %
                           {expertise && ', expertise du domaine'}
                         </span>
@@ -392,7 +392,7 @@ export function MandateOverview({
                               {effects.join(' · ')}
                             </span>
                           ) : (
-                            <span className="text-slate-500 dark:text-slate-400">
+                            <span className="text-encre-3">
                               aucun effet de domaine (compétence moyenne)
                             </span>
                           )}
@@ -402,7 +402,7 @@ export function MandateOverview({
                   );
                 })}
               </ul>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-encre-3">
                 Effets de domaine : hypothèses du jeu, proportionnels à l’écart de compétence à 50 %
                 ; ils passent par les registres de l’économie et du Parlement.
               </p>
@@ -426,7 +426,7 @@ export function MandateOverview({
               <dl className="grid grid-cols-2 gap-2">
                 {KEY_INDICATORS.map((indicator) => (
                   <div key={indicator} className="rounded-xl bg-slate-50 p-2 dark:bg-slate-800/60">
-                    <dt className="text-xs text-slate-600 dark:text-slate-400">
+                    <dt className="text-xs text-encre-2">
                       {INDICATOR_LABELS[indicator].label.split(' (')[0]}
                     </dt>
                     <dd className="font-display text-base font-bold tabular-nums">
@@ -461,7 +461,7 @@ export function MandateOverview({
                       ? 'Stratégie arrêtée'
                       : 'Stratégie d’alliance à choisir'}
                   </Badge>
-                  <span className="text-xs text-slate-600 dark:text-slate-400">
+                  <span className="text-xs text-encre-2">
                     {legislatives.campagne.alliances.length} accord(s) simulé(s) entre blocs
                   </span>
                 </p>

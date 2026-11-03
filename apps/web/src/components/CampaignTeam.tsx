@@ -103,7 +103,7 @@ export function CampaignTeam({ report, state }: { report: WeeklyReport; state: G
               <GeneratedPortrait seed={`equipe:${l.prenom}`} background={l.fond} />
             </span>
             <p className="min-w-0 rounded-2xl rounded-tl-sm bg-slate-100 px-3.5 py-2.5 dark:bg-white/[0.06]">
-              <span className="block text-xs font-semibold text-slate-600 dark:text-slate-400">
+              <span className="block text-xs font-semibold text-encre-2">
                 {l.prenom}, {l.role.toLocaleLowerCase('fr-FR')}
               </span>
               {l.texte}
@@ -111,7 +111,7 @@ export function CampaignTeam({ report, state }: { report: WeeklyReport; state: G
           </li>
         ))}
       </ul>
-      <p className="text-xs text-slate-600 dark:text-slate-400">
+      <p className="text-xs text-encre-2">
         Équipe fictive ; ses mots résument le bilan du moteur, détaillé ci-dessous.
       </p>
     </section>

@@ -74,7 +74,7 @@ function Review({
       >
         <table className="w-full min-w-[30rem] text-left">
           <caption className="sr-only">Indicateurs au début et à la fin du quinquennat</caption>
-          <thead className="text-xs text-slate-500 dark:text-slate-400">
+          <thead className="text-xs text-encre-3">
             <tr>
               <th scope="col">Indicateur</th>
               <th scope="col">Début ({formatGameDate(debut.date)})</th>
@@ -119,7 +119,7 @@ function Review({
         </table>
       </div>
       {debut.popularite === null && (
-        <p className="text-xs text-slate-500 dark:text-slate-400">
+        <p className="text-xs text-encre-3">
           Popularité de départ non enregistrée : partie reprise d’un format de sauvegarde antérieur
           au bilan du quinquennat.
         </p>
@@ -146,7 +146,7 @@ function Review({
               </li>
             ))}
           </ul>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-encre-3">
             Objectifs fixés à la formation du premier gouvernement ; barème du jeu : 1 point par
             objectif atteint, la moitié du chemin parcouru sinon (hypothèses, jamais des
             prévisions).
@@ -209,7 +209,7 @@ function Review({
           <p>Aucune conséquence durable née pendant ce quinquennat.</p>
         )}
       </div>
-      <p className="text-xs text-slate-500 dark:text-slate-400">
+      <p className="text-xs text-encre-3">
         Valeurs simulées par le jeu (aucune n’est une prévision) ; seules les valeurs de départ de
         l’économie sont des données réelles. Pendant la campagne qui suit, l’action du gouvernement
         sortant, le Parlement et l’économie ne sont pas simulés (simplification du jeu).

@@ -135,7 +135,7 @@ export function Leaderboard({
                   style={{ width: `${(s.estimation / max) * 100}%`, backgroundColor: s.color }}
                 />
               </span>
-              <p className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-slate-600 dark:text-slate-400">
+              <p className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-encre-2">
                 <span>Bureaux dépouillés : {percent(s.depouille)}</span>
                 {s.outcome && <Badge tone="succes">{s.outcome}</Badge>}
               </p>
@@ -164,7 +164,7 @@ export function Feed({ items }: { items: FeedItem[] }) {
         Départements dépouillés
       </h2>
       {items.length === 0 ? (
-        <p className="text-sm text-slate-600 dark:text-slate-400">
+        <p className="text-sm text-encre-2">
           Aucun département entièrement dépouillé pour l’instant.
         </p>
       ) : (

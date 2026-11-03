@@ -30,7 +30,7 @@ type PollResult = Poll['results'][number];
 function Variation({ value }: { value: number | null }) {
   const tone =
     value === null || value === 0
-      ? 'text-slate-600 dark:text-slate-400'
+      ? 'text-encre-2'
       : value > 0
         ? 'text-emerald-700 dark:text-emerald-400'
         : 'text-red-700 dark:text-red-400';
@@ -65,7 +65,7 @@ export function PollResults({
     <table className="w-full text-left text-sm">
       <caption className="sr-only">{`${POLL_KIND_LABELS[poll.kind]} — ${poll.institute}, semaine ${poll.week}`}</caption>
       <thead>
-        <tr className="text-xs text-slate-500 dark:text-slate-400">
+        <tr className="text-xs text-encre-3">
           <th scope="col" className="py-1 font-medium">
             Candidat
           </th>
@@ -108,7 +108,7 @@ export function PollResults({
               <td className="py-1 pr-2 text-right text-xs whitespace-nowrap tabular-nums">
                 <Variation value={result.variation} />
               </td>
-              <td className="py-1 pr-2 text-right whitespace-nowrap tabular-nums text-slate-600 dark:text-slate-400">
+              <td className="py-1 pr-2 text-right whitespace-nowrap tabular-nums text-encre-2">
                 ± {formatShare(result.margin).replace(' %', ' pt')}
               </td>
               <td className="py-1">
@@ -167,7 +167,7 @@ export function PollExplanation({ poll, state }: { poll: Poll; state: GameState 
       <h3 id={`pourquoi-${poll.id}`} className="font-semibold">
         Pourquoi ça bouge ?
       </h3>
-      <p className="text-xs text-slate-600 dark:text-slate-400">
+      <p className="text-xs text-encre-2">
         Écart depuis la vague précédente de {poll.institute}, en points, décomposé par facteur du
         modèle d’opinion simulé. L’échantillon est redressé : sans fait nouveau, les intentions
         bougent peu.
@@ -196,19 +196,19 @@ export function PollExplanation({ poll, state }: { poll: Poll; state: GameState 
 export function PollSheet({ poll }: { poll: Poll }) {
   return (
     <dl className="grid gap-x-4 gap-y-1 text-xs sm:grid-cols-[10rem_1fr]">
-      <dt className="text-slate-500 dark:text-slate-400">Institut</dt>
+      <dt className="text-encre-3">Institut</dt>
       <dd>{poll.institute}</dd>
-      <dt className="text-slate-500 dark:text-slate-400">Terrain</dt>
+      <dt className="text-encre-3">Terrain</dt>
       <dd>
         du {formatGameDate(poll.fieldStart)} au {formatGameDate(poll.fieldEnd)}
       </dd>
-      <dt className="text-slate-500 dark:text-slate-400">Publication</dt>
+      <dt className="text-encre-3">Publication</dt>
       <dd>{formatGameDate(poll.publishedAt)}</dd>
-      <dt className="text-slate-500 dark:text-slate-400">Échantillon</dt>
+      <dt className="text-encre-3">Échantillon</dt>
       <dd>{formatCount(poll.sampleSize)} personnes</dd>
-      <dt className="text-slate-500 dark:text-slate-400">Méthode</dt>
+      <dt className="text-encre-3">Méthode</dt>
       <dd>{poll.method}</dd>
-      <dt className="text-slate-500 dark:text-slate-400">Limites</dt>
+      <dt className="text-encre-3">Limites</dt>
       <dd>{poll.limits}</dd>
     </dl>
   );
@@ -243,7 +243,7 @@ export function Polls() {
   return (
     <section aria-labelledby="titre-sondages" className="space-y-6">
       <ScreenHeading id="titre-sondages">Sondages</ScreenHeading>
-      <p className="text-sm text-slate-600 dark:text-slate-400">
+      <p className="text-sm text-encre-2">
         <Badge tone="simule">Sondage simulé</Badge> Les instituts sont fictifs. Chaque sondage
         interroge un échantillon tiré de l’opinion simulée : il comporte une marge d’erreur et un
         biais propre à l’institut, atténués par le redressement. Ce n’est jamais une prédiction du
@@ -261,7 +261,7 @@ export function Polls() {
           <h2 id="titre-dernier" className="text-2xl">
             Dernier sondage : {POLL_KIND_LABELS[latest.kind].toLowerCase()}
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-encre-3">
             {latest.institute}, terrain du {formatGameDate(latest.fieldStart)} au{' '}
             {formatGameDate(latest.fieldEnd)}, {formatCount(latest.sampleSize)} personnes. Le trait
             fin indique la marge d’erreur à 95 %.
@@ -286,7 +286,7 @@ export function Polls() {
               Intentions de vote au premier tour, derniers sondages
             </caption>
             <thead>
-              <tr className="text-xs text-slate-500 dark:text-slate-400">
+              <tr className="text-xs text-encre-3">
                 <th scope="col" className="py-1 pr-2 font-medium">
                   Candidat
                 </th>
@@ -347,7 +347,7 @@ export function Polls() {
                 <details>
                   <summary className="cursor-pointer">
                     <span className="font-semibold">{title(poll)}</span>
-                    <span className="block text-xs text-slate-500 dark:text-slate-400">
+                    <span className="block text-xs text-encre-3">
                       Semaine {poll.week} · publié le {formatGameDate(poll.publishedAt)}
                     </span>
                   </summary>

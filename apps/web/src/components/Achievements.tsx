@@ -9,7 +9,7 @@ export function Achievements({ state, ruleset }: { state: GameState; ruleset: Ru
   const unlocked = new Map(state.succes.map((s) => [s.id, s.semaine]));
   return (
     <div className="space-y-3 text-sm">
-      <p className="text-slate-600 dark:text-slate-400">
+      <p className="text-encre-2">
         {unlocked.size} succès débloqué(s) sur {ruleset.succes.liste.length}. Convention du jeu :
         des jalons de votre partie, sans valeur d’évaluation réelle.
       </p>
@@ -41,8 +41,8 @@ export function Achievements({ state, ruleset }: { state: GameState; ruleset: Ru
               </span>
               <span className="min-w-0">
                 <span className="block font-semibold">{a.libelle}</span>
-                <span className="block text-slate-600 dark:text-slate-400">{a.description}</span>
-                <span className="block text-xs font-semibold text-slate-500 dark:text-slate-400">
+                <span className="block text-encre-2">{a.description}</span>
+                <span className="block text-xs font-semibold text-encre-3">
                   {done ? `Débloqué en semaine ${week}` : 'À débloquer'}
                 </span>
               </span>

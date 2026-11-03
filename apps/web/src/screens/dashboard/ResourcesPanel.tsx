@@ -49,7 +49,7 @@ export function ResourcesPanel({ resources, ruleset }: { resources: Resources; r
               key={key}
               className="rounded-card border border-slate-200/80 bg-white p-3.5 shadow-card dark:border-slate-800 dark:bg-slate-900"
             >
-              <dt className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400">
+              <dt className="flex items-center gap-1.5 text-xs font-semibold text-encre-2">
                 <Icon aria-hidden="true" className="size-3.5" />
                 {RESOURCE_LABELS[key]}
               </dt>
@@ -71,7 +71,7 @@ export function ResourcesPanel({ resources, ruleset }: { resources: Resources; r
                 </dd>
               )}
               {key === 'tempsHeures' && (
-                <dd className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                <dd className="mt-1 text-xs text-encre-3">
                   sur {ruleset.jeu.tempsHebdomadaireHeures} h cette semaine
                 </dd>
               )}

@@ -867,7 +867,7 @@ export function Dashboard() {
                   (Constitution, art. 6). La campagne se déroule sans vous.
                 </p>
               )}
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-encre-3">
                 Calendrier : celui de 2027 transposé en {state.cycle.annee} (hypothèse, dates
                 réelles fixées par décret). Parrainages et comptes de campagne repartent de zéro.
                 Pendant la campagne, l’action du gouvernement sortant, le Parlement et l’économie ne
@@ -923,7 +923,7 @@ export function Dashboard() {
                       `À retirer : ${plan.retirer.map(programmeLabel).join(', ')} (un revirement coûte de la crédibilité).`}
                   </p>
                 ) : (
-                  <p className="text-slate-600 dark:text-slate-400">
+                  <p className="text-encre-2">
                     Aucun changement de programme prévu ({actor.programme.propositions.length}{' '}
                     proposition(s) annoncée(s)).
                   </p>
@@ -989,7 +989,7 @@ export function Dashboard() {
           )}
 
           {observer && (
-            <p className="text-sm text-slate-600 dark:text-slate-400">
+            <p className="text-sm text-encre-2">
               Mode observateur : aucune campagne n’est contrôlée. Les candidats fictifs mènent leur
               campagne de façon autonome ; les décisions éventuelles prennent l’option par défaut.
             </p>
@@ -1025,9 +1025,7 @@ export function Dashboard() {
                   eventFamily={(id) => data?.evenements.find((e) => e.id === id)?.famille ?? null}
                 />
               ) : (
-                <p className="text-sm text-slate-500 dark:text-slate-400">
-                  Aucune semaine résolue pour l’instant.
-                </p>
+                <p className="text-sm text-encre-3">Aucune semaine résolue pour l’instant.</p>
               )}
             </Disclosure>
 
@@ -1103,9 +1101,7 @@ export function Dashboard() {
               <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm sm:grid-cols-3">
                 {facts.map((fact) => (
                   <div key={fact.label}>
-                    <dt className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                      {fact.label}
-                    </dt>
+                    <dt className="text-xs font-semibold text-encre-3">{fact.label}</dt>
                     <dd className="mt-0.5 font-semibold">{fact.value}</dd>
                   </div>
                 ))}
@@ -1119,15 +1115,15 @@ export function Dashboard() {
               <div className="mt-3 border-t border-slate-200 pt-3 dark:border-slate-800">
                 <h3 className="font-semibold">Paramètres techniques</h3>
                 <dl className="mt-2 grid gap-2 text-sm sm:grid-cols-[12rem_1fr]">
-                  <dt className="text-slate-500 dark:text-slate-400">Graine</dt>
+                  <dt className="text-encre-3">Graine</dt>
                   <dd className="font-mono break-all">{game.seed}</dd>
-                  <dt className="text-slate-500 dark:text-slate-400">Version du moteur</dt>
+                  <dt className="text-encre-3">Version du moteur</dt>
                   <dd className="font-mono">{game.engineVersion}</dd>
-                  <dt className="text-slate-500 dark:text-slate-400">Jeu de règles</dt>
+                  <dt className="text-encre-3">Jeu de règles</dt>
                   <dd className="font-mono">{game.rulesetVersion}</dd>
-                  <dt className="text-slate-500 dark:text-slate-400">Format de sauvegarde</dt>
+                  <dt className="text-encre-3">Format de sauvegarde</dt>
                   <dd className="font-mono">{game.saveSchemaVersion}</dd>
-                  <dt className="text-slate-500 dark:text-slate-400">Empreinte de l’état</dt>
+                  <dt className="text-encre-3">Empreinte de l’état</dt>
                   <dd className="font-mono break-all" data-testid="empreinte">
                     {game.stateHash}
                   </dd>

@@ -65,7 +65,7 @@ export function SearchBox({
       <div className="relative">
         <Search
           aria-hidden="true"
-          className="pointer-events-none absolute top-1/2 left-3.5 z-10 size-4 -translate-y-1/2 text-slate-500 dark:text-slate-400"
+          className="pointer-events-none absolute top-1/2 left-3.5 z-10 size-4 -translate-y-1/2 text-encre-3"
         />
         <input
           id={id}
@@ -96,9 +96,7 @@ export function SearchBox({
               className="max-h-72 space-y-0.5 overflow-y-auto rounded-card border border-slate-200/80 bg-white p-1.5 shadow-raised dark:border-slate-700 dark:bg-slate-900"
             >
               {results.length === 0 && (
-                <li className="px-3 py-2 text-sm text-slate-600 dark:text-slate-400">
-                  Aucun territoire trouvé.
-                </li>
+                <li className="px-3 py-2 text-sm text-encre-2">Aucun territoire trouvé.</li>
               )}
               {results.map((r) => (
                 <li key={`${r.level}-${r.code}`}>
@@ -108,7 +106,7 @@ export function SearchBox({
                     onClick={() => choose(r)}
                   >
                     <span className="font-semibold">{r.nom}</span>{' '}
-                    <span className="shrink-0 text-xs text-slate-600 dark:text-slate-400">
+                    <span className="shrink-0 text-xs text-encre-2">
                       ({LEVEL_LABELS[r.level].toLowerCase()} {r.code})
                     </span>
                   </button>
@@ -206,7 +204,7 @@ export function ResultTable({
     <table className="w-full text-left text-sm">
       <caption className="sr-only">Voix par candidat</caption>
       <thead>
-        <tr className="text-xs text-slate-600 dark:text-slate-400">
+        <tr className="text-xs text-encre-2">
           <th scope="col" className="py-1 font-medium">
             Candidat
           </th>
@@ -278,7 +276,7 @@ export function TerritorySheet({
     <section aria-label={`Fiche : ${info.nom}`} className={`space-y-4 ${className}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
+          <p className="text-xs font-medium text-encre-2">
             {LEVEL_LABELS[info.level]} · code {info.code}
             {info.context && ` · ${info.context}`}
           </p>
@@ -334,7 +332,7 @@ export function TerritorySheet({
                 key={term}
                 className={`rounded-xl bg-slate-50 px-2.5 py-2 dark:bg-slate-800/60 ${term === 'Votants' ? 'col-span-2' : ''}`}
               >
-                <dt className="text-xs text-slate-600 dark:text-slate-400">{term}</dt>
+                <dt className="text-xs text-encre-2">{term}</dt>
                 <dd className="font-semibold">{value}</dd>
               </div>
             ))}
@@ -344,7 +342,7 @@ export function TerritorySheet({
         </>
       ) : (
         data && (
-          <p className="text-sm text-slate-600 dark:text-slate-400">
+          <p className="text-sm text-encre-2">
             Pas de résultat détaillé pour ce territoire
             {data.nature === 'fictif'
               ? ' dans le jeu de démonstration (communes de l’Ain, de la Corse, de la Somme et des DROM uniquement).'
@@ -382,7 +380,7 @@ function LegislativeDetail({ info, data }: { info: SheetInfo; data: SourceData }
               ))}
           </ul>
         ) : (
-          <p className="text-slate-600 dark:text-slate-400">Aucun élu à ce tour.</p>
+          <p className="text-encre-2">Aucun élu à ce tour.</p>
         )}
       </div>
       {districts.length > 0 && (
@@ -392,7 +390,7 @@ function LegislativeDetail({ info, data }: { info: SheetInfo; data: SourceData }
             {districts.map((d) => (
               <li key={d.code} className="py-1">
                 <span className="font-medium">{d.libelle}</span>
-                <span className="block text-slate-600 dark:text-slate-400">
+                <span className="block text-encre-2">
                   {d.tete
                     ? `En tête : ${labels.get(d.tete.bloc) ?? d.tete.bloc} (${Math.round(d.tete.part * 100)} %)`
                     : 'Pas de vote à ce tour'}
@@ -405,7 +403,7 @@ function LegislativeDetail({ info, data }: { info: SheetInfo; data: SourceData }
           </ul>
         </div>
       )}
-      <p className="text-xs text-slate-500 dark:text-slate-400">
+      <p className="text-xs text-encre-3">
         Résultats par bloc, sans aucun nom de candidat ;{' '}
         {data.nature === 'reel'
           ? 'nuances officielles de 2024 regroupées par bloc (hypothèse de jeu).'
@@ -422,7 +420,7 @@ export function OffMapList({ manifest, data }: { manifest: GeoManifest; data: So
       <h2 id="titre-hors-carte" className="text-xl font-bold">
         Hors carte
       </h2>
-      <p className="text-xs text-slate-600 dark:text-slate-400">
+      <p className="text-xs text-encre-2">
         Ces électeurs votent à la présidentielle et comptent dans le total national, mais leurs
         territoires ne sont pas cartographiés.
         {data?.legislatives &&
@@ -435,7 +433,7 @@ export function OffMapList({ manifest, data }: { manifest: GeoManifest; data: So
           return (
             <li key={area.code} className="flex flex-wrap justify-between gap-2 py-1">
               <span>{area.nom}</span>
-              <span className="text-slate-600 dark:text-slate-400">
+              <span className="text-encre-2">
                 {result
                   ? `${formatCount(result.inscrits)} inscrits${leader !== null ? ` · en tête : ${data!.candidats[leader]!.label}` : ''}`
                   : 'pas de résultat'}

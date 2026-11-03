@@ -75,7 +75,7 @@ function BillCard({ bill, state, ruleset }: { bill: Bill; state: GameState; rule
         {bill.concessions > 0 && <Badge>{bill.concessions} concession(s)</Badge>}
         {bill.frondeursNegocies && <Badge>Négocié avec les frondeurs</Badge>}
       </p>
-      <p className="text-slate-600 dark:text-slate-400">
+      <p className="text-encre-2">
         Déposé en semaine {bill.deposeSemaine}
         {finished
           ? ` ; ${bill.issue!.motif} en semaine ${bill.issue!.semaine}.`
@@ -193,7 +193,7 @@ function Content({ state, ruleset }: { state: GameState; ruleset: Ruleset }) {
         {overview ? (
           // Vue du mandat affichée en tête de l'espace : pas de second hémicycle ici.
           <div className="space-y-1.5">
-            <p className="text-slate-600 dark:text-slate-400">
+            <p className="text-encre-2">
               Hémicycle, majorité et tension parlementaire ({parliament.tension.valeur}/100) : vue
               du mandat, en tête de l’espace. Détail de la tension :
             </p>
@@ -249,7 +249,7 @@ function Content({ state, ruleset }: { state: GameState; ruleset: Ruleset }) {
         >
           <table className="w-full min-w-[30rem] text-left">
             <caption className="sr-only">Groupes politiques et sièges</caption>
-            <thead className="text-xs text-slate-500 dark:text-slate-400">
+            <thead className="text-xs text-encre-3">
               <tr>
                 <th scope="col">Groupe</th>
                 <th scope="col">Sièges</th>
@@ -271,7 +271,7 @@ function Content({ state, ruleset }: { state: GameState; ruleset: Ruleset }) {
                         className={`mr-1.5 inline-block size-2.5 rounded-full ${colorOf(g.id).swatch}`}
                       />
                       <span className="font-semibold">{g.sigle}</span>{' '}
-                      <span className="text-slate-600 dark:text-slate-400">{g.libelle}</span>
+                      <span className="text-encre-2">{g.libelle}</span>
                       {mine?.groupe === g.id && (
                         <>
                           {' '}
@@ -301,7 +301,7 @@ function Content({ state, ruleset }: { state: GameState; ruleset: Ruleset }) {
             </tbody>
           </table>
         </div>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
+        <p className="text-xs text-encre-3">
           Composition réelle par groupe, sans aucun nom de député ; positions des groupes estimées
           ou supposées. Les votes, la fronde et la position à l’égard du président sont simulés par
           groupe : aucun vote n’est attribué à un député réel. Votre groupe : celui de votre
@@ -326,7 +326,7 @@ function Content({ state, ruleset }: { state: GameState; ruleset: Ruleset }) {
               </li>
             ))}
           </ul>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-encre-3">
             Motions simulées, déposées par l’opposition quand la tension parlementaire dépasse le
             seuil du jeu ; au plus trois par session ordinaire (simplification de la limite de
             signatures par député).
@@ -353,7 +353,7 @@ function Content({ state, ruleset }: { state: GameState; ruleset: Ruleset }) {
                 : 'La feuille de route est vide : aucun texte ne sera déposé.'}
           </p>
         )}
-        <p className="text-xs text-slate-500 dark:text-slate-400">
+        <p className="text-xs text-encre-3">
           Procédure simplifiée (paramètres de jeu) : commission, séance, navette avec le Sénat
           (accord simulé), lecture définitive à l’Assemblée en cas de désaccord (art. 45) ;
           engagement de responsabilité (art. 49 al. 3) une fois par session ordinaire hors lois

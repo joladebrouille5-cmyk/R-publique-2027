@@ -93,8 +93,7 @@ function Delta({ ressource, delta }: Impact) {
 }
 
 function Impacts({ impacts }: { impacts: Impact[] }) {
-  if (impacts.length === 0)
-    return <p className="text-xs text-slate-600 dark:text-slate-400">Sans effet mesurable.</p>;
+  if (impacts.length === 0) return <p className="text-xs text-encre-2">Sans effet mesurable.</p>;
   return (
     <p className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs font-semibold">
       {impacts.map((i) => (
@@ -118,10 +117,7 @@ function BriefDelta({ ressource, delta, index }: Impact & { index: number }) {
       <span className="sr-only">
         {RESOURCE_LABELS[ressource]} {formatDelta(ressource, delta)}
       </span>
-      <span
-        aria-hidden="true"
-        className="block truncate text-xs font-semibold text-slate-600 dark:text-slate-400"
-      >
+      <span aria-hidden="true" className="block truncate text-xs font-semibold text-encre-2">
         {RESOURCE_LABELS[ressource]}
       </span>{' '}
       <span
@@ -223,7 +219,7 @@ export function WeeklyDebrief({
               </span>
             </span>
             <div className="min-w-0">
-              <p className="text-xs font-bold text-slate-600 dark:text-slate-400">
+              <p className="text-xs font-bold text-encre-2">
                 Semaine du {formatGameDate(report.date)}
               </p>
               <h2 id={titleId} className="text-[1.9rem] leading-[0.95] sm:text-5xl">
@@ -268,12 +264,7 @@ export function WeeklyDebrief({
                   return (
                     <li key={id}>
                       <span className="font-semibold">{a?.libelle ?? id}</span>
-                      {a && (
-                        <span className="text-slate-600 dark:text-slate-400">
-                          {' '}
-                          — {a.description}
-                        </span>
-                      )}
+                      {a && <span className="text-encre-2"> — {a.description}</span>}
                     </li>
                   );
                 })}
@@ -287,7 +278,7 @@ export function WeeklyDebrief({
                 Vos actions et leur impact
               </h3>
               {done.length === 0 && rejected.length === 0 && (
-                <p className="text-slate-600 dark:text-slate-400">Aucune action cette semaine.</p>
+                <p className="text-encre-2">Aucune action cette semaine.</p>
               )}
               <ul className="space-y-3">
                 {done.map((group) => {
@@ -299,7 +290,7 @@ export function WeeklyDebrief({
                         {first!.label}
                         {group.length > 1 && ` (×${group.length})`}
                         {first!.cible && (
-                          <span className="font-normal text-slate-600 dark:text-slate-400">
+                          <span className="font-normal text-encre-2">
                             {' '}
                             — {group.map((a) => a.cible).join(', ')}
                           </span>
@@ -329,7 +320,7 @@ export function WeeklyDebrief({
               Imprévus et décisions
             </h3>
             {unexpected.length === 0 && report.decisions.length === 0 && (
-              <p className="text-slate-600 dark:text-slate-400">Aucun imprévu cette semaine.</p>
+              <p className="text-encre-2">Aucun imprévu cette semaine.</p>
             )}
             <ul className="space-y-3">
               {unexpected.map((event) => (
@@ -353,7 +344,7 @@ export function WeeklyDebrief({
                       Suite de « {event.suiteDe} »
                     </p>
                   )}
-                  <p className="text-slate-600 dark:text-slate-400">{event.description}</p>
+                  <p className="text-encre-2">{event.description}</p>
                   {playerId && <Impacts impacts={impactOf(report, playerId, eventFactor(event))} />}
                 </li>
               ))}
@@ -384,7 +375,7 @@ export function WeeklyDebrief({
               <h3 id={`${titleId}-conseil`} className={title}>
                 Conseil des ministres
               </h3>
-              <p className="text-slate-600 dark:text-slate-400">
+              <p className="text-encre-2">
                 {report.conseil.ministres.length} membre(s) du gouvernement suivi(s) : popularité
                 prêtée et loyauté (hypothèses du jeu).
               </p>
@@ -438,9 +429,7 @@ export function WeeklyDebrief({
               Sondages de la semaine
             </h3>
             {polls.length === 0 ? (
-              <p className="text-slate-600 dark:text-slate-400">
-                Aucun sondage d’intentions publié cette semaine.
-              </p>
+              <p className="text-encre-2">Aucun sondage d’intentions publié cette semaine.</p>
             ) : (
               <ul className="space-y-2">
                 {polls.map((poll) => {

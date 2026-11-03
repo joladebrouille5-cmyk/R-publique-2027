@@ -130,7 +130,7 @@ function Credits({ ruleset }: { ruleset: Ruleset }) {
       </Sub>
 
       <Sub title="Données importées">
-        <p className="text-sm text-slate-600 dark:text-slate-400">
+        <p className="text-sm text-encre-2">
           Personnalités (relevé du {formatGameDate(ruleset.personnalites.verifieLe)}), personnalités
           nominables au gouvernement ({formatGameDate(ruleset.figures.verifieLe)}), médias (
           {formatGameDate(ruleset.mediasReels.verifieLe)}), économie, Assemblée nationale et
@@ -152,12 +152,12 @@ function Credits({ ruleset }: { ruleset: Ruleset }) {
         <dl className="space-y-2 text-sm">
           <div>
             <dt className="font-semibold">Personnalités</dt>
-            <dd className="text-slate-600 dark:text-slate-400">{ruleset.personnalites.decision}</dd>
+            <dd className="text-encre-2">{ruleset.personnalites.decision}</dd>
           </div>
           {ruleset.personnalites.nonIntegrees.length > 0 && (
             <div>
               <dt className="font-semibold">Candidatures déclarées non intégrées</dt>
-              <dd className="text-slate-600 dark:text-slate-400">
+              <dd className="text-encre-2">
                 {ruleset.personnalites.nonIntegrees
                   .map((n) => `${n.prenom} ${n.nom} (${n.parti}) : ${n.motif}`)
                   .join(' ; ')}
@@ -166,12 +166,12 @@ function Credits({ ruleset }: { ruleset: Ruleset }) {
           )}
           <div>
             <dt className="font-semibold">Personnalités nominables au gouvernement</dt>
-            <dd className="text-slate-600 dark:text-slate-400">{ruleset.figures.decision}</dd>
+            <dd className="text-encre-2">{ruleset.figures.decision}</dd>
           </div>
           {ruleset.figures.ecartees.length > 0 && (
             <div>
               <dt className="font-semibold">Personnalités de la sélection écartées à l’import</dt>
-              <dd className="text-slate-600 dark:text-slate-400">
+              <dd className="text-encre-2">
                 {ruleset.figures.ecartees
                   .map((e) => `${e.prenom} ${e.nom} : ${e.motif}`)
                   .join(' ; ')}
@@ -180,11 +180,11 @@ function Credits({ ruleset }: { ruleset: Ruleset }) {
           )}
           <div>
             <dt className="font-semibold">Médias</dt>
-            <dd className="text-slate-600 dark:text-slate-400">{ruleset.mediasReels.decision}</dd>
+            <dd className="text-encre-2">{ruleset.mediasReels.decision}</dd>
           </div>
           <div>
             <dt className="font-semibold">Médias mesurés mais non retenus</dt>
-            <dd className="text-slate-600 dark:text-slate-400">
+            <dd className="text-encre-2">
               {[
                 ...ruleset.mediasReels.exclus.map((e) => `${e.libelle} : ${e.motif}`),
                 ...ruleset.mediasReels.emissionsNonRetenues.map((e) => `${e.titre} : ${e.motif}`),
@@ -228,10 +228,8 @@ function Credits({ ruleset }: { ruleset: Ruleset }) {
                 {p.prenom} {p.nom}
               </p>
               <PhotoCreditLine personality={p} />
-              <p className="text-xs text-slate-600 dark:text-slate-400">
-                Position : {p.position.detail}
-              </p>
-              <p className="text-xs text-slate-600 dark:text-slate-400">
+              <p className="text-xs text-encre-2">Position : {p.position.detail}</p>
+              <p className="text-xs text-encre-2">
                 Fiche :{' '}
                 <a href={p.article} {...external}>
                   article Wikipédia
@@ -263,7 +261,7 @@ function Credits({ ruleset }: { ruleset: Ruleset }) {
                 {f.prenom} {f.nom}
               </p>
               <PhotoCreditLine personality={f} />
-              <p className="text-xs text-slate-600 dark:text-slate-400">
+              <p className="text-xs text-encre-2">
                 Position : {f.position.detail} Compétence estimée :{' '}
                 {f.competence.facteurs
                   .map(
@@ -273,7 +271,7 @@ function Credits({ ruleset }: { ruleset: Ruleset }) {
                   .join(' ; ')}
                 . Notoriété {f.notoriete.niveau} : {f.notoriete.motif}.
               </p>
-              <p className="text-xs text-slate-600 dark:text-slate-400">
+              <p className="text-xs text-encre-2">
                 Fiche :{' '}
                 <a href={f.article} {...external}>
                   article Wikipédia (révision importée)
@@ -290,7 +288,7 @@ function Credits({ ruleset }: { ruleset: Ruleset }) {
       </Sub>
 
       <Sub title="Logos des médias">
-        <ul className="space-y-1 text-xs text-slate-600 dark:text-slate-400">
+        <ul className="space-y-1 text-xs text-encre-2">
           {outlets.map((o) => (
             <li key={o.id}>
               <span className="font-semibold text-slate-900 dark:text-slate-100">{o.libelle}</span>{' '}
@@ -328,19 +326,17 @@ function Credits({ ruleset }: { ruleset: Ruleset }) {
             return note ? (
               <div key={key}>
                 <dt className="font-semibold">{label}</dt>
-                <dd className="text-slate-600 dark:text-slate-400">{note}</dd>
+                <dd className="text-encre-2">{note}</dd>
               </div>
             ) : null;
           })}
           <div>
             <dt className="font-semibold">Sondages simulés</dt>
-            <dd className="text-slate-600 dark:text-slate-400">{ruleset.sondages.limites}</dd>
+            <dd className="text-encre-2">{ruleset.sondages.limites}</dd>
           </div>
           <div>
             <dt className="font-semibold">Équipe gouvernementale</dt>
-            <dd className="text-slate-600 dark:text-slate-400">
-              {ruleset.quinquennat.equipe.note}
-            </dd>
+            <dd className="text-encre-2">{ruleset.quinquennat.equipe.note}</dd>
           </div>
           {[
             ...Object.values(ruleset.personnalites.methode),
@@ -350,7 +346,7 @@ function Credits({ ruleset }: { ruleset: Ruleset }) {
           ].map((text) => (
             <div key={text}>
               <dt className="sr-only">Méthode des données importées</dt>
-              <dd className="text-slate-600 dark:text-slate-400">{text}</dd>
+              <dd className="text-encre-2">{text}</dd>
             </div>
           ))}
         </dl>
@@ -391,11 +387,11 @@ export function Parametres() {
 
       <Section id="titre-a-propos" title="À propos">
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
-          <dt className="text-slate-600 dark:text-slate-400">Jeu de règles</dt>
+          <dt className="text-encre-2">Jeu de règles</dt>
           <dd>{ruleset.data ? `${ruleset.data.libelle} (${ruleset.data.version})` : '—'}</dd>
-          <dt className="text-slate-600 dark:text-slate-400">Moteur</dt>
+          <dt className="text-encre-2">Moteur</dt>
           <dd>{versions?.engine ?? '—'}</dd>
-          <dt className="text-slate-600 dark:text-slate-400">Format de sauvegarde</dt>
+          <dt className="text-encre-2">Format de sauvegarde</dt>
           <dd>{versions?.saveSchema ?? '—'}</dd>
         </dl>
       </Section>

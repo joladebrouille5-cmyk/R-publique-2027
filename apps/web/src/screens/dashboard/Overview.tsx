@@ -55,7 +55,7 @@ export function Overview({
                   data-tuile={tile.id}
                   className="group flex h-full w-full flex-col items-start gap-0.5 px-3.5 py-1.5 text-left transition-colors duration-200 hover:bg-or-100 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-republique-600 dark:hover:bg-dorure/[0.08] sm:px-4 sm:py-3 dark:focus-visible:outline-dorure"
                 >
-                  <span className="flex w-full items-center gap-1.5 text-[0.7rem] font-semibold text-slate-600 dark:text-slate-400">
+                  <span className="flex w-full items-center gap-1.5 text-[0.7rem] font-semibold text-encre-2">
                     <Icon aria-hidden="true" className="size-3.5 shrink-0" strokeWidth={2.25} />
                     <span className="min-w-0 flex-1 truncate leading-tight sm:whitespace-normal">
                       {tile.label}

@@ -35,7 +35,7 @@ function Account({ state, actor, ruleset }: { state: GameState; actor: Actor; ru
             ['Plafond applicable', formatEuros(cap)],
           ].map(([term, value]) => (
             <div key={term}>
-              <dt className="text-xs text-slate-500 dark:text-slate-400">{term}</dt>
+              <dt className="text-xs text-encre-3">{term}</dt>
               <dd className="font-semibold tabular-nums">{value}</dd>
             </div>
           ))}
@@ -191,7 +191,7 @@ export function Finances() {
           <table className="w-full min-w-[30rem] text-left">
             <caption className="sr-only">Dépenses et dons de chaque candidat</caption>
             <thead>
-              <tr className="text-xs text-slate-500 dark:text-slate-400">
+              <tr className="text-xs text-encre-3">
                 <th scope="col" className="py-1 font-medium">
                   Candidat
                 </th>
@@ -255,7 +255,7 @@ export function Finances() {
             limite des dépenses et de l’apport personnel.
           </li>
         </ul>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
+        <p className="text-xs text-encre-3">
           <Badge tone="reel">Règles réelles</Badge> Emprunts bancaires, part d’apport personnel des
           fonds de départ et montants des collectes : hypothèses de jeu. Sources : Paramètres →
           Crédits.

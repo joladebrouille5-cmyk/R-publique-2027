@@ -59,15 +59,13 @@ function Consequences({ state, ruleset }: { state: GameState; ruleset: Ruleset }
               <p className="flex flex-wrap items-center gap-2">
                 <Badge tone="simule">{ORIGIN_LABELS[c.origine]}</Badge>
                 <strong>{c.libelle}</strong>
-                <span className="text-slate-600 dark:text-slate-400">
+                <span className="text-encre-2">
                   {c.debut > week
                     ? `à partir de la semaine ${c.debut}`
                     : `encore ${c.fin - week + 1} semaine(s), jusqu’à la semaine ${c.fin}`}
                 </span>
               </p>
-              <p className="text-xs text-slate-600 dark:text-slate-400">
-                {describeLasting(c, ruleset)}
-              </p>
+              <p className="text-xs text-encre-2">{describeLasting(c, ruleset)}</p>
             </li>
           ))}
         </ul>
@@ -82,7 +80,7 @@ function Consequences({ state, ruleset }: { state: GameState; ruleset: Ruleset }
           </h3>
           <ul
             aria-labelledby="titre-consequences-achevees"
-            className="mt-1 list-inside list-disc text-slate-600 dark:text-slate-400"
+            className="mt-1 list-inside list-disc text-encre-2"
           >
             {past.map((c) => (
               <li key={c.id}>
@@ -92,7 +90,7 @@ function Consequences({ state, ruleset }: { state: GameState; ruleset: Ruleset }
           </ul>
         </div>
       )}
-      <p className="text-xs text-slate-500 dark:text-slate-400">
+      <p className="text-xs text-encre-3">
         Effets et durées sont des hypothèses de jeu ; chaque effet hebdomadaire apparaît dans les
         facteurs de l’économie et de la popularité. Pendant une campagne présidentielle, ils ne
         s’appliquent pas (le quinquennat n’est pas simulé).
@@ -158,7 +156,7 @@ function Content({ state, ruleset }: { state: GameState; ruleset: Ruleset }) {
                 {c.libelle} <Badge tone="fictif">Fictif</Badge>
                 {c.majeur && <Badge tone="alerte">Majeure</Badge>}
               </p>
-              <p className="text-slate-600 dark:text-slate-400">{c.description}</p>
+              <p className="text-encre-2">{c.description}</p>
               {c.mois && (
                 <p className="text-xs">Saison : {c.mois.map((m) => MONTHS[m - 1]).join(', ')}.</p>
               )}
@@ -181,7 +179,7 @@ function Content({ state, ruleset }: { state: GameState; ruleset: Ruleset }) {
             </li>
           ))}
         </ul>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
+        <p className="text-xs text-encre-3">
           Crises inventées pour le jeu : probabilités, conditions et effets sont des paramètres de
           jeu. Une crise impose une décision au président avant de continuer.
           {scenario && scenario.quinquennat.crises !== 1

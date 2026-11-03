@@ -27,7 +27,7 @@ function Level({ progression }: { progression: Progression }) {
           <span className="block font-display text-2xl leading-tight font-[780] [font-stretch:80%]">
             {niveau.titre}
           </span>
-          <span className="block text-sm text-slate-600 dark:text-slate-400">
+          <span className="block text-sm text-encre-2">
             {plural(points, 'point')}
             {next ? `, ${next.points - points} avant « ${next.titre} »` : ', niveau le plus haut'}
           </span>
@@ -74,7 +74,7 @@ export function Palmares() {
             ],
           ].map(([term, value]) => (
             <div key={term} className="px-3 py-3 first:pl-0">
-              <dt className="text-xs text-slate-600 dark:text-slate-400">{term}</dt>
+              <dt className="text-xs text-encre-2">{term}</dt>
               <dd className="font-display text-3xl font-black tabular-nums">{value}</dd>
             </div>
           ))}

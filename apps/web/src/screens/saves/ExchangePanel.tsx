@@ -57,7 +57,7 @@ export function ExchangePanel({ gameId }: { gameId: string }) {
       <h2 id="titre-echange" className="text-lg font-semibold">
         Exporter ou importer
       </h2>
-      <p className="text-sm text-slate-600 dark:text-slate-400">
+      <p className="text-sm text-encre-2">
         L’export produit un fichier JSON versionné contenant l’état complet et son empreinte.
         L’import crée toujours une <strong>nouvelle</strong> partie : aucune partie existante n’est
         écrasée, et un fichier corrompu ou incohérent (empreinte, format, contenu) est refusé.

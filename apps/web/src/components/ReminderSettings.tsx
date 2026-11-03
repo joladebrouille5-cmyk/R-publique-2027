@@ -13,7 +13,7 @@ export function ReminderSettings() {
   const [problem, setProblem] = useState<string | null>(null);
   if (!reminders)
     return (
-      <p className="text-sm text-slate-600 dark:text-slate-400">
+      <p className="text-sm text-encre-2">
         Le rappel quotidien du défi du jour est proposé dans l’application Android, où il est
         programmé sur l’appareil. Le navigateur n’envoie aucune notification.
       </p>
@@ -70,7 +70,7 @@ export function ReminderSettings() {
           {problem}
         </p>
       )}
-      <p className="text-xs text-slate-600 dark:text-slate-400">
+      <p className="text-xs text-encre-2">
         Notification programmée sur l’appareil, sans réseau ; l’heure peut varier de quelques
         minutes (alarme non exacte, qui ménage la batterie).
       </p>

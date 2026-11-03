@@ -165,9 +165,7 @@ function Tiles<T extends string>({
               </span>
               <span>
                 <span className="font-display text-lg font-semibold">{labelOf(option.value)}</span>
-                <span className="block text-sm text-slate-600 dark:text-slate-400">
-                  {option.description}
-                </span>
+                <span className="block text-sm text-encre-2">{option.description}</span>
               </span>
             </label>
           );
@@ -209,7 +207,7 @@ function Step({
           {index + 1}
         </span>
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">
+          <p className="text-sm font-semibold text-encre-2">
             Étape {index + 1} sur {count}
           </p>
           <h2
@@ -220,7 +218,7 @@ function Step({
           >
             {titre}
           </h2>
-          <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-400">{description}</p>
+          <p className="mt-0.5 text-sm text-encre-2">{description}</p>
         </div>
       </header>
       <div className={`${card} space-y-7`}>{children}</div>
@@ -464,7 +462,7 @@ export function NewGame() {
                         placeholder={suggestedName}
                         aria-describedby="aide-nom"
                       />
-                      <p id="aide-nom" className="text-xs text-slate-600 dark:text-slate-400">
+                      <p id="aide-nom" className="text-xs text-encre-2">
                         Laissé vide : « {suggestedName} ».
                       </p>
                     </div>
@@ -482,7 +480,7 @@ export function NewGame() {
                         onChange={(event) => setStartDate(event.target.value)}
                         aria-describedby="aide-depart"
                       />
-                      <p id="aide-depart" className="text-xs text-slate-600 dark:text-slate-400">
+                      <p id="aide-depart" className="text-xs text-encre-2">
                         Un lundi de l’automne 2026 (le temps avance par semaines).
                       </p>
                     </div>
@@ -499,7 +497,7 @@ export function NewGame() {
                         placeholder="aléatoire"
                         aria-describedby="aide-graine"
                       />
-                      <p id="aide-graine" className="text-xs text-slate-600 dark:text-slate-400">
+                      <p id="aide-graine" className="text-xs text-encre-2">
                         Même graine et mêmes décisions donnent la même partie.
                       </p>
                     </div>
@@ -570,12 +568,12 @@ export function NewGame() {
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-slate-600 dark:text-slate-400">
+                <p className="text-sm text-encre-2">
                   Choisissez la personnalité que vous incarnez.
                 </p>
               ))}
             {withPersonality && chosenPersonality && (
-              <p className="mt-3 text-xs text-slate-600 dark:text-slate-400">{SIMULATION_NOTICE}</p>
+              <p className="mt-3 text-xs text-encre-2">{SIMULATION_NOTICE}</p>
             )}
             {mode === 'observateur' && (
               <p className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300">
@@ -586,7 +584,7 @@ export function NewGame() {
             <dl className="mt-5 divide-y divide-slate-200 border-t border-slate-200 text-sm dark:divide-white/[0.07] dark:border-white/[0.07]">
               {recap.map(([term, value]) => (
                 <div key={term} className="flex justify-between gap-4 py-2">
-                  <dt className="text-slate-600 dark:text-slate-400">{term}</dt>
+                  <dt className="text-encre-2">{term}</dt>
                   <dd className="text-right font-semibold">{value}</dd>
                 </div>
               ))}

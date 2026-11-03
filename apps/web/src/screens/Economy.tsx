@@ -101,11 +101,11 @@ function Content({
                     {formatIndicator(indicator, value)}
                   </span>
                 </p>
-                <p className="text-xs text-slate-600 dark:text-slate-400">
+                <p className="text-xs text-encre-2">
                   {formatIndicatorDelta(since)} depuis le début {startLabel} (semaine{' '}
                   {start.semaine}).
                 </p>
-                <p className="text-xs text-slate-600 dark:text-slate-400">
+                <p className="text-xs text-encre-2">
                   Départ : <Origin ruleset={ruleset} indicator={indicator} />
                 </p>
                 {/* Phase 13 : facteurs à plat, sans volet dans la section dépliée. */}
@@ -115,7 +115,7 @@ function Content({
                       Semaine {lastWeek} : {formatIndicatorDelta(change.after - change.before)}
                     </p>
                     {change.factors.length > 0 && (
-                      <ul className="list-inside list-disc text-slate-600 dark:text-slate-400">
+                      <ul className="list-inside list-disc text-encre-2">
                         {change.factors.map((f, i) => (
                           <li key={i}>
                             {f.label} : {formatIndicatorDelta(f.value)}
@@ -129,7 +129,7 @@ function Content({
             );
           })}
         </ul>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
+        <p className="text-xs text-encre-3">
           Valeurs de départ réelles ; leur évolution est une simulation (hypothèses du jeu, réformes
           adoptées, crises fictives), jamais une prévision. Sources : Paramètres → Crédits.
         </p>

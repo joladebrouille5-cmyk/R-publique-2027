@@ -29,7 +29,7 @@ export function PersonalityPicker({
     <fieldset className="space-y-3">
       {/* Le titre du chapitre est visible au-dessus ; la légende nomme le groupe. */}
       <legend className="sr-only">Personnalité incarnée</legend>
-      <p className="text-sm text-slate-600 dark:text-slate-400">
+      <p className="text-sm text-encre-2">
         Candidatures déclarées à la présidentielle de 2027, relevées le {formatGameDate(verifieLe)}{' '}
         et retenues pour le jeu. {SIMULATION_NOTICE} Sources et crédits des photos : Paramètres.
       </p>
@@ -53,7 +53,7 @@ export function PersonalityPicker({
                 </span>
                 <span id={`fiche-${p.id}`} className="block space-y-1 text-xs">
                   <span className="block">{p.parti}</span>
-                  <span className="block text-slate-600 dark:text-slate-400">
+                  <span className="block text-encre-2">
                     {describePosition(p.position)} — {POSITION_METHOD_LABELS[p.position.methode]}
                   </span>
                 </span>
@@ -74,7 +74,7 @@ export function PersonalityPicker({
         </div>
       )}
       {nonIntegrees.length > 0 && (
-        <details className="text-xs text-slate-600 dark:text-slate-400">
+        <details className="text-xs text-encre-2">
           <summary className="cursor-pointer">
             {nonIntegrees.length} autres candidatures déclarées, non intégrées
           </summary>

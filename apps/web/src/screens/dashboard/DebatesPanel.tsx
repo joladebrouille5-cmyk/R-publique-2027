@@ -60,7 +60,7 @@ export function DebatesPanel({
               <p className="flex flex-wrap items-center gap-2">
                 {outlet && <OutletLogo outlet={outlet} />}
                 <span className="font-semibold">{rule.libelle}</span>
-                <span className="text-sm text-slate-600 dark:text-slate-400">
+                <span className="text-sm text-encre-2">
                   {outlet?.libelle ?? rule.mediaId}
                   {echeance &&
                     `, ${formatGameDate(echeance.date)}${echeance.heure ? ` à ${echeance.heure.replace(':', ' h ')}` : ''}`}{' '}

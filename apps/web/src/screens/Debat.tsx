@@ -162,7 +162,7 @@ function Plateau({ session }: { session: DebateSession }) {
           <h1 id="titre-debat" className={screenTitle}>
             {session.libelle}
           </h1>
-          <p className="flex flex-wrap items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+          <p className="flex flex-wrap items-center gap-2 text-sm text-encre-2">
             {outlet && <OutletLogo outlet={outlet} />}
             <span>
               {outlet?.libelle ?? session.mediaId}, {formatGameDate(session.date)} — débat simulé,
@@ -243,9 +243,7 @@ function Plateau({ session }: { session: DebateSession }) {
               ))}
             </ol>
           ) : (
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              Vous avez la parole en premier.
-            </p>
+            <p className="text-sm text-encre-2">Vous avez la parole en premier.</p>
           )}
           <CardPicker
             key={session.enCours.index}
@@ -340,7 +338,7 @@ function Plateau({ session }: { session: DebateSession }) {
           Retour au tableau de bord
         </Link>
       </p>
-      <p className="text-xs text-slate-600 dark:text-slate-400">{ruleset.data?.debats.note}</p>
+      <p className="text-xs text-encre-2">{ruleset.data?.debats.note}</p>
     </section>
   );
 }

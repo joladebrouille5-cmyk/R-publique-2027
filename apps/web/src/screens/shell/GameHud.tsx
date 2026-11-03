@@ -64,7 +64,7 @@ function Stat({
 }) {
   return (
     <div className="min-w-0 px-2 first:pl-0 sm:px-4">
-      <dt className="flex items-center gap-1 text-[0.7rem] font-semibold text-slate-600 dark:text-slate-400">
+      <dt className="flex items-center gap-1 text-[0.7rem] font-semibold text-encre-2">
         <Icon aria-hidden="true" className="hidden size-3.5 shrink-0 sm:block" strokeWidth={2.25} />
         <span className="truncate">{label}</span>
       </dt>
@@ -115,7 +115,7 @@ export function GameHud({ game, ruleset }: { game: GameDetail; ruleset: Ruleset 
           <p className="truncate font-display text-xl leading-tight font-[850] [font-stretch:76%] sm:text-[1.75rem]">
             {player ? candidateName(player.candidate) : 'Mode observateur'}
           </p>
-          <p className="flex items-center gap-1.5 truncate text-xs text-slate-600 dark:text-slate-400">
+          <p className="flex items-center gap-1.5 truncate text-xs text-encre-2">
             {player && (
               <span className="hidden truncate font-semibold text-slate-700 sm:inline dark:text-slate-300">
                 {player.candidate.parti}

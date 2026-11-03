@@ -150,7 +150,7 @@ export function Espace({ hub }: { hub: Hub }) {
         <h1 id="titre-espace" className={screenTitle}>
           {hub.titre}
         </h1>
-        <p className="text-slate-600 dark:text-slate-400">{hub.intro}</p>
+        <p className="text-encre-2">{hub.intro}</p>
       </div>
       {/* Phase 13 : l'essentiel du mandat, toujours visible, en tête de l'espace Pouvoir. */}
       {overview && ruleset.data && (

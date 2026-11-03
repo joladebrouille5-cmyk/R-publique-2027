@@ -40,7 +40,7 @@ export function TripPlanner({
         <MapPin aria-hidden="true" className="size-4 text-amber-700 dark:text-amber-300" />
         Programmer un déplacement
       </p>
-      <p className="text-xs text-slate-600 dark:text-slate-400">
+      <p className="text-xs text-encre-2">
         {visits > 0
           ? `${visits} déplacement(s) du président ici pendant le mandat (trace en pointillés sur la carte).`
           : 'Aucun déplacement du président ici pendant le mandat.'}
@@ -69,9 +69,7 @@ export function TripPlanner({
                 <Plus aria-hidden="true" className="size-4" />
                 {action.libelle} ({action.cout.tempsHeures} h)
               </button>
-              {reason && (
-                <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400">{reason}</p>
-              )}
+              {reason && <p className="mt-0.5 text-xs text-encre-2">{reason}</p>}
             </li>
           );
         })}

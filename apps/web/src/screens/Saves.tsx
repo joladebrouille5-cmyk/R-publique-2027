@@ -50,7 +50,7 @@ export function Saves() {
   return (
     <section aria-labelledby="titre-sauvegardes" className="space-y-6">
       <ScreenHeading id="titre-sauvegardes">Sauvegardes</ScreenHeading>
-      <p className="text-sm text-slate-600 dark:text-slate-400">
+      <p className="text-sm text-encre-2">
         Les sauvegardes sont conservées sur le serveur. Chaque sauvegarde garde l’empreinte de
         l’état : une restauration redonne exactement la même partie.
       </p>
@@ -92,7 +92,7 @@ export function Saves() {
                   <div>
                     <p className="font-semibold">Emplacement {slot}</p>
                     {existing ? (
-                      <p className="text-sm text-slate-600 dark:text-slate-400">
+                      <p className="text-sm text-encre-2">
                         {existing.label ? `${existing.label} — ` : ''}Semaine {existing.week},{' '}
                         {formatGameDate(existing.date)} · enregistrée le{' '}
                         {formatTimestamp(existing.createdAt)}

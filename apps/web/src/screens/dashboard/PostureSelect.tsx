@@ -15,7 +15,7 @@ function fit(affinity: number): { label: string; tone: string } {
     return { label: 'adaptée au format', tone: 'text-emerald-700 dark:text-emerald-400' };
   if (affinity <= -10)
     return { label: 'peu adaptée au format', tone: 'text-red-700 dark:text-red-400' };
-  return { label: 'neutre pour ce format', tone: 'text-slate-600 dark:text-slate-400' };
+  return { label: 'neutre pour ce format', tone: 'text-encre-2' };
 }
 
 /**
@@ -43,7 +43,7 @@ export function PostureSelect({
   const selected = rules.postures.find((p) => p.id === value)!;
   return (
     <fieldset className="w-full basis-full space-y-1.5">
-      <legend className="text-xs text-slate-600 dark:text-slate-400">
+      <legend className="text-xs text-encre-2">
         Posture du passage n° {index + 1}
         {format ? ` — ${format.libelle}` : ' — choisissez d’abord le média'}
       </legend>
@@ -65,7 +65,7 @@ export function PostureSelect({
           </label>
         ))}
       </div>
-      <p className="text-xs text-slate-600 dark:text-slate-400">
+      <p className="text-xs text-encre-2">
         {selected.description}
         {format && (
           <>

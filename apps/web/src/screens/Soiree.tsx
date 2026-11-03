@@ -413,7 +413,7 @@ function Night({ result }: { result: RoundResult }) {
           <h1 id="titre-soiree" className={screenTitle}>
             Soirée électorale
           </h1>
-          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-600 dark:text-slate-400">
+          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-encre-2">
             <span>
               {round === 1 ? 'Premier' : 'Second'} tour de la présidentielle {state.cycle.annee},{' '}
               {formatGameDate(result.date)}
@@ -425,9 +425,7 @@ function Night({ result }: { result: RoundResult }) {
           </p>
         </div>
         <p className="text-right">
-          <span className="block text-xs font-semibold text-slate-600 dark:text-slate-400">
-            Heure de la soirée
-          </span>
+          <span className="block text-xs font-semibold text-encre-2">Heure de la soirée</span>
           <span
             data-testid="horloge-soiree"
             className="block font-display text-6xl leading-none font-extrabold tabular-nums [text-shadow:0_0_24px_rgb(98_134_255/0.45)] sm:text-7xl"
@@ -451,7 +449,7 @@ function Night({ result }: { result: RoundResult }) {
             key={term}
             className="rounded-2xl border border-slate-200/80 bg-white px-3 py-2.5 shadow-card dark:border-white/10 dark:bg-white/[0.04]"
           >
-            <dt className="text-xs font-semibold text-slate-600 dark:text-slate-400">{term}</dt>
+            <dt className="text-xs font-semibold text-encre-2">{term}</dt>
             <dd className="font-display text-2xl font-extrabold tabular-nums sm:text-3xl">
               {value}
             </dd>
@@ -480,7 +478,7 @@ function Night({ result }: { result: RoundResult }) {
           <h2 id="titre-verdict" className="text-3xl sm:text-4xl">
             {outcomeText}
           </h2>
-          <p className="text-sm text-slate-600 dark:text-slate-400">
+          <p className="text-sm text-encre-2">
             Résultat simulé du {roundName(round)} tour, identique à celui de l’écran Résultats.
           </p>
           <div className="flex flex-wrap gap-2">
@@ -617,9 +615,7 @@ function Night({ result }: { result: RoundResult }) {
                     </label>
                   ))}
                 </div>
-                <p className="text-xs text-slate-600 dark:text-slate-400">
-                  {VITESSE_AIDE[vitesse]}
-                </p>
+                <p className="text-xs text-encre-2">{VITESSE_AIDE[vitesse]}</p>
               </fieldset>
               <div role="group" aria-label="Déroulé de la soirée" className="flex flex-wrap gap-2">
                 {done ? (
@@ -735,7 +731,7 @@ function Night({ result }: { result: RoundResult }) {
                       />
                       <span className="min-w-0">
                         <span className="block font-semibold">{DROM_LABELS[code]}</span>
-                        <span className="block text-xs text-slate-600 dark:text-slate-400">
+                        <span className="block text-xs text-encre-2">
                           {r && r.exprimes > 0
                             ? `${candidats[leaderOf(r)!]!.label} en tête`
                             : 'En attente'}
@@ -755,7 +751,7 @@ function Night({ result }: { result: RoundResult }) {
         </div>
       </div>
 
-      <p className="text-xs text-slate-600 dark:text-slate-400">
+      <p className="text-xs text-encre-2">
         Horaires, rythme du dépouillement et estimations : simulation du jeu, déterministe (graine
         de la partie). Chaque chiffre affiché est une part exacte du résultat simulé du tour ; à
         minuit, tout est dépouillé, Français de l’étranger et collectivités d’outre-mer compris.

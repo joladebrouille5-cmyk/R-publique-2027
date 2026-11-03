@@ -30,10 +30,7 @@ export function MajorityGauge({
         <span className="font-semibold">Majorité des membres</span>
         <span className="font-display text-lg font-bold tabular-nums">
           {supporters}
-          <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">
-            {' '}
-            / {majority}
-          </span>
+          <span className="text-sm font-semibold text-encre-3"> / {majority}</span>
         </span>
       </p>
       <div
@@ -55,7 +52,7 @@ export function MajorityGauge({
           style={{ left: pct(majority, filled) }}
         />
       </div>
-      <p className="text-xs text-slate-600 dark:text-slate-400">
+      <p className="text-xs text-encre-2">
         {text} Seuil : majorité des {filled} sièges pourvus.
         {coalition &&
           ` Dont coalition avec le bloc « ${coalition.libelle} » (${coalition.sieges}).`}
@@ -112,7 +109,7 @@ export function TensionGauge({
         <span className="font-semibold">Tension parlementaire</span>
         <span className="font-display text-lg font-bold tabular-nums">
           {tension.valeur}
-          <span className="text-sm font-semibold text-slate-500 dark:text-slate-400"> / 100</span>
+          <span className="text-sm font-semibold text-encre-3"> / 100</span>
         </span>
       </p>
       <div
@@ -138,20 +135,18 @@ export function TensionGauge({
         <Icon aria-hidden="true" className="size-3.5 shrink-0" />
         {level.label}
         {compact && (
-          <span className="font-normal text-slate-500 dark:text-slate-400">
-            · indicateur du jeu (hypothèses)
-          </span>
+          <span className="font-normal text-encre-3">· indicateur du jeu (hypothèses)</span>
         )}
       </p>
       {!compact && tension.censure && (
-        <p className="text-xs text-slate-600 dark:text-slate-400">
+        <p className="text-xs text-encre-2">
           Censure projetée : {tension.censure.pour} voix pour {tension.censure.majorite} requises
           (projection du jeu, sans aléa).
         </p>
       )}
       {details && !compact && <TensionFactors tension={tension} />}
       {!compact && (
-        <p className="text-xs text-slate-500 dark:text-slate-400">
+        <p className="text-xs text-encre-3">
           Indicateur du jeu (hypothèses) : il renchérit le 49.3, nourrit la censure et, au-delà de{' '}
           {seuilMotion}, peut provoquer des motions de censure spontanées (au plus trois par
           session).
@@ -168,7 +163,7 @@ export function TensionFactors({ tension }: { tension: Parliament['tension'] }) 
     <ul className="space-y-0.5 text-xs" aria-label="Facteurs de la tension parlementaire">
       {tension.facteurs.map((f) => (
         <li key={f.libelle} className="flex justify-between gap-3">
-          <span className="text-slate-600 dark:text-slate-400">{f.libelle}</span>
+          <span className="text-encre-2">{f.libelle}</span>
           <span className="shrink-0 font-semibold tabular-nums">
             {f.valeur > 0 ? `+${f.valeur}` : `−${Math.abs(f.valeur)}`}
           </span>

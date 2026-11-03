@@ -195,7 +195,7 @@ export function MoveItem({
             ))}
         </ul>
         {move.reaction && (
-          <p className="text-xs text-slate-600 dark:text-slate-400">
+          <p className="text-xs text-encre-2">
             <span className="font-semibold">{move.reaction.compte}</span> (compte fictif) :{' '}
             {move.reaction.texte}
           </p>
@@ -242,7 +242,7 @@ export function Lecterns({
                 {id === player && ' (vous)'}
               </p>
               {empty ? (
-                <p className="text-xs text-slate-600 dark:text-slate-400">Chaise vide</p>
+                <p className="text-xs text-encre-2">Chaise vide</p>
               ) : (
                 <>
                   <p className="flex items-baseline justify-between gap-2">
@@ -336,7 +336,7 @@ export function ApprovalChart({
           />
         ))}
       </svg>
-      <figcaption className="flex flex-wrap gap-x-4 text-xs text-slate-600 dark:text-slate-400">
+      <figcaption className="flex flex-wrap gap-x-4 text-xs text-encre-2">
         {player && series[player] && (
           <span className="flex items-center gap-1.5">
             <span aria-hidden="true" className="h-1 w-4 rounded-full bg-republique-500" />
@@ -415,7 +415,7 @@ export function CardPicker({
                   {info.titre}
                   {detail && <span className="block text-sm font-semibold">{detail}</span>}
                 </span>
-                <span className="text-xs text-slate-600 dark:text-slate-400">{info.aide}</span>
+                <span className="text-xs text-encre-2">{info.aide}</span>
               </button>
             </li>
           );
@@ -452,7 +452,7 @@ export function CardPicker({
           </fieldset>
           <fieldset className="space-y-1.5">
             <legend className="text-sm font-bold">Angle</legend>
-            <p className="text-xs text-slate-600 dark:text-slate-400">
+            <p className="text-xs text-encre-2">
               Le fait reproché doit être vrai pour la cible (écran Candidats) : sinon, l’attaque se
               retourne contre vous.
             </p>
@@ -471,9 +471,7 @@ export function CardPicker({
                   />
                   <span>
                     <span className="block font-semibold">{a.libelle}</span>
-                    <span className="block text-xs text-slate-600 dark:text-slate-400">
-                      {a.fait}
-                    </span>
+                    <span className="block text-xs text-encre-2">{a.fait}</span>
                   </span>
                 </label>
               ))}
@@ -551,7 +549,7 @@ export function FlashPoll({
           Chaise vide : {session.refus.map((id) => nameOf(state, id)).join(', ')}.
         </p>
       )}
-      <p className="text-xs text-slate-600 dark:text-slate-400">
+      <p className="text-xs text-encre-2">
         {result.applique
           ? 'Effets appliqués à la résolution de la semaine : popularité, notoriété, dynamique et intentions de vote (voir le bilan).'
           : 'Les effets (popularité, notoriété, dynamique, intentions de vote) seront appliqués à la résolution de la semaine.'}

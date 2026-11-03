@@ -164,7 +164,7 @@ function Calendar({ state, ruleset }: { state: GameState; ruleset: Ruleset }) {
             : 'Le président (IA) dissout si ses soutiens sont trop minoritaires et sa popularité suffisante (règle de jeu, hypothèse).'}
         </p>
       )}
-      <p className="text-xs text-slate-500 dark:text-slate-400">{rules.regles.regle}</p>
+      <p className="text-xs text-encre-3">{rules.regles.regle}</p>
     </section>
   );
 }
@@ -243,12 +243,12 @@ function Campaign({ state, ruleset }: { state: GameState; ruleset: Ruleset }) {
             ))}
           </ul>
         ) : (
-          <p className="text-slate-600 dark:text-slate-400">
+          <p className="text-encre-2">
             Aucun déplacement du président dans un département depuis l’ouverture de la campagne.
           </p>
         )}
       </div>
-      <p className="text-xs text-slate-500 dark:text-slate-400">
+      <p className="text-xs text-encre-3">
         Accords simulés, acceptés par les partenaires selon la proximité des positions : ils ne
         décrivent aucun accord réel. Les blocs conduits par l’IA ne concluent aucun accord avec le
         bloc visé par le front républicain (convention du jeu). Chaque déplacement du président dans
@@ -303,7 +303,7 @@ function Composition({ outcome, ruleset }: { outcome: LegislativeOutcome; rulese
       >
         <table className="w-full min-w-[30rem] text-left">
           <caption className="sr-only">Sièges et voix du premier tour par bloc</caption>
-          <thead className="text-xs text-slate-500 dark:text-slate-400">
+          <thead className="text-xs text-encre-3">
             <tr>
               <th scope="col">Bloc</th>
               <th scope="col">Sièges</th>
@@ -330,7 +330,7 @@ function Composition({ outcome, ruleset }: { outcome: LegislativeOutcome; rulese
           </tbody>
         </table>
       </div>
-      <p className="text-xs text-slate-500 dark:text-slate-400">
+      <p className="text-xs text-encre-3">
         {real
           ? 'Sièges : composition actuelle de l’Assemblée (groupes et députés en exercice, sans aucun nom), rattachée aux blocs. Voix : premier tour de 2024, nuances du ministère de l’Intérieur regroupées par bloc.'
           : 'Résultats simulés : un candidat par bloc dans chaque circonscription (un seul pour deux blocs liés par des investitures communes), voix de 2024 modulées par l’élan présidentiel, la popularité du président, la mobilisation de campagne et un aléa ; désistements au second tour selon les accords, reports de voix selon la proximité des blocs ; sièges d’un bloc répartis entre ses groupes au prorata de leurs sièges sortants. Aucun résultat simulé n’est une prévision.'}{' '}
@@ -377,7 +377,7 @@ function Districts({ rows, title, note }: { rows: Row[]; title: string; note: st
       >
         <table className="w-full min-w-[36rem] text-left text-xs">
           <caption className="sr-only">{title}</caption>
-          <thead className="text-slate-500 dark:text-slate-400">
+          <thead className="text-encre-3">
             <tr>
               <th scope="col">Circonscription</th>
               <th scope="col">Inscrits</th>
@@ -407,7 +407,7 @@ function Districts({ rows, title, note }: { rows: Row[]; title: string; note: st
           </tbody>
         </table>
       </div>
-      <p className="text-xs text-slate-500 dark:text-slate-400">{note}</p>
+      <p className="text-xs text-encre-3">{note}</p>
     </section>
   );
 }

@@ -129,7 +129,7 @@ function Member({
           {info.badge && <Badge tone={info.badge.tone}>{info.badge.text}</Badge>}
         </span>
         {(info.detail || info.competence) && (
-          <span className="block text-xs text-slate-600 dark:text-slate-400">
+          <span className="block text-xs text-encre-2">
             {info.detail}
             {info.detail && info.competence && ' · '}
             {info.competence && (
@@ -180,7 +180,7 @@ function Figures({ ruleset }: { ruleset: Ruleset }) {
       <h2 id="titre-figures" className="text-lg font-semibold">
         Personnalités nominables
       </h2>
-      <p className="text-slate-600 dark:text-slate-400">
+      <p className="text-encre-2">
         Outre les candidats de la partie et les profils fictifs, le président peut solliciter ces
         personnalités réelles pour Matignon ou un ministère ; le Premier ministre les place là où
         elles sont expertes. Leur réponse est simulée : une personnalité éloignée du président peut
@@ -224,9 +224,7 @@ function Figures({ ruleset }: { ruleset: Ruleset }) {
                           <span className="block font-medium">
                             {f.prenom} {f.nom}
                           </span>
-                          <span className="block text-xs text-slate-600 dark:text-slate-400">
-                            {mainFunction(f)}
-                          </span>
+                          <span className="block text-xs text-encre-2">{mainFunction(f)}</span>
                           <span className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs">
                             <span className="inline-flex items-center gap-1">
                               Compétence {pct(f.competence.valeur)}{' '}
@@ -304,13 +302,13 @@ function Content({ state, ruleset }: { state: GameState; ruleset: Ruleset }) {
           <>
             <p>Nommé la semaine du {formatGameDate(government.nommeLe)}.</p>
             <dl className="grid gap-2 sm:grid-cols-[14rem_1fr]">
-              <dt className="text-slate-500 dark:text-slate-400">Premier ministre</dt>
+              <dt className="text-encre-3">Premier ministre</dt>
               <dd>
                 <Member state={state} ruleset={ruleset} member={government.premierMinistre} />
               </dd>
               {government.ministres.map((minister) => (
                 <div key={minister.posteId} className="contents">
-                  <dt className="text-slate-500 dark:text-slate-400">
+                  <dt className="text-encre-3">
                     {postes.get(minister.posteId) ?? minister.posteId}
                   </dt>
                   <dd>
@@ -333,7 +331,7 @@ function Content({ state, ruleset }: { state: GameState; ruleset: Ruleset }) {
               : `le Premier ministre sera nommé la semaine de l’investiture (${formatGameDate(q.mandat.debut)}).`}
           </p>
         )}
-        <p className="text-xs text-slate-500 dark:text-slate-400">
+        <p className="text-xs text-encre-3">
           Les personnalités réelles nommées ne prennent part au jeu que par une simulation : aucun
           propos ne leur est attribué ; leur compétence est une estimation tirée des fonctions
           exercées ; une fonction ministérielle du domaine d’un poste (passée ou présente) y ajoute
@@ -356,7 +354,7 @@ function Content({ state, ruleset }: { state: GameState; ruleset: Ruleset }) {
               <li key={g.numero} className="flex flex-wrap items-center gap-2">
                 <span>n° {g.numero} :</span>
                 <Member state={state} ruleset={ruleset} member={g.premierMinistre} />
-                <span className="text-slate-500 dark:text-slate-400">
+                <span className="text-encre-3">
                   du {formatGameDate(g.debut)} au {formatGameDate(g.fin)} ({g.motif})
                 </span>
               </li>
@@ -400,7 +398,7 @@ function Content({ state, ruleset }: { state: GameState; ruleset: Ruleset }) {
             une personnalité réelle jouée par l’IA).
           </p>
         )}
-        <p className="text-xs text-slate-500 dark:text-slate-400">
+        <p className="text-xs text-encre-3">
           Le gouvernement dépose ces propositions au Parlement, dans l’ordre ; seules celles que le
           Parlement adopte sont appliquées.{' '}
           <Link to="../parlement" className="underline">

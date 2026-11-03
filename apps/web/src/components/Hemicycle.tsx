@@ -319,7 +319,7 @@ export function Hemicycle({
             </li>
           )}
         </ul>
-        <p className="text-center text-xs text-slate-500 dark:text-slate-400">
+        <p className="text-center text-xs text-encre-3">
           Couleurs des groupes : convention du jeu, pas des couleurs officielles. Groupes rangés de
           gauche à droite selon leur position (moyenne des deux axes).
           {rebels > 0 &&

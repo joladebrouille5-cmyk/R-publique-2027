@@ -119,7 +119,7 @@ function FormatTiles({
               </span>
               <div className="min-w-0 flex-1">
                 <p className="font-bold leading-tight">{format.libelle}</p>
-                <p className="text-xs text-slate-600 dark:text-slate-400">
+                <p className="text-xs text-encre-2">
                   {format.plateforme} · ex.{' '}
                   {format.exemples.map((exemple) => exemple.nom).join(', ')}
                 </p>
@@ -161,13 +161,13 @@ function FormatTiles({
                   )}
                 </dl>
                 {format.exemples.map((exemple) => (
-                  <p key={exemple.nom} className="mt-3 text-xs text-slate-600 dark:text-slate-400">
+                  <p key={exemple.nom} className="mt-3 text-xs text-encre-2">
                     {exemple.nom} : {exemple.fait}.
                   </p>
                 ))}
               </InfoPopover>
             </div>
-            <p className="text-sm text-slate-600 dark:text-slate-400">{format.description}</p>
+            <p className="text-sm text-encre-2">{format.description}</p>
             <div className="mt-auto flex items-center justify-between gap-2">
               <span className="text-xs font-semibold text-slate-600 tabular-nums dark:text-slate-400">
                 {action.cout.tempsHeures} h
@@ -223,9 +223,9 @@ function Post({ post, state, ruleset }: { post: DigitalPost; state: GameState; r
         <div className="min-w-0 flex-1">
           <p className="leading-tight">
             <span className="font-bold">{name}</span>
-            {mine && <span className="text-slate-600 dark:text-slate-400"> (vous)</span>}
+            {mine && <span className="text-encre-2"> (vous)</span>}
           </p>
-          <p className="text-xs text-slate-600 dark:text-slate-400">
+          <p className="text-xs text-encre-2">
             {format?.libelle ?? post.formatId} · semaine {post.semaine}
           </p>
         </div>

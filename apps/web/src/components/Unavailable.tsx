@@ -11,7 +11,7 @@ export function Unavailable({ screen }: { screen: GameScreen }) {
           Non disponible — prévu en phase {screen.phase}
         </p>
         <p className="mt-3 text-slate-700 dark:text-slate-300">{screen.description}</p>
-        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+        <p className="mt-2 text-sm text-encre-3">
           Cet écran sera activé lorsque le moteur correspondant sera implémenté et testé.
         </p>
       </div>

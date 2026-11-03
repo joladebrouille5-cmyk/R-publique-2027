@@ -112,7 +112,7 @@ export function Disclosure({
               {title}
             </span>
             {status && (
-              <span className="mt-0.5 block font-sans text-sm font-normal text-slate-600 dark:text-slate-400">
+              <span className="mt-0.5 block font-sans text-sm font-normal text-encre-2">
                 {status}
               </span>
             )}

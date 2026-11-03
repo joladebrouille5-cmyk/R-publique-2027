@@ -33,6 +33,13 @@
   --color-dorure: #ffe53d;
   /* Surimpression du bleu et du rouge : l'encre du texte et de l'affiche-titre. */
   --color-surimpression: #24164f;
+  /* Encres sémantiques (phase 22) : principale, secondaire, tertiaire ; filet et feuille. La
+     nuit les redéfinit (html.dark) : une classe suffit là où il fallait une paire clair/nuit. */
+  --color-encre: #1b1a3a;
+  --color-encre-2: #4a4e70;
+  --color-encre-3: #62678a;
+  --color-filet: #d3d6e0;
+  --color-feuille: #fbfbfc;
 
   /* Neutres : du papier froid à l'encre de surimpression (remplacent la gamme slate). */
   --color-slate-50: #f1f2f5;
@@ -235,6 +242,11 @@
   html.dark {
     color-scheme: dark;
     background-color: var(--color-slate-950);
+    --color-encre: #f1f2f5;
+    --color-encre-2: #9297ae;
+    --color-encre-3: #9297ae;
+    --color-filet: #353859;
+    --color-feuille: #1b1a3a;
   }
   body {
     @apply bg-slate-50 text-slate-900 antialiased dark:bg-transparent dark:text-slate-100;
@@ -312,8 +324,12 @@
   *::before,
   *::after {
     animation-duration: 1ms !important;
+    /* Phase 22 : sans délai non plus, sinon un élément qui entre « en différé » reste invisible
+       le temps du délai (affiches de l'écran-titre). */
+    animation-delay: 0s !important;
     animation-iteration-count: 1 !important;
     transition-duration: 1ms !important;
+    transition-delay: 0s !important;
     scroll-behavior: auto !important;
   }
   ::view-transition-old(root),

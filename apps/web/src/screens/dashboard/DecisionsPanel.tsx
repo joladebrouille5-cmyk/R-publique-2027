@@ -152,10 +152,10 @@ export function ResponsibleMinister({
       )}
       <p className="min-w-0 text-sm leading-snug">
         <span className="block font-bold">{info.name}</span>
-        <span className="block text-slate-600 dark:text-slate-400">
+        <span className="block text-encre-2">
           {decision.kind === 'qag' ? 'Répond pour le gouvernement' : 'En charge'} · {poste}
         </span>
-        <span className="block text-xs text-slate-500 dark:text-slate-400">
+        <span className="block text-xs text-encre-3">
           {member.nature === 'profil'
             ? 'Profil fictif'
             : 'Nomination simulée : aucun propos ne lui est attribué'}
@@ -278,9 +278,7 @@ function GroupedOptions({
                         {portrait && <Avatar portrait={portrait} size="sm" />}
                         <span className="min-w-0 space-y-0.5">
                           <span className="block font-semibold">{option.libelle}</span>
-                          <span className="block text-sm text-slate-600 dark:text-slate-400">
-                            {option.description}
-                          </span>
+                          <span className="block text-sm text-encre-2">{option.description}</span>
                         </span>
                       </label>
                     </li>
@@ -334,9 +332,7 @@ export function DecisionsPanel({
               {(decision.kind === 'urgence' || decision.kind === 'qag') && (
                 <ResponsibleMinister decision={decision} state={state} ruleset={ruleset} />
               )}
-              <p className="max-w-prose text-slate-600 dark:text-slate-400">
-                {decision.description}
-              </p>
+              <p className="max-w-prose text-encre-2">{decision.description}</p>
               {onSpotlight && SPOTLIGHT_KINDS.has(decision.kind) && (
                 <button
                   type="button"
@@ -378,9 +374,7 @@ export function DecisionsPanel({
                         className="sr-only"
                       />
                       <span className="font-bold">{option.libelle}</span>
-                      <span className="text-sm text-slate-600 dark:text-slate-400">
-                        {option.description}
-                      </span>
+                      <span className="text-sm text-encre-2">{option.description}</span>
                       {decision.kind === 'alliance' && ruleset && (
                         // Accord ou coalition avec un bloc : visages des personnalités de ses partis.
                         <BlocFaces people={blocPeople(ruleset, option.id.split(':')[1] ?? '')} />

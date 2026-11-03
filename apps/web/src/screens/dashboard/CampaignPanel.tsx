@@ -53,7 +53,7 @@ export function CampaignPanel({ state, actor, ruleset }: Props) {
                 ['Validées', s.validees],
               ].map(([term, value]) => (
                 <div key={term}>
-                  <dt className="text-xs text-slate-500 dark:text-slate-400">{term}</dt>
+                  <dt className="text-xs text-encre-3">{term}</dt>
                   <dd className="font-semibold tabular-nums">{formatCount(Number(value))}</dd>
                 </div>
               ))}
@@ -65,7 +65,7 @@ export function CampaignPanel({ state, actor, ruleset }: Props) {
               </p>
             )}
             {closing && (
-              <p className="text-xs text-slate-600 dark:text-slate-400">
+              <p className="text-xs text-encre-2">
                 {closed
                   ? `Présentations closes depuis le ${formatGameDate(closing)}.`
                   : `Clôture le ${formatGameDate(closing)} à 18 h. Les promesses se gagnent en rencontrant des élus locaux ; elles deviennent des intentions puis des présentations envoyées pendant la période d’envoi.`}

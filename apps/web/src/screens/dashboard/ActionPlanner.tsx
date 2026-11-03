@@ -252,7 +252,7 @@ function SupportHint({
         </span>
         {prospect ? (
           prospect.probabilites ? (
-            <span className="block text-slate-600 dark:text-slate-400">
+            <span className="block text-encre-2">
               Proximité {prospect.proximite}/100 · probabilité d’accord (hypothèse du jeu){' '}
               <strong className="text-slate-900 dark:text-slate-100">
                 {percent(prospect.probabilites[counterpart])}
@@ -266,7 +266,7 @@ function SupportHint({
             <span className="block text-red-700 dark:text-red-300">{prospect.motif}</span>
           )
         ) : (
-          <span className="block text-slate-600 dark:text-slate-400">
+          <span className="block text-encre-2">
             Probabilité d’accord indisponible pour l’instant : le serveur l’évaluera à la
             résolution.
           </span>
@@ -307,7 +307,7 @@ function TargetSelect({
   const outlets = new Map(ruleset.mediasReels.organes.map((o) => [o.id, o]));
   return (
     <div className="flex flex-col gap-1 sm:flex-row sm:items-center">
-      <label htmlFor={id} className="text-xs text-slate-600 dark:text-slate-400">
+      <label htmlFor={id} className="text-xs text-encre-2">
         {TARGET_LABELS[action.cible ?? 'media']}
       </label>
       <select
@@ -445,7 +445,7 @@ function PresidentialDetails({ action, ruleset }: { action: ActionDefinition; ru
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2.5">
           {rows.map(([term, text]) => (
             <div key={term} className="contents">
-              <dt className="text-slate-500 dark:text-slate-400">{term}</dt>
+              <dt className="text-encre-3">{term}</dt>
               <dd>{text}</dd>
             </div>
           ))}
@@ -491,14 +491,14 @@ function ActionDetails({
         {plateau && <Badge tone="simule">Passage noté sans tirage</Badge>}
       </div>
       <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2.5">
-        <dt className="text-slate-500 dark:text-slate-400">Coût</dt>
+        <dt className="text-encre-3">Coût</dt>
         <dd>
           {presidency ? '' : `${formatResource('budgetCentimes', action.cout.budgetCentimes)} · `}
           {formatResource('tempsHeures', action.cout.tempsHeures)}
           {action.prerequis.militantsMin > 0 &&
             ` · ${action.prerequis.militantsMin} militants requis`}
         </dd>
-        <dt className="text-slate-500 dark:text-slate-400">Effet attendu</dt>
+        <dt className="text-encre-3">Effet attendu</dt>
         <dd>
           {effectLines(action).length > 0 ? (
             <ul className="list-inside list-disc space-y-0.5">
@@ -510,7 +510,7 @@ function ActionDetails({
             'aucun effet direct'
           )}
         </dd>
-        <dt className="text-slate-500 dark:text-slate-400">Risque</dt>
+        <dt className="text-encre-3">Risque</dt>
         <dd>
           {!action.risque
             ? 'aucun'
@@ -520,8 +520,8 @@ function ActionDetails({
         </dd>
       </dl>
       {presidency && <PresidentialDetails action={action} ruleset={ruleset} />}
-      {action.note && <p className="text-xs text-slate-500 dark:text-slate-400">{action.note}</p>}
-      <p className="text-xs text-slate-500 dark:text-slate-400">
+      {action.note && <p className="text-xs text-encre-3">{action.note}</p>}
+      <p className="text-xs text-encre-3">
         {plateau
           ? 'Passage dans les médias, sans tirage au sort : l’effet se place dans l’écart indiqué selon la préparation, la posture choisie, le format et votre situation (valeurs de jeu, hypothèses).'
           : 'Valeurs de jeu (hypothèses) ; l’effet réel est tiré au sort dans l’écart indiqué.'}
@@ -548,7 +548,7 @@ function Meter({
   const low = ratio < 0.15;
   return (
     <div className="min-w-0 flex-1">
-      <p className="flex items-center justify-between gap-2 text-xs font-semibold text-slate-600 dark:text-slate-400">
+      <p className="flex items-center justify-between gap-2 text-xs font-semibold text-encre-2">
         <span className="flex items-center gap-1">
           <Icon aria-hidden="true" className="size-3.5" />
           {label}
@@ -620,7 +620,7 @@ export function ActionPlanner({
             text={`${remaining.time} h`}
           />
           <div className="shrink-0 text-right">
-            <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">Actions</p>
+            <p className="text-xs font-semibold text-encre-2">Actions</p>
             <p className="font-display text-sm font-bold tabular-nums">
               {plan.length}/{ruleset.jeu.actionsMaxParSemaine}
             </p>
@@ -696,7 +696,7 @@ export function ActionPlanner({
             })}
           </ol>
         ) : (
-          <p className="text-sm text-slate-600 dark:text-slate-400">
+          <p className="text-sm text-encre-2">
             Aucune action programmée : touchez une action ci-dessous pour l’ajouter à la semaine.
           </p>
         )}
@@ -731,7 +731,7 @@ export function ActionPlanner({
                 <span className="font-display text-[1.02rem] leading-tight font-bold [font-stretch:88%]">
                   {action.libelle}
                 </span>
-                <span className="mt-auto flex flex-wrap items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
+                <span className="mt-auto flex flex-wrap items-center gap-1.5 text-xs text-encre-2">
                   <span className="font-semibold tabular-nums">{cost}</span>
                   {action.cible && (
                     <span className="inline-flex items-center gap-0.5 font-semibold text-republique-700 dark:text-republique-300">
@@ -805,7 +805,7 @@ export function ActionPlanner({
           </Drawer>
         );
       })()}
-      <p className="text-xs text-slate-500 dark:text-slate-400">
+      <p className="text-xs text-encre-3">
         {presidency
           ? 'Coûts, effets et probabilités sont des paramètres de jeu (hypothèses), pas des données officielles. Le serveur revalide chaque action.'
           : 'Coûts, effets et probabilités sont des paramètres de jeu (hypothèses), pas des données officielles ; le plafond des dépenses et les règles des dons sont, eux, des règles réelles. Le serveur revalide chaque action.'}

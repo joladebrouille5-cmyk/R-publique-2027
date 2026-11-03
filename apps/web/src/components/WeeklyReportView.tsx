@@ -49,7 +49,7 @@ export function PrestationDetail({ prestation }: { prestation: Prestation }) {
           {prestation.incident && ' : passage raté, l’aléa de l’action se produit'}.
         </span>
       </p>
-      <ul className="text-xs text-slate-600 dark:text-slate-400" aria-label="Raisons du score">
+      <ul className="text-xs text-encre-2" aria-label="Raisons du score">
         {prestation.raisons.map((r) => (
           <li key={r.label} className="flex justify-between gap-3">
             <span>{r.label}</span>
@@ -91,7 +91,7 @@ function ChangesList({
                 Facteurs de la variation de {RESOURCE_LABELS[change.ressource]}
               </caption>
               <thead>
-                <tr className="text-slate-500 dark:text-slate-400">
+                <tr className="text-encre-3">
                   <th scope="col" className="py-1 font-medium">
                     Facteur
                   </th>
@@ -270,7 +270,7 @@ export function WeeklyReportView({
       <section aria-label="Actions de la semaine">
         <h3 className="mb-2 font-semibold">{playerId ? 'Vos actions' : 'Actions'}</h3>
         {playerId && ownActions.length === 0 ? (
-          <p className="text-slate-500 dark:text-slate-400">Aucune action programmée.</p>
+          <p className="text-encre-3">Aucune action programmée.</p>
         ) : !playerId ? null : (
           <ul className="space-y-1">
             {ownActions.map((action) => (
@@ -285,9 +285,7 @@ export function WeeklyReportView({
                   {action.label}
                   {action.cible && ` — ${action.cible}`}
                 </span>
-                {action.reason && (
-                  <span className="text-slate-600 dark:text-slate-400">— {action.reason}</span>
-                )}
+                {action.reason && <span className="text-encre-2">— {action.reason}</span>}
                 {action.prestation && <PrestationDetail prestation={action.prestation} />}
               </li>
             ))}
@@ -347,9 +345,7 @@ export function WeeklyReportView({
                 {event.suiteDe && (
                   <span className="block text-sm font-semibold">Suite de « {event.suiteDe} »</span>
                 )}
-                <span className="block text-slate-600 dark:text-slate-400">
-                  {event.description}
-                </span>
+                <span className="block text-encre-2">{event.description}</span>
                 {event.decisionId && (
                   <span className="block text-amber-800 dark:text-amber-300">
                     Une décision est à prendre.
@@ -372,9 +368,7 @@ export function WeeklyReportView({
 
       <section aria-label="Variations des ressources">
         <h3 className="mb-2 font-semibold">Variations et facteurs</h3>
-        {playerId && ownChanges.length === 0 && (
-          <p className="text-slate-500 dark:text-slate-400">Aucune variation.</p>
-        )}
+        {playerId && ownChanges.length === 0 && <p className="text-encre-3">Aucune variation.</p>}
         {playerId && ownChanges.length > 0 && <ChangesList changes={ownChanges} />}
         {otherChanges.length > 0 && (
           <details className="mt-2" open={!playerId}>
@@ -409,7 +403,7 @@ export function WeeklyReportView({
         <summary className="cursor-pointer font-semibold">Les 12 étapes de la semaine</summary>
         <ol className="mt-2 space-y-1">
           {report.steps.map((step) => (
-            <li key={step.step} className={step.active ? '' : 'text-slate-500 dark:text-slate-400'}>
+            <li key={step.step} className={step.active ? '' : 'text-encre-3'}>
               {step.step}. {step.label} — {step.active ? step.summary : `inactif : ${step.summary}`}
             </li>
           ))}

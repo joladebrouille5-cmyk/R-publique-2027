@@ -46,9 +46,7 @@ export function DifficultyPicker({
               <span className="block font-display text-lg leading-tight font-semibold">
                 {DIFFICULTY_LABELS[difficulty]}
               </span>
-              <span className="block text-xs text-slate-600 dark:text-slate-400">
-                {DIFFICULTY_TAGLINES[difficulty]}
-              </span>
+              <span className="block text-xs text-encre-2">{DIFFICULTY_TAGLINES[difficulty]}</span>
               {locks[difficulty] && <LockNote condition={locks[difficulty]} />}
             </span>
           </label>

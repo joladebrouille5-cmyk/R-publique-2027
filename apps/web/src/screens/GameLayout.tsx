@@ -24,7 +24,7 @@ function Game({ game }: { game: GameDetail }) {
       <div className="min-w-0">
         <GameHud game={game} ruleset={ruleset.data} />
         <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 sm:mb-5">
-          <p className="text-sm text-slate-600 dark:text-slate-400">
+          <p className="text-sm text-encre-2">
             Partie{' '}
             <span className="font-semibold text-slate-800 dark:text-slate-200">{game.name}</span>
           </p>

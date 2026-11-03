@@ -47,7 +47,7 @@ function SpeakingTime({
   const t = outlet.tempsDeParole;
   if (!t) {
     return (
-      <p className="text-xs text-slate-600 dark:text-slate-400">
+      <p className="text-xs text-encre-2">
         Presse écrite : pas de relevé de temps de parole ; même traitement pour tous les candidats.
       </p>
     );
@@ -58,7 +58,7 @@ function SpeakingTime({
     .map((a) => ({ actor: a, party: arcomParty(ruleset, a) }))
     .filter((r): r is { actor: Actor; party: string } => r.party !== null);
   return (
-    <div className="space-y-1 text-xs text-slate-600 dark:text-slate-400">
+    <div className="space-y-1 text-xs text-encre-2">
       <p>
         Temps de parole des partis (relevé officiel) : {hoursLabel(t.partisSecondes)} du{' '}
         {formatGameDate(debut)} au {formatGameDate(fin)} (pouvoir exécutif, compté à part :{' '}
@@ -123,7 +123,7 @@ function Coverage({ outlet, state }: { outlet: RealOutlet; state: GameState }) {
     <table className="w-full text-left text-xs">
       <caption className="sr-only">Couverture simulée des candidats par {outlet.libelle}</caption>
       <thead>
-        <tr className="text-slate-500 dark:text-slate-400">
+        <tr className="text-encre-3">
           <th scope="col" className="font-medium">
             Candidat
           </th>
@@ -164,7 +164,7 @@ function Shows({ state, ruleset }: { state: GameState; ruleset: Ruleset }) {
       <h2 id="titre-emissions" className="text-lg font-semibold">
         Émissions politiques
       </h2>
-      <p className="text-sm text-slate-600 dark:text-slate-400">
+      <p className="text-sm text-encre-2">
         Émissions réelles, avec leur chaîne et leurs présentateurs. Pour y être invité, programmez «
         Invité d’une émission politique » dans le plan d’actions : l’interview est simulée et rien
         n’est attribué aux journalistes.
@@ -182,7 +182,7 @@ function Shows({ state, ruleset }: { state: GameState; ruleset: Ruleset }) {
               className="space-y-1 rounded-lg border border-slate-200 p-3 text-sm dark:border-slate-800"
             >
               <p className="font-semibold">{show.titre}</p>
-              <p className="text-xs text-slate-600 dark:text-slate-400">
+              <p className="text-xs text-encre-2">
                 {channels.join(', ')}
                 {show.diffusion && ` · ${show.diffusion}`}
               </p>
@@ -223,7 +223,7 @@ export function Medias() {
       >
         {MEDIA_NOTICE}
       </p>
-      <p className="text-sm text-slate-600 dark:text-slate-400">
+      <p className="text-sm text-encre-2">
         {state.medias
           ? `Couverture simulée de la semaine ${state.medias.semaine} : exposition (part de l’attention de l’organe) et tonalité (−100 à +100). Elle dépend de la notoriété, des actions de la semaine et, à la télévision et à la radio, de l’exposition mesurée du parti de chaque candidat.`
           : 'La couverture médiatique sera calculée à la résolution de la semaine.'}
@@ -256,7 +256,7 @@ export function Medias() {
                     {outlet.libelle}
                     {outlet.portee === 'regionale' && <Badge>régionale</Badge>}
                   </p>
-                  <p className="text-xs text-slate-600 dark:text-slate-400">
+                  <p className="text-xs text-encre-2">
                     Audience mesurée : {audienceLabel(outlet)}.
                   </p>
                   <SpeakingTime outlet={outlet} ruleset={data} actors={actors} />

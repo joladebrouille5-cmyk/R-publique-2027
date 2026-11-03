@@ -31,7 +31,7 @@ export function Compass({
     );
   };
   const groups = ruleset?.electorat.groupes ?? [];
-  const caption = 'text-[0.7rem] font-semibold text-slate-600 dark:text-slate-400';
+  const caption = 'text-[0.7rem] font-semibold text-encre-2';
   return (
     <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] grid-rows-[auto_auto_auto] items-center gap-1.5">
       <span aria-hidden="true" className={`col-start-2 text-center ${caption}`}>

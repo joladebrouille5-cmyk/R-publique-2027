@@ -102,7 +102,7 @@ export function PhotoPicker({
           {error}
         </p>
       )}
-      <p id={`${id}-aide`} className="text-xs text-slate-600 dark:text-slate-400">
+      <p id={`${id}-aide`} className="text-xs text-encre-2">
         JPEG, PNG ou WebP. L’image est recadrée et réduite sur votre appareil (256 × 256 px, 100 Ko
         au plus), puis conservée avec la partie (sauvegardes et export compris). Sans photo, votre
         candidat reçoit un portrait illustré.

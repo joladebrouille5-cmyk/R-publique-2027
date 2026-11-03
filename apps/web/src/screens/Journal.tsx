@@ -36,7 +36,7 @@ export function Journal() {
   return (
     <section aria-labelledby="titre-journal" className="space-y-4">
       <ScreenHeading id="titre-journal">Journal</ScreenHeading>
-      <p className="text-sm text-slate-600 dark:text-slate-400">
+      <p className="text-sm text-encre-2">
         Historique immuable de la partie, du plus récent au plus ancien. Une restauration de
         sauvegarde n’efface rien : elle apparaît comme une entrée.
       </p>
@@ -54,7 +54,7 @@ export function Journal() {
                   <span className="font-semibold">
                     Semaine {entry.report.week} — {formatGameDate(entry.report.date)}
                   </span>
-                  <span className="block text-xs text-slate-500 dark:text-slate-400">
+                  <span className="block text-xs text-encre-3">
                     {entry.report.election &&
                       `${entry.report.election.round === 1 ? 'Premier' : 'Second'} tour · `}
                     {
@@ -83,7 +83,7 @@ export function Journal() {
             >
               <span className="font-medium">{JOURNAL_TYPE_LABELS[entry.type] ?? entry.type}</span>
               {describe(entry.type, entry.details) && ` — ${describe(entry.type, entry.details)}`}
-              <span className="block text-xs text-slate-500 dark:text-slate-400">
+              <span className="block text-xs text-encre-3">
                 Semaine {entry.week} · {formatTimestamp(entry.createdAt)}
               </span>
             </li>

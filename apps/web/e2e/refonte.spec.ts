@@ -77,6 +77,19 @@ test('mouvement réduit : les affiches et le titre ne s’animent pas', async ({
     ),
   );
   expect(durations).toEqual(['0.001s', '0.001s']);
+  // Phase 22 : ni délai — les huit panneaux sont garnis d'emblée, aucune affiche n'attend son tour.
+  expect(await page.locator('.animate-colle').count()).toBeGreaterThan(1);
+  const states = () =>
+    page.evaluate(() => [
+      ...new Set(
+        [...document.querySelectorAll('.animate-colle')].map((el) => {
+          const style = getComputedStyle(el);
+          return `${style.animationDelay} ${style.opacity}`;
+        }),
+      ),
+    ]);
+  // Opaques en moins de 150 ms (sans le correctif, la dernière affiche attendait 1 s).
+  await expect.poll(states, { timeout: 150, intervals: [25] }).toEqual(['0s 1']);
   await context.close();
 });
 
