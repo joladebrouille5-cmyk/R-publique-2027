@@ -1,5 +1,6 @@
 import { candidateName, type GameDetail, type Ruleset } from '@r2027/shared';
 import { CalendarDays, Heart, Megaphone, Users, Wallet, type LucideIcon } from 'lucide-react';
+import { useLayoutEffect, useRef } from 'react';
 import { Avatar } from '../../components/Avatar';
 import { PHASE_LABELS } from '../../labels';
 import { portraitOf } from '../../portraits';
@@ -88,9 +89,25 @@ export function GameHud({ game, ruleset }: { game: GameDetail; ruleset: Ruleset 
   const player = state.player.actorId ? state.actors[state.player.actorId] : undefined;
   const ballot = nextBallot(ruleset, game.date);
   const resources = player?.resources;
+  const hud = useRef<HTMLElement>(null);
+  // Phase 22 : la hauteur du bandeau collant (--hud) place le sommaire des espaces juste dessous.
+  useLayoutEffect(() => {
+    const element = hud.current;
+    if (!element) return;
+    const root = document.documentElement;
+    const update = () => root.style.setProperty('--hud', `${element.offsetHeight}px`);
+    update();
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(update);
+    observer?.observe(element);
+    return () => {
+      observer?.disconnect();
+      root.style.removeProperty('--hud');
+    };
+  }, []);
 
   return (
     <section
+      ref={hud}
       aria-label="Situation de la partie"
       className="sticky top-(--sat) z-30 -mx-4 mb-6 overflow-hidden border-b-[1.5px] border-slate-900 bg-papier/95 px-4 pt-3 pb-2.5 backdrop-blur-md supports-[backdrop-filter]:bg-papier/85 lg:mx-0 lg:mt-3 lg:rounded-dossier lg:border-[1.5px] lg:px-5 dark:border-white/25 dark:bg-slate-950/90 dark:supports-[backdrop-filter]:bg-slate-950/80"
     >

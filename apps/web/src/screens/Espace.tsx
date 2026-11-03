@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router';
 import { useRuleset } from '../api/hooks';
 import { Disclosure, DisclosureGroup } from '../components/Disclosure';
+import { SectionNav } from '../components/SectionNav';
 import { Unavailable } from '../components/Unavailable';
 import { screenTitle } from '../components/ui';
 import { useCurrentGame } from './GameLayout';
@@ -69,7 +70,9 @@ export function useOpenSections(paths: readonly string[]) {
         ?.focus({ preventScroll: true });
     });
   };
-  return { open, toggle, show };
+  /** Replie toutes les sections (sommaire, phase 22). */
+  const collapseAll = () => setOpen(new Set());
+  return { open, toggle, show, collapseAll };
 }
 
 /** Écran du registre, ou avis d'indisponibilité. */
@@ -142,7 +145,7 @@ export function ScreenSection({
 export function Espace({ hub }: { hub: Hub }) {
   const game = useCurrentGame();
   const ruleset = useRuleset(game.rulesetVersion, game.state.cycle);
-  const { open, toggle, show } = useOpenSections(hub.sections);
+  const { open, toggle, show, collapseAll } = useOpenSections(hub.sections);
   const overview = hub.path === 'pouvoir' && ruleset.data !== undefined && showsMandate(game.state);
   return (
     <section aria-labelledby="titre-espace" className="space-y-5">
@@ -152,6 +155,21 @@ export function Espace({ hub }: { hub: Hub }) {
         </h1>
         <p className="text-encre-2">{hub.intro}</p>
       </div>
+      {/* Phase 22 : le sommaire collant de l'espace, sous le bandeau de campagne. */}
+      <SectionNav
+        label="Sommaire de l’espace"
+        items={hub.sections.map((path) => {
+          const Icon = SECTION_ICONS[path]!;
+          return {
+            id: path,
+            label: mergedSection(path)?.label ?? screens.get(path)!.label,
+            icon: <Icon strokeWidth={2.25} />,
+            open: open.has(path),
+          };
+        })}
+        onShow={show}
+        onCollapseAll={collapseAll}
+      />
       {/* Phase 13 : l'essentiel du mandat, toujours visible, en tête de l'espace Pouvoir. */}
       {overview && ruleset.data && (
         <MandateOverview state={game.state} ruleset={ruleset.data} onShow={show} />

@@ -6,6 +6,7 @@ import { LogoCreditLine } from '../components/RealMedia';
 import { PhotoCreditLine } from '../components/RealPersonality';
 import { ReminderSettings } from '../components/ReminderSettings';
 import { MusicCredits, SoundSettings } from '../components/SoundSettings';
+import { SectionNav } from '../components/SectionNav';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { card, screenTitle } from '../components/ui';
 import { formatGameDate } from '../labels';
@@ -364,6 +365,17 @@ export function Parametres() {
       <h1 id="titre-parametres" className={screenTitle}>
         Paramètres
       </h1>
+      {/* Phase 22 : sommaire collant de la page (la liste des crédits est longue). */}
+      <SectionNav
+        label="Sommaire des paramètres"
+        items={[
+          { id: 'titre-apparence', label: 'Apparence' },
+          { id: 'titre-son', label: 'Son' },
+          { id: 'titre-rappels', label: 'Rappels' },
+          ...(ruleset.data ? [{ id: 'titre-credits', label: 'Crédits' }] : []),
+          { id: 'titre-a-propos', label: 'À propos' },
+        ]}
+      />
 
       <Section id="titre-apparence" title="Apparence">
         <ThemeToggle />
