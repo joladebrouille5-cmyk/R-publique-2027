@@ -14,6 +14,7 @@ import {
   RULESET,
   RULESET_URL,
   rulesetHandler,
+  wizardTo,
 } from '../test/utils';
 
 // Phase 15 : pré-campagne à l'écran — orientation du mouvement à la création, course aux
@@ -48,12 +49,14 @@ describe('création : orientation stratégique du mouvement', () => {
     });
     renderRoute('/nouvelle-partie');
     const user = userEvent.setup();
-    await user.type(await screen.findByLabelText('Nom de la partie'), 'Mon mouvement');
+    await screen.findByRole('heading', { level: 2, name: 'La partie' });
+    await wizardTo(user, 'Votre candidat');
     await user.type(screen.getByLabelText('Prénom'), 'Lou');
     await user.type(screen.getByLabelText(/^Nom \*/), 'Martin');
     await user.type(screen.getByLabelText(/^Parti ou mouvement/), 'Parti du renouveau');
+    await wizardTo(user, 'Votre parcours');
     const group = await screen.findByRole('group', {
-      name: 'Orientation stratégique du mouvement',
+      name: 'Variante de campagne (facultative)',
     });
     expect(within(group).getAllByRole('radio')).toHaveLength(RULESET.orientations.liste.length + 1);
     expect(
@@ -68,6 +71,7 @@ describe('création : orientation stratégique du mouvement', () => {
     );
     await user.click(camp);
     expect(camp).toBeChecked();
+    await wizardTo(user, 'Le format');
     await user.click(screen.getByRole('button', { name: 'Créer la partie' }));
     await waitFor(() => expect(calls.some((c) => c.method === 'POST')).toBe(true));
     expect(calls.find((c) => c.method === 'POST')!.body).toMatchObject({
@@ -80,10 +84,13 @@ describe('création : orientation stratégique du mouvement', () => {
     mockApi(base(initialState()));
     renderRoute('/nouvelle-partie');
     const user = userEvent.setup();
-    await screen.findByRole('group', { name: 'Orientation stratégique du mouvement' });
-    await user.click(screen.getByRole('radio', { name: /Observateur/ }));
+    await user.click(await screen.findByRole('radio', { name: /Observateur/ }));
+    // En observateur, l'assistant saute le candidat et le parcours.
+    await user.click(screen.getByRole('button', { name: 'Suivant' }));
+    expect(screen.getByRole('heading', { level: 2, name: 'Le terrain' })).toBeInTheDocument();
+    expect(screen.getByText('Étape 2 sur 3')).toBeInTheDocument();
     expect(
-      screen.queryByRole('group', { name: 'Orientation stratégique du mouvement' }),
+      screen.queryByRole('group', { name: 'Variante de campagne (facultative)' }),
     ).not.toBeInTheDocument();
   });
 });

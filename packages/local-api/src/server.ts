@@ -500,6 +500,7 @@ export class LocalApi {
           adversaires: body.adversaires,
           scenarioId: body.scenarioId,
           orientationId: body.orientationId,
+          format: body.format,
         },
         getRuleset(CURRENT_RULESET_KEY),
       );

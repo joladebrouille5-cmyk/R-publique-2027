@@ -818,11 +818,33 @@ export type GameStateV19 = z.infer<typeof GameStateV19Schema>;
  * d'un nouveau numéro de format et d'une migration (packages/save-engine). L'aléa ne figure pas
  * dans l'état : chaque tirage est dérivé de la graine, de la semaine et de son contexte.
  */
-export const GameStateSchema = GameStateV19Schema.extend({
+export const GameStateV20Schema = GameStateV19Schema.extend({
   meta: MetaV1Schema.extend({
     difficulty: DifficultySchema,
     saveSchemaVersion: z.literal(20),
   }).strict(),
+}).strict();
+export type GameStateV20 = z.infer<typeof GameStateV20Schema>;
+
+/**
+ * Format de partie (phase 20), choisi à la création : complet (campagne puis quinquennat et
+ * cycles suivants) ou court (la partie s'arrête au soir de l'élection présidentielle).
+ */
+export const GAME_FORMATS = ['complet', 'court'] as const;
+export const GameFormatSchema = z.enum(GAME_FORMATS);
+export type GameFormat = z.infer<typeof GameFormatSchema>;
+
+/**
+ * État complet d'une partie, format de sauvegarde n° 21 (phase 20) : en plus, le format de la
+ * partie (`player.format`). Toute évolution s'accompagne d'un nouveau numéro de format et d'une
+ * migration (packages/save-engine).
+ */
+export const GameStateSchema = GameStateV20Schema.extend({
+  meta: MetaV1Schema.extend({
+    difficulty: DifficultySchema,
+    saveSchemaVersion: z.literal(21),
+  }).strict(),
+  player: PlayerSchema.extend({ format: GameFormatSchema }).strict(),
 }).strict();
 export type GameState = z.infer<typeof GameStateSchema>;
 

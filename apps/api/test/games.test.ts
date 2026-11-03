@@ -182,6 +182,17 @@ describe('création de partie', () => {
     expect(refused.json()).toMatchObject({ error: { code: 'requete_invalide' } });
   });
 
+  it('crée une partie au format court ; refuse un format inconnu (phase 20)', async () => {
+    const client = new Client(app);
+    const court = await createGame(client, { ...newGame, format: 'court' });
+    expect(court.state.player.format).toBe('court');
+    expect(court.stateHash).toBe(hashState(court.state));
+    expect((await createGame(client)).state.player.format).toBe('complet');
+    const refused = await client.post('/api/games', { ...newGame, format: 'eclair' });
+    expect(refused.statusCode).toBe(400);
+    expect(refused.json()).toMatchObject({ error: { code: 'requete_invalide' } });
+  });
+
   it('applique le profil de départ choisi', async () => {
     const client = new Client(app);
     const base = await createGame(client);

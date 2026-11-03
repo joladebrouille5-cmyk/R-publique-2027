@@ -8,16 +8,45 @@ import {
   type GameDetail,
 } from '@r2027/shared';
 
+/** Assistant de création (phase 20) : « Suivant » jusqu'à l'étape intitulée `titre`. */
+export async function wizardTo(page: Page, titre: string) {
+  const position = page.getByText(/^Étape \d+ sur \d+$/);
+  for (let i = 0; i < 6; i++) {
+    if (await page.getByRole('heading', { level: 2, name: titre }).isVisible()) return;
+    const before = (await position.textContent()) ?? '';
+    await page.getByRole('button', { name: 'Suivant' }).click();
+    await expect(position).not.toHaveText(before);
+  }
+  throw new Error(`Étape de l'assistant introuvable : ${titre}`);
+}
+
+/** Étape « Votre candidat » : identité minimale du candidat personnalisé. */
+export async function fillCandidate(page: Page, nom = 'Durand') {
+  await wizardTo(page, 'Votre candidat');
+  await page.getByLabel('Prénom').fill('Camille');
+  await page.getByLabel(/^Nom \*/).fill(nom);
+  await page.getByLabel(/^Parti ou mouvement/).fill('Mouvement Playwright');
+}
+
+/** Dernière étape : options avancées (nom, graine, date de départ), puis création. */
+export async function finishWizard(
+  page: Page,
+  options: { name?: string; seed?: string; startDate?: string; submit?: boolean } = {},
+) {
+  await wizardTo(page, 'Le format');
+  await page.getByText('Options avancées').click();
+  if (options.name) await page.getByLabel('Nom de la partie').fill(options.name);
+  if (options.seed) await page.getByLabel('Graine (facultative)').fill(options.seed);
+  if (options.startDate) await page.getByLabel('Date de départ').fill(options.startDate);
+  if (options.submit !== false) await page.getByRole('button', { name: 'Créer la partie' }).click();
+}
+
 export async function createGame(page: Page, name: string, seed = 'e2e-boucle') {
   await page.goto('/');
   await expect(page.getByText(/Serveur connecté/)).toBeVisible();
   await page.getByRole('link', { name: 'Nouvelle partie' }).click();
-  await page.getByLabel('Nom de la partie').fill(name);
-  await page.getByLabel('Prénom').fill('Camille');
-  await page.getByLabel(/^Nom \*/).fill('Durand');
-  await page.getByLabel(/^Parti ou mouvement/).fill('Mouvement Playwright');
-  await page.getByLabel('Graine (facultative)').fill(seed);
-  await page.getByRole('button', { name: 'Créer la partie' }).click();
+  await fillCandidate(page);
+  await finishWizard(page, { name, seed });
   await expect(page.getByRole('heading', { name: 'Tableau de bord' })).toBeVisible();
 }
 

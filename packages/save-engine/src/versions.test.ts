@@ -29,6 +29,7 @@ import V16 from './fixtures/v16-phase-12.json' with { type: 'json' };
 import V17 from './fixtures/v17-phase-13.json' with { type: 'json' };
 import V18 from './fixtures/v18-phase-14.json' with { type: 'json' };
 import V19 from './fixtures/v19-phase-17.json' with { type: 'json' };
+import V20 from './fixtures/v20-phase-19.json' with { type: 'json' };
 import { loadStoredState, MIGRATED_CANDIDATE, SaveFormatError, upgradeState } from './versions';
 
 const ruleset = getRuleset(CURRENT_RULESET_KEY);
@@ -135,8 +136,10 @@ const withoutPhase15 = <T extends object>(state: T): T => {
   const s = state as Partial<GameState>;
   const out: Record<string, unknown> = { ...(state as Record<string, unknown>) };
   if (s.player) {
-    const { orientation, ...player } = s.player;
+    // Format 21 (phase 20) : une partie migrée continue au format complet.
+    const { orientation, format, ...player } = s.player;
     expect(orientation).toBeNull();
+    expect(format).toBe('complet');
     out.player = player;
   }
   if (s.negociations) {
@@ -423,7 +426,12 @@ describe('migrations de sauvegarde', () => {
       rulesetVersion: CURRENT_RULESET_KEY,
     });
     // Adversaires fictifs, aucun candidat réel ; tout le reste est conservé tel quel.
-    expect(state.player).toEqual({ ...V5.state.player, adversaires: 'fictifs', orientation: null });
+    expect(state.player).toEqual({
+      ...V5.state.player,
+      adversaires: 'fictifs',
+      orientation: null,
+      format: 'complet',
+    });
     for (const [id, actor] of Object.entries(state.actors)) {
       const before = V5.state.actors[id as keyof typeof V5.state.actors];
       expect({ ...actor, resources: v1Resources(actor.resources) }).toEqual({
@@ -1071,9 +1079,10 @@ describe('migrations de sauvegarde', () => {
     });
     // La difficulté est figée à la création : ni le niveau ni les moyens des candidats ne
     // changent à la migration.
-    const { meta: _meta, ...rest } = state;
-    const { meta: _m, ...restBefore } = V19.state;
+    const { meta: _meta, player, ...rest } = state;
+    const { meta: _m, player: before, ...restBefore } = V19.state;
     expect(rest).toEqual(restBefore);
+    expect(player).toEqual({ ...before, format: 'complet' });
     // La campagne continue avec le jeu de règles 17, débats compris, de façon déterministe.
     const play = () => {
       let current = state;
@@ -1105,6 +1114,36 @@ describe('migrations de sauvegarde', () => {
     expect(later.meta.week).toBe(state.meta.week + 6);
     expect(GameStateSchema.parse(later)).toEqual(later);
     expect(play()).toEqual(later);
+  });
+
+  it('passe au format 21 sans rien perdre : une partie existante reste au format complet (format 20)', () => {
+    const { state, migratedFrom } = loadStoredState(V20.state, V20.stateHash, 20);
+    expect(migratedFrom).toBe(20);
+    expect(state.meta).toMatchObject({
+      week: V20.state.meta.week,
+      difficulty: 'legende',
+      saveSchemaVersion: SAVE_SCHEMA_VERSION,
+      engineVersion: ENGINE_VERSION,
+      rulesetVersion: CURRENT_RULESET_KEY,
+    });
+    expect(state.player.format).toBe('complet');
+    const { meta: _meta, player, ...rest } = state;
+    const { meta: _m, player: before, ...restBefore } = V20.state;
+    expect(rest).toEqual(restBefore);
+    expect(player).toEqual({ ...before, format: 'complet' });
+    const next = advanceWeek(
+      state,
+      {
+        actions: [],
+        decisions: state.pendingDecisions.map((d) => ({
+          decisionId: d.id,
+          optionId: d.defaultOptionId,
+        })),
+      },
+      { ruleset },
+    ).state;
+    expect(next.meta.week).toBe(state.meta.week + 1);
+    expect(GameStateSchema.parse(next)).toEqual(next);
   });
 
   it('refuse un état qui cite une personnalité absente du vivier courant', () => {
@@ -1143,6 +1182,7 @@ describe('migrations de sauvegarde', () => {
     expect(errorCode(() => upgradeState(V17.state, 18))).toBe('etat_invalide');
     expect(errorCode(() => upgradeState(V18.state, 19))).toBe('etat_invalide');
     expect(errorCode(() => upgradeState(V19.state, 20))).toBe('etat_invalide');
+    expect(errorCode(() => upgradeState(V20.state, 21))).toBe('etat_invalide');
   });
 
   it('refuse un jeu de règles inconnu', () => {

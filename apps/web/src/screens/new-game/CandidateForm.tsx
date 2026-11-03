@@ -47,7 +47,7 @@ function nearestGroups(ruleset: Ruleset, draft: CandidateDraft) {
     .map(({ group }) => group.libelle);
 }
 
-/** Création du candidat du joueur (§1.2) : identité, parti, positionnement et profil de départ. */
+/** Création du candidat du joueur (§1.2) : identité, parti, photo et positionnement. */
 export function CandidateForm({ value, onChange }: Props) {
   const ruleset = useCurrentRuleset();
   const set = <K extends keyof CandidateDraft>(key: K, next: CandidateDraft[K]) =>
@@ -143,7 +143,7 @@ export function CandidateForm({ value, onChange }: Props) {
 
       <div className="space-y-1">
         <label htmlFor="candidat-parcours" className={label}>
-          Parcours (facultatif)
+          Biographie (facultative)
         </label>
         <textarea
           id="candidat-parcours"
@@ -154,43 +154,58 @@ export function CandidateForm({ value, onChange }: Props) {
           onChange={(event) => set('parcours', event.target.value)}
         />
       </div>
+    </fieldset>
+  );
+}
 
-      <fieldset className="space-y-2">
-        <legend className={label}>Profil de départ</legend>
-        {ruleset.isError && (
-          <ErrorMessage error={ruleset.error} onRetry={() => void ruleset.refetch()} />
-        )}
-        {ruleset.isPending && <p className="text-sm">Chargement des profils…</p>}
-        <div className="grid gap-2.5 sm:grid-cols-2">
-          {[null, ...(ruleset.data?.profilsDeDepart ?? [])].map((profile) => (
-            <label key={profile?.id ?? 'aucun'} className={optionTile}>
-              <input
-                type="radio"
-                name="profil"
-                value={profile?.id ?? ''}
-                checked={value.profilId === (profile?.id ?? null)}
-                onChange={() => set('profilId', profile?.id ?? null)}
-                className={radio}
-              />
-              <span>
-                <span className="font-semibold">
-                  {profile?.libelle ?? 'Sans profil particulier'}
-                </span>
-                <span className="block text-xs text-slate-600 dark:text-slate-400">
-                  {profile
-                    ? `${profile.description} ${Object.entries(profile.modificateurs)
-                        .map(
-                          ([key, delta]) =>
-                            `${RESOURCE_LABELS[key as ResourceKey]} ${formatDelta(key as ResourceKey, delta ?? 0)}`,
-                        )
-                        .join(', ')}.`
-                    : 'Ressources de départ de la difficulté choisie, sans modification.'}
-                </span>
+/**
+ * Parcours du candidat (phase 20, ancien « profil de départ ») : d'où il vient en politique, avec
+ * ses écarts de moyens de départ (hypothèses du jeu de règles).
+ */
+export function ProfilePicker({
+  value,
+  onChange,
+}: {
+  value: string | null;
+  onChange: (profilId: string | null) => void;
+}) {
+  const ruleset = useCurrentRuleset();
+  return (
+    <fieldset className="space-y-2">
+      <legend className={label}>Votre parcours</legend>
+      {ruleset.isError && (
+        <ErrorMessage error={ruleset.error} onRetry={() => void ruleset.refetch()} />
+      )}
+      {ruleset.isPending && <p className="text-sm">Chargement des profils…</p>}
+      <div className="grid gap-2.5 sm:grid-cols-2">
+        {[null, ...(ruleset.data?.profilsDeDepart ?? [])].map((profile) => (
+          <label key={profile?.id ?? 'aucun'} className={optionTile}>
+            <input
+              type="radio"
+              name="profil"
+              value={profile?.id ?? ''}
+              checked={value === (profile?.id ?? null)}
+              onChange={() => onChange(profile?.id ?? null)}
+              className={radio}
+            />
+            <span>
+              <span className="font-semibold">
+                {profile?.libelle ?? 'Sans parcours particulier'}
               </span>
-            </label>
-          ))}
-        </div>
-      </fieldset>
+              <span className="block text-xs text-slate-600 dark:text-slate-400">
+                {profile
+                  ? `${profile.description} ${Object.entries(profile.modificateurs)
+                      .map(
+                        ([key, delta]) =>
+                          `${RESOURCE_LABELS[key as ResourceKey]} ${formatDelta(key as ResourceKey, delta ?? 0)}`,
+                      )
+                      .join(', ')}.`
+                  : 'Ressources de départ de la difficulté choisie, sans modification.'}
+              </span>
+            </span>
+          </label>
+        ))}
+      </div>
     </fieldset>
   );
 }

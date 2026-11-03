@@ -1,13 +1,24 @@
 import {
+  candidateName,
   DEFAULT_START_DATE,
   START_DATE_MAX,
   START_DATE_MIN,
   type Difficulty,
+  type GameFormat,
   type GameMode,
   type OpponentSet,
 } from '@r2027/shared';
-import { Eye, PenLine, ScrollText, type LucideIcon } from 'lucide-react';
-import { useId, useState, type FormEvent, type ReactNode } from 'react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  Eye,
+  Flag,
+  Hourglass,
+  PenLine,
+  ScrollText,
+  type LucideIcon,
+} from 'lucide-react';
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { useNavigate } from 'react-router';
 import { useCreateGame, useCurrentRuleset } from '../api/hooks';
 import { Affiche } from '../components/Affiche';
@@ -15,6 +26,7 @@ import { ErrorMessage } from '../components/ErrorMessage';
 import { PersonalityPhoto, SIMULATION_NOTICE } from '../components/RealPersonality';
 import {
   buttonPrestige,
+  buttonSecondary,
   card,
   cardRaised,
   input,
@@ -23,18 +35,30 @@ import {
   radio,
   screenTitle,
 } from '../components/ui';
-import { DIFFICULTY_LABELS, formatGameDate, MODE_LABELS, OPPONENT_SET_LABELS } from '../labels';
+import {
+  DIFFICULTY_LABELS,
+  FORMAT_LABELS,
+  formatGameDate,
+  MODE_LABELS,
+  OPPONENT_SET_LABELS,
+} from '../labels';
 import { familyOf } from '../portraits';
-import { CandidateForm, EMPTY_CANDIDATE, type CandidateDraft } from './new-game/CandidateForm';
+import {
+  CandidateForm,
+  EMPTY_CANDIDATE,
+  ProfilePicker,
+  type CandidateDraft,
+} from './new-game/CandidateForm';
 import { DifficultyPicker } from './new-game/DifficultyPicker';
 import { OrientationPicker } from './new-game/OrientationPicker';
 import { PersonalityPicker } from './new-game/PersonalityPicker';
 import { ScenarioPicker } from './new-game/ScenarioPicker';
 
-// Création de partie (phase 16) : des chapitres numérotés, dans l'ordre où l'on compose une
-// candidature, et un récapitulatif (l'affiche du candidat en direct, les choix faits, le bouton
-// de création) collé à droite sur ordinateur, à la fin du formulaire sur téléphone. Mêmes champs,
-// mêmes libellés et même requête qu'avant la refonte.
+// Création de partie en assistant pas à pas (phase 20, choix de l'utilisateur) : une question par
+// étape, l'affiche du candidat mise à jour en direct à côté, des boutons Précédent et Suivant.
+// Le nom de la partie, la date de départ et la graine sont rangés dans les options avancées de la
+// dernière étape (un nom est proposé d'office). La requête envoyée est celle d'avant, plus le
+// format de la partie.
 
 const MODES: { value: GameMode; description: string; icon: LucideIcon }[] = [
   {
@@ -64,30 +88,136 @@ const OPPONENTS: { value: OpponentSet; description: string }[] = [
   },
 ];
 
-/** Chapitre du formulaire : numéro doré, titre en Didone, une ligne d'explication. */
-function Chapitre({
-  numero,
-  titre,
-  description,
+const FORMATS: { value: GameFormat; description: string; icon: LucideIcon }[] = [
+  {
+    value: 'complet',
+    description:
+      'La campagne, la soirée électorale, puis le quinquennat et les élections suivantes : plusieurs soirées de jeu.',
+    icon: Hourglass,
+  },
+  {
+    value: 'court',
+    description:
+      'La campagne jusqu’au soir de l’élection : la partie s’arrête à l’annonce du résultat.',
+    icon: Flag,
+  },
+];
+
+type StepId = 'partie' | 'candidat' | 'parcours' | 'terrain' | 'format';
+const STEP_TITLES: Record<StepId, { titre: string; description: string }> = {
+  partie: { titre: 'La partie', description: 'Comment voulez-vous jouer ?' },
+  candidat: { titre: 'Votre candidat', description: 'Identité, portrait et positionnement.' },
+  parcours: {
+    titre: 'Votre parcours',
+    description: 'D’où vous venez, puis, si vous le voulez, la variante de votre campagne.',
+  },
+  terrain: {
+    titre: 'Le terrain',
+    description: 'Qui vous affrontez, avec quelle exigence, dans quelle conjoncture.',
+  },
+  format: { titre: 'Le format', description: 'Jusqu’où va la partie.' },
+};
+
+const validDate = (iso: string) =>
+  /^\d{4}-\d{2}-\d{2}$/.test(iso) && !Number.isNaN(Date.parse(`${iso}T00:00:00Z`));
+
+function Tiles<T extends string>({
+  name,
+  legend,
+  options,
+  value,
+  onChange,
+  labelOf,
+  columns = 'md:grid-cols-3',
+}: {
+  name: string;
+  legend: string;
+  options: { value: T; description: string; icon?: LucideIcon }[];
+  value: T;
+  onChange: (value: T) => void;
+  labelOf: (value: T) => string;
+  columns?: string;
+}) {
+  return (
+    <fieldset className="space-y-2">
+      <legend className={label}>{legend}</legend>
+      <div className={`grid gap-2.5 ${columns}`}>
+        {options.map((option) => {
+          const Icon = option.icon;
+          return (
+            <label key={option.value} className={`${optionTile} md:flex-col`}>
+              <span className="flex items-center gap-3">
+                <input
+                  type="radio"
+                  name={name}
+                  value={option.value}
+                  checked={value === option.value}
+                  onChange={() => onChange(option.value)}
+                  className={radio}
+                />
+                {Icon && (
+                  <Icon
+                    aria-hidden="true"
+                    className="size-5 text-or-600 md:size-6 dark:text-dorure"
+                    strokeWidth={1.75}
+                  />
+                )}
+              </span>
+              <span>
+                <span className="font-display text-lg font-semibold">{labelOf(option.value)}</span>
+                <span className="block text-sm text-slate-600 dark:text-slate-400">
+                  {option.description}
+                </span>
+              </span>
+            </label>
+          );
+        })}
+      </div>
+    </fieldset>
+  );
+}
+
+function Step({
+  id,
+  index,
+  count,
   children,
 }: {
-  numero: number;
-  titre: string;
-  description: string;
+  id: StepId;
+  index: number;
+  count: number;
   children: ReactNode;
 }) {
-  const id = useId();
+  const heading = useRef<HTMLHeadingElement>(null);
+  const first = useRef(true);
+  // Le focus suit l'étape (lecteurs d'écran, clavier), sauf à l'ouverture de l'écran.
+  useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    heading.current?.focus();
+  }, [id]);
+  const { titre, description } = STEP_TITLES[id];
   return (
-    <section aria-labelledby={id} className="scroll-mt-24">
+    <section aria-labelledby={`etape-${id}`} className="scroll-mt-24">
       <header className="mb-4 flex items-start gap-4">
         <span
           aria-hidden="true"
           className="w-9 shrink-0 font-display text-[2.6rem] leading-[0.9] font-bold text-or-600 dark:text-dorure"
         >
-          {numero}
+          {index + 1}
         </span>
         <div className="min-w-0">
-          <h2 id={id} className="text-2xl sm:text-[1.75rem]">
+          <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">
+            Étape {index + 1} sur {count}
+          </p>
+          <h2
+            id={`etape-${id}`}
+            ref={heading}
+            tabIndex={-1}
+            className="text-2xl outline-none sm:text-[1.75rem]"
+          >
             {titre}
           </h2>
           <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-400">{description}</p>
@@ -98,9 +228,6 @@ function Chapitre({
   );
 }
 
-const validDate = (iso: string) =>
-  /^\d{4}-\d{2}-\d{2}$/.test(iso) && !Number.isNaN(Date.parse(`${iso}T00:00:00Z`));
-
 export function NewGame() {
   const navigate = useNavigate();
   const createGame = useCreateGame();
@@ -108,6 +235,7 @@ export function NewGame() {
   const [name, setName] = useState('');
   const [mode, setMode] = useState<GameMode>('candidat_personnalise');
   const [difficulty, setDifficulty] = useState<Difficulty>('standard');
+  const [format, setFormat] = useState<GameFormat>('complet');
   const [startDate, setStartDate] = useState(DEFAULT_START_DATE);
   const [seed, setSeed] = useState('');
   const [candidate, setCandidate] = useState<CandidateDraft>(EMPTY_CANDIDATE);
@@ -116,24 +244,61 @@ export function NewGame() {
   const [scenario, setScenario] = useState('standard');
   const [orientation, setOrientation] = useState<string | null>(null);
   const [missing, setMissing] = useState<string | null>(null);
+  const [step, setStep] = useState(0);
   const withCandidate = mode === 'candidat_personnalise';
   const withPersonality = mode === 'candidat_reel';
 
+  const steps: StepId[] =
+    mode === 'observateur'
+      ? ['partie', 'terrain', 'format']
+      : ['partie', 'candidat', 'parcours', 'terrain', 'format'];
+  const index = Math.min(step, steps.length - 1);
+  const current = steps[index]!;
+  const last = current === 'format';
+
+  const chosenPersonality = ruleset.data?.personnalites.personnalites.find(
+    (p) => p.id === personality,
+  );
+  /** Nom proposé d'office (modifiable dans les options avancées). */
+  const suggestedName = withCandidate
+    ? candidate.nom.trim()
+      ? `Campagne de ${candidateName({ prenom: candidate.prenom.trim(), nom: candidate.nom.trim() })}`
+      : 'Ma campagne'
+    : withPersonality
+      ? chosenPersonality
+        ? `Campagne de ${chosenPersonality.prenom} ${chosenPersonality.nom}`
+        : 'Ma campagne'
+      : 'Observation de la présidentielle';
+
+  /** Ce qui manque pour quitter une étape, ou null. */
+  const blocker = (id: StepId): string | null => {
+    if (id === 'candidat' && withCandidate && (!candidate.nom.trim() || !candidate.parti.trim()))
+      return 'Indiquez au moins le nom du candidat et son parti.';
+    if (id === 'candidat' && withPersonality && !personality)
+      return 'Choisissez la personnalité que vous incarnez.';
+    return null;
+  };
+
+  const goBack = () => {
+    setMissing(null);
+    setStep(Math.max(0, index - 1));
+  };
+
   const onSubmit = (event: FormEvent) => {
     event.preventDefault();
-    if (withCandidate && (!candidate.nom.trim() || !candidate.parti.trim())) {
-      setMissing('Indiquez au moins le nom du candidat et son parti.');
+    if (!last) {
+      const problem = blocker(current);
+      setMissing(problem);
+      if (!problem) setStep(index + 1);
       return;
     }
-    if (withPersonality && !personality) {
-      setMissing('Choisissez la personnalité que vous incarnez.');
-      return;
-    }
-    setMissing(null);
+    const problem = steps.map(blocker).find((p) => p !== null) ?? null;
+    setMissing(problem);
+    if (problem) return;
     const { economie, societe, ...identity } = candidate;
     createGame.mutate(
       {
-        name,
+        name: name.trim() || suggestedName,
         mode,
         difficulty,
         startDate,
@@ -147,30 +312,18 @@ export function NewGame() {
         ...((withCandidate || withPersonality) && orientation
           ? { orientationId: orientation }
           : {}),
+        format,
       },
       { onSuccess: (game) => void navigate(`/parties/${game.id}/tableau-de-bord`) },
     );
   };
 
-  let chapter = 0;
-  const next = () => ++chapter;
-  const chosenPersonality = ruleset.data?.personnalites.personnalites.find(
-    (p) => p.id === personality,
-  );
   const recap: [string, string][] = [
     ['Mode', MODE_LABELS[mode]],
     ['Adversaires', OPPONENT_SET_LABELS[opponents]],
     ['Difficulté', DIFFICULTY_LABELS[difficulty]],
     ['Scénario', ruleset.data?.scenarios.find((s) => s.id === scenario)?.libelle ?? scenario],
-    ...(withCandidate || withPersonality
-      ? ([
-          [
-            'Orientation',
-            ruleset.data?.orientations.liste.find((o) => o.id === orientation)?.libelle ??
-              'Sans orientation particulière',
-          ],
-        ] as [string, string][])
-      : []),
+    ['Format', FORMAT_LABELS[format]],
     ['Départ', validDate(startDate) ? formatGameDate(startDate) : 'date à préciser'],
   ];
 
@@ -187,168 +340,154 @@ export function NewGame() {
         noValidate
         className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start xl:grid-cols-[minmax(0,1fr)_22rem]"
       >
-        <div className="min-w-0 space-y-12">
-          <Chapitre
-            numero={next()}
-            titre="La partie"
-            description="Son nom, et la façon dont vous la jouez."
-          >
-            <div className="space-y-1">
-              <label htmlFor="nom" className={label}>
-                Nom de la partie
-              </label>
-              <input
-                id="nom"
-                className={input}
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                maxLength={80}
-                required
+        <div className="min-w-0 space-y-6">
+          <Step id={current} index={index} count={steps.length}>
+            {current === 'partie' && (
+              <Tiles
+                name="mode"
+                legend="Mode de jeu"
+                options={MODES}
+                value={mode}
+                onChange={(next) => {
+                  setMode(next);
+                  setMissing(null);
+                }}
+                labelOf={(v) => MODE_LABELS[v]}
               />
-            </div>
-
-            <fieldset className="space-y-2">
-              <legend className={label}>Mode de jeu</legend>
-              <div className="grid gap-2.5 md:grid-cols-3">
-                {MODES.map((option) => {
-                  const Icon = option.icon;
-                  return (
-                    <label key={option.value} className={`${optionTile} md:flex-col`}>
-                      <span className="flex items-center gap-3">
-                        <input
-                          type="radio"
-                          name="mode"
-                          value={option.value}
-                          checked={mode === option.value}
-                          onChange={() => setMode(option.value)}
-                          className={radio}
-                        />
-                        <Icon
-                          aria-hidden="true"
-                          className="size-5 text-or-600 md:size-6 dark:text-dorure"
-                          strokeWidth={1.75}
-                        />
-                      </span>
-                      <span>
-                        <span className="font-display text-lg font-semibold">
-                          {MODE_LABELS[option.value]}
-                        </span>
-                        <span className="block text-sm text-slate-600 dark:text-slate-400">
-                          {option.description}
-                        </span>
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
-            </fieldset>
-          </Chapitre>
-
-          {withCandidate && (
-            <Chapitre
-              numero={next()}
-              titre="Votre candidat"
-              description="Identité, portrait, positionnement et profil de départ."
-            >
+            )}
+            {current === 'candidat' && withCandidate && (
               <CandidateForm value={candidate} onChange={setCandidate} />
-            </Chapitre>
-          )}
-          {withPersonality && (
-            <Chapitre
-              numero={next()}
-              titre="Personnalité incarnée"
-              description="Une candidature déclarée, retenue pour le jeu ; son parcours est simulé."
-            >
+            )}
+            {current === 'candidat' && withPersonality && (
               <PersonalityPicker value={personality} onChange={setPersonality} />
-            </Chapitre>
-          )}
-          {(withCandidate || withPersonality) && (
-            <Chapitre
-              numero={next()}
-              titre="Le mouvement"
-              description="Sur quoi votre campagne s’appuie pour partir."
-            >
-              <OrientationPicker value={orientation} onChange={setOrientation} />
-            </Chapitre>
-          )}
-
-          <Chapitre
-            numero={next()}
-            titre="Le terrain"
-            description="Qui vous affrontez, avec quelle exigence, dans quelle conjoncture."
-          >
-            <fieldset className="space-y-2">
-              <legend className={label}>Adversaires</legend>
-              <div className="grid gap-2.5 sm:grid-cols-2">
-                {OPPONENTS.map((option) => (
-                  <label key={option.value} className={optionTile}>
-                    <input
-                      type="radio"
-                      name="adversaires"
-                      value={option.value}
-                      checked={opponents === option.value}
-                      onChange={() => setOpponents(option.value)}
-                      className={radio}
-                    />
-                    <span>
-                      <span className="font-semibold">{OPPONENT_SET_LABELS[option.value]}</span>
-                      <span className="block text-sm text-slate-600 dark:text-slate-400">
-                        {option.description}
-                      </span>
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-
-            <DifficultyPicker value={difficulty} onChange={setDifficulty} mode={mode} />
-
-            <ScenarioPicker value={scenario} onChange={setScenario} />
-          </Chapitre>
-
-          <Chapitre
-            numero={next()}
-            titre="Le calendrier"
-            description="Le lundi où tout commence, et la graine du hasard."
-          >
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-1">
-                <label htmlFor="depart" className={label}>
-                  Date de départ
-                </label>
-                <input
-                  id="depart"
-                  type="date"
-                  className={input}
-                  value={startDate}
-                  min={START_DATE_MIN}
-                  max={START_DATE_MAX}
-                  onChange={(event) => setStartDate(event.target.value)}
-                  aria-describedby="aide-depart"
+            )}
+            {current === 'parcours' && (
+              <>
+                {withCandidate && (
+                  <ProfilePicker
+                    value={candidate.profilId}
+                    onChange={(profilId) => setCandidate({ ...candidate, profilId })}
+                  />
+                )}
+                <OrientationPicker value={orientation} onChange={setOrientation} />
+              </>
+            )}
+            {current === 'terrain' && (
+              <>
+                <Tiles
+                  name="adversaires"
+                  legend="Adversaires"
+                  options={OPPONENTS}
+                  value={opponents}
+                  onChange={setOpponents}
+                  labelOf={(v) => OPPONENT_SET_LABELS[v]}
+                  columns="sm:grid-cols-2"
                 />
-                <p id="aide-depart" className="text-xs text-slate-600 dark:text-slate-400">
-                  Un lundi de l’automne 2026 (le temps avance par semaines).
-                </p>
-              </div>
-              <div className="space-y-1">
-                <label htmlFor="graine" className={label}>
-                  Graine (facultative)
-                </label>
-                <input
-                  id="graine"
-                  className={input}
-                  value={seed}
-                  onChange={(event) => setSeed(event.target.value)}
-                  maxLength={64}
-                  placeholder="aléatoire"
-                  aria-describedby="aide-graine"
+                <DifficultyPicker value={difficulty} onChange={setDifficulty} mode={mode} />
+                <ScenarioPicker value={scenario} onChange={setScenario} />
+              </>
+            )}
+            {current === 'format' && (
+              <>
+                <Tiles
+                  name="format"
+                  legend="Format de la partie"
+                  options={FORMATS}
+                  value={format}
+                  onChange={setFormat}
+                  labelOf={(v) => FORMAT_LABELS[v]}
+                  columns="sm:grid-cols-2"
                 />
-                <p id="aide-graine" className="text-xs text-slate-600 dark:text-slate-400">
-                  Même graine et mêmes décisions donnent la même partie.
-                </p>
-              </div>
-            </div>
-          </Chapitre>
+                <details className="rounded-2xl border border-slate-200 p-4 dark:border-white/10">
+                  <summary className="min-h-11 cursor-pointer content-center font-semibold">
+                    Options avancées
+                  </summary>
+                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-1 sm:col-span-2">
+                      <label htmlFor="nom" className={label}>
+                        Nom de la partie
+                      </label>
+                      <input
+                        id="nom"
+                        className={input}
+                        value={name}
+                        onChange={(event) => setName(event.target.value)}
+                        maxLength={80}
+                        placeholder={suggestedName}
+                        aria-describedby="aide-nom"
+                      />
+                      <p id="aide-nom" className="text-xs text-slate-600 dark:text-slate-400">
+                        Laissé vide : « {suggestedName} ».
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <label htmlFor="depart" className={label}>
+                        Date de départ
+                      </label>
+                      <input
+                        id="depart"
+                        type="date"
+                        className={input}
+                        value={startDate}
+                        min={START_DATE_MIN}
+                        max={START_DATE_MAX}
+                        onChange={(event) => setStartDate(event.target.value)}
+                        aria-describedby="aide-depart"
+                      />
+                      <p id="aide-depart" className="text-xs text-slate-600 dark:text-slate-400">
+                        Un lundi de l’automne 2026 (le temps avance par semaines).
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <label htmlFor="graine" className={label}>
+                        Graine (facultative)
+                      </label>
+                      <input
+                        id="graine"
+                        className={input}
+                        value={seed}
+                        onChange={(event) => setSeed(event.target.value)}
+                        maxLength={64}
+                        placeholder="aléatoire"
+                        aria-describedby="aide-graine"
+                      />
+                      <p id="aide-graine" className="text-xs text-slate-600 dark:text-slate-400">
+                        Même graine et mêmes décisions donnent la même partie.
+                      </p>
+                    </div>
+                  </div>
+                </details>
+              </>
+            )}
+          </Step>
+
+          {missing && (
+            <p role="alert" className="text-sm text-red-700 dark:text-red-400">
+              {missing}
+            </p>
+          )}
+          {createGame.isError && <ErrorMessage error={createGame.error} />}
+
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            {index > 0 ? (
+              <button type="button" className={buttonSecondary} onClick={goBack}>
+                <ArrowLeft aria-hidden="true" className="size-4" />
+                Précédent
+              </button>
+            ) : (
+              <span />
+            )}
+            {last ? (
+              <button type="submit" className={buttonPrestige} disabled={createGame.isPending}>
+                {createGame.isPending ? 'Création…' : 'Créer la partie'}
+              </button>
+            ) : (
+              <button type="submit" className={buttonPrestige}>
+                Suivant
+                <ArrowRight aria-hidden="true" className="size-4" />
+              </button>
+            )}
+          </div>
         </div>
 
         <aside aria-label="Récapitulatif" className="space-y-4 lg:sticky lg:top-6">
@@ -405,21 +544,6 @@ export function NewGame() {
               ))}
             </dl>
           </div>
-
-          {missing && (
-            <p role="alert" className="text-sm text-red-700 dark:text-red-400">
-              {missing}
-            </p>
-          )}
-          {createGame.isError && <ErrorMessage error={createGame.error} />}
-
-          <button
-            type="submit"
-            className={`${buttonPrestige} w-full`}
-            disabled={createGame.isPending}
-          >
-            {createGame.isPending ? 'Création…' : 'Créer la partie'}
-          </button>
         </aside>
       </form>
     </div>

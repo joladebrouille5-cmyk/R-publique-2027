@@ -1,5 +1,5 @@
 /** Version du moteur, enregistrée dans chaque partie et chaque sauvegarde (§11). */
-export const ENGINE_VERSION = '0.20.0';
+export const ENGINE_VERSION = '0.21.0';
 
 /**
  * Version du format de `GameState` ; toute évolution s'accompagne d'une migration
@@ -19,6 +19,7 @@ export const ENGINE_VERSION = '0.20.0';
  * 14 (jeu de règles 15 : vivier de personnalités réelles, expertise ministérielle) ; 19 : phase
  * 15 (jeu de règles 16 : orientation stratégique, négociations de soutien, ministres vivants,
  * urgences ministérielles, questions au gouvernement, objectifs de mandat, succès) ; 20 : phase
- * 18 (jeu de règles 17 : cinq niveaux de difficulté, Découverte et Légende en plus).
+ * 18 (jeu de règles 17 : cinq niveaux de difficulté, Découverte et Légende en plus) ; 21 : phase
+ * 20 (format de partie complet ou court).
  */
-export const SAVE_SCHEMA_VERSION = 20;
+export const SAVE_SCHEMA_VERSION = 21;

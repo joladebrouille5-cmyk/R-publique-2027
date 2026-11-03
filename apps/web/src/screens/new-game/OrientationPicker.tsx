@@ -58,7 +58,7 @@ export function OrientationPicker({
   ];
   return (
     <fieldset className="space-y-2">
-      <legend className={label}>Orientation stratégique du mouvement</legend>
+      <legend className={label}>Variante de campagne (facultative)</legend>
       <div className="grid gap-2.5 sm:grid-cols-2">
         {options.map((option) => (
           <label key={option.id ?? 'aucune'} className={optionTile}>

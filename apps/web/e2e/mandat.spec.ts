@@ -1,7 +1,15 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import { GameDetailSchema } from '@r2027/shared';
-import { advanceViaApi, createGame, gameIdOf, openScreen, settled } from './helpers';
+import {
+  advanceViaApi,
+  createGame,
+  fillCandidate,
+  finishWizard,
+  gameIdOf,
+  openScreen,
+  settled,
+} from './helpers';
 
 // Phase 13 : photo du candidat préparée par le navigateur (recadrage, réduction, encodage),
 // vue du mandat en tête de l'espace Pouvoir, carte des législatives par bloc.
@@ -18,9 +26,7 @@ test('photo du candidat : préparée sur l’appareil, envoyée et conservée av
   await page.goto('/');
   await expect(page.getByText(/Serveur connecté/)).toBeVisible();
   await page.getByRole('link', { name: 'Nouvelle partie' }).click();
-  await page.getByLabel('Nom de la partie').fill('Partie avec photo');
-  await page.getByLabel(/^Nom \*/).fill('Durand');
-  await page.getByLabel(/^Parti ou mouvement/).fill('Mouvement Playwright');
+  await fillCandidate(page);
   // Sans photo : portrait illustré généré.
   await expect(page.locator('[data-avatar="illustration"]').first()).toBeVisible();
   await page
@@ -28,7 +34,7 @@ test('photo du candidat : préparée sur l’appareil, envoyée et conservée av
     .setInputFiles({ name: 'portrait.png', mimeType: 'image/png', buffer: PNG });
   const preview = page.getByRole('img', { name: 'Photo choisie pour le candidat' });
   await expect(preview).toHaveAttribute('src', /^data:image\/(webp|jpeg);base64,/);
-  await page.getByRole('button', { name: 'Créer la partie' }).click();
+  await finishWizard(page, { name: 'Partie avec photo' });
   await expect(page.getByRole('heading', { name: 'Tableau de bord' })).toBeVisible();
   const game = GameDetailSchema.parse(
     await (await page.request.get(`/api/games/${gameIdOf(page)}`)).json(),

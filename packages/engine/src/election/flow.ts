@@ -46,6 +46,15 @@ export function concludeRound(
       }
     }
     state.pendingDecisions = state.pendingDecisions.filter((d) => d.kind !== 'consigne');
+    // Format court (phase 20) : la partie s'arrête au soir de l'élection, sans quinquennat.
+    if (state.player.format === 'court') {
+      const winner = state.actors[result.winner]!;
+      state.calendar = {
+        blockedBy: 'fin-de-partie',
+        blockedMessage: `Partie terminée (format court) : ${candidateName(winner.candidate)} est élu(e) président(e) de la République au ${result.round === 1 ? 'premier' : 'second'} tour. Revivez la soirée électorale ou commencez une nouvelle partie.`,
+      };
+      return { phaseChange: { from, to: state.meta.phase }, events };
+    }
     // Phase 6 : le vainqueur (joueur ou IA) entre en fonctions à l'investiture.
     openQuinquennat(state, ruleset, result.winner);
     return { phaseChange: { from, to: state.meta.phase }, events };

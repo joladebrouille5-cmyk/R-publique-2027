@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
+import { fillCandidate, finishWizard } from '../../web/e2e/helpers';
 
 // Phase 8 : l'application Android joue sans réseau. Le paquet de l'APK est servi tel quel ;
 // toute requête vers une autre origine est coupée, et aucune requête /api ne doit partir :
@@ -43,12 +44,9 @@ async function createGame(page: Page, name: string) {
   await page.goto('/');
   await engineReady(page);
   await page.getByRole('link', { name: 'Nouvelle partie' }).click();
-  await page.getByLabel('Nom de la partie').fill(name);
-  await page.getByLabel('Prénom').fill('Camille');
-  await page.getByLabel(/^Nom \*/).fill('Hors-Ligne');
-  await page.getByLabel(/^Parti ou mouvement/).fill('Mouvement de poche');
-  await page.getByLabel('Graine (facultative)').fill('android');
-  await page.getByRole('button', { name: 'Créer la partie' }).click();
+  // Assistant de création (phase 20) : candidat, puis options avancées de la dernière étape.
+  await fillCandidate(page, 'Hors-Ligne');
+  await finishWizard(page, { name, seed: 'android' });
   await expect(page.getByRole('heading', { name: 'Tableau de bord' })).toBeVisible();
 }
 

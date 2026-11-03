@@ -1,7 +1,16 @@
 import { readFile } from 'node:fs/promises';
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { advanceViaApi, createGame, openScreen, openSection, resolveWeek } from './helpers';
+import {
+  advanceViaApi,
+  createGame,
+  fillCandidate,
+  finishWizard,
+  openScreen,
+  openSection,
+  resolveWeek,
+  wizardTo,
+} from './helpers';
 
 /** Empreinte de l'état : paramètres techniques de la section « La partie » du QG. */
 async function readStateHash(page: Page): Promise<string> {
@@ -268,13 +277,12 @@ test('scénario de départ fictif : choisi à la création, affiché pendant la 
   page,
 }) => {
   await page.goto('/nouvelle-partie');
-  await page.getByLabel('Nom de la partie').fill('Scénario');
-  await page.getByLabel(/^Nom \*/).fill('Durand');
-  await page.getByLabel(/^Parti ou mouvement/).fill('Mouvement Playwright');
+  await fillCandidate(page);
+  await wizardTo(page, 'Le terrain');
   const scenarios = page.getByRole('group', { name: 'Scénario de départ' });
   await scenarios.getByRole('radio', { name: /Colère sociale/ }).check();
   await expect(scenarios.getByText(/Événements de campagne × 1,5/)).toBeVisible();
-  await page.getByRole('button', { name: 'Créer la partie' }).click();
+  await finishWizard(page, { name: 'Scénario' });
   await expect(page.getByRole('heading', { name: 'Tableau de bord' })).toBeVisible();
   // Le scénario se lit dans la ligne d'état de la section « La partie », et dans ses faits.
   await expect(page.getByRole('button', { name: /^La partie/ })).toContainText('Colère sociale');
@@ -289,11 +297,8 @@ test('scénario de départ fictif : choisi à la création, affiché pendant la 
 
 test('une date de départ invalide est refusée par le serveur', async ({ page }) => {
   await page.goto('/nouvelle-partie');
-  await page.getByLabel('Nom de la partie').fill('Date invalide');
-  await page.getByLabel(/^Nom \*/).fill('Durand');
-  await page.getByLabel(/^Parti ou mouvement/).fill('Mouvement Playwright');
-  await page.getByLabel('Date de départ').fill('2026-09-29');
-  await page.getByRole('button', { name: 'Créer la partie' }).click();
+  await fillCandidate(page);
+  await finishWizard(page, { name: 'Date invalide', startDate: '2026-09-29' });
   await expect(page.getByRole('alert')).toContainText('doit être un lundi');
 });
 

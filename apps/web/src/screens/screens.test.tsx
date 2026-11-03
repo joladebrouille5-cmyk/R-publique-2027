@@ -15,6 +15,8 @@ import {
   RULESET_URL,
   rulesetHandler,
   saveFixture,
+  advancedOptions,
+  wizardTo,
 } from '../test/utils';
 
 const gameHandlers = {
@@ -116,12 +118,12 @@ describe('création de partie', () => {
     renderRoute('/nouvelle-partie');
     const user = userEvent.setup();
     expect(await screen.findByRole('radio', { name: /Candidat personnalisé/ })).toBeChecked();
-    await user.type(screen.getByLabelText('Nom de la partie'), 'Réel');
     await user.click(screen.getByRole('radio', { name: /Candidat réel/ }));
+    await wizardTo(user, 'Votre candidat');
     const group = await screen.findByRole('group', { name: 'Personnalité incarnée' });
     expect(within(group).getByText(/sont simulés par le jeu/)).toBeInTheDocument();
-    // Sans choix, la création est refusée côté interface.
-    await user.click(screen.getByRole('button', { name: 'Créer la partie' }));
+    // Sans choix, l'assistant ne passe pas à l'étape suivante.
+    await user.click(screen.getByRole('button', { name: 'Suivant' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('personnalité que vous incarnez');
 
     await user.click(within(group).getByRole('radio', { name: /Marine Tondelier/ }));
@@ -134,10 +136,13 @@ describe('création de partie', () => {
     expect(
       within(group).getByRole('img', { name: 'Portrait de Marine Tondelier' }),
     ).toHaveAttribute('src', '/personnalites/reel-tondelier.webp');
+    await wizardTo(user, 'Le terrain');
     await user.click(screen.getByRole('radio', { name: /Personnalités réelles/ }));
+    await advancedOptions(user, { name: 'Réel' });
     await user.click(screen.getByRole('button', { name: 'Créer la partie' }));
     await waitFor(() => expect(calls.some((c) => c.method === 'POST')).toBe(true));
     expect(calls.find((c) => c.method === 'POST')!.body).toEqual({
+      format: 'complet',
       name: 'Réel',
       mode: 'candidat_reel',
       difficulty: 'standard',
@@ -155,11 +160,14 @@ describe('création de partie', () => {
     });
     const { router } = renderRoute('/nouvelle-partie');
     const user = userEvent.setup();
-    await user.type(await screen.findByLabelText('Nom de la partie'), 'Ma campagne');
+    await screen.findByRole('heading', { level: 2, name: 'La partie' });
+    await wizardTo(user, 'Votre candidat');
     await user.type(screen.getByLabelText('Prénom'), 'Lou');
     await user.type(screen.getByLabelText(/^Nom \*/), 'Martin');
     await user.type(screen.getByLabelText(/^Parti ou mouvement/), 'Parti du renouveau');
+    await wizardTo(user, 'Votre parcours');
     await user.click(await screen.findByRole('radio', { name: /Figure de la société civile/ }));
+    await wizardTo(user, 'Le terrain');
     await user.click(screen.getByRole('radio', { name: /Expert/ }));
     // Scénario de départ (phase 7) : situation fictive, écarts affichés.
     const scenarios = screen.getByRole('group', { name: 'Scénario de départ' });
@@ -167,7 +175,8 @@ describe('création de partie', () => {
     expect(storm.closest('label')).toHaveTextContent('Scénario fictif');
     expect(storm.closest('label')).toHaveTextContent(/Crises × 1,2/);
     await user.click(storm);
-    await user.type(screen.getByLabelText('Graine (facultative)'), 'ma-graine');
+    await advancedOptions(user, { name: 'Ma campagne', seed: 'ma-graine' });
+    await user.click(screen.getByRole('radio', { name: /Court/ }));
     await user.click(screen.getByRole('button', { name: 'Créer la partie' }));
 
     await waitFor(() =>
@@ -180,6 +189,7 @@ describe('création de partie', () => {
       startDate: '2026-09-28',
       seed: 'ma-graine',
       scenarioId: 'tempete-economique',
+      format: 'court',
       candidate: {
         prenom: 'Lou',
         nom: 'Martin',
@@ -197,15 +207,20 @@ describe('création de partie', () => {
     const calls = mockApi({ ...gameHandlers });
     renderRoute('/nouvelle-partie');
     const user = userEvent.setup();
-    await user.type(await screen.findByLabelText('Nom de la partie'), 'X');
-    await user.click(screen.getByRole('button', { name: 'Créer la partie' }));
+    await screen.findByRole('heading', { level: 2, name: 'La partie' });
+    await wizardTo(user, 'Votre candidat');
+    await user.click(screen.getByRole('button', { name: 'Suivant' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('nom du candidat et son parti');
+    expect(screen.getByRole('heading', { level: 2, name: 'Votre candidat' })).toBeInTheDocument();
     expect(calls.some((call) => call.method === 'POST')).toBe(false);
   });
 
   it('indique les électorats proches du positionnement choisi', async () => {
     mockApi({ ...gameHandlers });
     renderRoute('/nouvelle-partie');
+    const user = userEvent.setup();
+    await screen.findByRole('heading', { level: 2, name: 'La partie' });
+    await wizardTo(user, 'Votre candidat');
     expect(
       await screen.findByText(/Électorats les plus proches : Centre gauche/),
     ).toBeInTheDocument();
@@ -238,9 +253,11 @@ describe('création de partie', () => {
     });
     renderRoute('/nouvelle-partie');
     const user = userEvent.setup();
-    await user.type(await screen.findByLabelText('Nom de la partie'), 'X');
+    await screen.findByRole('heading', { level: 2, name: 'La partie' });
+    await wizardTo(user, 'Votre candidat');
     await user.type(screen.getByLabelText(/^Nom \*/), 'Martin');
     await user.type(screen.getByLabelText(/^Parti ou mouvement/), 'Parti');
+    await wizardTo(user, 'Le format');
     await user.click(screen.getByRole('button', { name: 'Créer la partie' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('doit être un lundi');
   });

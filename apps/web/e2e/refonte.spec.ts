@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { closeDebrief, createGame, settled } from './helpers';
+import { closeDebrief, createGame, settled, wizardTo } from './helpers';
 
 // Phase 16 : refonte « Grand Soir ». Écran-titre (mur d'affichage des candidats fictifs),
 // création en chapitres avec l'affiche en direct, QG et débriefing : accessibilité (axe) dans les
@@ -79,23 +79,22 @@ test('mouvement réduit : les affiches et le titre ne s’animent pas', async ({
   await context.close();
 });
 
-test('création en chapitres : affiche en direct, boussole, un seul bouton de création', async ({
+test('création en assistant : une étape à la fois, affiche en direct, boussole, format', async ({
   page,
 }) => {
   test.setTimeout(120_000);
   await page.goto('/nouvelle-partie');
   await expect(page.getByRole('heading', { level: 1, name: 'Nouvelle partie' })).toBeVisible();
-  for (const chapter of [
-    'La partie',
-    'Votre candidat',
-    'Le mouvement',
-    'Le terrain',
-    'Le calendrier',
-  ])
-    await expect(page.getByRole('heading', { level: 2, name: chapter })).toBeVisible();
+  // Une étape à la fois : la première, sans bouton Précédent.
+  await expect(page.getByRole('heading', { level: 2, name: 'La partie' })).toBeVisible();
+  await expect(page.getByText('Étape 1 sur 5')).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2, name: 'Le terrain' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Précédent' })).toHaveCount(0);
+  await bothThemes(page, 'Création, étape 1');
 
   const recap = page.getByRole('complementary', { name: 'Récapitulatif' });
   await expect(recap.getByText('Votre mouvement')).toBeVisible();
+  await wizardTo(page, 'Votre candidat');
   await page.getByLabel('Prénom').fill('Hélène');
   await page.getByLabel(/^Nom \*/).fill('Vasseur');
   await page.getByLabel(/^Parti ou mouvement/).fill('Renouveau citoyen');
@@ -109,12 +108,34 @@ test('création en chapitres : affiche en direct, boussole, un seul bouton de cr
   await page.mouse.click(box.x + box.width * 0.25, box.y + box.height * 0.75);
   await expect(page.getByLabel(/Positionnement économique/)).toHaveValue('-50');
   await expect(page.getByLabel(/Positionnement sociétal/)).toHaveValue('-50');
+  await bothThemes(page, 'Création, candidat');
+  await noOverflow(page, 'Création, candidat');
 
+  // Parcours : profil puis variante, réunis sur une même étape.
+  await wizardTo(page, 'Votre parcours');
+  await expect(page.getByRole('group', { name: 'Votre parcours' })).toBeVisible();
+  await expect(
+    page.getByRole('group', { name: 'Variante de campagne (facultative)' }),
+  ).toBeVisible();
+  // Précédent revient à l'étape d'avant, sans rien perdre.
+  await page.getByRole('button', { name: 'Précédent' }).click();
+  await expect(page.getByLabel(/^Nom \*/)).toHaveValue('Vasseur');
+
+  await wizardTo(page, 'Le terrain');
   await page.getByRole('radio', { name: /Expert/ }).check();
   await expect(recap.getByText('Expert', { exact: true })).toBeVisible();
+  await wizardTo(page, 'Le format');
+  await page.getByRole('radio', { name: /Court/ }).check();
+  await expect(recap.getByText('Court', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Suivant' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Créer la partie' })).toHaveCount(1);
-  await bothThemes(page, 'Création');
-  await noOverflow(page, 'Création');
+  await page.getByText('Options avancées').click();
+  await expect(page.getByLabel('Nom de la partie')).toHaveAttribute(
+    'placeholder',
+    'Campagne de Hélène Vasseur',
+  );
+  await bothThemes(page, 'Création, format');
+  await noOverflow(page, 'Création, format');
 });
 
 test('QG et débriefing : thème clair, cibles tactiles de 44 px', async ({ page }) => {

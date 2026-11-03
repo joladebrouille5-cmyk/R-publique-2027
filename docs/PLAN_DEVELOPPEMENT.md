@@ -999,6 +999,21 @@ Décisions de conception (révisables) :
 
 **Bilan (29/10/2026)** — les quatre tâches sont réalisées ; moteur, jeu de règles (17.0.0) et format de sauvegarde (20) inchangés ; application 1.11.0. Limites : le son n'a pas été écouté sur un téléphone réel (R-53 : rendu mesuré, pas entendu) ; la campagne ne compte que deux morceaux, répétés au fil des semaines ; aucun son d'interface ni ambiance de foule (non demandés) ; les jingles sont des synthèses du jeu, d'un timbre plus électronique qu'un orchestre enregistré.
 
+
+### Phase 20 — Création en assistant, récit, surprises, réel et progression (en cours)
+
+Suite de la demande du 29/10/2026 (« création de partie trop de paramètres […] rendre le jeu vivant, réel et addictif ») ; décisions de l'utilisateur au questionnaire, appliquées telles quelles : création en **assistant pas à pas** avec l'affiche en direct (boutons Précédent et Suivant, ni récapitulatif, ni « Passer », ni frise) ; nom de la partie, date de départ et graine dans des options avancées ; candidat saisi en entier ; profil de départ et orientation **fusionnés en un seul choix « Votre parcours »** (parcours principal, variante facultative) ; **format choisi à la création** (complet, ou court : la partie s'arrête au soir du second tour) ; **l'équipe de campagne raconte la semaine**, visuels plutôt que tableaux, une phrase et le détail au toucher, **moins d'écrans** (liste proposée puis validée par l'utilisateur avant toute suppression) ; **événements en chaîne** et **coups des adversaires** fictifs ; **calendrier, lieux et rouages réels** (sourcés, sinon étiquetés) ; **palmarès, déblocages** (une partie de l'existant verrouillée jusqu'à une première victoire), **niveau de joueur**, **défi du jour** (score au premier tour) et **notifications locales**.
+
+| # | Tâche | Critère d'acceptation |
+|---|---|---|
+| P20-01 | Format court : choix à la création (API, moteur local), la partie s'arrête au soir du second tour ; format de sauvegarde 21, migration 20 → 21 (parties existantes au format complet) ; moteur 0.21.0. | tests du moteur (fin au second tour, aucun quinquennat), migration testée sur un état réel du format 20, mêmes refus API / moteur local. |
+| P20-02 | Création en assistant : étapes (partie, candidat, parcours, terrain, format), affiche en direct, Précédent / Suivant, options avancées, même requête qu'avant. | tests de composants et e2e (axe, 360 px) ; requête envoyée identique pour les mêmes choix. |
+| P20-03 | Récit et lisibilité : débriefing raconté par une équipe de campagne fictive (lu dans le bilan du moteur, rien de recalculé), visuels et résumés d'une phrase ; liste d'écrans à regrouper soumise à l'utilisateur. | tests de composants ; aucun propos prêté à une personne réelle ; liste validée avant tout retrait. |
+| P20-04 | Surprises : événements fictifs en chaîne (suites programmées) et coups des adversaires fictifs ; jeu de règles 18.0.0. | tests du moteur (déterminisme, suites programmées une seule fois, registre). |
+| P20-05 | Réel : calendrier réel 2026-2027 (jours fériés selon la loi, campagne officielle) sourcé ou étiqueté ; effets dans la campagne. | sources dans SOURCES ; tests. |
+| P20-06 | Progression : palmarès et niveau de joueur calculés par l'API et le moteur local à partir des parties, déblocages, défi du jour ; notifications locales si l'extension est disponible hors ligne. | tests d'intégration et du moteur local ; e2e. |
+| P20-07 | Documentation, vérifications, APK. | `pnpm check`, intégration, e2e, `pnpm test:mobile`, APK. |
+
 ---
 
 ## 5. Questions ouvertes

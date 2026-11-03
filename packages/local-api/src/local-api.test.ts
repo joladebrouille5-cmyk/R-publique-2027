@@ -150,6 +150,17 @@ describe('serveur local : parties et progression', () => {
     ).toBe('requete_invalide');
   });
 
+  it('crée une partie au format court ; même refus que l’API (phase 20)', async () => {
+    const api = server();
+    expect((await newGame(api, { format: 'court' })).state.player.format).toBe('court');
+    expect((await newGame(api)).state.player.format).toBe('complet');
+    expect(
+      error(
+        await call(api, 'POST', '/api/games', { name: 'x', mode: 'observateur', format: 'eclair' }),
+      ),
+    ).toBe('requete_invalide');
+  });
+
   it('crée une partie avec une orientation stratégique (phase 15), mêmes refus que l’API', async () => {
     const api = server();
     const game = await newGame(api, { orientationId: 'elus-locaux' });

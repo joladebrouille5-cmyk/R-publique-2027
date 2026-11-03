@@ -33,6 +33,7 @@ describe('createGame', () => {
       actorId: PLAYER_ACTOR_ID,
       adversaires: 'fictifs',
       orientation: null,
+      format: 'complet',
     });
     expect(state.actors[PLAYER_ACTOR_ID]).toMatchObject({
       kind: 'joueur',
@@ -119,6 +120,7 @@ describe('createGame', () => {
       actorId: null,
       adversaires: 'fictifs',
       orientation: null,
+      format: 'complet',
     });
     expect(Object.values(state.actors).every((a) => a.kind === 'adversaire')).toBe(true);
   });

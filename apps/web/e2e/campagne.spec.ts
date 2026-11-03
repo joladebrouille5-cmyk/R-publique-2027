@@ -1,6 +1,13 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { advanceViaApi, createGame, openScreen, openSection, resolveWeek } from './helpers';
+import {
+  advanceViaApi,
+  createGame,
+  finishWizard,
+  openScreen,
+  openSection,
+  resolveWeek,
+} from './helpers';
 
 // Campagne approfondie (phase 5) : programme, actions ciblées, parrainages, finances,
 // relations, mode observateur — bureau et téléphone.
@@ -109,10 +116,8 @@ test('observateur : les adversaires agissent, collectent et se motivent seuls', 
   page,
 }) => {
   await page.goto('/nouvelle-partie');
-  await page.getByLabel('Nom de la partie').fill('Observation');
   await page.getByLabel('Observateur').check();
-  await page.getByLabel('Graine (facultative)').fill('e2e-observateur');
-  await page.getByRole('button', { name: 'Créer la partie' }).click();
+  await finishWizard(page, { name: 'Observation', seed: 'e2e-observateur' });
   await resolveWeek(page, 0);
   await openSection(page, 'bilan-semaine');
   const report = page.getByRole('region', { name: /Bilan de la semaine 0/ });

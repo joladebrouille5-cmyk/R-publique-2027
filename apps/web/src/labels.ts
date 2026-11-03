@@ -1,4 +1,5 @@
 import type {
+  GameFormat,
   AiObjective,
   CandidateStatus,
   DataStatus,
@@ -33,6 +34,12 @@ export const POSITION_METHOD_LABELS: Record<PositionMethod, string> = {
   parti_soutien: 'position estimée du parti qui soutient sa candidature',
   ancien_parti: 'hypothèse : position d’un ancien parti',
   famille: 'hypothèse : moyenne de sa famille politique',
+};
+
+/** Format de la partie (phase 20). */
+export const FORMAT_LABELS: Record<GameFormat, string> = {
+  complet: 'Complet',
+  court: 'Court',
 };
 
 export const DIFFICULTY_LABELS: Record<Difficulty, string> = {

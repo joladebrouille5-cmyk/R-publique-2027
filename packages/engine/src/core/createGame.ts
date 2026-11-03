@@ -10,6 +10,7 @@ import {
   type Actor,
   type CandidateInput,
   type Difficulty,
+  type GameFormat,
   type GameMode,
   type GameState,
   type OpponentSet,
@@ -43,6 +44,8 @@ export type CreateGameInput = {
   scenarioId?: string | undefined;
   /** Orientation stratégique du mouvement du joueur (phase 15), facultative. */
   orientationId?: string | undefined;
+  /** Format de la partie (phase 20) : complet par défaut, ou court (fin au soir de l'élection). */
+  format?: GameFormat | undefined;
 };
 
 export class GameCreationError extends Error {
@@ -455,6 +458,7 @@ export function createGame(input: CreateGameInput, ruleset: Ruleset): GameState 
       actorId: input.mode === 'observateur' ? null : PLAYER_ACTOR_ID,
       adversaires,
       orientation: orientation?.id ?? null,
+      format: input.format ?? 'complet',
     },
     actors,
     scheduled: [],

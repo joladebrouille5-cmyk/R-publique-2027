@@ -44,6 +44,7 @@ describe('personnalités réelles', () => {
       actorId: PLAYER_ACTOR_ID,
       adversaires: 'fictifs',
       orientation: null,
+      format: 'complet',
     });
     expect(
       Object.keys(state.actors)

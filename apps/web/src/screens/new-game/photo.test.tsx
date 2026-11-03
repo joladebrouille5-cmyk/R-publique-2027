@@ -8,6 +8,7 @@ import {
   mockApi,
   renderRoute,
   rulesetHandler,
+  wizardTo,
 } from '../../test/utils';
 import { PhotoError, preparePhoto } from './photo';
 
@@ -31,7 +32,8 @@ const handlers = {
 
 async function fillCandidate() {
   const user = userEvent.setup();
-  await user.type(await screen.findByLabelText('Nom de la partie'), 'Avec photo');
+  await screen.findByRole('heading', { level: 2, name: 'La partie' });
+  await wizardTo(user, 'Votre candidat');
   await user.type(screen.getByLabelText(/^Nom \*/), 'Martin');
   await user.type(screen.getByLabelText(/^Parti ou mouvement/), 'Parti du renouveau');
   return user;
@@ -60,6 +62,7 @@ describe('photo du candidat (phase 13)', () => {
     expect(screen.queryByRole('img', { name: 'Photo choisie pour le candidat' })).toBeNull();
     await user.upload(screen.getByLabelText('Importer une photo'), file);
     await screen.findByRole('img', { name: 'Photo choisie pour le candidat' });
+    await wizardTo(user, 'Le format');
     await user.click(screen.getByRole('button', { name: 'Créer la partie' }));
     await waitFor(() =>
       expect(router.state.location.pathname).toBe(`/parties/${GAME_ID}/tableau-de-bord`),

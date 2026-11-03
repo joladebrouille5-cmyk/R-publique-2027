@@ -16,7 +16,8 @@ import {
   type WeeklyReport,
 } from '@r2027/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import type { UserEvent } from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { vi } from 'vitest';
 import { setSound } from '../audio/systeme';
@@ -279,3 +280,23 @@ export const jingles = (calls: readonly string[]) => calls.filter((c) => c.start
 /** Dernière ambiance publiée. */
 export const lastAmbiance = (calls: readonly string[]) =>
   calls.filter((c) => c.startsWith('ambiance:')).at(-1);
+
+/** Assistant de création (phase 20) : « Suivant » jusqu'à l'étape intitulée `titre`. */
+export async function wizardTo(user: UserEvent, titre: string): Promise<void> {
+  for (let i = 0; i < 6; i++) {
+    if (screen.queryByRole('heading', { level: 2, name: titre })) return;
+    await user.click(screen.getByRole('button', { name: 'Suivant' }));
+  }
+  throw new Error(`Étape de l'assistant introuvable : ${titre}`);
+}
+
+/** Dernière étape de l'assistant : nom de la partie et graine dans les options avancées. */
+export async function advancedOptions(
+  user: UserEvent,
+  options: { name?: string; seed?: string },
+): Promise<void> {
+  await wizardTo(user, 'Le format');
+  await user.click(screen.getByText('Options avancées'));
+  if (options.name) await user.type(screen.getByLabelText('Nom de la partie'), options.name);
+  if (options.seed) await user.type(screen.getByLabelText('Graine (facultative)'), options.seed);
+}

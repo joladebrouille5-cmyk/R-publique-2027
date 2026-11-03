@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { GameDetailSchema, SupportProspectsSchema } from '@r2027/shared';
-import { closeDebrief, gameIdOf, settled } from './helpers';
+import { closeDebrief, fillCandidate, finishWizard, gameIdOf, settled, wizardTo } from './helpers';
 
 // Phase 15 : pré-campagne dans le navigateur — orientation du mouvement à la création, course aux
 // parrainages, négociation d'un soutien (vivier servi par l'API, issue simulée par le moteur),
@@ -28,16 +28,13 @@ test('pré-campagne : orientation, course aux parrainages, soutien négocié, re
   await page.goto('/');
   await expect(page.getByText(/Serveur connecté/)).toBeVisible();
   await page.getByRole('link', { name: 'Nouvelle partie' }).click();
-  await page.getByLabel('Nom de la partie').fill('Pré-campagne');
-  await page.getByLabel('Prénom').fill('Camille');
-  await page.getByLabel(/^Nom \*/).fill('Durand');
-  await page.getByLabel(/^Parti ou mouvement/).fill('Mouvement Playwright');
-  await page.getByLabel('Graine (facultative)').fill('e2e-elus');
+  await fillCandidate(page);
+  await wizardTo(page, 'Votre parcours');
   await page
-    .getByRole('group', { name: 'Orientation stratégique du mouvement' })
+    .getByRole('group', { name: 'Variante de campagne (facultative)' })
     .getByRole('radio', { name: /S’appuyer sur les élus locaux/ })
     .check();
-  await page.getByRole('button', { name: 'Créer la partie' }).click();
+  await finishWizard(page, { name: 'Pré-campagne', seed: 'e2e-elus' });
   await expect(page.getByRole('heading', { name: 'Tableau de bord' })).toBeVisible();
   expect((await readGame(page)).state.player.orientation).toBe('elus-locaux');
 

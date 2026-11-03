@@ -35,6 +35,7 @@ import {
   GameStateV17Schema,
   GameStateV18Schema,
   GameStateV19Schema,
+  GameStateV20Schema,
   addDays,
   DIGITAL_HISTORY_WEEKS,
   daysFromCivil,
@@ -62,6 +63,7 @@ import {
   type GameStateV16,
   type GameStateV18,
   type GameStateV19,
+  type GameStateV20,
   type GameStateV17,
 } from '@r2027/shared';
 import { z } from 'zod';
@@ -110,7 +112,8 @@ const SCHEMAS: Record<number, z.ZodType> = {
   17: GameStateV17Schema,
   18: GameStateV18Schema,
   19: GameStateV19Schema,
-  20: GameStateSchema,
+  20: GameStateV20Schema,
+  21: GameStateSchema,
 };
 
 /** Jeux de règles des parties aux formats 2 (phase 2) et 3 (phase 3). */
@@ -757,7 +760,7 @@ function migrateV18ToV19(v18: GameStateV18): GameStateV19 {
  * 19 → 20 (phase 18) : passage au jeu de règles 17 (cinq niveaux de difficulté). Le niveau de la
  * partie (Accessible, Standard ou Expert) est repris tel quel : ses paramètres sont inchangés.
  */
-function migrateV19ToV20(v19: GameStateV19): GameState {
+function migrateV19ToV20(v19: GameStateV19): GameStateV20 {
   return {
     ...v19,
     meta: {
@@ -766,6 +769,23 @@ function migrateV19ToV20(v19: GameStateV19): GameState {
       rulesetVersion: CURRENT_RULESET_KEY,
       saveSchemaVersion: 20,
     },
+  };
+}
+
+/**
+ * 20 → 21 (phase 20) : format de partie. Une partie existante continue au format complet
+ * (campagne puis quinquennat), comme avant ; rien d'autre ne change.
+ */
+function migrateV20ToV21(v20: GameStateV20): GameState {
+  return {
+    ...v20,
+    meta: {
+      ...v20.meta,
+      engineVersion: ENGINE_VERSION,
+      rulesetVersion: CURRENT_RULESET_KEY,
+      saveSchemaVersion: 21,
+    },
+    player: { ...v20.player, format: 'complet' },
   };
 }
 
@@ -789,6 +809,7 @@ const MIGRATIONS: Record<number, (state: never) => unknown> = {
   17: migrateV17ToV18,
   18: migrateV18ToV19,
   19: migrateV19ToV20,
+  20: migrateV20ToV21,
 };
 
 export type LoadedState = { state: GameState; stateHash: string; migratedFrom: number | null };

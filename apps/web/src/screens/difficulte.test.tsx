@@ -14,6 +14,7 @@ import {
   RULESET_URL,
   rulesetHandler,
   TEST_CANDIDATE,
+  wizardTo,
 } from '../test/utils';
 
 // Phase 18 : cinq niveaux de difficulté, chacun avec sa fiche lue dans le jeu de règles.
@@ -39,6 +40,11 @@ describe('niveaux de difficulté', () => {
     });
     renderRoute('/nouvelle-partie');
     const user = userEvent.setup();
+    await screen.findByRole('heading', { level: 2, name: 'La partie' });
+    await wizardTo(user, 'Votre candidat');
+    await user.type(screen.getByLabelText(/^Nom \*/), 'Martin');
+    await user.type(screen.getByLabelText(/^Parti ou mouvement/), 'Parti du renouveau');
+    await wizardTo(user, 'Le terrain');
     const group = await screen.findByRole('group', { name: 'Difficulté' });
     const radios = within(group).getAllByRole('radio');
     expect(radios.map((r) => (r as HTMLInputElement).value)).toEqual([...DIFFICULTIES]);
@@ -55,9 +61,6 @@ describe('niveaux de difficulté', () => {
     expect(row(sheet, 'Maîtrise au débat')).toBe('inchangée');
 
     // Légende : moyens maigres, adversaires plus riches, plus connus et meilleurs au débat.
-    await user.type(screen.getByLabelText('Nom de la partie'), 'Sans filet');
-    await user.type(screen.getByLabelText(/^Nom \*/), 'Martin');
-    await user.type(screen.getByLabelText(/^Parti ou mouvement/), 'Parti du renouveau');
     await user.click(within(group).getByRole('radio', { name: /Légende/ }));
     sheet = within(group).getByRole('region', { name: /Niveau Légende/ });
     const legende = RULESET.jeu.ressourcesInitiales.legende;
@@ -76,9 +79,11 @@ describe('niveaux de difficulté', () => {
       'DifficultéLégende',
     );
 
+    await wizardTo(user, 'Le format');
     await user.click(screen.getByRole('button', { name: 'Créer la partie' }));
     await waitFor(() => expect(calls.some((c) => c.method === 'POST')).toBe(true));
     expect(calls.find((c) => c.method === 'POST')!.body).toMatchObject({
+      name: 'Campagne de Martin',
       difficulty: 'legende',
     });
   });
@@ -88,6 +93,7 @@ describe('niveaux de difficulté', () => {
     renderRoute('/nouvelle-partie');
     const user = userEvent.setup();
     await user.click(await screen.findByRole('radio', { name: /Observateur/ }));
+    await wizardTo(user, 'Le terrain');
     await user.click(screen.getByRole('radio', { name: /Découverte/ }));
     const sheet = screen.getByRole('region', { name: /Niveau Découverte/ });
     expect(within(sheet).queryByText('Vos moyens de départ')).not.toBeInTheDocument();

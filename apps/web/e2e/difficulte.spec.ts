@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { openSection, settled } from './helpers';
+import { fillCandidate, finishWizard, openSection, settled, wizardTo } from './helpers';
 
 // Phase 18 : cinq niveaux de difficulté. Échelle et fiche du niveau à la création (accessibilité
 // dans les deux thèmes, largeur des téléphones), niveau enregistré par le serveur et rappelé,
@@ -21,6 +21,8 @@ test('cinq niveaux, fiche du niveau choisi, partie créée en Légende', async (
   await page.goto('/');
   await expect(page.getByText(/Serveur connecté/)).toBeVisible();
   await page.getByRole('link', { name: 'Nouvelle partie' }).click();
+  await fillCandidate(page);
+  await wizardTo(page, 'Le terrain');
   const group = page.getByRole('group', { name: 'Difficulté' });
   await expect(group.getByRole('radio')).toHaveCount(5);
   await expect(group.getByRole('radio', { name: /Standard/ })).toBeChecked();
@@ -43,15 +45,10 @@ test('cinq niveaux, fiche du niveau choisi, partie créée en Légende', async (
   }
   await page.setViewportSize({ width: 1280, height: 800 });
 
-  await page.getByLabel('Nom de la partie').fill('Sans filet');
-  await page.getByLabel('Prénom').fill('Camille');
-  await page.getByLabel(/^Nom \*/).fill('Durand');
-  await page.getByLabel(/^Parti ou mouvement/).fill('Mouvement Playwright');
-  await page.getByLabel('Graine (facultative)').fill('e2e-legende');
   await group.getByRole('radio', { name: /Légende/ }).check();
   await expect(group.getByRole('region', { name: /Niveau Légende/ })).toBeVisible();
   await expect(page.getByRole('complementary', { name: 'Récapitulatif' })).toContainText('Légende');
-  await page.getByRole('button', { name: 'Créer la partie' }).click();
+  await finishWizard(page, { name: 'Sans filet', seed: 'e2e-legende' });
   await expect(page.getByRole('heading', { name: 'Tableau de bord' })).toBeVisible();
 
   // Le niveau est celui de l'état produit par le serveur ; il ne se change plus.

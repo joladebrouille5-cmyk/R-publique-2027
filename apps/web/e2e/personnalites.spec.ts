@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { openScreen, openSection, resolveWeek } from './helpers';
+import { finishWizard, openScreen, openSection, resolveWeek, wizardTo } from './helpers';
 
 // Personnalités réelles (phase 5 bis) : création d'une partie où l'on incarne une personnalité
 // sourcée face aux adversaires réels, photos créditées, rappels de simulation, accessibilité.
@@ -16,8 +16,8 @@ const audit = async (page: Page, label: string) => {
 
 test('incarner une personnalité réelle face aux adversaires réels', async ({ page }) => {
   await page.goto('/nouvelle-partie');
-  await page.getByLabel('Nom de la partie').fill('Personnalités');
   await page.getByRole('radio', { name: /Candidat réel/ }).check();
+  await wizardTo(page, 'Votre candidat');
   const group = page.getByRole('group', { name: 'Personnalité incarnée' });
   await expect(group.getByText(/sont simulés par le jeu/)).toBeVisible();
   await group.getByRole('radio', { name: /Marine Tondelier/ }).check();
@@ -26,10 +26,10 @@ test('incarner une personnalité réelle face aux adversaires réels', async ({ 
   const portrait = group.getByRole('img', { name: 'Portrait de Marine Tondelier' });
   await expect(portrait).toBeVisible();
   expect(await portrait.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(240);
-  await page.getByRole('radio', { name: /Personnalités réelles/ }).check();
   await audit(page, 'Nouvelle partie');
-  await page.getByLabel('Graine (facultative)').fill('e2e-reel');
-  await page.getByRole('button', { name: 'Créer la partie' }).click();
+  await wizardTo(page, 'Le terrain');
+  await page.getByRole('radio', { name: /Personnalités réelles/ }).check();
+  await finishWizard(page, { name: 'Personnalités', seed: 'e2e-reel' });
   await expect(page.getByRole('heading', { name: 'Tableau de bord' })).toBeVisible();
   await expect(page.getByText(/Partie avec des personnalités réelles/)).toBeVisible();
 

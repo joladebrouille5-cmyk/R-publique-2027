@@ -3,6 +3,7 @@ import {
   AlliancePlanSchema,
   DecisionAnswerSchema,
   DifficultySchema,
+  GameFormatSchema,
   GameModeSchema,
   GamePhaseSchema,
   GameStateSchema,
@@ -62,6 +63,8 @@ export const CreateGameRequestSchema = z
       .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/)
       .max(60)
       .optional(),
+    /** Format de la partie (phase 20) : complet, ou court (fin au soir de la présidentielle). */
+    format: GameFormatSchema.default('complet'),
   })
   .strict()
   .superRefine((body, ctx) => {
