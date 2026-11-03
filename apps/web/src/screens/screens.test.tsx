@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { Unavailable } from '../components/Unavailable';
 import { GAME_SCREENS } from './registry';
-import { HUBS, hubOf, screenHref } from './shell/navigation';
+import { HUBS, hubOf, partsOf, screenHref } from './shell/navigation';
 import {
   GAME_ID,
   gameFixture,
@@ -47,7 +47,7 @@ describe('navigation de partie', () => {
       expect(hub, s.path).toBeDefined();
       expect(screenHref(s.path)).toBe(hub!.path === s.path ? s.path : `${hub!.path}#${s.path}`);
     }
-    expect(HUBS.flatMap((h) => h.sections).sort()).toEqual(
+    expect(HUBS.flatMap((h) => h.sections.flatMap(partsOf)).sort()).toEqual(
       GAME_SCREENS.map((s) => s.path)
         .filter((path) => !HUBS.some((h) => h.path === path))
         .sort(),
@@ -56,21 +56,37 @@ describe('navigation de partie', () => {
 
   it('redirige une ancienne adresse d’écran vers sa section dépliée', async () => {
     mockApi(gameHandlers);
-    const { router } = renderRoute(`/parties/${GAME_ID}/sondages`);
+    const { router } = renderRoute(`/parties/${GAME_ID}/conseil`);
+    expect(await screen.findByRole('heading', { level: 1, name: 'Pouvoir' })).toBeInTheDocument();
+    await waitFor(() => expect(router.state.location.pathname).toBe(`/parties/${GAME_ID}/pouvoir`));
+    expect(router.state.location.hash).toBe('#conseil');
+    // Phase 20 : le Conseil des ministres est présenté avec le gouvernement, dans une section.
+    expect(
+      screen.getByRole('button', { name: /^Gouvernement et Conseil des ministres/ }),
+    ).toHaveAttribute('aria-expanded', 'true');
+    expect(document.getElementById('conseil')).not.toBeNull();
+    expect(screen.getByRole('heading', { level: 2, name: 'Conseil des ministres' })).toBeVisible();
+    // Les autres sections restent repliées : leur contenu n'est pas rendu.
+    const parliament = screen.getByRole('button', { name: /^Parlement/ });
+    expect(parliament).toHaveAttribute('aria-expanded', 'false');
+    await userEvent.click(parliament);
+    expect(parliament).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('fusionne les sondages et les résultats en une seule section, ouverte d’emblée (phase 20)', async () => {
+    mockApi(gameHandlers);
+    const { router } = renderRoute(`/parties/${GAME_ID}/resultats`);
     expect(await screen.findByRole('heading', { level: 1, name: 'Opinion' })).toBeInTheDocument();
-    await waitFor(() => expect(router.state.location.pathname).toBe(`/parties/${GAME_ID}/opinion`));
-    expect(router.state.location.hash).toBe('#sondages');
-    expect(screen.getByRole('button', { name: /^Sondages/ })).toHaveAttribute(
+    await waitFor(() => expect(router.state.location.hash).toBe('#resultats'));
+    expect(screen.getByRole('button', { name: /^Sondages et résultats/ })).toHaveAttribute(
       'aria-expanded',
       'true',
     );
-    // Les autres sections restent repliées : leur contenu n'est pas rendu.
-    const results = screen.getByRole('button', { name: /^Résultats/ });
-    expect(results).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.queryByRole('region', { name: 'Résultats' })).not.toBeInTheDocument();
-    await userEvent.click(results);
-    expect(results).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('region', { name: 'Sondages' })).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Résultats' })).toBeInTheDocument();
+    // Sans ancre aussi : l'espace d'une seule section l'ouvre.
+    await router.navigate(`/parties/${GAME_ID}/opinion`);
+    expect(await screen.findByRole('region', { name: 'Sondages' })).toBeInTheDocument();
   });
 
   it('affiche le tableau de bord avec la date en jeu', async () => {

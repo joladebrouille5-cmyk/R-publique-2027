@@ -9,7 +9,7 @@ import { useCurrentGame } from './GameLayout';
 import { MandateOverview, MandateOverviewShown, showsMandate } from './pouvoir/MandateOverview';
 import { GAME_SCREENS } from './registry';
 import { SECTION_SCREENS, sectionStatus } from './sections';
-import { SECTION_ICONS, type Hub } from './shell/navigation';
+import { mergedSection, SECTION_ICONS, sectionOf, type Hub } from './shell/navigation';
 
 // Espace de la partie (phase 12) : un titre, puis les écrans de l'espace en sections
 // dépliables. L'adresse `#section` (ou une ancienne adresse d'écran, redirigée ici) déplie la
@@ -17,27 +17,36 @@ import { SECTION_ICONS, type Hub } from './shell/navigation';
 
 const screens = new Map(GAME_SCREENS.map((s) => [s.path, s]));
 
-/** Sections dépliées d'une page, ouvertes aussi par l'ancre de l'adresse. */
+/**
+ * Sections dépliées d'une page, ouvertes aussi par l'ancre de l'adresse. L'ancre d'un écran
+ * présenté dans une section commune (phase 20, `#resultats`) déplie cette section et amène
+ * l'écran à la vue. Une page d'une seule section l'ouvre d'emblée.
+ */
 export function useOpenSections(paths: readonly string[]) {
   const { hash } = useLocation();
   const target = decodeURIComponent(hash.slice(1));
+  const targetSection = target ? sectionOf(target) : '';
   const [open, setOpen] = useState<ReadonlySet<string>>(
-    () => new Set(paths.includes(target) ? [target] : []),
+    () =>
+      new Set(
+        paths.includes(targetSection) ? [targetSection] : paths.length === 1 ? [paths[0]!] : [],
+      ),
   );
   // Nouvelle ancre : la section visée est dépliée (pendant le rendu, sans effet en cascade).
   const [handled, setHandled] = useState(target);
   if (handled !== target) {
     setHandled(target);
-    if (paths.includes(target) && !open.has(target)) setOpen(new Set([...open, target]));
+    if (paths.includes(targetSection) && !open.has(targetSection))
+      setOpen(new Set([...open, targetSection]));
   }
   useEffect(() => {
-    if (!paths.includes(target)) return;
-    // Après le rendu du contenu : la section défile sous le bandeau de la partie.
+    if (!paths.includes(targetSection)) return;
+    // Après le rendu du contenu : la section (ou l'écran visé) défile sous le bandeau.
     const frame = requestAnimationFrame(() =>
       document.getElementById(target)?.scrollIntoView({ block: 'start' }),
     );
     return () => cancelAnimationFrame(frame);
-  }, [target, paths]);
+  }, [target, targetSection, paths]);
   const toggle = (path: string) =>
     setOpen((current) => {
       const next = new Set(current);
@@ -45,19 +54,32 @@ export function useOpenSections(paths: readonly string[]) {
       else next.add(path);
       return next;
     });
-  /** Déplie une section et l'amène à l'écran, focus sur son titre (bouton). */
+  /**
+   * Déplie une section et l'amène à l'écran, focus sur son titre (bouton) ; l'écran d'une section
+   * commune est amené lui-même à la vue.
+   */
   const show = (path: string) => {
-    setOpen((current) => (current.has(path) ? current : new Set([...current, path])));
+    const section = sectionOf(path);
+    setOpen((current) => (current.has(section) ? current : new Set([...current, section])));
     requestAnimationFrame(() => {
-      const section = document.getElementById(path);
-      section?.scrollIntoView({ block: 'start', behavior: 'smooth' });
-      section?.querySelector<HTMLElement>('button[aria-expanded]')?.focus({ preventScroll: true });
+      document.getElementById(path)?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      document
+        .getElementById(section)
+        ?.querySelector<HTMLElement>('button[aria-expanded]')
+        ?.focus({ preventScroll: true });
     });
   };
   return { open, toggle, show };
 }
 
-/** Section dépliable présentant un écran du registre. */
+/** Écran du registre, ou avis d'indisponibilité. */
+function ScreenBody({ path }: { path: string }) {
+  const screen = screens.get(path)!;
+  const Screen = SECTION_SCREENS[path]!;
+  return screen.available ? <Screen /> : <Unavailable screen={screen} />;
+}
+
+/** Section dépliable présentant un écran du registre, ou plusieurs (section commune). */
 export function ScreenSection({
   path,
   game,
@@ -71,9 +93,38 @@ export function ScreenSection({
   open: boolean;
   onToggle: () => void;
 }) {
-  const screen = screens.get(path)!;
-  const Screen = SECTION_SCREENS[path]!;
   const Icon = SECTION_ICONS[path]!;
+  const merged = mergedSection(path);
+  if (merged)
+    return (
+      <Disclosure
+        id={path}
+        title={merged.label}
+        status={sectionStatus(path, game, ruleset)}
+        open={open}
+        onToggle={onToggle}
+        icon={<Icon className="size-5" strokeWidth={2} />}
+      >
+        <div className="space-y-8">
+          {merged.parts.map((part, index) => (
+            // Un simple bloc : l'écran intégré est lui-même une région nommée par son titre.
+            <div
+              key={part}
+              id={part}
+              className={`scroll-mt-40 space-y-3 ${
+                index > 0 ? 'border-t border-slate-200 pt-6 dark:border-slate-800' : ''
+              }`}
+            >
+              <h2 id={`${part}-partie`} className="font-display text-xl">
+                {screens.get(part)!.label}
+              </h2>
+              <ScreenBody path={part} />
+            </div>
+          ))}
+        </div>
+      </Disclosure>
+    );
+  const screen = screens.get(path)!;
   return (
     <Disclosure
       id={path}
@@ -83,7 +134,7 @@ export function ScreenSection({
       onToggle={onToggle}
       icon={<Icon className="size-5" strokeWidth={2} />}
     >
-      {screen.available ? <Screen /> : <Unavailable screen={screen} />}
+      <ScreenBody path={path} />
     </Disclosure>
   );
 }

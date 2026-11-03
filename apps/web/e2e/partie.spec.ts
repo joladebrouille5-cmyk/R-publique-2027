@@ -211,7 +211,7 @@ test('présidentielle complète puis quinquennat : deux tours, résultats, gouve
   await expect(
     t2.getByText(`${winner.prenom} ${winner.nom} est élu(e) président(e) de la République.`),
   ).toBeVisible();
-  await expect(page.getByRole('region', { name: 'Premier tour' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Premier tour', exact: true })).toBeVisible();
 
   await openScreen(page, 'Tableau de bord');
   const quinquennat = page.getByRole('region', { name: /Quinquennat 2027–2032/ });

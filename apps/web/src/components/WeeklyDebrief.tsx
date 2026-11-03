@@ -24,6 +24,7 @@ import {
 } from '../labels';
 import { useCue } from '../audio/hooks';
 import { Badge } from './Badge';
+import { CampaignTeam } from './CampaignTeam';
 import { buttonPrestige, buttonSecondary } from './ui';
 import { useCountUp } from './useCountUp';
 import { useModal } from './useModal';
@@ -249,6 +250,9 @@ export function WeeklyDebrief({
           tabIndex={0}
           className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4 text-sm outline-none focus-visible:ring-2 focus-visible:ring-republique-500 focus-visible:ring-inset sm:px-6"
         >
+          {/* Phase 20 : l'équipe de campagne résume la semaine, le détail suit. */}
+          <CampaignTeam report={report} state={state} />
+
           {report.succes.length > 0 && (
             <section
               aria-labelledby={`${titleId}-succes`}

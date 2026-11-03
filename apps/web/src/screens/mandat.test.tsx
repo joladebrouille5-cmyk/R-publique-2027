@@ -117,15 +117,8 @@ describe('vue du mandat (phase 13)', () => {
     renderRoute(`/parties/${GAME_ID}/pouvoir`);
     await screen.findByRole('region', { name: 'Vue du mandat' });
     const user = userEvent.setup();
-    const ids = [
-      'gouvernement',
-      'conseil',
-      'parlement',
-      'economie',
-      'crises',
-      'legislatives',
-      'bilan',
-    ];
+    // Phase 20 : gouvernement et Conseil, économie et crises forment chacun une section.
+    const ids = ['executif', 'parlement', 'economie-crises', 'legislatives', 'bilan'];
     for (const id of ids) {
       const toggle = document.querySelector<HTMLButtonElement>(`section#${id} > h2 > button`)!;
       await user.click(toggle);

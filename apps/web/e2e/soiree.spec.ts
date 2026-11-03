@@ -85,6 +85,6 @@ test('le soir du premier tour, la partie passe en direct jusqu’aux résultats 
   );
 
   await page.getByRole('link', { name: 'Voir les résultats complets' }).click();
-  await expect(page.getByRole('heading', { name: 'Résultats' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Résultats', exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Revivre la soirée électorale' })).toBeVisible();
 });

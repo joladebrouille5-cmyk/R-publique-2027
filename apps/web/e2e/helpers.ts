@@ -149,23 +149,26 @@ export async function advanceAsCandidate(
   return game;
 }
 
-/** Écrans du cahier des charges (§13) : l'onglet de leur espace et leur section dépliable. */
+/**
+ * Écrans du cahier des charges (§13) : l'onglet de leur espace et leur section dépliable (phase
+ * 20 : quatre paires d'écrans partagent une section commune).
+ */
 const SCREENS: Record<string, { espace: string; section?: string }> = {
   'Tableau de bord': { espace: 'QG' },
-  Journal: { espace: 'QG', section: 'journal' },
-  Sauvegardes: { espace: 'QG', section: 'sauvegardes' },
+  Journal: { espace: 'QG', section: 'archives' },
+  Sauvegardes: { espace: 'QG', section: 'archives' },
   'Carte électorale': { espace: 'Carte' },
   Programme: { espace: 'Campagne', section: 'programme' },
   Candidats: { espace: 'Campagne', section: 'candidats' },
   Médias: { espace: 'Campagne', section: 'medias' },
   Finances: { espace: 'Campagne', section: 'finances' },
-  Sondages: { espace: 'Opinion', section: 'sondages' },
-  Résultats: { espace: 'Opinion', section: 'resultats' },
-  Gouvernement: { espace: 'Pouvoir', section: 'gouvernement' },
-  'Conseil des ministres': { espace: 'Pouvoir', section: 'conseil' },
+  Sondages: { espace: 'Opinion', section: 'sondages-resultats' },
+  Résultats: { espace: 'Opinion', section: 'sondages-resultats' },
+  Gouvernement: { espace: 'Pouvoir', section: 'executif' },
+  'Conseil des ministres': { espace: 'Pouvoir', section: 'executif' },
   Parlement: { espace: 'Pouvoir', section: 'parlement' },
-  Économie: { espace: 'Pouvoir', section: 'economie' },
-  Crises: { espace: 'Pouvoir', section: 'crises' },
+  Économie: { espace: 'Pouvoir', section: 'economie-crises' },
+  Crises: { espace: 'Pouvoir', section: 'economie-crises' },
   Législatives: { espace: 'Pouvoir', section: 'legislatives' },
   'Bilan du quinquennat': { espace: 'Pouvoir', section: 'bilan' },
 };

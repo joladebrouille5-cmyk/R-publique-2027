@@ -152,8 +152,7 @@ const QG_SECTIONS = [
   'ressources',
   'campagne-detail',
   'calendrier',
-  'journal',
-  'sauvegardes',
+  'archives',
   'partie',
 ];
 
@@ -1070,16 +1069,14 @@ export function Dashboard() {
           </Disclosure>
         )}
 
-        {['journal', 'sauvegardes'].map((path) => (
-          <ScreenSection
-            key={path}
-            path={path}
-            game={game}
-            ruleset={data}
-            open={open.has(path)}
-            onToggle={() => toggle(path)}
-          />
-        ))}
+        {/* Phase 20 : journal et sauvegardes, une seule section « Archives de la partie ». */}
+        <ScreenSection
+          path="archives"
+          game={game}
+          ruleset={data}
+          open={open.has('archives')}
+          onToggle={() => toggle('archives')}
+        />
 
         <Disclosure
           id="partie"

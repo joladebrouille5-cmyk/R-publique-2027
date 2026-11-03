@@ -5,6 +5,8 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 import { initialState, jingles, recordSound, RULESET } from '../test/utils';
+import { formatEuros } from '../labels';
+import { teamBriefing } from './CampaignTeam';
 import { WeeklyDebrief } from './WeeklyDebrief';
 
 // Débriefing de la semaine (phase 11) : un vrai bilan du moteur, rien de recalculé à l'écran.
@@ -125,5 +127,31 @@ describe('débriefing de la semaine', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
     await user.click(proceed);
     expect(onClose).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('équipe de campagne (phase 20)', () => {
+  it('raconte la semaine en quatre phrases tirées du bilan du moteur', () => {
+    const { report, state } = show();
+    const team = screen.getByRole('region', { name: 'Votre équipe raconte la semaine' });
+    const lines = within(team).getAllByRole('listitem');
+    expect(lines).toHaveLength(4);
+    const player = state.actors[state.player.actorId!]!;
+    const lines_ = teamBriefing(report, state);
+    expect(lines_.map((l) => l.role)).toEqual([
+      'Directrice de campagne',
+      'Trésorier',
+      'Conseillère opinion',
+      'Responsable du terrain',
+    ]);
+    // Le trésorier lit la caisse dans l'état servi, la direction le nombre d'actions menées.
+    expect(lines[1]).toHaveTextContent(
+      formatEuros(player.resources.budgetCentimes).replace(/\s/g, ' '),
+    );
+    const done = report.actions.filter(
+      (a) => a.actorId === state.player.actorId && a.status === 'validee',
+    ).length;
+    expect(lines[0]).toHaveTextContent(new RegExp(`^Inès, directrice de campagne${done} action`));
+    expect(within(team).getByText(/Équipe fictive/)).toBeInTheDocument();
   });
 });

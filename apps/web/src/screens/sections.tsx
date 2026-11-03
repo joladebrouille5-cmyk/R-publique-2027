@@ -17,6 +17,7 @@ import { Polls } from './Polls';
 import { Programme } from './Programme';
 import { Results } from './Results';
 import { Saves } from './Saves';
+import { mergedSection } from './shell/navigation';
 
 // Écrans présentés en sections dépliables (espaces) ou en tiroirs (QG), et leur ligne d'état :
 // un résumé lu dans l'état servi par l'API, sans rien recalculer de la simulation.
@@ -48,6 +49,14 @@ export function sectionStatus(
   game: GameDetail,
   ruleset: Ruleset | undefined,
 ): string | null {
+  // Section commune (phase 20) : l'état de chacun de ses écrans, à la suite.
+  const merged = mergedSection(path);
+  if (merged) {
+    const parts = merged.parts
+      .map((part) => sectionStatus(part, game, ruleset))
+      .filter((line) => line !== null);
+    return parts.length > 0 ? parts.join(' · ') : null;
+  }
   const { state } = game;
   const actor = state.player.actorId ? state.actors[state.player.actorId] : undefined;
   const q = state.quinquennat;

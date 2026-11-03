@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { advanceViaApi, createGame } from './helpers';
+import { advanceViaApi, createGame, wizardTo } from './helpers';
 
 // Paramètres et crédits (phase 11) : les sources, liens, licences et crédits quittent les écrans
 // de jeu pour « Paramètres → Crédits et mentions légales » ; seules restent à l'écran les
@@ -38,6 +38,8 @@ test('aucun lien de source sur les écrans de jeu ni à la création de partie',
   // Création de partie, personnalités réelles comprises.
   await page.goto('/nouvelle-partie');
   await page.getByRole('radio', { name: /Candidat réel/ }).check();
+  expect(await externalLinks(page)).toEqual([]);
+  await wizardTo(page, 'Votre candidat');
   await expect(page.getByRole('group', { name: 'Personnalité incarnée' })).toBeVisible();
   expect(await externalLinks(page)).toEqual([]);
 

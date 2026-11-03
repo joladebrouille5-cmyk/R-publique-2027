@@ -112,7 +112,7 @@ test('partie complète sans réseau : création, semaine, reprise, carte, export
   ).toBeVisible();
 
   // Export (hors application native : téléchargement), puis import en nouvelle partie.
-  await openScreen(page, 'QG', 'sauvegardes');
+  await openScreen(page, 'QG', 'archives');
   const [download] = await Promise.all([
     page.waitForEvent('download'),
     page.getByRole('button', { name: 'Exporter la partie (JSON)' }).click(),
