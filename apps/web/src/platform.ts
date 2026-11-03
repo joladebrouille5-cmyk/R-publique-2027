@@ -8,6 +8,11 @@ export type Platform = {
   saveFile: (fileName: string, content: string) => Promise<void>;
   /** Avertissement durable sur le stockage de l'appareil (affiché en pied de page), ou null. */
   storageNotice: string | null;
+  /**
+   * Passage de l'application au premier plan (true) ou en arrière-plan (false), quand la
+   * plateforme le signale (application Android) ; renvoie de quoi se désabonner.
+   */
+  onActiveChange?: (listener: (active: boolean) => void) => () => void;
 };
 
 /** Téléchargement dans le navigateur (lien temporaire vers un Blob). */

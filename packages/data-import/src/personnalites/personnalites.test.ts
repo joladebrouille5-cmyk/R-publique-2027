@@ -283,6 +283,15 @@ describe('Commons, CHES et Wikidata', () => {
       { licence: 'CC BY-SA 4.0', licenceUrl: 'https://creativecommons.org/licenses/by-sa/4.0' },
     ]);
     expect(parseAuthor(COMMONS_PAGE)).toBe('Photographe Libre');
+    // Modèle « Creator » : sa feuille de style intégrée n'est pas reprise dans le nom.
+    expect(
+      parseAuthor(
+        COMMONS_PAGE.replace(
+          'Photographe Libre',
+          '<style data-mw-deduplicate="TemplateStyles:r1">.mw-parser-output .commons-creator-table{color:inherit}</style><span>Photographe Libre</span>',
+        ),
+      ),
+    ).toBe('Photographe Libre');
     expect(freeLicense(COMMONS_PAGE)).toEqual({
       licence: 'CC BY-SA 4.0',
       licenceUrl: 'https://creativecommons.org/licenses/by-sa/4.0',

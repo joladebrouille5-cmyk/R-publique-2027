@@ -4,13 +4,14 @@ import { useCurrentRuleset, useHealth } from '../api/hooks';
 import { ErrorMessage } from '../components/ErrorMessage';
 import { LogoCreditLine } from '../components/RealMedia';
 import { PhotoCreditLine } from '../components/RealPersonality';
+import { MusicCredits, SoundSettings } from '../components/SoundSettings';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { card, screenTitle } from '../components/ui';
 import { formatGameDate } from '../labels';
 import { useGeoManifest } from '../map/data';
 import { platform } from '../platform';
 
-// Paramètres (phase 11) : apparence, crédits et mentions légales, à propos. Toutes les sources,
+// Paramètres (phase 11) : apparence, son (phase 19), crédits et mentions légales, à propos. Toutes les sources,
 // licences, crédits de photos et de logos et notes de méthode, retirés des écrans de jeu (qui
 // ne gardent que leurs étiquettes courtes : réel, simulé, estimation, hypothèse, fictif), sont
 // rassemblés ici, à partir du jeu de règles et du référentiel géographique servis par l'API.
@@ -302,6 +303,10 @@ function Credits({ ruleset }: { ruleset: Ruleset }) {
         </ul>
       </Sub>
 
+      <Sub title="Musique">
+        <MusicCredits />
+      </Sub>
+
       <Sub title="Émissions politiques">
         <ul className="space-y-1 text-sm">
           {ruleset.mediasReels.emissions.map((show) => (
@@ -365,6 +370,10 @@ export function Parametres() {
 
       <Section id="titre-apparence" title="Apparence">
         <ThemeToggle />
+      </Section>
+
+      <Section id="titre-son" title="Son">
+        <SoundSettings />
       </Section>
 
       {ruleset.data ? (

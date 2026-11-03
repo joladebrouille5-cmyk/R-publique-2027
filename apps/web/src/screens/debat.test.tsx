@@ -1,6 +1,6 @@
 import { advanceWeek, createGame, playDebate } from '@r2027/engine';
 import type { DebateRequest, GameState } from '@r2027/shared';
-import { screen, waitFor, within } from '@testing-library/react';
+import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeAll, describe, expect, it } from 'vitest';
 import {
@@ -8,8 +8,11 @@ import {
   GAME_ID,
   gameFixture,
   healthHandler,
+  jingles,
+  lastAmbiance,
   mockApi,
   playedState,
+  recordSound,
   renderRoute,
   RULESET,
   RULESET_URL,
@@ -161,6 +164,31 @@ describe('débats télévisés', () => {
     );
     expect(screen.getByRole('button', { name: 'Revoir en accéléré' })).toBeInTheDocument();
     expect(screen.queryByRole('list', { name: 'Cartes de la séquence' })).not.toBeInTheDocument();
+  });
+
+  it('ouvre le plateau sur le jingle du débat, sans musique ; rien pour un débat terminé (phase 19)', async () => {
+    const calls = recordSound();
+    mockApi(handlers(state));
+    renderRoute(`/parties/${GAME_ID}/debat/debat-t1-tous`);
+    const user = userEvent.setup();
+    expect(await screen.findByText('En direct')).toBeInTheDocument();
+    expect(jingles(calls)).toEqual(['jingle:debat']);
+    expect(lastAmbiance(calls)).toBe('ambiance:silence');
+    await user.click(screen.getByRole('button', { name: 'Simuler la fin du débat' }));
+    expect(await screen.findByText('Débat terminé')).toBeInTheDocument();
+    expect(jingles(calls)).toEqual(['jingle:debat']);
+    cleanup();
+    // Relecture d'un débat terminé : ni jingle, ni musique.
+    const over = playDebate(state, RULESET, 'debat-t1-tous', {
+      action: 'finir',
+      sequence: session(state).enCours?.index ?? 0,
+    }).state;
+    const again = recordSound();
+    mockApi(handlers(over));
+    renderRoute(`/parties/${GAME_ID}/debat/debat-t1-tous`);
+    expect(await screen.findByText('Débat terminé')).toBeInTheDocument();
+    expect(jingles(again)).toEqual([]);
+    expect(lastAmbiance(again)).toBe('ambiance:silence');
   });
 
   it('n’attribue aucune réplique à une personnalité réelle', async () => {

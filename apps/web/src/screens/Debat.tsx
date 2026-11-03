@@ -3,6 +3,7 @@ import { FastForward, Play, Timer } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { useDebate, useRuleset } from '../api/hooks';
+import { useAmbiance, useCue } from '../audio/hooks';
 import { OutletLogo } from '../components/RealMedia';
 import { ErrorMessage } from '../components/ErrorMessage';
 import { buttonPrimary, buttonSecondary, card, screenTitle } from '../components/ui';
@@ -94,6 +95,9 @@ function Plateau({ session }: { session: DebateSession }) {
   const index = session.enCours?.index ?? session.sequences.length;
   const depart = ruleset.data?.debats.approbation.depart ?? 50;
   const cancelled = cancelledDebate(session);
+  // Son (phase 19) : pas de musique sur le plateau ; jingle d'ouverture d'un débat à venir ou en cours.
+  useAmbiance('silence', 2);
+  useCue(session.statut !== 'termine' && !cancelled ? 'debat' : null);
 
   const play = (choice: { carte: DebateCard; cible?: string; angle?: DebateAngle }) => {
     if (!session.enCours) return;

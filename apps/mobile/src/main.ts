@@ -3,7 +3,7 @@ import { mountApp } from '../../web/src/app';
 import { setPlatform } from '../../web/src/platform';
 import { requestPersistentStorage, startLocalBackend } from './backend';
 import { readEmbeddedGeo } from './geo-files';
-import { saveOrShareFile } from './native';
+import { onAppActiveChange, saveOrShareFile } from './native';
 
 // Entrée de l'application Android (phase 8) : le moteur tourne sur l'appareil, les parties
 // sont enregistrées dans IndexedDB ; aucune connexion réseau n'est nécessaire ni effectuée.
@@ -32,6 +32,8 @@ async function start() {
       kind: 'local',
       saveFile: saveOrShareFile,
       storageNotice: await requestPersistentStorage(navigator.storage),
+      // Son (phase 19) : la musique se coupe quand l'application passe en arrière-plan.
+      onActiveChange: onAppActiveChange,
     });
     mountApp(root);
   } catch (error) {

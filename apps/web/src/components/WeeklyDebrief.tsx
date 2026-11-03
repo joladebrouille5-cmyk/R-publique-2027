@@ -22,6 +22,7 @@ import {
   PRESTATION_LABELS,
   RESOURCE_LABELS,
 } from '../labels';
+import { useCue } from '../audio/hooks';
 import { Badge } from './Badge';
 import { buttonPrestige, buttonSecondary } from './ui';
 import { useCountUp } from './useCountUp';
@@ -178,6 +179,8 @@ export function WeeklyDebrief({
       }).filter((i) => i.delta !== 0)
     : [];
   const unexpected = report.events;
+  // Son (phase 19) : un événement majeur dans la semaine s'annonce par le jingle d'une nouvelle.
+  useCue(unexpected.some((e) => e.majeur) ? 'flash' : null);
   const decisionsImpact = playerId
     ? impactOf(report, playerId, (f) => f.source === 'decision')
     : [];

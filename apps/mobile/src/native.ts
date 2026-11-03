@@ -1,3 +1,4 @@
+import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { Directory, Encoding, Filesystem } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
@@ -29,4 +30,14 @@ export async function saveOrShareFile(fileName: string, content: string): Promis
     if (error instanceof Error && /cancel/i.test(error.message)) return;
     throw error;
   }
+}
+
+/**
+ * Passage de l'application au premier plan ou en arrière-plan (phase 19), signalé par Android ;
+ * dans un navigateur (aperçu), la visibilité de la page suffit et rien n'est abonné ici.
+ */
+export function onAppActiveChange(listener: (active: boolean) => void): () => void {
+  if (!Capacitor.isNativePlatform()) return () => undefined;
+  const subscription = App.addListener('appStateChange', ({ isActive }) => listener(isActive));
+  return () => void subscription.then((handle) => handle.remove());
 }

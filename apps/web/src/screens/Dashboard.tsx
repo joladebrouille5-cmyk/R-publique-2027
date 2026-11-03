@@ -693,6 +693,7 @@ export function Dashboard() {
           answer={answers[spotlight.id]}
           onAnswer={answer}
           onClose={closeSpotlight}
+          announce={spotlightId === null}
         />
       )}
 

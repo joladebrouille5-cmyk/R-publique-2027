@@ -2,6 +2,8 @@ import type { GameDetail } from '@r2027/shared';
 import { Link, Outlet, useOutletContext, useParams } from 'react-router';
 import { ApiRequestError } from '../api/client';
 import { useGame, useRuleset } from '../api/hooks';
+import { ambianceForPhase } from '../audio/ambiance';
+import { useAmbiance } from '../audio/hooks';
 import { ErrorMessage } from '../components/ErrorMessage';
 import { GameHud } from './shell/GameHud';
 import { GameNav } from './shell/GameNav';
@@ -12,6 +14,7 @@ export function useCurrentGame(): GameDetail {
 
 function Game({ game }: { game: GameDetail }) {
   const ruleset = useRuleset(game.rulesetVersion, game.state.cycle);
+  useAmbiance(ambianceForPhase(game.phase), 1);
   const withRealPeople = Object.values(game.state.actors).some(
     (a) => a.candidate.nature === 'reel',
   );

@@ -1,7 +1,9 @@
 import { Settings } from 'lucide-react';
 import { Link, Outlet, useMatch } from 'react-router';
 import { useHealth } from '../api/hooks';
+import { useAmbiance, useSoundEngine } from '../audio/hooks';
 import { platform } from '../platform';
+import { SoundToggle } from './SoundToggle';
 import { ThemeToggle, useApplyTheme } from './ThemeToggle';
 
 /**
@@ -61,6 +63,9 @@ function Brand() {
 
 export function AppLayout() {
   useApplyTheme();
+  // Son (phase 19) : réglages et premier geste ; musique de l'écran-titre hors d'une partie.
+  useSoundEngine();
+  useAmbiance('accueil', 0);
   const { storageNotice } = platform();
   const inGame = useMatch('/parties/:gameId/*') !== null;
   return (
@@ -79,7 +84,8 @@ export function AppLayout() {
       <header className="pt-(--sat) pr-(--sar) pl-(--sal)">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 pt-3 pb-2 sm:gap-4">
           <Brand />
-          <div className="flex items-center gap-1 sm:gap-2">
+          <div className="flex items-center gap-0.5 sm:gap-2">
+            <SoundToggle />
             <ThemeToggle />
             <Link
               to="/parametres"

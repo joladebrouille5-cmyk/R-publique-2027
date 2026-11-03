@@ -1,0 +1,106 @@
+{
+  "verifieLe": "2026-10-29",
+  "note": "Musique : morceaux de Kevin MacLeod (incompetech.com) sous licence CC BY 3.0, hébergés sur Wikimedia Commons ; licence et auteur lus sur la page de chaque fichier lors de l’import (pnpm data:sons). Extraits, volume normalisé et réencodage déclarés pour chaque morceau. Les jingles des moments forts sont fabriqués par le jeu (synthèse dans le navigateur) et n’empruntent aucun enregistrement.",
+  "morceaux": [
+    {
+      "id": "inspired",
+      "titre": "Inspired",
+      "auteur": "Kevin MacLeod",
+      "ambiance": "accueil",
+      "fichier": "sons/inspired.mp3",
+      "dureeSecondes": 150.047,
+      "octets": 1801088,
+      "sha256": "1e48d8b966cfdc5067ee6f20bea7e8692cac40a4d26ce02226c4ff15f80d8acb",
+      "licence": "CC BY 3.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by/3.0",
+      "source": "https://commons.wikimedia.org/wiki/File:Inspired%20(ISRC%20USUAN1600022).mp3",
+      "original": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/a/a1/Inspired_(ISRC_USUAN1600022).mp3",
+        "sha256": "40b1af74145cedac77814d060155ad4658e04efa14d1b649decedc98fbb25f69",
+        "octets": 9156393,
+        "dureeSecondes": 286.067
+      },
+      "modifications": "extrait des 150 premières secondes (sur 286), fondu de sortie de 4 s, volume normalisé (EBU R128, −18 LUFS), réencodé en MP3 96 kbit/s stéréo."
+    },
+    {
+      "id": "investigations",
+      "titre": "Investigations",
+      "auteur": "Kevin MacLeod",
+      "ambiance": "campagne",
+      "fichier": "sons/investigations.mp3",
+      "dureeSecondes": 93.518,
+      "octets": 1122752,
+      "sha256": "28b0ef412c24052f4d9324a41586950e94277034379067534af758a5caa561d4",
+      "licence": "CC BY 3.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by/3.0",
+      "source": "https://commons.wikimedia.org/wiki/File:Investigations%20(ISRC%20USUAN1100646).mp3",
+      "original": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/8/83/Investigations_(ISRC_USUAN1100646).mp3",
+        "sha256": "699f7a3cd227dfe5c1e88099b45af57202bfe9d56f86b8b43e4252b65dd96768",
+        "octets": 3745876,
+        "dureeSecondes": 93.545
+      },
+      "modifications": "morceau entier, volume normalisé (EBU R128, −18 LUFS), réencodé en MP3 96 kbit/s stéréo."
+    },
+    {
+      "id": "impact-moderato",
+      "titre": "Impact Moderato",
+      "auteur": "Kevin MacLeod",
+      "ambiance": "campagne",
+      "fichier": "sons/impact-moderato.mp3",
+      "dureeSecondes": 75.703,
+      "octets": 908970,
+      "sha256": "bf32e31c6e2eb91264b9af5a0d46cd2ac3dc542dbecc6b421766d60aebc69444",
+      "licence": "CC BY 3.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by/3.0",
+      "source": "https://commons.wikimedia.org/wiki/File:Impact%20Moderato%20(ISRC%20USUAN1100618).mp3",
+      "original": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/a/a7/Impact_Moderato_(ISRC_USUAN1100618).mp3",
+        "sha256": "a85d378af027d75014be4a95b43007b19e03b06693c4b4ad72594cf392f4bc1c",
+        "octets": 3031166,
+        "dureeSecondes": 75.677
+      },
+      "modifications": "morceau entier, volume normalisé (EBU R128, −18 LUFS), réencodé en MP3 96 kbit/s stéréo."
+    },
+    {
+      "id": "deliberate-thought",
+      "titre": "Deliberate Thought",
+      "auteur": "Kevin MacLeod",
+      "ambiance": "mandat",
+      "fichier": "sons/deliberate-thought.mp3",
+      "dureeSecondes": 150.047,
+      "octets": 2057520,
+      "sha256": "deb96ba11014a60c65f558ad31a7c395d2ede8cdefc517eff0df28b2cc7dbdc4",
+      "licence": "CC BY 3.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by/3.0",
+      "source": "https://commons.wikimedia.org/wiki/File:Deliberate%20Thought%20(ISRC%20USUAN1100261).mp3",
+      "original": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/b/b4/Deliberate_Thought_(ISRC_USUAN1100261).mp3",
+        "sha256": "243d5543c930bf54e95868bab9da860e67ce8835e3698881fda287bc58cc343f",
+        "octets": 7224606,
+        "dureeSecondes": 177.456
+      },
+      "modifications": "extrait des 150 premières secondes (sur 177), fondu de sortie de 4 s, volume normalisé (EBU R128, −18 LUFS), réencodé en MP3 96 kbit/s stéréo."
+    },
+    {
+      "id": "lasting-hope",
+      "titre": "Lasting Hope",
+      "auteur": "Kevin MacLeod",
+      "ambiance": "mandat",
+      "fichier": "sons/lasting-hope.mp3",
+      "dureeSecondes": 143.961,
+      "octets": 1870284,
+      "sha256": "446fa71bb9cbc5fdaa2e5db58c503ddb70458be495b212247f95cdd2b84d5f41",
+      "licence": "CC BY 3.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by/3.0",
+      "source": "https://commons.wikimedia.org/wiki/File:Lasting%20Hope%20(ISRC%20USUAN1100178).mp3",
+      "original": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/e/e4/Lasting_Hope_(ISRC_USUAN1100178).mp3",
+        "sha256": "baf3af8010570060927286de4e0b969c25f34e3444574812d36eedc57eb0f862",
+        "octets": 5866781,
+        "dureeSecondes": 143.928
+      },
+      "modifications": "morceau entier, volume normalisé (EBU R128, −18 LUFS), réencodé en MP3 96 kbit/s stéréo."
+    }
+  ]
+}

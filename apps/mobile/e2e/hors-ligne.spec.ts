@@ -70,6 +70,17 @@ test('partie complète sans réseau : création, semaine, reprise, carte, export
 }) => {
   const watch = await offline(context, page);
   await createGame(page, 'Partie Android');
+  // Son (phase 19) : après les gestes de la création, la musique de la campagne joue depuis
+  // les fichiers embarqués dans le paquet (aucune requête hors de l'application).
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        [...document.querySelectorAll<HTMLAudioElement>('audio[data-son="musique"]')]
+          .filter((a) => !a.paused)
+          .map((a) => new URL(a.src).pathname),
+      ),
+    )
+    .toEqual(['/sons/investigations.mp3']);
 
   await page.getByRole('button', { name: 'Ajouter Meeting public' }).click();
   await page.getByRole('button', { name: 'Résoudre la semaine 0' }).click();

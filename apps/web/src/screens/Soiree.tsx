@@ -19,6 +19,8 @@ import { ArrowLeft, FastForward, RotateCcw, SkipForward, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { useRuleset } from '../api/hooks';
+import { verdictCue } from '../audio/ambiance';
+import { useAmbiance, useCue } from '../audio/hooks';
 import { ErrorMessage } from '../components/ErrorMessage';
 import {
   buttonPrimary,
@@ -131,6 +133,11 @@ function Night({ result }: { result: RoundResult }) {
   const [vitesse, setVitesse] = useState<Vitesse>(() => (reducedMotion ? 'pause' : 'x5'));
   const minute = Math.min(SOIREE_MINUTES, Math.floor(clock));
   const done = minute >= SOIREE_MINUTES;
+  // Son (phase 19) : pas de musique pendant le direct ; le jingle de 20 h à l'ouverture (et à
+  // chaque « Revoir depuis 20 h »), celui de la victoire ou de la défaite à la fin du dépouillement.
+  useAmbiance('silence', 2);
+  useCue(minute === 0 ? 'vingt-heures' : null);
+  useCue(done ? verdictCue(result, state.player.actorId) : null);
   const rate = SOIREE_VITESSES.find((v) => v.id === vitesse)!.minutesParSeconde;
   useEffect(() => {
     if (rate === 0 || done) return;

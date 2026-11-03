@@ -19,6 +19,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { vi } from 'vitest';
+import { setSound } from '../audio/systeme';
 import { routes } from '../routes';
 
 export const GAME_ID = '11111111-1111-4111-8111-111111111111';
@@ -254,3 +255,27 @@ export function reportFixture(overrides: Partial<WeeklyReport> = {}): WeeklyRepo
     ...overrides,
   };
 }
+
+/**
+ * Double du système sonore (phase 19) : note, dans l'ordre, les ambiances publiées
+ * (« ambiance:… »), les jingles joués (« jingle:… ») et les écoutes depuis Paramètres
+ * (« essai:… »). Remis à zéro après chaque test (setup.ts).
+ */
+export function recordSound(): string[] {
+  const calls: string[] = [];
+  setSound({
+    unlock: () => undefined,
+    setAmbiance: (ambiance) => calls.push(`ambiance:${ambiance}`),
+    setSettings: () => undefined,
+    setActive: () => undefined,
+    play: (cue) => calls.push(`jingle:${cue}`),
+    preview: (cue) => calls.push(`essai:${cue}`),
+  });
+  return calls;
+}
+
+/** Jingles joués, dans l'ordre. */
+export const jingles = (calls: readonly string[]) => calls.filter((c) => c.startsWith('jingle:'));
+/** Dernière ambiance publiée. */
+export const lastAmbiance = (calls: readonly string[]) =>
+  calls.filter((c) => c.startsWith('ambiance:')).at(-1);

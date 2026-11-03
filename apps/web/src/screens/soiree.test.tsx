@@ -3,13 +3,17 @@ import { SOIREE_TRANCHES, type GameState } from '@r2027/shared';
 import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { verdictCue } from '../audio/ambiance';
 import { percent } from './soiree/parts';
 import {
   GAME_ID,
   gameFixture,
   healthHandler,
   mockApi,
+  jingles,
+  lastAmbiance,
   playedState,
+  recordSound,
   renderRoute,
   reportFixture,
   RULESET,
@@ -136,6 +140,27 @@ describe('soirée électorale', () => {
       Object.keys(t1.territoire!.departements).length,
     );
     expect(screen.getByRole('button', { name: 'Revoir depuis 20 h' })).toBeInTheDocument();
+  });
+
+  it('s’ouvre sur le jingle de 20 h, sans musique, et finit sur la victoire ou la défaite (phase 19)', async () => {
+    reducedMotion();
+    const calls = recordSound();
+    mockApi(handlers());
+    renderRoute(`/parties/${GAME_ID}/soiree/1`);
+    const user = userEvent.setup();
+    expect(await screen.findByRole('heading', { name: 'Soirée électorale' })).toBeInTheDocument();
+    await waitFor(() => expect(calls).toContain('jingle:vingt-heures'));
+    expect(lastAmbiance(calls)).toBe('ambiance:silence');
+    expect(jingles(calls)).toEqual(['jingle:vingt-heures']);
+    // Une demi-heure plus tard : aucun nouveau jingle.
+    await user.click(screen.getByRole('button', { name: 'Passer à 20 h 30' }));
+    await user.click(screen.getByRole('button', { name: 'Résultats définitifs' }));
+    const verdict = verdictCue(state.elections.t1!, state.player.actorId);
+    expect(verdict).not.toBeNull();
+    expect(jingles(calls)).toEqual(['jingle:vingt-heures', `jingle:${verdict}`]);
+    // Revoir depuis 20 h : le jingle de 20 h, de nouveau.
+    await user.click(screen.getByRole('button', { name: 'Revoir depuis 20 h' }));
+    expect(calls.at(-1)).toBe('jingle:vingt-heures');
   });
 
   it('fait défiler un bandeau visuel et annonce chaque tranche aux lecteurs d’écran', async () => {

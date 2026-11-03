@@ -18,8 +18,10 @@ import {
   GAME_ID,
   gameFixture,
   healthHandler,
+  jingles,
   mockApi,
   playedState,
+  recordSound,
   renderRoute,
   RULESET,
   RULESET_URL,
@@ -210,10 +212,13 @@ describe('urgences ministérielles (phase 15)', () => {
       state = step(state, urgent).state;
     const urgence = state.pendingDecisions.find((d) => d.kind === 'urgence');
     expect(urgence).toBeDefined();
+    const calls = recordSound();
     mockApi(base(state));
     renderRoute(`/parties/${GAME_ID}/tableau-de-bord`);
     const dialog = await screen.findByRole('dialog', { name: urgence!.label });
     expect(within(dialog).getByText('Urgence ministérielle (fictive)')).toBeInTheDocument();
+    // Ouvert de lui-même, le pop-up s'annonce par le jingle d'une nouvelle importante (phase 19).
+    expect(jingles(calls)).toEqual(['jingle:flash']);
     const minister = memberInfo(state, RULESET, inCharge(state, urgence!));
     const poste = RULESET.quinquennat.postes.find((p) => p.id === urgence!.posteId)!;
     expect(await within(dialog).findByText(minister.name)).toBeInTheDocument();

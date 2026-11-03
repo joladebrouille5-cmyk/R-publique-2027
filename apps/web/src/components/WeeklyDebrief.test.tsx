@@ -1,10 +1,10 @@
 import { advanceWeek } from '@r2027/engine';
 import type { Ruleset } from '@r2027/shared';
-import { render, screen, within } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
-import { initialState, RULESET } from '../test/utils';
+import { initialState, jingles, recordSound, RULESET } from '../test/utils';
 import { WeeklyDebrief } from './WeeklyDebrief';
 
 // Débriefing de la semaine (phase 11) : un vrai bilan du moteur, rien de recalculé à l'écran.
@@ -21,7 +21,7 @@ const RULES = (() => {
   return rules;
 })();
 
-function resolved() {
+function resolved(rules: Ruleset = RULES) {
   const start = initialState();
   start.actors[start.player.actorId!]!.resources.popularite = 3_000;
   return advanceWeek(
@@ -34,12 +34,12 @@ function resolved() {
       ],
       decisions: [],
     },
-    { ruleset: RULES },
+    { ruleset: rules },
   );
 }
 
-function show(onClose = vi.fn()) {
-  const { state, report } = resolved();
+function show(onClose = vi.fn(), rules: Ruleset = RULES) {
+  const { state, report } = resolved(rules);
   render(
     <MemoryRouter>
       <button type="button">Résoudre la semaine 0</button>
@@ -56,6 +56,19 @@ function show(onClose = vi.fn()) {
 }
 
 describe('débriefing de la semaine', () => {
+  it('annonce un événement majeur par le jingle d’une nouvelle importante, et lui seul (phase 19)', () => {
+    const calls = recordSound();
+    show();
+    expect(jingles(calls)).toEqual([]);
+    cleanup();
+    // Même semaine, mais « Salle comble » déclaré majeur dans le jeu de règles du test.
+    const major = JSON.parse(JSON.stringify(RULES)) as Ruleset;
+    major.evenements.find((e) => e.id === 'salle-comble')!.majeur = true;
+    const { report } = show(vi.fn(), major);
+    expect(report.events.some((e) => e.majeur)).toBe(true);
+    expect(jingles(calls)).toEqual(['jingle:flash']);
+  });
+
   it('résume l’impact des actions, les passages, les imprévus, les adversaires et les sondages', () => {
     const { report, state } = show();
     const dialog = screen.getByRole('dialog', { name: 'Débriefing de la semaine 0' });

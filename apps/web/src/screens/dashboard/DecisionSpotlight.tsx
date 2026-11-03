@@ -7,6 +7,7 @@ import {
 import { Check, Radio, X } from 'lucide-react';
 import { useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { useCue } from '../../audio/hooks';
 import { Badge } from '../../components/Badge';
 import { Hemicycle, seatingOrder } from '../../components/Hemicycle';
 import { TensionGauge } from '../../components/ParliamentGauges';
@@ -44,6 +45,7 @@ export function DecisionSpotlight({
   answer,
   onAnswer,
   onClose,
+  announce = false,
 }: {
   decision: PendingDecision;
   state: GameState;
@@ -52,9 +54,12 @@ export function DecisionSpotlight({
   answer: string | undefined;
   onAnswer: (decisionId: string, optionId: string) => void;
   onClose: () => void;
+  /** Pop-up ouvert de lui-même (et non par le joueur) : une urgence s'annonce par un jingle. */
+  announce?: boolean;
 }) {
   const titleId = useId();
   const descriptionId = useId();
+  useCue(announce && decision.kind === 'urgence' ? 'flash' : null);
   const panel = useRef<HTMLDivElement>(null);
   const onKeyDown = useModal(panel, onClose);
   const kind = DECISION_KINDS[decision.kind];
