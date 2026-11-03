@@ -30,6 +30,7 @@ Simulation politique française : présidentielle, campagne et quinquennat. Jeu 
 | 17 | Débats télévisés obligatoires : la semaine attend que le joueur ait joué (ou refusé) le débat où il est invité | ✅ terminée |
 | 18 | Cinq niveaux de difficulté (Découverte, Accessible, Standard, Expert, Légende), fiche des effets de chaque niveau à la création et au QG | ✅ terminée |
 | 19 | Le son : musique d'ambiance sous licence libre (accueil, campagne, mandat) et jingles des moments forts fabriqués par le jeu (20 h, victoire, défaite, débat, nouvelle importante), bouton « Couper le son » | ✅ terminée |
+| 20 | Création en assistant pas à pas, format court, équipe de campagne qui raconte la semaine, moins d'écrans, événements en chaîne et coups des adversaires, calendrier réel (jours fériés, campagne officielle, égalité des temps de parole), palmarès, niveau de joueur, déblocages, défi du jour et rappel quotidien sur Android | ✅ terminée |
 
 **Ce qui fonctionne aujourd'hui** :
 - créer une partie avec son candidat (prénom, nom, parti, positionnement économique et sociétal, parcours, profil de départ, **photo** importée depuis l'appareil, recadrée et réduite sur place, sinon un portrait illustré généré) ou en observateur, avec difficulté (cinq niveaux, de Découverte à Légende, chacun avec la fiche de ses effets lue dans le jeu de règles ; niveau fixé à la création), date de départ et graine ;

@@ -135,6 +135,14 @@ Stocker des valeurs par commune dans chaque instantané hebdomadaire serait proh
 > **Phase 18 — format 20** (implémenté, jeu de règles 17.0.0, moteur 0.20.0) : `meta.difficulty` accepte cinq niveaux (`decouverte`, `accessible`, `standard`, `expert`, `legende`) ; le format 19 reste figé à trois niveaux. Énumération `Difficulty` de la base étendue par la migration Prisma `20261029130524_phase18_difficulte`.
 >
 > Migration 19 → 20 : métadonnées passées au moteur 0.20.0 et au jeu de règles 17.0.0 ; rien d'autre ne change (le niveau est fixé à la création : ni le niveau, ni les moyens des candidats ne sont recalculés). Fixture de non-régression : un état réel du format 19 (`packages/save-engine/src/fixtures/v19-phase-17.json`, moteur de la phase 17, niveau Expert, semaine 22).
+
+> **Phase 20 — format 21** (implémenté, moteur 0.21.0) : `player.format` (`complet` : campagne puis quinquennat et cycles suivants ; `court` : la partie s'arrête au soir du second tour, `calendar.blockedBy = 'fin-de-partie'`).
+>
+> Migration 20 → 21 : une partie existante continue au format complet. Fixture de non-régression : un état réel du format 20 (`packages/save-engine/src/fixtures/v20-phase-19.json`, moteur de la phase 19, niveau Légende).
+>
+> **Phase 20 — format 22** (implémenté, jeux de règles 18.0.0 à 20.0.0, moteur 0.22.0) : `suites`, les suites programmées des événements en chaîne (`{ id, evenement, dueWeek, origine }` : l'événement à déclencher, la semaine d'échéance, le libellé de l'événement d'origine). Le bilan d'une semaine signale, pour un événement, `suiteDe` (libellé de l'événement d'origine) et `adversaire` (rival auteur d'un coup simulé) ; les avis du calendrier ont un genre `ferie` (jours fériés, dates déduites du code du travail). Ces champs du bilan sont facultatifs : les journaux antérieurs restent valides. La progression entre les parties (palmarès, niveau, déblocages, défi du jour) n'est **pas** dans l'état : l'API et le moteur local la calculent à partir des parties enregistrées (`computeProgression` de `@r2027/shared`) ; un défi est une partie de graine `defi-AAAA-MM-JJ` créée avec le drapeau `defi` (graine réservée).
+>
+> Migration 21 → 22 : aucune suite programmée ; métadonnées passées au moteur 0.22.0 et au jeu de règles courant. Fixture de non-régression : un état réel du format 21 (`packages/save-engine/src/fixtures/v21-phase-20.json`, moteur 0.21.0, niveau Expert, format court).
 >
 > L'esquisse ci-dessous décrit la cible des phases suivantes.
 
