@@ -96,8 +96,19 @@ describe('progression hebdomadaire', () => {
     expect(next).toMatchObject({ week: 1, date: '2026-10-05', version: game.version + 1 });
     expect(report).toMatchObject({ week: 0, nextWeek: 1 });
     const meeting = ruleset.actions.find((a) => a.id === 'meeting')!;
+    // Le coût du meeting, plus ce que les événements de la semaine ont apporté ou coûté (dons,
+    // coups adverses…), chacun inscrit au registre.
+    const budget = report.changes.find(
+      (c) => c.actorId === 'joueur' && c.ressource === 'budgetCentimes',
+    )!;
+    const fromEvents = budget.factors
+      .filter((f) => f.source === 'evenement')
+      .reduce((sum, f) => sum + f.value, 0);
+    expect(budget.factors.filter((f) => f.source === 'action').map((f) => f.value)).toEqual([
+      -meeting.cout.budgetCentimes,
+    ]);
     expect(next.state.actors.joueur!.resources.budgetCentimes).toBe(
-      game.state.actors.joueur!.resources.budgetCentimes - meeting.cout.budgetCentimes,
+      game.state.actors.joueur!.resources.budgetCentimes - meeting.cout.budgetCentimes + fromEvents,
     );
 
     const actions = await db.gameAction.findMany({

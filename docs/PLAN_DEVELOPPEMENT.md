@@ -1014,6 +1014,11 @@ Suite de la demande du 29/10/2026 (« création de partie trop de paramètres [�
 | P20-06 | Progression : palmarès et niveau de joueur calculés par l'API et le moteur local à partir des parties, déblocages, défi du jour ; notifications locales si l'extension est disponible hors ligne. | tests d'intégration et du moteur local ; e2e. |
 | P20-07 | Documentation, vérifications, APK. | `pnpm check`, intégration, e2e, `pnpm test:mobile`, APK. |
 
+- **P20-01 faite** — format court (`player.format`), fin de partie au soir du second tour (`blockedBy: 'fin-de-partie'`), format de sauvegarde 21 et migration 20 → 21 testée sur un état réel du format 20 (`v20-phase-19.json`) ; mêmes refus dans l'API et le moteur local.
+- **P20-02 faite** — assistant de création en cinq étapes (la partie, votre candidat, votre parcours, le terrain, le format), affiche en direct, options avancées (nom, date, graine).
+- **P20-03 faite** — l'équipe de campagne fictive (Inès, Paul, Maya, Hugo) raconte la semaine en une phrase chacun, tirée du bilan du moteur (`CampaignTeam`) ; liste des regroupements validée par l'utilisateur le 03/11/2026 et appliquée sans retirer aucun écran : « Archives de la partie » (journal et sauvegardes), « Sondages et résultats », « Gouvernement et Conseil des ministres », « Économie et crises » ; les anciennes adresses (`/resultats`, `/conseil`, `#crises`…) déplient la section commune et amènent l'écran à la vue.
+- **P20-04 faite** — jeu de règles `presidentielle-2027@18.0.0` : suites d'événements (`suites`, selon le choix du joueur ou dès l'événement, probabilité et délai), événements qui ne surviennent qu'en suite (`enSuiteSeulement`), famille « coup adverse » (sept coups simulés du rival le plus proche dans les intentions, marque `{adversaire}`, effets du rival par le registre, aucun propos prêté) ; validations croisées dans `RulesetSchema` ; format de sauvegarde **22** (`suites` programmées) et migration 21 → 22 testée sur un état réel du format 21 (`v21-phase-20.json`) ; moteur 0.22.0. Le débriefing rappelle l'origine d'une suite (« Suite de « … » ») et la directrice de campagne signale le coup du rival.
+
 ---
 
 ## 5. Questions ouvertes

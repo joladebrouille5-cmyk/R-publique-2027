@@ -344,6 +344,9 @@ export function WeeklyReportView({
                   )}
                   <span className="font-medium">{event.label}</span>
                 </span>
+                {event.suiteDe && (
+                  <span className="block text-sm font-semibold">Suite de « {event.suiteDe} »</span>
+                )}
                 <span className="block text-slate-600 dark:text-slate-400">
                   {event.description}
                 </span>

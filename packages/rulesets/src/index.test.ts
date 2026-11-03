@@ -155,6 +155,40 @@ describe('jeu de règles presidentielle-2027', () => {
     for (const event of ruleset.evenements) expect(event.nature).toBe('fictif');
   });
 
+  it('enchaîne des événements et prête des coups simulés aux adversaires (phase 20)', () => {
+    const chained = ruleset.evenements.filter((e) => e.suites.length > 0);
+    expect(chained.length).toBeGreaterThanOrEqual(6);
+    // Suites selon le choix du joueur : une même décision peut mener à deux suites opposées.
+    const rumeur = ruleset.evenements.find((e) => e.id === 'rumeur-financement')!;
+    expect(rumeur.suites.map((f) => f.choix).sort()).toEqual(['dementir', 'transparence']);
+    for (const event of ruleset.evenements.filter((e) => e.enSuiteSeulement))
+      expect(event.probabiliteHebdomadaire, event.id).toBe(0);
+    const coups = ruleset.evenements.filter((e) => e.famille === 'coup-adversaire');
+    expect(coups.length).toBeGreaterThan(5);
+    for (const coup of coups) {
+      expect(coup.adversaire, coup.id).not.toBeNull();
+      // Une action simulée du rival, jamais un propos : l'avertissement figure dans le texte.
+      expect(coup.description, coup.id).toMatch(/Coup simulé par le jeu : aucun propos/);
+      expect(`${coup.libelle} ${coup.description}`, coup.id).not.toMatch(
+        /déclare|affirme|accuse|dénonce|« /,
+      );
+    }
+
+    const unknown = full();
+    unknown.evenements.find((e) => e.id === 'fuite-note')!.suites![0]!.evenement = 'absent';
+    expect(RulesetSchema.safeParse(unknown).success).toBe(false);
+    const badChoice = full();
+    badChoice.evenements.find((e) => e.id === 'fuite-note')!.suites![0]!.choix = 'absent';
+    expect(RulesetSchema.safeParse(badChoice).success).toBe(false);
+    const orphan = full();
+    orphan.evenements.find((e) => e.id === 'fuite-note')!.suites = [];
+    expect(RulesetSchema.safeParse(orphan).success).toBe(false);
+    const unnamed = full();
+    unnamed.evenements.find((e) => e.id === 'tractage-adverse')!.libelle = 'Tractage massif';
+    unnamed.evenements.find((e) => e.id === 'tractage-adverse')!.description = 'Sans rival.';
+    expect(RulesetSchema.safeParse(unnamed).success).toBe(false);
+  });
+
   it('ne présente que des adversaires et des instituts fictifs, déclarés comme tels', () => {
     for (const candidate of ruleset.candidatsFictifs) {
       expect(candidate.parcours).toMatch(/^Personnage fictif\./);

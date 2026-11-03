@@ -346,6 +346,12 @@ export function WeeklyDebrief({
                     )}
                     <span className="font-semibold">{event.label}</span>
                   </p>
+                  {/* Phase 20 : un événement en chaîne rappelle celui dont il découle. */}
+                  {event.suiteDe && (
+                    <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                      Suite de « {event.suiteDe} »
+                    </p>
+                  )}
                   <p className="text-slate-600 dark:text-slate-400">{event.description}</p>
                   {playerId && <Impacts impacts={impactOf(report, playerId, eventFactor(event))} />}
                 </li>

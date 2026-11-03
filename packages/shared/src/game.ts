@@ -835,16 +835,45 @@ export const GameFormatSchema = z.enum(GAME_FORMATS);
 export type GameFormat = z.infer<typeof GameFormatSchema>;
 
 /**
- * État complet d'une partie, format de sauvegarde n° 21 (phase 20) : en plus, le format de la
- * partie (`player.format`). Toute évolution s'accompagne d'un nouveau numéro de format et d'une
- * migration (packages/save-engine).
+ * État au format 21 (phase 20) : en plus du format 20, le format de la partie
+ * (`player.format`). Figé pour les migrations.
  */
-export const GameStateSchema = GameStateV20Schema.extend({
+export const GameStateV21Schema = GameStateV20Schema.extend({
   meta: MetaV1Schema.extend({
     difficulty: DifficultySchema,
     saveSchemaVersion: z.literal(21),
   }).strict(),
   player: PlayerSchema.extend({ format: GameFormatSchema }).strict(),
+}).strict();
+export type GameStateV21 = z.infer<typeof GameStateV21Schema>;
+
+/**
+ * Suite programmée d'un événement (phase 20, événements en chaîne) : l'événement `evenement`
+ * survient à la résolution de la semaine `dueWeek` (au plus tard la suivante, si une décision
+ * est déjà ouverte cette semaine-là).
+ */
+export const FollowUpSchema = z
+  .object({
+    id: Id,
+    evenement: Id,
+    dueWeek: z.number().int().min(0),
+    /** Libellé de l'événement d'origine, tel qu'il a été annoncé au joueur. */
+    origine: z.string().min(1),
+  })
+  .strict();
+export type FollowUp = z.infer<typeof FollowUpSchema>;
+
+/**
+ * État complet d'une partie, format de sauvegarde n° 22 (phase 20) : en plus du format 21, les
+ * suites programmées des événements en chaîne (`suites`). Toute évolution s'accompagne d'un
+ * nouveau numéro de format et d'une migration (packages/save-engine).
+ */
+export const GameStateSchema = GameStateV21Schema.extend({
+  meta: MetaV1Schema.extend({
+    difficulty: DifficultySchema,
+    saveSchemaVersion: z.literal(22),
+  }).strict(),
+  suites: z.array(FollowUpSchema),
 }).strict();
 export type GameState = z.infer<typeof GameStateSchema>;
 

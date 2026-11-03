@@ -37,6 +37,8 @@ export function teamBriefing(report: WeeklyReport, state: GameState): TeamLine[]
   const done = own.filter((a) => a.status === 'validee').length;
   const refused = own.length - done;
   const major = report.events.find((e) => e.majeur);
+  // Phase 20 : un coup adverse est signalé par la direction, après un événement majeur.
+  const coup = report.events.find((e) => e.adversaire !== undefined);
   const best = (['notoriete', 'popularite'] as const)
     .map((r) => ({ r, d: delta(r) }))
     .sort((a, b) => Math.abs(b.d) - Math.abs(a.d))[0]!;
@@ -46,9 +48,11 @@ export function teamBriefing(report: WeeklyReport, state: GameState): TeamLine[]
       : `${best.r === 'notoriete' ? 'la notoriété' : 'la popularité'} ${best.d > 0 ? 'gagne' : 'recule de'} ${formatDelta(best.r, best.d).replace(/^[+−]/, best.d > 0 ? '+' : '')}`;
   const direction = major
     ? `Coup de tonnerre cette semaine : « ${major.label} ». ${done > 0 ? `Nos ${done} action${done > 1 ? 's' : ''} n’en ont que plus compté.` : 'Il faudra réagir.'}`
-    : done === 0
-      ? `Semaine blanche : aucune action menée${refused ? `, ${refused} refusée${refused > 1 ? 's' : ''}` : ''}. Et ${tendency}.`
-      : `${done} action${done > 1 ? 's' : ''} menée${done > 1 ? 's' : ''}${refused ? ` (${refused} refusée${refused > 1 ? 's' : ''})` : ''} : ${tendency}.`;
+    : coup
+      ? `Le camp d’en face a frappé : « ${coup.label} ». ${done > 0 ? `Nous avons répondu par ${done} action${done > 1 ? 's' : ''}.` : 'Prévoyons la riposte.'}`
+      : done === 0
+        ? `Semaine blanche : aucune action menée${refused ? `, ${refused} refusée${refused > 1 ? 's' : ''}` : ''}. Et ${tendency}.`
+        : `${done} action${done > 1 ? 's' : ''} menée${done > 1 ? 's' : ''}${refused ? ` (${refused} refusée${refused > 1 ? 's' : ''})` : ''} : ${tendency}.`;
 
   // Trésor : dépense de la semaine et caisse restante.
   const spent = delta('budgetCentimes');

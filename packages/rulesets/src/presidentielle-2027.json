@@ -1,6 +1,6 @@
 {
   "id": "presidentielle-2027",
-  "version": "17.0.0",
+  "version": "18.0.0",
   "libelle": "Présidentielle 2027 et quinquennat — campagne, parrainages, financement, médias réels, présidence, gouvernement et figures réelles nominables, Parlement, économie, crises et législatives",
   "verifieLe": "2026-10-28",
   "sources": {
@@ -1216,7 +1216,18 @@
         }
       ],
       "choixParDefaut": "ignorer",
-      "campagne": null
+      "campagne": null,
+      "suites": [
+        {
+          "evenement": "polemique-relancee",
+          "choix": "repondre",
+          "probabilite": 0.4,
+          "delaiSemaines": {
+            "min": 1,
+            "max": 2
+          }
+        }
+      ]
     },
     {
       "id": "crise-equipe",
@@ -1508,7 +1519,18 @@
         }
       ],
       "choixParDefaut": "dementir",
-      "campagne": null
+      "campagne": null,
+      "suites": [
+        {
+          "evenement": "fuite-note-authentifiee",
+          "choix": "dementir",
+          "probabilite": 0.5,
+          "delaiSemaines": {
+            "min": 2,
+            "max": 4
+          }
+        }
+      ]
     },
     {
       "id": "soutien-elus",
@@ -1621,7 +1643,18 @@
       "campagne": null,
       "contexte": {
         "local": true
-      }
+      },
+      "suites": [
+        {
+          "evenement": "usine-repreneur",
+          "choix": "sur-place",
+          "probabilite": 0.5,
+          "delaiSemaines": {
+            "min": 3,
+            "max": 6
+          }
+        }
+      ]
     },
     {
       "id": "crue-departement",
@@ -2464,7 +2497,18 @@
         }
       ],
       "choixParDefaut": "accepter",
-      "campagne": null
+      "campagne": null,
+      "suites": [
+        {
+          "evenement": "grand-oral-viral",
+          "choix": "accepter",
+          "probabilite": 0.5,
+          "delaiSemaines": {
+            "min": 1,
+            "max": 2
+          }
+        }
+      ]
     },
     {
       "id": "video-terrain-virale",
@@ -2714,7 +2758,18 @@
         }
       ],
       "choixParDefaut": "attendre",
-      "campagne": null
+      "campagne": null,
+      "suites": [
+        {
+          "evenement": "cyberattaque-fuite",
+          "choix": "attendre",
+          "probabilite": 0.5,
+          "delaiSemaines": {
+            "min": 1,
+            "max": 3
+          }
+        }
+      ]
     },
     {
       "id": "coup-de-fatigue",
@@ -2828,7 +2883,18 @@
         }
       ],
       "choixParDefaut": "assumer",
-      "campagne": null
+      "campagne": null,
+      "suites": [
+        {
+          "evenement": "tract-errone-parodie",
+          "choix": "assumer",
+          "probabilite": 0.4,
+          "delaiSemaines": {
+            "min": 1,
+            "max": 2
+          }
+        }
+      ]
     },
     {
       "id": "bataille-procurations",
@@ -2933,6 +2999,745 @@
       "campagne": null,
       "contexte": {
         "phases": ["entre_deux_tours"]
+      }
+    },
+    {
+      "id": "fuite-note-authentifiee",
+      "libelle": "La note démentie est authentifiée",
+      "description": "Un quotidien publie la preuve que la note interne que vous aviez démentie est bien de votre équipe.",
+      "nature": "fictif",
+      "famille": "polemique",
+      "majeur": true,
+      "probabiliteHebdomadaire": 0.0,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 0,
+      "occurrencesMax": null,
+      "effets": [
+        {
+          "ressource": "popularite",
+          "base": -60,
+          "ecart": 20,
+          "delaiSemaines": 0,
+          "saturation": false
+        },
+        {
+          "ressource": "notoriete",
+          "base": 20,
+          "ecart": 10,
+          "delaiSemaines": 0,
+          "saturation": true
+        }
+      ],
+      "choix": [],
+      "choixParDefaut": null,
+      "campagne": null,
+      "enSuiteSeulement": true
+    },
+    {
+      "id": "polemique-relancee",
+      "libelle": "La polémique rebondit",
+      "description": "Votre réponse sur les réseaux relance la polémique : captures d’écran, détournements, éditorialistes.",
+      "nature": "fictif",
+      "famille": "polemique",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.0,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 0,
+      "occurrencesMax": null,
+      "effets": [
+        {
+          "ressource": "popularite",
+          "base": -25,
+          "ecart": 10,
+          "delaiSemaines": 0,
+          "saturation": false
+        },
+        {
+          "ressource": "dynamique",
+          "base": -150,
+          "ecart": 100,
+          "delaiSemaines": 0,
+          "saturation": false
+        }
+      ],
+      "choix": [],
+      "choixParDefaut": null,
+      "campagne": null,
+      "enSuiteSeulement": true
+    },
+    {
+      "id": "usine-repreneur",
+      "libelle": "Un repreneur pour l’usine",
+      "description": "L’usine où vous étiez venu soutenir les salariés trouve un repreneur ; votre visite est rappelée dans la presse.",
+      "nature": "fictif",
+      "famille": "opportunite",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.0,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 0,
+      "occurrencesMax": null,
+      "effets": [
+        {
+          "ressource": "popularite",
+          "base": 30,
+          "ecart": 10,
+          "delaiSemaines": 0,
+          "saturation": true
+        },
+        {
+          "ressource": "notoriete",
+          "base": 20,
+          "ecart": 10,
+          "delaiSemaines": 0,
+          "saturation": true
+        }
+      ],
+      "choix": [],
+      "choixParDefaut": null,
+      "campagne": null,
+      "enSuiteSeulement": true
+    },
+    {
+      "id": "grand-oral-viral",
+      "libelle": "Votre grand oral circule",
+      "description": "Un extrait de votre grand oral devant les étudiants fait le tour des réseaux.",
+      "nature": "fictif",
+      "famille": "opportunite",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.0,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 0,
+      "occurrencesMax": null,
+      "effets": [
+        {
+          "ressource": "jeunesse",
+          "base": 400,
+          "ecart": 200,
+          "delaiSemaines": 0,
+          "saturation": false
+        },
+        {
+          "ressource": "dynamique",
+          "base": 200,
+          "ecart": 100,
+          "delaiSemaines": 0,
+          "saturation": false
+        }
+      ],
+      "choix": [],
+      "choixParDefaut": null,
+      "campagne": null,
+      "enSuiteSeulement": true
+    },
+    {
+      "id": "cyberattaque-fuite",
+      "libelle": "Les données du site piraté sont publiées",
+      "description": "Les pirates publient des courriels de votre équipe. Rien d’illégal, mais beaucoup de commentaires.",
+      "nature": "fictif",
+      "famille": "vie-de-campagne",
+      "majeur": true,
+      "probabiliteHebdomadaire": 0.0,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 0,
+      "occurrencesMax": null,
+      "effets": [],
+      "choix": [
+        {
+          "id": "plainte",
+          "libelle": "Porter plainte et faire auditer",
+          "description": "Un prestataire sécurise vos outils ; la plainte est saluée.",
+          "effets": [
+            {
+              "ressource": "budgetCentimes",
+              "base": -800000,
+              "ecart": 0,
+              "delaiSemaines": 0,
+              "saturation": false
+            },
+            {
+              "ressource": "popularite",
+              "base": 10,
+              "ecart": 0,
+              "delaiSemaines": 0,
+              "saturation": true
+            }
+          ]
+        },
+        {
+          "id": "silence",
+          "libelle": "Ne pas commenter",
+          "description": "Les courriels restent le sujet de la semaine.",
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -30,
+              "ecart": 0,
+              "delaiSemaines": 0,
+              "saturation": false
+            },
+            {
+              "ressource": "dynamique",
+              "base": -200,
+              "ecart": 0,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        }
+      ],
+      "choixParDefaut": "silence",
+      "campagne": null,
+      "enSuiteSeulement": true
+    },
+    {
+      "id": "tract-errone-parodie",
+      "libelle": "Votre tract détourné",
+      "description": "Le tract erroné que vous avez assumé devient un mème moqué sur les réseaux.",
+      "nature": "fictif",
+      "famille": "polemique",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.0,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 0,
+      "occurrencesMax": null,
+      "effets": [
+        {
+          "ressource": "dynamique",
+          "base": -200,
+          "ecart": 100,
+          "delaiSemaines": 0,
+          "saturation": false
+        },
+        {
+          "ressource": "notoriete",
+          "base": 10,
+          "ecart": 5,
+          "delaiSemaines": 0,
+          "saturation": true
+        }
+      ],
+      "choix": [],
+      "choixParDefaut": null,
+      "campagne": null,
+      "enSuiteSeulement": true
+    },
+    {
+      "id": "rumeur-financement",
+      "libelle": "Rumeur sur le financement de votre campagne",
+      "description": "Un site d’information évoque, sans preuve, un prêt de complaisance accordé à votre campagne.",
+      "nature": "fictif",
+      "famille": "polemique",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.03,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 12,
+      "occurrencesMax": 1,
+      "effets": [],
+      "choix": [
+        {
+          "id": "transparence",
+          "libelle": "Publier vos comptes",
+          "description": "Vous publiez l’état de votre compte de campagne et vos prêts.",
+          "effets": [
+            {
+              "ressource": "tempsHeures",
+              "base": -4,
+              "ecart": 0,
+              "delaiSemaines": 0,
+              "saturation": false
+            },
+            {
+              "ressource": "popularite",
+              "base": 10,
+              "ecart": 0,
+              "delaiSemaines": 0,
+              "saturation": true
+            }
+          ]
+        },
+        {
+          "id": "dementir",
+          "libelle": "Démentir sans détailler",
+          "description": "Un communiqué dément ; la rumeur reste en ligne.",
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -5,
+              "ecart": 0,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        }
+      ],
+      "choixParDefaut": "transparence",
+      "campagne": null,
+      "suites": [
+        {
+          "evenement": "comptes-salues",
+          "choix": "transparence",
+          "probabilite": 0.6,
+          "delaiSemaines": {
+            "min": 1,
+            "max": 3
+          }
+        },
+        {
+          "evenement": "rumeur-relancee",
+          "choix": "dementir",
+          "probabilite": 0.5,
+          "delaiSemaines": {
+            "min": 2,
+            "max": 4
+          }
+        }
+      ]
+    },
+    {
+      "id": "comptes-salues",
+      "libelle": "Votre transparence saluée",
+      "description": "Une association anticorruption cite la publication de vos comptes en exemple.",
+      "nature": "fictif",
+      "famille": "opportunite",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.0,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 0,
+      "occurrencesMax": null,
+      "effets": [
+        {
+          "ressource": "popularite",
+          "base": 30,
+          "ecart": 10,
+          "delaiSemaines": 0,
+          "saturation": true
+        }
+      ],
+      "choix": [],
+      "choixParDefaut": null,
+      "campagne": null,
+      "enSuiteSeulement": true
+    },
+    {
+      "id": "rumeur-relancee",
+      "libelle": "La rumeur de financement repart",
+      "description": "Faute de détails, la rumeur sur votre financement est reprise par d’autres médias.",
+      "nature": "fictif",
+      "famille": "polemique",
+      "majeur": true,
+      "probabiliteHebdomadaire": 0.0,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 0,
+      "occurrencesMax": null,
+      "effets": [
+        {
+          "ressource": "popularite",
+          "base": -45,
+          "ecart": 15,
+          "delaiSemaines": 0,
+          "saturation": false
+        },
+        {
+          "ressource": "notoriete",
+          "base": 20,
+          "ecart": 10,
+          "delaiSemaines": 0,
+          "saturation": true
+        }
+      ],
+      "choix": [],
+      "choixParDefaut": null,
+      "campagne": null,
+      "enSuiteSeulement": true
+    },
+    {
+      "id": "contre-programmation",
+      "libelle": "Contre-programmation de {adversaire}",
+      "description": "Le camp de {adversaire} réunit ses partisans le même soir que votre meeting : les caméras se partagent. Coup simulé par le jeu : aucun propos n’est prêté à quiconque.",
+      "nature": "fictif",
+      "famille": "coup-adversaire",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.12,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 6,
+      "occurrencesMax": null,
+      "effets": [
+        {
+          "ressource": "notoriete",
+          "base": -20,
+          "ecart": 10,
+          "delaiSemaines": 0,
+          "saturation": false
+        }
+      ],
+      "choix": [],
+      "choixParDefaut": null,
+      "campagne": null,
+      "contexte": {
+        "phases": ["campagne", "entre_deux_tours"],
+        "actionsRecentes": {
+          "actions": ["meeting", "grand-meeting"],
+          "semaines": 1
+        }
+      },
+      "adversaire": {
+        "effets": [
+          {
+            "ressource": "notoriete",
+            "base": 30,
+            "ecart": 10,
+            "delaiSemaines": 0,
+            "saturation": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "tractage-adverse",
+      "libelle": "Tractage massif de l’équipe de {adversaire}",
+      "description": "Les militants de {adversaire} quadrillent les marchés où vous faisiez campagne. Coup simulé par le jeu : aucun propos n’est prêté à quiconque.",
+      "nature": "fictif",
+      "famille": "coup-adversaire",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.05,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 6,
+      "occurrencesMax": null,
+      "effets": [
+        {
+          "ressource": "popularite",
+          "base": -15,
+          "ecart": 10,
+          "delaiSemaines": 0,
+          "saturation": false
+        }
+      ],
+      "choix": [],
+      "choixParDefaut": null,
+      "campagne": null,
+      "contexte": {
+        "phases": ["campagne", "entre_deux_tours"]
+      },
+      "adversaire": {
+        "effets": [
+          {
+            "ressource": "popularite",
+            "base": 10,
+            "ecart": 5,
+            "delaiSemaines": 0,
+            "saturation": true
+          },
+          {
+            "ressource": "militants",
+            "base": -10,
+            "ecart": 5,
+            "delaiSemaines": 0,
+            "saturation": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "soutien-debauche",
+      "libelle": "Un de vos soutiens locaux rejoint {adversaire}",
+      "description": "Un élu qui vous soutenait annonce rejoindre la campagne de {adversaire}. Coup simulé par le jeu : aucun propos n’est prêté à quiconque.",
+      "nature": "fictif",
+      "famille": "coup-adversaire",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.03,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 10,
+      "occurrencesMax": null,
+      "effets": [],
+      "choix": [
+        {
+          "id": "riposter",
+          "libelle": "Aller à la rencontre de ses électeurs",
+          "description": "Vous passez une journée sur place pour garder vos appuis.",
+          "effets": [
+            {
+              "ressource": "tempsHeures",
+              "base": -4,
+              "ecart": 0,
+              "delaiSemaines": 0,
+              "saturation": false
+            },
+            {
+              "ressource": "popularite",
+              "base": 5,
+              "ecart": 0,
+              "delaiSemaines": 0,
+              "saturation": true
+            }
+          ]
+        },
+        {
+          "id": "laisser",
+          "libelle": "Laisser partir",
+          "description": "Vous ne commentez pas ce départ.",
+          "effets": [
+            {
+              "ressource": "popularite",
+              "base": -25,
+              "ecart": 0,
+              "delaiSemaines": 0,
+              "saturation": false
+            },
+            {
+              "ressource": "militants",
+              "base": -10,
+              "ecart": 0,
+              "delaiSemaines": 0,
+              "saturation": false
+            }
+          ]
+        }
+      ],
+      "choixParDefaut": "laisser",
+      "campagne": null,
+      "contexte": {
+        "phases": ["campagne", "entre_deux_tours"]
+      },
+      "suites": [
+        {
+          "evenement": "soutiens-retenus",
+          "choix": "riposter",
+          "probabilite": 0.5,
+          "delaiSemaines": {
+            "min": 2,
+            "max": 4
+          }
+        }
+      ],
+      "adversaire": {
+        "effets": [
+          {
+            "ressource": "popularite",
+            "base": 15,
+            "ecart": 10,
+            "delaiSemaines": 0,
+            "saturation": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "soutiens-retenus",
+      "libelle": "Vos appuis locaux tiennent bon",
+      "description": "Votre journée sur le terrain a convaincu les élus voisins de rester à vos côtés.",
+      "nature": "fictif",
+      "famille": "opportunite",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.0,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 0,
+      "occurrencesMax": null,
+      "effets": [
+        {
+          "ressource": "militants",
+          "base": 20,
+          "ecart": 10,
+          "delaiSemaines": 0,
+          "saturation": false
+        },
+        {
+          "ressource": "popularite",
+          "base": 15,
+          "ecart": 5,
+          "delaiSemaines": 0,
+          "saturation": true
+        }
+      ],
+      "choix": [],
+      "choixParDefaut": null,
+      "campagne": null,
+      "enSuiteSeulement": true
+    },
+    {
+      "id": "offensive-numerique-adverse",
+      "libelle": "Campagne numérique ciblée de {adversaire}",
+      "description": "L’équipe de {adversaire} achète des publicités ciblées auprès de vos électeurs les plus jeunes. Coup simulé par le jeu : aucun propos n’est prêté à quiconque.",
+      "nature": "fictif",
+      "famille": "coup-adversaire",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.05,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 6,
+      "occurrencesMax": null,
+      "effets": [
+        {
+          "ressource": "dynamique",
+          "base": -250,
+          "ecart": 150,
+          "delaiSemaines": 0,
+          "saturation": false
+        },
+        {
+          "ressource": "jeunesse",
+          "base": -150,
+          "ecart": 100,
+          "delaiSemaines": 0,
+          "saturation": false
+        }
+      ],
+      "choix": [],
+      "choixParDefaut": null,
+      "campagne": null,
+      "contexte": {
+        "phases": ["campagne", "entre_deux_tours"]
+      },
+      "adversaire": {
+        "effets": [
+          {
+            "ressource": "dynamique",
+            "base": 300,
+            "ecart": 150,
+            "delaiSemaines": 0,
+            "saturation": false
+          },
+          {
+            "ressource": "budgetCentimes",
+            "base": -1000000,
+            "ecart": 0,
+            "delaiSemaines": 0,
+            "saturation": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "ralliement-adverse",
+      "libelle": "Un maire de votre camp rallie {adversaire}",
+      "description": "Un maire jusqu’ici proche de vos idées appelle à voter pour {adversaire}. Coup simulé par le jeu : aucun propos n’est prêté à quiconque.",
+      "nature": "fictif",
+      "famille": "coup-adversaire",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.04,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 8,
+      "occurrencesMax": null,
+      "effets": [
+        {
+          "ressource": "popularite",
+          "base": -20,
+          "ecart": 10,
+          "delaiSemaines": 0,
+          "saturation": false
+        },
+        {
+          "ressource": "militants",
+          "base": -10,
+          "ecart": 5,
+          "delaiSemaines": 0,
+          "saturation": false
+        }
+      ],
+      "choix": [],
+      "choixParDefaut": null,
+      "campagne": null,
+      "contexte": {
+        "phases": ["campagne", "entre_deux_tours"]
+      },
+      "adversaire": {
+        "effets": [
+          {
+            "ressource": "popularite",
+            "base": 20,
+            "ecart": 10,
+            "delaiSemaines": 0,
+            "saturation": true
+          },
+          {
+            "ressource": "notoriete",
+            "base": 10,
+            "ecart": 5,
+            "delaiSemaines": 0,
+            "saturation": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "diner-levee-fonds",
+      "libelle": "Grand dîner de levée de fonds pour {adversaire}",
+      "description": "{adversaire} réunit ses donateurs ; vos militants y voient un défi et se remobilisent. Coup simulé par le jeu : aucun propos n’est prêté à quiconque.",
+      "nature": "fictif",
+      "famille": "coup-adversaire",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.04,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 8,
+      "occurrencesMax": null,
+      "effets": [
+        {
+          "ressource": "militants",
+          "base": 15,
+          "ecart": 10,
+          "delaiSemaines": 0,
+          "saturation": false
+        }
+      ],
+      "choix": [],
+      "choixParDefaut": null,
+      "campagne": null,
+      "contexte": {
+        "phases": ["campagne", "entre_deux_tours"]
+      },
+      "adversaire": {
+        "effets": [
+          {
+            "ressource": "budgetCentimes",
+            "base": 3000000,
+            "ecart": 1000000,
+            "delaiSemaines": 0,
+            "saturation": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "affichage-adverse",
+      "libelle": "Campagne d’affichage géante de {adversaire}",
+      "description": "Les affiches de {adversaire} couvrent les grandes gares et les abribus de vos villes. Coup simulé par le jeu : aucun propos n’est prêté à quiconque.",
+      "nature": "fictif",
+      "famille": "coup-adversaire",
+      "majeur": false,
+      "probabiliteHebdomadaire": 0.04,
+      "conditions": [],
+      "delaiMinEntreOccurrences": 8,
+      "occurrencesMax": null,
+      "effets": [
+        {
+          "ressource": "notoriete",
+          "base": -15,
+          "ecart": 10,
+          "delaiSemaines": 0,
+          "saturation": false
+        }
+      ],
+      "choix": [],
+      "choixParDefaut": null,
+      "campagne": null,
+      "contexte": {
+        "phases": ["campagne", "entre_deux_tours"]
+      },
+      "adversaire": {
+        "effets": [
+          {
+            "ressource": "notoriete",
+            "base": 25,
+            "ecart": 10,
+            "delaiSemaines": 0,
+            "saturation": true
+          },
+          {
+            "ressource": "budgetCentimes",
+            "base": -1500000,
+            "ecart": 0,
+            "delaiSemaines": 0,
+            "saturation": false
+          }
+        ]
       }
     }
   ],

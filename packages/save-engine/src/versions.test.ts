@@ -30,6 +30,7 @@ import V17 from './fixtures/v17-phase-13.json' with { type: 'json' };
 import V18 from './fixtures/v18-phase-14.json' with { type: 'json' };
 import V19 from './fixtures/v19-phase-17.json' with { type: 'json' };
 import V20 from './fixtures/v20-phase-19.json' with { type: 'json' };
+import V21 from './fixtures/v21-phase-20.json' with { type: 'json' };
 import { loadStoredState, MIGRATED_CANDIDATE, SaveFormatError, upgradeState } from './versions';
 
 const ruleset = getRuleset(CURRENT_RULESET_KEY);
@@ -145,6 +146,11 @@ const withoutPhase15 = <T extends object>(state: T): T => {
   if (s.negociations) {
     expect(s.negociations).toEqual([]);
     delete out.negociations;
+  }
+  // Format 22 (phase 20) : aucune suite d'événement programmée dans une partie migrée.
+  if (s.suites) {
+    expect(s.suites).toEqual([]);
+    delete out.suites;
   }
   if (s.succes) {
     expect(s.succes).toEqual([]);
@@ -1079,11 +1085,12 @@ describe('migrations de sauvegarde', () => {
     });
     // La difficulté est figée à la création : ni le niveau ni les moyens des candidats ne
     // changent à la migration.
-    const { meta: _meta, player, ...rest } = state;
+    const { meta: _meta, player, suites, ...rest } = state;
     const { meta: _m, player: before, ...restBefore } = V19.state;
+    expect(suites).toEqual([]);
     expect(rest).toEqual(restBefore);
     expect(player).toEqual({ ...before, format: 'complet' });
-    // La campagne continue avec le jeu de règles 17, débats compris, de façon déterministe.
+    // La campagne continue avec le jeu de règles courant, débats compris, de façon déterministe.
     const play = () => {
       let current = state;
       for (let i = 0; i < 6; i++) {
@@ -1127,8 +1134,9 @@ describe('migrations de sauvegarde', () => {
       rulesetVersion: CURRENT_RULESET_KEY,
     });
     expect(state.player.format).toBe('complet');
-    const { meta: _meta, player, ...rest } = state;
+    const { meta: _meta, player, suites, ...rest } = state;
     const { meta: _m, player: before, ...restBefore } = V20.state;
+    expect(suites).toEqual([]);
     expect(rest).toEqual(restBefore);
     expect(player).toEqual({ ...before, format: 'complet' });
     const next = advanceWeek(
@@ -1144,6 +1152,38 @@ describe('migrations de sauvegarde', () => {
     ).state;
     expect(next.meta.week).toBe(state.meta.week + 1);
     expect(GameStateSchema.parse(next)).toEqual(next);
+  });
+
+  it('passe au jeu de règles 18 sans rien perdre : aucune suite programmée (format 21, format court)', () => {
+    const { state, migratedFrom } = loadStoredState(V21.state, V21.stateHash, 21);
+    expect(migratedFrom).toBe(21);
+    expect(state.meta).toMatchObject({
+      week: V21.state.meta.week,
+      saveSchemaVersion: SAVE_SCHEMA_VERSION,
+      engineVersion: ENGINE_VERSION,
+      rulesetVersion: CURRENT_RULESET_KEY,
+    });
+    const { meta: _meta, suites, ...rest } = state;
+    const { meta: _m, ...restBefore } = V21.state;
+    expect(suites).toEqual([]);
+    expect(rest).toEqual(restBefore);
+    expect(state.player.format).toBe('court');
+    // La campagne continue avec les chaînes et les coups adverses du jeu de règles 18.
+    let current = state;
+    for (let i = 0; i < 4; i++)
+      current = advanceWeek(
+        current,
+        {
+          actions: [],
+          decisions: current.pendingDecisions.map((d) => ({
+            decisionId: d.id,
+            optionId: d.defaultOptionId,
+          })),
+        },
+        { ruleset },
+      ).state;
+    expect(current.meta.week).toBe(state.meta.week + 4);
+    expect(GameStateSchema.parse(current)).toEqual(current);
   });
 
   it('refuse un état qui cite une personnalité absente du vivier courant', () => {

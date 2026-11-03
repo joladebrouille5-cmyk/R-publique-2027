@@ -922,18 +922,46 @@ export const EventChoiceSchema = z
   })
   .strict();
 
-/** Familles d'événements de campagne (phase 11) : une seule par semaine, fraîcheur par famille. */
+/**
+ * Familles d'événements de campagne (phase 11) : une seule par semaine, fraîcheur par famille.
+ * Phase 20 : `coup-adversaire`, coups simulés du rival le plus proche dans les intentions.
+ */
 export const EVENT_FAMILIES = [
   'fait-divers',
   'polemique',
   'opportunite',
   'vie-de-campagne',
+  'coup-adversaire',
 ] as const;
 export const EventFamilySchema = z.enum(EVENT_FAMILIES);
 export type EventFamily = z.infer<typeof EventFamilySchema>;
 
 /** Marque du département d'un événement local, remplacée par « Nom (code) ». */
 export const DEPARTEMENT_MARQUE = '{departement}';
+
+/** Marque du rival visé par un coup adverse (phase 20), remplacée par son nom. */
+export const ADVERSAIRE_MARQUE = '{adversaire}';
+
+/**
+ * Suite d'un événement (phase 20, événements en chaîne) : un autre événement du catalogue,
+ * programmé quelques semaines plus tard avec une probabilité, dès que l'événement survient ou
+ * seulement après l'option `choix` de sa décision.
+ */
+export const EventFollowUpSchema = z
+  .object({
+    evenement: Id,
+    choix: Id.nullable(),
+    probabilite: Probability,
+    delaiSemaines: z
+      .object({
+        min: z.number().int().min(1).max(8),
+        max: z.number().int().min(1).max(8),
+      })
+      .strict()
+      .refine((d) => d.min <= d.max, 'délai minimal supérieur au délai maximal'),
+  })
+  .strict();
+export type EventFollowUp = z.infer<typeof EventFollowUpSchema>;
 
 const Bounds = z
   .object({ min: z.number().int().nullable(), max: z.number().int().nullable() })
@@ -979,6 +1007,19 @@ export const EventDefinitionSchema = z
     campagne: CampaignEffectSchema.nullable(),
     choix: z.array(EventChoiceSchema),
     choixParDefaut: Id.nullable(),
+    /** Phase 20 : événements programmés à la suite de celui-ci (chaîne). */
+    suites: z.array(EventFollowUpSchema).default([]),
+    /** Phase 20 : jamais tiré au hasard ; ne survient qu'en suite d'un autre événement. */
+    enSuiteSeulement: z.boolean().default(false),
+    /**
+     * Phase 20, coup adverse : le rival le plus proche du joueur dans les intentions (marque
+     * `{adversaire}`) en est l'auteur, simulé ; `effets` s'appliquent à ce rival.
+     */
+    adversaire: z
+      .object({ effets: z.array(EffectSchema) })
+      .strict()
+      .nullable()
+      .default(null),
   })
   .strict();
 export type EventDefinition = z.infer<typeof EventDefinitionSchema>;
@@ -2163,6 +2204,26 @@ export const RulesetSchema = z
       }
       if (!hasChoices && event.effets.length === 0 && !event.campagne)
         issue(`${event.id} : aucun effet`);
+      // Phase 20 : suites (chaînes) et coups adverses.
+      for (const follow of event.suites) {
+        const next = ruleset.evenements.find((e) => e.id === follow.evenement);
+        if (!next) issue(`${event.id} : suite inconnue ${follow.evenement}`);
+        if (follow.evenement === event.id) issue(`${event.id} : un événement ne se suit pas`);
+        if (follow.choix !== null && !event.choix.some((c) => c.id === follow.choix))
+          issue(`${event.id} : la suite ${follow.evenement} cite un choix inconnu ${follow.choix}`);
+      }
+      if (
+        event.enSuiteSeulement &&
+        !ruleset.evenements.some((e) => e.suites.some((f) => f.evenement === event.id))
+      )
+        issue(`${event.id} : événement de suite qu'aucun autre ne programme`);
+      const named = [event.libelle, event.description].some((t) => t.includes(ADVERSAIRE_MARQUE));
+      if ((event.adversaire !== null) !== (event.famille === 'coup-adversaire'))
+        issue(`${event.id} : un coup adverse, et lui seul, a un rival (adversaire)`);
+      if (event.adversaire !== null && !named)
+        issue(`${event.id} : un coup adverse nomme son rival ({adversaire})`);
+      if (event.adversaire === null && named)
+        issue(`${event.id} : la marque {adversaire} exige un coup adverse`);
     }
 
     // Phase 5 : actions de campagne.

@@ -464,6 +464,7 @@ export function createGame(input: CreateGameInput, ruleset: Ruleset): GameState 
     scheduled: [],
     pendingDecisions: [],
     eventHistory: {},
+    suites: [],
     opinion: null,
     polls: [],
     sondagesBase: {},

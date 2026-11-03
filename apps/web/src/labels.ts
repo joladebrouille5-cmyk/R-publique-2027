@@ -280,6 +280,7 @@ export const EVENT_FAMILY_LABELS = {
   polemique: 'Polémique',
   opportunite: 'Opportunité',
   'vie-de-campagne': 'Vie de campagne',
+  'coup-adversaire': 'Coup adverse',
 } as const;
 
 /**

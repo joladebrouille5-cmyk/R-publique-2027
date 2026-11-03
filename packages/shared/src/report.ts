@@ -82,6 +82,10 @@ export const ReportEventSchema = z
     nature: z.enum(['fictif', 'simule']),
     majeur: z.boolean(),
     decisionId: z.string().nullable(),
+    /** Phase 20 : libellé de l'événement dont celui-ci est la suite (chaîne). */
+    suiteDe: z.string().optional(),
+    /** Phase 20 : rival auteur d'un coup adverse (simulé). */
+    adversaire: z.string().optional(),
   })
   .strict();
 export type ReportEvent = z.infer<typeof ReportEventSchema>;

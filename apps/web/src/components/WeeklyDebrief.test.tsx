@@ -155,3 +155,45 @@ describe('équipe de campagne (phase 20)', () => {
     expect(within(team).getByText(/Équipe fictive/)).toBeInTheDocument();
   });
 });
+
+describe('événements en chaîne et coups adverses (phase 20)', () => {
+  it('rappelle l’événement d’origine d’une suite, et l’équipe signale le coup du rival', () => {
+    const rules = JSON.parse(JSON.stringify(RULES)) as Ruleset;
+    rules.evenements.find((e) => e.id === 'diner-levee-fonds')!.probabiliteHebdomadaire = 1;
+    const start = initialState();
+    start.suites = [
+      {
+        id: 's-test',
+        evenement: 'comptes-salues',
+        dueWeek: start.meta.week,
+        origine: 'Rumeur sur le financement de votre campagne',
+      },
+    ];
+    const { state, report } = advanceWeek(
+      start,
+      { actions: [{ actionId: 'meeting' }], decisions: [] },
+      { ruleset: rules },
+    );
+    const coup = report.events.find((e) => e.refId === 'diner-levee-fonds')!;
+    expect(coup.adversaire).toBeDefined();
+    render(
+      <MemoryRouter>
+        <WeeklyDebrief
+          report={report}
+          state={state}
+          gameId="partie"
+          eventFamily={(id) => rules.evenements.find((e) => e.id === id)?.famille ?? null}
+          onClose={vi.fn()}
+        />
+      </MemoryRouter>,
+    );
+    expect(
+      screen.getByText('Suite de « Rumeur sur le financement de votre campagne »'),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText('Coup adverse').length).toBeGreaterThan(0);
+    const team = screen.getByRole('region', { name: 'Votre équipe raconte la semaine' });
+    expect(within(team).getAllByRole('listitem')[0]).toHaveTextContent(
+      `Le camp d’en face a frappé : « ${coup.label} »`,
+    );
+  });
+});

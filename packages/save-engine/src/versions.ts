@@ -36,6 +36,7 @@ import {
   GameStateV18Schema,
   GameStateV19Schema,
   GameStateV20Schema,
+  GameStateV21Schema,
   addDays,
   DIGITAL_HISTORY_WEEKS,
   daysFromCivil,
@@ -64,6 +65,7 @@ import {
   type GameStateV18,
   type GameStateV19,
   type GameStateV20,
+  type GameStateV21,
   type GameStateV17,
 } from '@r2027/shared';
 import { z } from 'zod';
@@ -113,7 +115,8 @@ const SCHEMAS: Record<number, z.ZodType> = {
   18: GameStateV18Schema,
   19: GameStateV19Schema,
   20: GameStateV20Schema,
-  21: GameStateSchema,
+  21: GameStateV21Schema,
+  22: GameStateSchema,
 };
 
 /** Jeux de règles des parties aux formats 2 (phase 2) et 3 (phase 3). */
@@ -776,7 +779,7 @@ function migrateV19ToV20(v19: GameStateV19): GameStateV20 {
  * 20 → 21 (phase 20) : format de partie. Une partie existante continue au format complet
  * (campagne puis quinquennat), comme avant ; rien d'autre ne change.
  */
-function migrateV20ToV21(v20: GameStateV20): GameState {
+function migrateV20ToV21(v20: GameStateV20): GameStateV21 {
   return {
     ...v20,
     meta: {
@@ -786,6 +789,23 @@ function migrateV20ToV21(v20: GameStateV20): GameState {
       saveSchemaVersion: 21,
     },
     player: { ...v20.player, format: 'complet' },
+  };
+}
+
+/**
+ * 21 → 22 (phase 20) : événements en chaîne. Une partie existante n'a aucune suite programmée ;
+ * les suites et les coups adverses du jeu de règles 18 s'appliquent dès la semaine suivante.
+ */
+function migrateV21ToV22(v21: GameStateV21): GameState {
+  return {
+    ...v21,
+    meta: {
+      ...v21.meta,
+      engineVersion: ENGINE_VERSION,
+      rulesetVersion: CURRENT_RULESET_KEY,
+      saveSchemaVersion: 22,
+    },
+    suites: [],
   };
 }
 
@@ -810,6 +830,7 @@ const MIGRATIONS: Record<number, (state: never) => unknown> = {
   18: migrateV18ToV19,
   19: migrateV19ToV20,
   20: migrateV20ToV21,
+  21: migrateV21ToV22,
 };
 
 export type LoadedState = { state: GameState; stateHash: string; migratedFrom: number | null };
