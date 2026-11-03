@@ -91,6 +91,7 @@ test('chaque jingle se rend sans silence ni saturation, à la durée de sa parti
     'debat',
     'defaite',
     'flash',
+    'tampon',
     'victoire',
     'vingt-heures',
   ]);
@@ -121,21 +122,23 @@ test('la musique attend un geste, suit l’écran et se coupe d’un bouton', as
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1, name: 'RÉPUBLIQUE 2027' })).toBeVisible();
   // Aucun son avant le premier geste : le morceau de l'accueil est prêt, mais à l'arrêt.
-  await expect.poll(() => decks(page)).toContainEqual({ src: 'inspired.mp3', playing: false });
+  await expect
+    .poll(() => decks(page))
+    .toContainEqual({ src: 'orient-et-occident.mp3', playing: false });
   expect(await playingTrack(page)).toEqual([]);
   await page.getByRole('heading', { level: 1, name: 'RÉPUBLIQUE 2027' }).click();
-  await expect.poll(() => playingTrack(page)).toEqual(['inspired.mp3']);
+  await expect.poll(() => playingTrack(page)).toEqual(['orient-et-occident.mp3']);
 
   const mute = page.getByRole('button', { name: 'Couper le son' });
   await mute.click();
   await expect(mute).toHaveAttribute('aria-pressed', 'true');
   await expect.poll(() => playingTrack(page)).toEqual([]);
   await mute.click();
-  await expect.poll(() => playingTrack(page)).toEqual(['inspired.mp3']);
+  await expect.poll(() => playingTrack(page)).toEqual(['orient-et-occident.mp3']);
 
   // Dans une partie en campagne : la musique de la campagne prend le relais en fondu.
   await createGame(page, 'Partie sonore', 'e2e-son');
-  await expect.poll(() => playingTrack(page), { timeout: 10_000 }).toEqual(['investigations.mp3']);
+  await expect.poll(() => playingTrack(page), { timeout: 10_000 }).toEqual(['catalyst.mp3']);
 });
 
 test('les réglages du son restent sur l’appareil ; Paramètres est accessible', async ({ page }) => {

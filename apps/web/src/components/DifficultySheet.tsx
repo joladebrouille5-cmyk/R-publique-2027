@@ -76,7 +76,7 @@ export function DifficultySheet({
   return (
     <section
       aria-labelledby={titleId}
-      className="rounded-2xl border border-or-300/50 bg-or-50/40 p-4 sm:p-5 dark:border-dorure/15 dark:bg-dorure/[0.035]"
+      className="rounded-2xl border border-slate-300 bg-or-50/40 p-4 sm:p-5 dark:border-dorure/15 dark:bg-dorure/[0.035]"
     >
       <div aria-live="polite" aria-atomic="true">
         <h3 id={titleId} className="flex items-center gap-3 text-xl">

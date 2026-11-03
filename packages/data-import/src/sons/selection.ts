@@ -1,8 +1,11 @@
 import type { Ambiance } from '@r2027/shared';
 
-// Musique du jeu (phase 19) : morceaux de Kevin MacLeod (incompetech.com) publiés sous licence
-// CC BY 3.0 et hébergés sur Wikimedia Commons. La licence et l'auteur ne sont pas recopiés ici :
-// l'importeur les lit sur la page de chaque fichier et refuse un morceau sans licence libre.
+// Musique du jeu (phase 21, remplace la sélection de la phase 19) : deux marches de compositeurs
+// français dans le domaine public (partition et interprétation de la fanfare de l'US Marine Band,
+// œuvre d'une administration fédérale américaine) et trois morceaux de Scott Buckley sous licence
+// CC BY 4.0, tous hébergés sur Wikimedia Commons. La licence et l'auteur ne sont pas recopiés ici :
+// l'importeur les lit sur la page de chaque fichier (licence de l'interprétation, pas seulement
+// celle de la partition) et refuse un morceau sans licence libre.
 
 export type MusicSelection = {
   id: string;
@@ -16,37 +19,37 @@ export type MusicSelection = {
 
 export const MUSIC_SELECTION: readonly MusicSelection[] = [
   {
-    id: 'inspired',
-    fichier: 'Inspired (ISRC USUAN1600022).mp3',
-    titre: 'Inspired',
+    id: 'orient-et-occident',
+    fichier: 'Orient et Occident - U.S. Marine Band.ogg',
+    titre: 'Orient et Occident, grande marche',
     ambiance: 'accueil',
     extraitMax: 150,
   },
   {
-    id: 'investigations',
-    fichier: 'Investigations (ISRC USUAN1100646).mp3',
-    titre: 'Investigations',
+    id: 'catalyst',
+    fichier: 'Scott Buckley - Catalyst.oga',
+    titre: 'Catalyst',
     ambiance: 'campagne',
-    extraitMax: null,
+    extraitMax: 150,
   },
   {
-    id: 'impact-moderato',
-    fichier: 'Impact Moderato (ISRC USUAN1100618).mp3',
-    titre: 'Impact Moderato',
+    id: 'marche-hongroise',
+    fichier: 'Marche Hongroise - U.S. Marine Band.ogg',
+    titre: 'Marche hongroise',
     ambiance: 'campagne',
-    extraitMax: null,
+    extraitMax: 150,
   },
   {
-    id: 'deliberate-thought',
-    fichier: 'Deliberate Thought (ISRC USUAN1100261).mp3',
-    titre: 'Deliberate Thought',
+    id: 'hiraeth',
+    fichier: 'Scott Buckley - Hiraeth.oga',
+    titre: 'Hiraeth',
     ambiance: 'mandat',
     extraitMax: 150,
   },
   {
-    id: 'lasting-hope',
-    fichier: 'Lasting Hope (ISRC USUAN1100178).mp3',
-    titre: 'Lasting Hope',
+    id: 'born-of-the-sky',
+    fichier: 'Scott Buckley - Born Of The Sky.oga',
+    titre: 'Born of the Sky',
     ambiance: 'mandat',
     extraitMax: null,
   },

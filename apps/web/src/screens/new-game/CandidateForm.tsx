@@ -88,7 +88,7 @@ export function CandidateForm({ value, onChange }: Props) {
         step={5}
         value={value[key]}
         onChange={(event) => set(key, Number(event.target.value))}
-        className="w-full accent-or-600 dark:accent-dorure"
+        className="w-full accent-republique-600 dark:accent-dorure"
         aria-valuetext={`${value[key]} (${value[key] < 0 ? left : value[key] > 0 ? right : 'centre'})`}
       />
       <span className="flex justify-between text-xs text-slate-600 dark:text-slate-400">

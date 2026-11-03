@@ -94,10 +94,14 @@ describe('son de l’interface', () => {
       'true',
     );
 
-    // Crédits (licence CC BY : titre, auteur, licence, source, modifications).
+    // Crédits (titre, auteur, licence, source, modifications ; exigés par CC BY).
     const credits = await screen.findByRole('region', { name: 'Crédits et mentions légales' });
     for (const track of MUSIC.morceaux) {
-      const line = within(credits).getByText(new RegExp(`« ${track.titre} » — Kevin MacLeod`));
+      const line = within(credits).getByText(
+        (_, node) =>
+          node?.tagName === 'LI' &&
+          (node.textContent ?? '').startsWith(`« ${track.titre} » — ${track.auteur}, licence`),
+      );
       expect(line).toHaveTextContent(track.modifications);
       expect(within(line).getByRole('link', { name: track.licence })).toHaveAttribute(
         'href',

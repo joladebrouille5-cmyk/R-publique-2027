@@ -19,7 +19,7 @@ export function SoundToggle() {
     >
       <Icon
         aria-hidden="true"
-        className={`size-5 ${coupe ? 'text-slate-500 dark:text-slate-400' : 'text-or-600 dark:text-dorure'}`}
+        className={`size-5 ${coupe ? 'text-slate-500 dark:text-slate-400' : 'text-slate-900 dark:text-dorure'}`}
       />
       <span className="sr-only">Couper le son</span>
     </button>

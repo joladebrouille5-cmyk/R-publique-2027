@@ -78,7 +78,7 @@ describe('jingles des moments forts', () => {
           expect(midi).toBeGreaterThanOrEqual(24);
           expect(midi).toBeLessThanOrEqual(108);
         }
-        if (!['cymbale', 'souffle'].includes(note.instrument))
+        if (!['cymbale', 'souffle', 'caisse', 'claque', 'tampon'].includes(note.instrument))
           expect(note.hauteurs.length).toBeGreaterThan(0);
       }
     }
@@ -116,8 +116,8 @@ describe('choix de la musique', () => {
 
   it('joue les morceaux de l’ambiance dans l’ordre du manifeste', () => {
     expect(playlistFor('campagne', MUSIC.morceaux).map((t) => t.id)).toEqual([
-      'investigations',
-      'impact-moderato',
+      'catalyst',
+      'marche-hongroise',
     ]);
     expect(playlistFor('silence', MUSIC.morceaux)).toEqual([]);
   });
@@ -266,10 +266,10 @@ describe('système sonore', () => {
     expect(playing()).toEqual([]);
     expect(render).not.toHaveBeenCalled();
     s.unlock();
-    expect(playing()).toEqual(['/sons/inspired.mp3']);
-    expect(s.currentTrack()).toBe('inspired');
+    expect(playing()).toEqual(['/sons/orient-et-occident.mp3']);
+    expect(s.currentTrack()).toBe('orient-et-occident');
     s.setAmbiance('mandat');
-    expect(s.currentTrack()).toBe('deliberate-thought');
+    expect(s.currentTrack()).toBe('hiraeth');
     s.setAmbiance('silence');
     expect(s.currentTrack()).toBeNull();
   });

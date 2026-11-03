@@ -22,7 +22,7 @@ export function Achievements({ state, ruleset }: { state: GameState; ruleset: Ru
               key={a.id}
               className={`flex items-start gap-3 rounded-card border p-3 ${
                 done
-                  ? 'border-or-300 bg-or-50 dark:border-or-700 dark:bg-or-900/40'
+                  ? 'border-slate-300 bg-or-50 dark:border-or-700 dark:bg-or-900/40'
                   : 'border-slate-200 dark:border-slate-700'
               }`}
             >

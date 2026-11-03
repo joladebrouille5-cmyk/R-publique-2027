@@ -4,7 +4,7 @@ import { Link } from 'react-router';
 import { useProgression } from '../api/hooks';
 import { formatGameDate, formatShare } from '../labels';
 import { ErrorMessage } from './ErrorMessage';
-import { buttonPrimary, card } from './ui';
+import { card } from './ui';
 
 // Palmarès (phase 20) : niveau de joueur, résultats, déblocages et défi du jour, tels que le
 // serveur (ou le moteur local) les calcule à partir des parties. Rien n'est recalculé ici.
@@ -20,11 +20,11 @@ function Level({ progression }: { progression: Progression }) {
   return (
     <div className="space-y-3">
       <p className="flex items-baseline gap-3">
-        <span className="font-display text-5xl leading-none font-bold text-or-600 dark:text-dorure">
+        <span className="font-display text-6xl leading-none font-black text-red-600 [font-stretch:110%] dark:text-red-400">
           {niveau.numero}
         </span>
         <span>
-          <span className="block font-display text-2xl leading-tight font-semibold">
+          <span className="block font-display text-2xl leading-tight font-[780] [font-stretch:80%]">
             {niveau.titre}
           </span>
           <span className="block text-sm text-slate-600 dark:text-slate-400">
@@ -39,10 +39,10 @@ function Level({ progression }: { progression: Progression }) {
         aria-valuemin={0}
         aria-valuemax={span}
         aria-valuenow={done}
-        className="h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-white/10"
+        className="h-3 overflow-hidden border-[1.5px] border-slate-900 bg-papier dark:border-slate-200 dark:bg-transparent"
       >
         <span
-          className="block h-full rounded-full bg-or-500 dark:bg-dorure"
+          className="block h-full bg-or-400 dark:bg-dorure"
           style={{ width: `${Math.round((done / span) * 100)}%` }}
         />
       </div>
@@ -64,7 +64,7 @@ export function Palmares() {
           Votre niveau
         </h3>
         <Level progression={data} />
-        <dl className="grid grid-cols-3 gap-3 text-center">
+        <dl className="grid grid-cols-3 divide-x divide-slate-300 border-y border-slate-300 dark:divide-white/15 dark:border-white/15">
           {[
             ['Parties', String(data.parties)],
             ['Victoires', String(data.victoires)],
@@ -73,9 +73,9 @@ export function Palmares() {
               data.meilleurPremierTour === null ? '—' : share(data.meilleurPremierTour),
             ],
           ].map(([term, value]) => (
-            <div key={term} className="rounded-2xl bg-slate-100 px-2 py-3 dark:bg-white/[0.05]">
+            <div key={term} className="px-3 py-3 first:pl-0">
               <dt className="text-xs text-slate-600 dark:text-slate-400">{term}</dt>
-              <dd className="font-display text-2xl font-bold tabular-nums">{value}</dd>
+              <dd className="font-display text-3xl font-black tabular-nums">{value}</dd>
             </div>
           ))}
         </dl>
@@ -85,7 +85,10 @@ export function Palmares() {
               {d.debloque ? (
                 <Check aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-emerald-600" />
               ) : (
-                <Lock aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-amber-700" />
+                <Lock
+                  aria-hidden="true"
+                  className="mt-0.5 size-4 shrink-0 text-red-600 dark:text-red-400"
+                />
               )}
               <span>
                 <span className="font-semibold">{d.libelle}</span>
@@ -97,24 +100,31 @@ export function Palmares() {
           ))}
         </ul>
       </section>
-      <section aria-labelledby="titre-defi" className={`${card} flex flex-col gap-4`}>
+      {/* Le défi du jour : le tract rouge de la journée, imprimé en aplat. */}
+      <section
+        aria-labelledby="titre-defi"
+        className="flex flex-col gap-4 rounded-card bg-red-700 p-4 text-white sm:p-6 dark:bg-red-800"
+      >
         <h3 id="titre-defi" className="flex items-center gap-2 text-xl">
-          <CalendarCheck aria-hidden="true" className="size-5 text-or-600 dark:text-dorure" />
+          <CalendarCheck aria-hidden="true" className="size-5" />
           Défi du jour
         </h3>
-        <p className="text-slate-700 dark:text-slate-300">
+        <p className="text-white/95">
           Même campagne pour tous ce {formatGameDate(defi.date)}, en format court. Votre score :
           votre part des voix au premier tour.
         </p>
-        <p className="font-display text-4xl font-bold tabular-nums">
+        <p className="font-display text-5xl leading-[0.95] font-black tabular-nums [font-stretch:78%]">
           {defi.meilleurScore === null ? 'Pas encore de score' : share(defi.meilleurScore)}
         </p>
-        <p className="text-sm text-slate-600 dark:text-slate-400">
+        <p className="text-sm text-white/90">
           {defi.tentatives === 0
             ? 'Aucune tentative aujourd’hui.'
             : `${plural(defi.tentatives, 'tentative')} aujourd’hui${defi.meilleurScore === null ? ', premier tour à venir' : ''}.`}
         </p>
-        <Link to="/nouvelle-partie?defi=1" className={`${buttonPrimary} mt-auto self-start`}>
+        <Link
+          to="/nouvelle-partie?defi=1"
+          className="mt-auto inline-flex min-h-11 items-center justify-center self-start rounded-md bg-papier px-5 py-2.5 font-display text-[0.95rem] font-bold text-red-700 [font-stretch:94%] transition hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white active:scale-[0.98] dark:text-red-800"
+        >
           Relever le défi
         </Link>
       </section>

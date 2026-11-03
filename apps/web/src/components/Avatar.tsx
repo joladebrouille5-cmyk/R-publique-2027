@@ -44,7 +44,7 @@ export function Avatar({
     shape === 'carre'
       ? ''
       : shape === 'affiche'
-        ? `rounded-affiche ${ring ? 'shadow-affiche ring-1 ring-or-400/70 dark:ring-dorure/60' : ''}`
+        ? `rounded-affiche ${ring ? 'shadow-affiche ring-1 ring-slate-900/70 dark:ring-dorure/60' : ''}`
         : `rounded-full ${ring ? 'ring-2 ring-white shadow-card dark:ring-slate-900' : ''}`;
   const frame = `${SIZES[size]} relative inline-flex shrink-0 overflow-hidden ${outline} ${className}`;
   if (portrait.photo && !failed) {

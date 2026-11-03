@@ -83,7 +83,7 @@ test('l’interface évite la barre d’état et la barre de gestes du télépho
 async function resolveBarTop(page: Page) {
   const bar = page
     .getByRole('button', { name: /^Résoudre la semaine/ })
-    .locator('xpath=ancestor::div[contains(@class, "sticky")][1]');
+    .locator('xpath=ancestor::div[@data-barre-resolution][1]');
   return (await bar.boundingBox())!.y;
 }
 

@@ -9,13 +9,14 @@ import {
   modificationsText,
   parseFfprobeDuration,
   parseLoudnorm,
+  recordingLicense,
 } from './build';
 import { FADE_OUT_SECONDS, LOUDNESS, MUSIC_SELECTION } from './selection';
 
 // Phase 19 : fonctions pures de l'import de la musique (aucun accès réseau ni appel à ffmpeg).
 
 /** Fin de sortie réelle de ffmpeg 6 avec `loudnorm=…:print_format=json`. */
-const STDERR = `Input #0, mp3, from 'inspired.mp3':
+const STDERR = `Input #0, mp3, from 'orient-et-occident.mp3':
   Duration: 00:04:46.07, start: 0.025057, bitrate: 256 kb/s
 [Parsed_loudnorm_0 @ 0x55d0c7a8a6c0]
 {
@@ -33,6 +34,13 @@ const STDERR = `Input #0, mp3, from 'inspired.mp3':
 `;
 
 const measure = parseLoudnorm(STDERR);
+
+/** Bloc de licence tel que Commons l'affiche (classes `licensetpl`). */
+const licence = (short: string, link?: string) =>
+  `<div class="layouttemplate licensetpl">${link ? `<span class="licensetpl&#95;link">${link}</span>` : ''}<span class="licensetpl&#95;short" style="display:none;">${short}</span></div>`;
+const page = (author: string, ...licences: string[]) =>
+  `<table><tr><td id="fileinfotpl&#95;aut" class="fileinfo-paramfield">Author</td><td>${author}</td></tr></table>${licences.join('')}`;
+const PD_MARK = 'https://creativecommons.org/publicdomain/mark/1.0/';
 
 describe('import de la musique (phase 19)', () => {
   it('lit la mesure de sonie de ffmpeg et refuse une sortie sans mesure', () => {
@@ -79,6 +87,12 @@ describe('import de la musique (phase 19)', () => {
     expect(creditedAuthor('Kevin MacLeod')).toBe('Kevin MacLeod');
     expect(creditedAuthor('Erik Satie (1866–1925)')).toBe('Erik Satie');
     expect(creditedAuthor('Orchestre (2004) live')).toBe('Orchestre (2004) live');
+    expect(
+      creditedAuthor('Composition: Camille Saint-Saëns Performance: United States Marine Band'),
+    ).toBe('Camille Saint-Saëns (composition), United States Marine Band (interprétation)');
+    expect(creditedAuthor('Composer: Erik Satie Performer: La Pianista')).toBe(
+      'Erik Satie (composition), La Pianista (interprétation)',
+    );
   });
 
   it('valide la fiche du manifeste et refuse une licence non libre', () => {
@@ -97,12 +111,56 @@ describe('import de la musique (phase 19)', () => {
       output: { sha256: 'b'.repeat(64), octets: 1_800_000, dureeSecondes: 150.0237 },
     };
     expect(buildTrack(input)).toMatchObject({
-      id: 'inspired',
-      fichier: 'sons/inspired.mp3',
+      id: 'orient-et-occident',
+      fichier: 'sons/orient-et-occident.mp3',
       dureeSecondes: 150.024,
       original: { dureeSecondes: 286.067 },
     });
     expect(() => buildTrack({ ...input, licence: 'Tous droits réservés' })).toThrow();
+  });
+
+  it('applique à un enregistrement la licence de l’interprétation, pas celle de la partition', () => {
+    // Partition dans le domaine public, interprétation sous CC BY-SA 3.0 ou GFDL (cas réel de
+    // Commons) : le fichier est sous CC BY-SA 3.0, jamais « domaine public ».
+    const piano = page(
+      'Composer: Erik Satie Performer: La Pianista',
+      licence('Public domain', PD_MARK),
+      licence('CC BY-SA 3.0', 'https://creativecommons.org/licenses/by-sa/3.0'),
+      licence('GFDL', 'http://www.gnu.org/copyleft/fdl.html'),
+    );
+    expect(recordingLicense(piano)).toEqual({
+      licence: 'CC BY-SA 3.0',
+      licenceUrl: 'https://creativecommons.org/licenses/by-sa/3.0',
+      auteur: 'Composer: Erik Satie Performer: La Pianista',
+    });
+    // Partition et interprétation dans le domaine public (orchestre d'une administration).
+    const fanfare = page(
+      'Composition: Camille Saint-Saëns Performance: United States Marine Band',
+      licence('Public domain', PD_MARK),
+      licence('Public domain'),
+    );
+    expect(recordingLicense(fanfare)).toMatchObject({
+      licence: 'Public domain',
+      licenceUrl: PD_MARK,
+    });
+    // Interprétation sous licence non libre : refus, même si la partition est libre.
+    expect(
+      recordingLicense(
+        page('Orchestre', licence('Public domain'), licence('Tous droits réservés')),
+      ),
+    ).toEqual({
+      refus: 'licence de l’enregistrement non reconnue comme libre (Tous droits réservés)',
+    });
+    expect(recordingLicense(page('Scott Buckley', licence('CC BY 4.0')))).toMatchObject({
+      licence: 'CC BY 4.0',
+      auteur: 'Scott Buckley',
+    });
+    expect(recordingLicense('<p>sans licence</p>')).toEqual({
+      refus: 'aucune licence lisible sur la page du fichier',
+    });
+    expect(recordingLicense(licence('CC0'))).toEqual({
+      refus: 'auteur non indiqué sur la page du fichier',
+    });
   });
 
   it('couvre chaque ambiance avec des morceaux distincts', () => {

@@ -40,7 +40,7 @@ function Volume({
         disabled={disabled}
         aria-valuetext={percent(value)}
         onChange={(event) => onChange(Number(event.target.value) / 100)}
-        className="h-11 w-full max-w-xs accent-or-600 disabled:opacity-50 dark:accent-dorure"
+        className="h-11 w-full max-w-xs accent-republique-600 disabled:opacity-50 dark:accent-dorure"
       />
       <output htmlFor={id} className="w-12 text-sm tabular-nums">
         {percent(value)}
@@ -64,7 +64,7 @@ function Check({
         type="checkbox"
         checked={checked}
         onChange={(event) => onChange(event.target.checked)}
-        className="size-4 accent-or-600 dark:accent-dorure"
+        className="size-4 accent-republique-600 dark:accent-dorure"
       />
       {text}
     </label>
@@ -147,7 +147,7 @@ export function MusicCredits() {
       <ul className="space-y-2">
         {MUSIC.morceaux.map((track) => (
           <li key={track.id}>
-            « {track.titre} » — {track.auteur} (incompetech.com), licence{' '}
+            « {track.titre} » — {track.auteur}, licence{' '}
             {track.licenceUrl ? (
               <a href={track.licenceUrl} {...external}>
                 {track.licence}

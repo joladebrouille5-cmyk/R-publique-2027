@@ -39,7 +39,7 @@ export function ReminderSettings() {
           type="checkbox"
           checked={actif}
           onChange={(event) => void apply(event.target.checked, heure)}
-          className="size-4 accent-or-600 dark:accent-dorure"
+          className="size-4 accent-republique-600 dark:accent-dorure"
         />
         Me rappeler le défi du jour chaque jour
       </label>

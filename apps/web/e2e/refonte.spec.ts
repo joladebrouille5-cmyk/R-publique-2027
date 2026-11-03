@@ -71,7 +71,8 @@ test('mouvement réduit : les affiches et le titre ne s’animent pas', async ({
     .first();
   await expect(poster).toBeVisible();
   const durations = await page.evaluate(() =>
-    ['.animate-colle', '.animate-titre'].map(
+    // Phase 21 : le second passage d'encre de l'affiche-titre (calage) ne s'anime pas non plus.
+    ['.animate-colle', '.animate-calage'].map(
       (selector) => getComputedStyle(document.querySelector(selector)!).animationDuration,
     ),
   );

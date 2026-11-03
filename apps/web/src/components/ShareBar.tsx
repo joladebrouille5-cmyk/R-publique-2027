@@ -19,7 +19,7 @@ export function ShareBar({ value, max, margin, emphasis = false, color }: Props)
   const scale = (v: number) => `${Math.max(0, Math.min(100, (v / Math.max(max, 1)) * 100))}%`;
   const fill = color
     ? // Liseré clair sur fond de nuit : une couleur sombre (bleu marine) reste visible.
-      `dark:ring-1 dark:ring-white/25 dark:ring-inset ${emphasis ? 'outline-2 outline-offset-1 outline-or-500 dark:outline-dorure' : ''}`
+      `dark:ring-1 dark:ring-white/25 dark:ring-inset ${emphasis ? 'outline-2 outline-offset-1 outline-republique-600 dark:outline-dorure' : ''}`
     : emphasis
       ? 'bg-republique-600 dark:bg-republique-500'
       : 'bg-slate-400 dark:bg-slate-500';

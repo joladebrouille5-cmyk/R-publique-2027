@@ -93,10 +93,10 @@ export function Compass({
           style={{ transform: `translate(${economie}px, ${-societe}px)` }}
           className="transition-transform duration-300 ease-sortie"
         >
-          <circle r="13" className="fill-or-400/25 dark:fill-dorure/20" />
+          <circle r="13" className="fill-red-400/25 dark:fill-dorure/20" />
           <circle
             r="6.5"
-            className="fill-or-500 stroke-white dark:fill-dorure dark:stroke-slate-950"
+            className="fill-red-500 stroke-white dark:fill-dorure dark:stroke-slate-950"
             strokeWidth="2"
           />
         </g>

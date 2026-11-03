@@ -703,7 +703,7 @@ export function ActionPlanner({
       </div>
 
       <ul
-        className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-4"
+        className="grid grid-cols-2 gap-2.5 @xl:grid-cols-3 @4xl:grid-cols-4"
         aria-label="Catalogue des actions"
       >
         {catalog.map((action) => {
@@ -721,18 +721,20 @@ export function ActionPlanner({
                 disabled={reason !== null}
                 onClick={() => onAdd(action.id)}
                 aria-label={`Ajouter ${action.libelle}`}
-                className="group flex h-full min-h-32 w-full flex-col items-start gap-2 rounded-2xl border border-slate-200/90 bg-white p-3.5 pr-11 text-left shadow-card transition duration-200 ease-sortie hover:border-or-400 hover:shadow-raised active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-55 disabled:shadow-none dark:border-white/[0.08] dark:bg-white/[0.03] dark:shadow-none dark:hover:border-dorure/50 dark:hover:bg-white/[0.06]"
+                className="group flex h-full min-h-32 w-full flex-col items-start gap-2 rounded-lg border-[1.5px] border-slate-200 bg-papier p-3.5 pr-11 text-left transition duration-150 ease-sortie hover:border-slate-900 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-55 dark:border-white/10 dark:bg-white/[0.03] dark:hover:border-slate-200"
               >
                 <span
-                  className={`inline-flex size-10 items-center justify-center rounded-xl transition-transform duration-200 ease-sortie group-enabled:group-hover:-rotate-6 ${actionTint(action.id)}`}
+                  className={`inline-flex size-10 items-center justify-center rounded-md ${actionTint(action.id)}`}
                 >
                   <Icon aria-hidden="true" className="size-5" strokeWidth={2} />
                 </span>
-                <span className="text-sm leading-snug font-bold">{action.libelle}</span>
+                <span className="font-display text-[1.02rem] leading-tight font-bold [font-stretch:88%]">
+                  {action.libelle}
+                </span>
                 <span className="mt-auto flex flex-wrap items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
                   <span className="font-semibold tabular-nums">{cost}</span>
                   {action.cible && (
-                    <span className="inline-flex items-center gap-0.5 text-amber-800 dark:text-amber-300">
+                    <span className="inline-flex items-center gap-0.5 font-semibold text-republique-700 dark:text-republique-300">
                       <Crosshair aria-hidden="true" className="size-3" />
                       cible
                     </span>
@@ -751,7 +753,7 @@ export function ActionPlanner({
                 ) : (
                   <span
                     aria-hidden="true"
-                    className="absolute right-3 bottom-3 inline-flex size-7 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition-colors group-hover:bg-or-400 group-hover:text-or-900 dark:bg-white/[0.08] dark:text-slate-300 dark:group-hover:bg-dorure dark:group-hover:text-[#1d1503]"
+                    className="absolute right-3 bottom-3 inline-flex size-7 items-center justify-center rounded-md bg-slate-200/80 text-slate-700 transition-colors group-hover:bg-or-400 group-hover:text-slate-950 dark:bg-white/[0.08] dark:text-slate-300 dark:group-hover:bg-dorure dark:group-hover:text-[#1d1503]"
                   >
                     <Plus className="size-4" />
                   </span>
@@ -761,7 +763,7 @@ export function ActionPlanner({
                 type="button"
                 aria-haspopup="dialog"
                 onClick={() => setDetails(action.id)}
-                className="absolute top-1 right-1 inline-flex size-11 shrink-0 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-republique-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-republique-300"
+                className="absolute top-1 right-1 inline-flex size-11 shrink-0 items-center justify-center rounded-md text-slate-500 hover:bg-slate-200/70 hover:text-republique-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-republique-300"
               >
                 <Info aria-hidden="true" className="size-5" />
                 <span className="sr-only">{`Détails : ${action.libelle}`}</span>

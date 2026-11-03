@@ -79,10 +79,10 @@ export function Disclosure({
         open ? 'bg-slate-50/80 dark:bg-white/[0.025]' : ''
       }`}
     >
-      {/* Section ouverte : liseré doré sur le bord, comme un signet. */}
+      {/* Section ouverte : trait de surligneur sur le bord, comme une page marquée. */}
       <span
         aria-hidden="true"
-        className={`absolute top-0 bottom-0 left-0 w-[3px] origin-top bg-or-400 transition-transform duration-300 ease-sortie dark:bg-dorure ${
+        className={`absolute top-0 bottom-0 left-0 w-[5px] origin-top bg-or-400 transition-transform duration-300 ease-sortie dark:bg-dorure ${
           open ? 'scale-y-100' : 'scale-y-0'
         }`}
       />
@@ -93,14 +93,14 @@ export function Disclosure({
           aria-expanded={open}
           aria-controls={contentId}
           onClick={onToggle}
-          className="group flex min-h-16 w-full items-center gap-4 px-4 py-3.5 text-left hover:bg-slate-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-republique-500 sm:px-6 dark:hover:bg-white/[0.035] dark:focus-visible:outline-dorure"
+          className="group flex min-h-16 w-full items-center gap-4 px-4 py-3.5 text-left hover:bg-slate-100/70 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-republique-600 sm:px-6 dark:hover:bg-white/[0.035] dark:focus-visible:outline-dorure"
         >
           {icon && (
             <span
               aria-hidden="true"
               className={`inline-flex size-6 shrink-0 items-center justify-center transition-colors ${
                 open
-                  ? 'text-or-600 dark:text-dorure'
+                  ? 'text-slate-950 dark:text-dorure'
                   : 'text-republique-600 group-hover:text-republique-700 dark:text-slate-400 dark:group-hover:text-slate-200'
               }`}
             >
@@ -108,7 +108,7 @@ export function Disclosure({
             </span>
           )}
           <span className="min-w-0 flex-1">
-            <span className="block font-display text-[1.35rem] leading-tight font-semibold tracking-[-0.01em]">
+            <span className="block font-display text-[1.4rem] leading-tight font-[780] tracking-[-0.005em]">
               {title}
             </span>
             {status && (

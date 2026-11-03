@@ -35,7 +35,7 @@ export function ThemeToggle() {
       <span className="sr-only">Thème</span>
       <Icon
         aria-hidden="true"
-        className="pointer-events-none absolute left-3.5 size-4 text-or-600 sm:left-3 dark:text-dorure"
+        className="pointer-events-none absolute left-3.5 size-4 text-slate-900 sm:left-3 dark:text-dorure"
       />
       <select
         value={theme}

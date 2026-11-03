@@ -18,7 +18,7 @@ export type OverviewTile = {
 };
 
 const TONES = {
-  alerte: 'text-amber-800 dark:text-amber-300',
+  alerte: 'text-red-600 dark:text-red-400',
   succes: 'text-emerald-700 dark:text-emerald-400',
 } as const;
 
@@ -39,32 +39,34 @@ export function Overview({
       {intro && <div className="space-y-1 text-sm">{intro}</div>}
       {/* Tableau d'affichage : des cases séparées par des filets (bordures des cases, rognées
           sur le pourtour par le cadre), sans carte par chiffre. */}
-      <div className="overflow-hidden rounded-dossier border border-slate-200/90 bg-white shadow-card dark:border-white/[0.08] dark:bg-slate-900/55 dark:shadow-none">
-        <ul className="-m-px grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+      <div className="@container overflow-hidden rounded-dossier border-[1.5px] border-slate-900 bg-papier dark:border-white/25 dark:bg-slate-900/70">
+        <ul className="-m-px grid grid-cols-2 @lg:grid-cols-3 @3xl:grid-cols-4">
           {tiles.map((tile) => {
             const Icon = tile.icon;
             return (
               <li
                 key={tile.id}
-                className="min-w-0 border-t border-l border-slate-200/90 dark:border-white/[0.07]"
+                className="min-w-0 border-t border-l border-slate-300 dark:border-white/15"
               >
                 <button
                   type="button"
                   onClick={tile.action.run}
                   aria-haspopup={tile.action.kind === 'tiroir' ? 'dialog' : undefined}
                   data-tuile={tile.id}
-                  className="group flex h-full w-full flex-col items-start gap-0.5 px-3.5 py-2 text-left transition-colors duration-200 hover:bg-slate-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-republique-500 sm:px-4 sm:py-3 dark:hover:bg-white/[0.04] dark:focus-visible:outline-dorure"
+                  className="group flex h-full w-full flex-col items-start gap-0.5 px-3.5 py-1.5 text-left transition-colors duration-200 hover:bg-or-100 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-republique-600 dark:hover:bg-dorure/[0.08] sm:px-4 sm:py-3 dark:focus-visible:outline-dorure"
                 >
                   <span className="flex w-full items-center gap-1.5 text-[0.7rem] font-semibold text-slate-600 dark:text-slate-400">
                     <Icon aria-hidden="true" className="size-3.5 shrink-0" strokeWidth={2.25} />
-                    <span className="min-w-0 flex-1 truncate">{tile.label}</span>
+                    <span className="min-w-0 flex-1 truncate leading-tight sm:whitespace-normal">
+                      {tile.label}
+                    </span>
                     <ChevronRight
                       aria-hidden="true"
-                      className="size-3.5 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 dark:text-slate-500"
+                      className="hidden size-3.5 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 sm:block dark:text-slate-500"
                     />
                   </span>
                   <span
-                    className={`w-full truncate font-display text-xl leading-tight font-bold tabular-nums sm:text-2xl ${tile.tone ? TONES[tile.tone] : 'text-slate-950 dark:text-white'}`}
+                    className={`w-full truncate font-display text-[1.45rem] leading-tight font-black tabular-nums sm:text-[1.7rem] ${tile.tone ? TONES[tile.tone] : 'text-slate-950 dark:text-white'}`}
                   >
                     {tile.value}
                   </span>

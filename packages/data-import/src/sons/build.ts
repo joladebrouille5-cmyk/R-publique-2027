@@ -1,4 +1,5 @@
-import { MusicTrackSchema, type MusicTrack } from '@r2027/shared';
+import { FREE_LICENSES, MusicTrackSchema, type MusicTrack } from '@r2027/shared';
+import { parseAuthor, parseLicenses, type CommonsLicense } from '../personnalites/commons';
 import { FADE_OUT_SECONDS, LOUDNESS, MP3_KBPS, type MusicSelection } from './selection';
 
 // Fonctions pures de l'import de la musique (phase 19) : lecture des mesures de ffmpeg et de
@@ -29,12 +30,41 @@ export function parseLoudnorm(stderr: string): LoudnormMeasure {
   return parsed as LoudnormMeasure;
 }
 
+/** Licence sans condition : domaine public ou CC0. */
+const UNCONDITIONAL = /^(CC0( 1\.0)?|Public domain|Domaine public)$/i;
+
+/**
+ * Licence d'un enregistrement (phase 21). Une page de Commons licencie souvent à part l'œuvre
+ * (« For the Original Composition » : domaine public) et l'interprétation (« For the
+ * Performance » : CC BY-SA…). C'est la licence à conditions qui s'applique au fichier : elle
+ * l'emporte sur le domaine public de la partition. Sans licence à conditions, le domaine public ou
+ * CC0 suffit. Si les seules licences à conditions ne sont pas libres, le morceau est refusé.
+ */
+export function recordingLicense(html: string): CommonsLicense | { refus: string } {
+  const licenses = parseLicenses(html);
+  if (licenses.length === 0) return { refus: 'aucune licence lisible sur la page du fichier' };
+  const conditional = licenses.filter((l) => !UNCONDITIONAL.test(l.licence));
+  const pool = conditional.length > 0 ? conditional : licenses;
+  const free = pool.find((l) => FREE_LICENSES.test(l.licence));
+  if (!free)
+    return {
+      refus: `licence de l’enregistrement non reconnue comme libre (${pool.map((l) => l.licence).join(', ')})`,
+    };
+  const auteur = parseAuthor(html);
+  if (!auteur) return { refus: 'auteur non indiqué sur la page du fichier' };
+  return { ...free, auteur };
+}
+
 /**
  * Nom de l'auteur tel que le crédit l'affiche : le modèle « Creator » de Commons fait suivre le
- * nom des années de vie (« Kevin MacLeod (1972–) »), qui ne font pas partie de l'attribution.
+ * nom des années de vie (« Kevin MacLeod (1972–) »), qui ne font pas partie de l'attribution ; le
+ * champ « Composition: … Performance: … » d'un enregistrement est rendu en français.
  */
 export function creditedAuthor(author: string): string {
-  return author.replace(/\s*\(\d{4}\s*[–-]\s*(\d{4})?\)\s*$/, '').trim();
+  const name = author.replace(/\s*\(\d{4}\s*[–-]\s*(\d{4})?\)\s*$/, '').trim();
+  // Enregistrement d'une œuvre ancienne : Commons sépare, en anglais, compositeur et interprète.
+  const split = /^Compos(?:ition|er):\s*(.+?)\s+Perform(?:ance|er):\s*(.+)$/.exec(name);
+  return split ? `${split[1]!.trim()} (composition), ${split[2]!.trim()} (interprétation)` : name;
 }
 
 /** Durée de l'extrait : le morceau entier, ou au plus `extraitMax` secondes. */

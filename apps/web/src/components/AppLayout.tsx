@@ -37,23 +37,25 @@ function ServerStatus() {
   );
 }
 
-/** Écharpe tricolore : trois bandes en biais, comme l'écharpe des élus de la République. */
-export function Echarpe({ className = 'h-5 w-[1.15rem]' }: { className?: string }) {
+/**
+ * Pastille de la marque (phase 21) : deux aplats d'encre, bleu et rouge, imprimés l'un sur
+ * l'autre avec un léger décalage ; leur chevauchement donne l'encre de surimpression.
+ */
+export function Echarpe({ className = 'size-6' }: { className?: string }) {
   return (
-    <span aria-hidden="true" className={`inline-flex -skew-x-[18deg] ${className}`}>
-      <span className="flex-1 bg-republique-600 dark:bg-republique-500" />
-      <span className="flex-1 bg-white ring-1 ring-slate-300/70 ring-inset dark:ring-0" />
-      <span className="flex-1 bg-red-600 dark:bg-red-500" />
+    <span aria-hidden="true" className={`relative inline-block shrink-0 ${className}`}>
+      <span className="absolute top-0 left-0 size-[72%] bg-republique-600 dark:bg-republique-400" />
+      <span className="absolute right-0 bottom-0 size-[72%] bg-red-500 mix-blend-multiply dark:bg-red-400 dark:mix-blend-screen" />
     </span>
   );
 }
 
-/** Marque : l'écharpe et le nom du jeu en Didone, comme une raison sociale gravée. */
+/** Marque : la pastille et le nom du jeu en grotesque d'affiche condensée. */
 function Brand() {
   return (
     <Link
       to="/"
-      className="flex items-center gap-2.5 rounded-full py-1 font-display text-[1.05rem] font-bold tracking-[0.06em] whitespace-nowrap sm:text-lg"
+      className="flex items-center gap-2.5 rounded-md py-1 font-display text-[1.2rem] font-[850] tracking-[0.01em] whitespace-nowrap [font-stretch:72%] sm:text-[1.35rem]"
     >
       <Echarpe />
       RÉPUBLIQUE 2027
@@ -72,7 +74,7 @@ export function AppLayout() {
     <div className="flex min-h-dvh flex-col">
       <a
         href="#contenu"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-full focus:bg-white focus:px-4 focus:py-2 focus:text-slate-900"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-white focus:px-4 focus:py-2 focus:text-slate-900"
       >
         Aller au contenu
       </a>
@@ -81,7 +83,7 @@ export function AppLayout() {
         aria-hidden="true"
         className="fixed inset-x-0 top-0 z-40 h-(--sat) bg-slate-50 dark:bg-slate-950"
       />
-      <header className="pt-(--sat) pr-(--sar) pl-(--sal)">
+      <header className="border-b border-slate-200/80 pt-(--sat) pr-(--sar) pl-(--sal) dark:border-white/[0.07]">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 pt-3 pb-2 sm:gap-4">
           <Brand />
           <div className="flex items-center gap-0.5 sm:gap-2">
@@ -89,7 +91,7 @@ export function AppLayout() {
             <ThemeToggle />
             <Link
               to="/parametres"
-              className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-full px-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/[0.07] dark:hover:text-white"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-md px-3 text-sm font-bold text-slate-800 hover:bg-slate-200/70 dark:text-slate-200 dark:hover:bg-white/[0.08] dark:hover:text-white"
             >
               <Settings aria-hidden="true" className="size-5" />
               <span className="sr-only sm:not-sr-only">Paramètres</span>

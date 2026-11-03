@@ -69,7 +69,7 @@ function Stat({
         <span className="truncate">{label}</span>
       </dt>
       <dd
-        className="truncate font-display text-xl leading-tight font-bold text-slate-950 sm:text-2xl dark:text-white"
+        className="truncate font-display text-[1.3rem] leading-tight font-black text-slate-950 [font-stretch:68%] sm:text-[1.7rem] sm:[font-stretch:86%] dark:text-white"
         data-testid={testId}
       >
         {value}
@@ -79,9 +79,9 @@ function Stat({
 }
 
 /**
- * Bandeau de campagne : le portrait du candidat en affiche, son mouvement, le calendrier, et le
- * compte à rebours du prochain scrutin en chiffres dorés ; les ressources en dessous, séparées
- * par des filets comme sur un tableau d'affichage.
+ * Bandeau de campagne (phase 21) : une feuille d'en-tête filetée d'encre ; le portrait du
+ * candidat en affiche, son mouvement, le calendrier, et le compte à rebours du prochain scrutin
+ * imprimé en blanc sur un pavé rouge ; les ressources en dessous, séparées par des filets.
  */
 export function GameHud({ game, ruleset }: { game: GameDetail; ruleset: Ruleset | undefined }) {
   const { state } = game;
@@ -92,14 +92,8 @@ export function GameHud({ game, ruleset }: { game: GameDetail; ruleset: Ruleset 
   return (
     <section
       aria-label="Situation de la partie"
-      className="sticky top-(--sat) z-30 -mx-4 mb-6 overflow-hidden border-b border-or-300/50 bg-white/85 px-4 pt-3.5 pb-2.5 shadow-hud backdrop-blur-md supports-[backdrop-filter]:bg-white/75 lg:mx-0 lg:rounded-b-dossier lg:border-x lg:px-6 dark:border-dorure/20 dark:bg-slate-950/85 dark:shadow-[inset_0_-1px_0_rgb(227_196_108/0.08),0_18px_40px_-24px_rgb(0_0_0/0.9)] dark:supports-[backdrop-filter]:bg-slate-950/70"
+      className="sticky top-(--sat) z-30 -mx-4 mb-6 overflow-hidden border-b-[1.5px] border-slate-900 bg-papier/95 px-4 pt-3 pb-2.5 backdrop-blur-md supports-[backdrop-filter]:bg-papier/85 lg:mx-0 lg:mt-3 lg:rounded-dossier lg:border-[1.5px] lg:px-5 dark:border-white/25 dark:bg-slate-950/90 dark:supports-[backdrop-filter]:bg-slate-950/80"
     >
-      {/* Liseré tricolore de l'écharpe. */}
-      <span aria-hidden="true" className="absolute inset-x-0 top-0 flex h-[3px]">
-        <span className="flex-1 bg-republique-600" />
-        <span className="flex-1 bg-white dark:bg-slate-100" />
-        <span className="flex-1 bg-red-600" />
-      </span>
       <div className="flex items-center gap-3 sm:gap-4">
         {player ? (
           <Avatar
@@ -118,7 +112,7 @@ export function GameHud({ game, ruleset }: { game: GameDetail; ruleset: Ruleset 
           </span>
         )}
         <div className="min-w-0 flex-1">
-          <p className="truncate font-display text-lg leading-tight font-bold sm:text-2xl">
+          <p className="truncate font-display text-xl leading-tight font-[850] [font-stretch:76%] sm:text-[1.75rem]">
             {player ? candidateName(player.candidate) : 'Mode observateur'}
           </p>
           <p className="flex items-center gap-1.5 truncate text-xs text-slate-600 dark:text-slate-400">
@@ -135,14 +129,16 @@ export function GameHud({ game, ruleset }: { game: GameDetail; ruleset: Ruleset 
             <span>{shortDate.format(new Date(`${game.date}T00:00:00Z`))}</span>
           </p>
         </div>
-        <p className="shrink-0 border-l border-or-300/60 pl-3 text-right sm:pl-5 dark:border-dorure/25">
+        <p
+          className={`shrink-0 text-right ${ballot ? 'rounded-md bg-red-700 px-2.5 py-1.5 text-white sm:px-3.5 dark:bg-red-800' : ''}`}
+        >
           {ballot ? (
             <>
-              <span className="block font-display text-[1.6rem] leading-none font-bold text-or-700 sm:text-[2.1rem] dark:text-dorure">
+              <span className="block font-display text-[1.6rem] leading-none font-black [font-stretch:92%] sm:text-[2.2rem]">
                 {ballot.jours === 0 ? 'Aujourd’hui' : `J−${ballot.jours}`}
               </span>
               <span
-                className="mt-0.5 block text-[0.7rem] font-semibold text-slate-600 dark:text-slate-400"
+                className="mt-0.5 block text-[0.7rem] font-bold text-white/90"
                 title={ballot.libelle}
               >
                 <span aria-hidden="true">{ballot.court}</span>
@@ -157,7 +153,7 @@ export function GameHud({ game, ruleset }: { game: GameDetail; ruleset: Ruleset 
         </p>
       </div>
       {resources && (
-        <dl className="mt-2.5 grid grid-cols-4 divide-x divide-slate-200 border-t border-slate-200/80 pt-2 dark:divide-white/[0.08] dark:border-white/[0.07]">
+        <dl className="mt-2.5 grid grid-cols-4 divide-x divide-slate-300 border-t border-slate-300 pt-2 dark:divide-white/15 dark:border-white/15">
           <Stat
             icon={Wallet}
             label="Budget"

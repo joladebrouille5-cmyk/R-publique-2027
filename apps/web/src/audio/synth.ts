@@ -277,6 +277,146 @@ const pulsation: Voice = (ctx, out, { start, hz, duree, level }) => {
   osc.stop(start + duree + 0.05);
 };
 
+/**
+ * Marimba (phase 21) : lame de bois frappée ; fondamentale et partiel de quatrième harmonique
+ * (accord de la lame), décroissance rapide, choc de mailloche.
+ */
+const marimba: Voice = (ctx, out, { start, hz, duree, level }) => {
+  const stop = start + Math.min(duree, 1.6);
+  for (const [ratio, amplitude, decay] of [
+    [1, 1, 1],
+    [4, 0.32, 0.25],
+    [9.9, 0.06, 0.08],
+  ] as const) {
+    const frequency = hz * ratio;
+    if (frequency > 14_000) continue;
+    const osc = ctx.createOscillator();
+    osc.frequency.value = frequency;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0, start);
+    gain.gain.linearRampToValueAtTime(level * 0.3 * amplitude, start + 0.002);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + (stop - start) * decay + 0.04);
+    osc.connect(gain).connect(out);
+    osc.start(start);
+    osc.stop(stop + 0.06);
+  }
+};
+
+/** Pizzicato : corde pincée ; dent de scie très filtrée qui se referme aussitôt. */
+const pizz: Voice = (ctx, out, { start, hz, duree, level }) => {
+  const stop = start + Math.min(duree, 1.2);
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.Q.value = 1.4;
+  filter.frequency.setValueAtTime(Math.min(hz * 10, 7000), start);
+  filter.frequency.exponentialRampToValueAtTime(Math.max(hz * 1.2, 120), stop);
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0, start);
+  gain.gain.linearRampToValueAtTime(level * 0.32, start + 0.003);
+  gain.gain.exponentialRampToValueAtTime(0.0001, stop);
+  filter.connect(gain).connect(out);
+  for (const cents of [-4, 4]) {
+    const osc = ctx.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.value = hz;
+    osc.detune.value = cents;
+    osc.connect(filter);
+    osc.start(start);
+    osc.stop(stop + 0.05);
+  }
+};
+
+/** Caisse claire : timbre (bruit en bande) et peau (sinus bref) ; un roulement est une suite. */
+const caisse: Voice = (ctx, out, { start, duree, level }) => {
+  const stop = start + Math.min(duree, 0.5);
+  const snare = noise(ctx, start, stop + 0.02);
+  const band = ctx.createBiquadFilter();
+  band.type = 'bandpass';
+  band.frequency.value = 3200;
+  band.Q.value = 0.8;
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(level * 0.3, start);
+  gain.gain.exponentialRampToValueAtTime(0.0001, stop);
+  snare.connect(band).connect(gain).connect(out);
+  const skin = ctx.createOscillator();
+  skin.frequency.setValueAtTime(240, start);
+  skin.frequency.exponentialRampToValueAtTime(170, start + 0.06);
+  const skinGain = ctx.createGain();
+  skinGain.gain.setValueAtTime(level * 0.28, start);
+  skinGain.gain.exponentialRampToValueAtTime(0.0001, start + 0.09);
+  skin.connect(skinGain).connect(out);
+  skin.start(start);
+  skin.stop(start + 0.12);
+};
+
+/** Claquement de mains : trois éclats de bruit rapprochés, puis une courte traîne. */
+const claque: Voice = (ctx, out, { start, level }) => {
+  const band = ctx.createBiquadFilter();
+  band.type = 'bandpass';
+  band.frequency.value = 1300;
+  band.Q.value = 1.1;
+  band.connect(out);
+  for (const [offset, tail] of [
+    [0, 0.012],
+    [0.011, 0.012],
+    [0.022, 0.14],
+  ] as const) {
+    const t = start + offset;
+    const burst = noise(ctx, t, t + tail + 0.03);
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(level * 0.55, t);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + tail);
+    burst.connect(gain).connect(band);
+  }
+};
+
+/** Frappe de machine à écrire : claquement sec (bruit aigu) et tintement métallique bref. */
+const machine: Voice = (ctx, out, { start, hz, level }) => {
+  const click = noise(ctx, start, start + 0.03);
+  const high = ctx.createBiquadFilter();
+  high.type = 'highpass';
+  high.frequency.value = 2500;
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(level * 0.42, start);
+  gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.022);
+  click.connect(high).connect(gain).connect(out);
+  const ping = ctx.createOscillator();
+  ping.type = 'triangle';
+  ping.frequency.value = Math.min(hz || 1800, 4000);
+  const pingGain = ctx.createGain();
+  pingGain.gain.setValueAtTime(level * 0.08, start);
+  pingGain.gain.exponentialRampToValueAtTime(0.0001, start + 0.05);
+  ping.connect(pingGain).connect(out);
+  ping.start(start);
+  ping.stop(start + 0.07);
+};
+
+/**
+ * Coup de tampon : choc sourd (sinus grave qui chute), claque du papier (bruit en bande) et
+ * frottement du caoutchouc ; aucun ton.
+ */
+const tampon: Voice = (ctx, out, { start, level }) => {
+  const thud = ctx.createOscillator();
+  thud.frequency.setValueAtTime(150, start);
+  thud.frequency.exponentialRampToValueAtTime(48, start + 0.12);
+  const thudGain = ctx.createGain();
+  thudGain.gain.setValueAtTime(0, start);
+  thudGain.gain.linearRampToValueAtTime(level * 0.9, start + 0.003);
+  thudGain.gain.exponentialRampToValueAtTime(0.0001, start + 0.22);
+  thud.connect(thudGain).connect(out);
+  thud.start(start);
+  thud.stop(start + 0.26);
+  const slap = noise(ctx, start, start + 0.12);
+  const band = ctx.createBiquadFilter();
+  band.type = 'bandpass';
+  band.frequency.value = 900;
+  band.Q.value = 0.9;
+  const slapGain = ctx.createGain();
+  slapGain.gain.setValueAtTime(level * 0.6, start);
+  slapGain.gain.exponentialRampToValueAtTime(0.0001, start + 0.08);
+  slap.connect(band).connect(slapGain).connect(out);
+};
+
 const VOICES: Record<Instrument, Voice> = {
   cuivres,
   cordes,
@@ -287,10 +427,16 @@ const VOICES: Record<Instrument, Voice> = {
   basse,
   souffle,
   pulsation,
+  marimba,
+  pizz,
+  caisse,
+  claque,
+  machine,
+  tampon,
 };
 
 /** Instruments sans hauteur : une seule voix, quelles que soient les hauteurs indiquées. */
-const UNPITCHED = new Set<Instrument>(['cymbale', 'souffle']);
+const UNPITCHED = new Set<Instrument>(['cymbale', 'souffle', 'caisse', 'claque', 'tampon']);
 
 function playNote(ctx: BaseAudioContext, bus: AudioNode, note: JingleNote, when: number) {
   const voice = VOICES[note.instrument];

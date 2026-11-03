@@ -22,11 +22,6 @@ function MurDAffichage({ ruleset }: { ruleset: Ruleset | undefined }) {
   const candidates = ruleset?.candidatsFictifs ?? [];
   return (
     <figure className="relative mt-10 sm:mt-14">
-      {/* Lumière du réverbère sur le mur. */}
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute -inset-x-4 -top-24 -bottom-8 bg-[radial-gradient(50%_50%_at_50%_45%,rgb(201_162_39/0.12),transparent_100%)] dark:bg-[radial-gradient(50%_50%_at_50%_45%,rgb(227_196_108/0.13),transparent_100%)]"
-      />
       <ol
         aria-label="Mur d’affichage : les candidats fictifs de la campagne"
         className="relative grid grid-cols-4 gap-x-2.5 gap-y-4 text-[9px] min-[400px]:text-[10px] sm:gap-x-4 sm:text-[13px] lg:grid-cols-8 lg:gap-x-3.5 lg:text-[11.5px] xl:text-[12.5px]"
@@ -69,11 +64,8 @@ function MurDAffichage({ ruleset }: { ruleset: Ruleset | undefined }) {
           );
         })}
       </ol>
-      {/* Le trottoir : un filet d'or. */}
-      <span
-        aria-hidden="true"
-        className="block h-px bg-[linear-gradient(90deg,transparent,rgb(201_162_39/0.7),transparent)] dark:bg-[linear-gradient(90deg,transparent,rgb(227_196_108/0.6),transparent)]"
-      />
+      {/* Le trottoir : un filet d'encre. */}
+      <span aria-hidden="true" className="block h-[3px] bg-slate-900 dark:bg-slate-300" />
       <figcaption className="mt-3 text-center text-xs text-slate-600 dark:text-slate-400">
         Candidats fictifs du jeu : noms, mouvements et visages sont inventés.
       </figcaption>
@@ -113,7 +105,7 @@ function Reprendre({ summary }: { summary: GameSummary }) {
           </p>
           {ballot && (
             <p className="mt-2 flex items-baseline gap-2">
-              <span className="font-display text-3xl leading-none font-bold text-or-700 dark:text-dorure">
+              <span className="font-display text-3xl leading-none font-black text-red-600 dark:text-red-400">
                 {ballot.jours === 0 ? 'Aujourd’hui' : `J−${ballot.jours}`}
               </span>
               <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
@@ -176,24 +168,22 @@ export function Home() {
   const latest = sorted[0];
   return (
     <div className="pb-14">
-      <section aria-labelledby="titre-jeu" className="mx-auto max-w-6xl px-4 pt-6 sm:pt-12">
-        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_23rem] lg:items-end lg:gap-12">
+      <section aria-labelledby="titre-jeu" className="mx-auto max-w-6xl px-4 pt-8 sm:pt-14">
+        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-end lg:gap-12">
           <div>
-            <p className="animate-apparait text-sm font-semibold text-slate-600 dark:text-slate-400">
-              Simulation politique française
-            </p>
+            {/* Affiche-titre (phase 21) : deux passages d'encre, le rouge imprimé sur le bleu. */}
             <h1
               id="titre-jeu"
-              className="mt-3 animate-titre font-display leading-[0.86] font-bold tracking-normal"
+              className="isolate font-display leading-[0.78] font-black tracking-normal"
             >
-              <span className="block text-[2.55rem] tracking-[0.05em] min-[400px]:text-[2.8rem] sm:text-7xl lg:text-[5.4rem]">
+              <span className="block animate-apparait text-[clamp(4rem,24vw,12.5rem)] tracking-[-0.01em] text-republique-600 [font-stretch:58%] dark:text-republique-400">
                 RÉPUBLIQUE
               </span>{' '}
-              <span className="block mt-[0.04em] text-[7.6rem] tracking-[-0.035em] text-or-600 min-[400px]:text-[8.4rem] sm:text-[11rem] lg:text-[13.5rem] dark:text-dorure dark:[text-shadow:0_0_80px_rgb(227_196_108/0.35)]">
+              <span className="-mt-[0.14em] -ml-[0.03em] sm:-mt-[0.2em] block animate-calage text-[clamp(6rem,28vw,15.5rem)] tracking-[-0.03em] text-red-500 mix-blend-multiply [font-stretch:122%] dark:text-red-400 dark:mix-blend-screen">
                 2027
               </span>
             </h1>
-            <p className="mt-6 max-w-xl text-base text-slate-700 sm:text-lg dark:text-slate-300">
+            <p className="mt-6 max-w-xl text-lg leading-relaxed text-slate-700 sm:text-xl dark:text-slate-300">
               Menez une campagne présidentielle semaine après semaine, affrontez des adversaires
               autonomes, vivez les soirées électorales des deux tours, puis gouvernez.
             </p>

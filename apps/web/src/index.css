@@ -1,98 +1,106 @@
 @import 'tailwindcss' source('..');
 /* Polices embarquées (licence SIL OFL 1.1) : l'application fonctionne hors ligne. */
 @import '@fontsource-variable/archivo/wdth.css';
-@import '@fontsource-variable/bodoni-moda/opsz.css';
-@import '@fontsource-variable/hanken-grotesk/wght.css';
+@import '@fontsource-variable/anybody/standard.css';
+@import '@fontsource-variable/atkinson-hyperlegible-next/wght.css';
 
 /* Thème sombre piloté par la classe `dark` sur <html> (soirée électorale / clair / système). */
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
- * Design system « Grand Soir » (phase 16, sur les jetons de la phase 9) : la République la nuit
- * d'une élection.
- * - Nuit : neutres bleutés (remplacent la gamme slate de Tailwind, donc tous les écrans) ; bleu
- *   de nuit par défaut, papier froid pour le thème clair.
- * - Bleu République pour agir, rouge velours (hémicycle) pour les risques et l'opposition,
- *   dorure des salons de l'Élysée pour le prestige et le moment décisif (bouton doré).
- * - Titres, noms sur les affiches et grands chiffres : Bodoni Moda, un Didone dans la lignée des
- *   Didot (axe de taille optique : contraste fort en grand, adouci en petit) ; interface et
- *   données : Hanken Grotesk ; habillage télévisé (soirée électorale, débats) : Archivo
- *   condensé, élément du monde du jeu.
+ * Design system « Tract » (phase 21) : la campagne telle qu'on l'imprime au local, en
+ * sérigraphie. Deux encres républicaines posées en aplat, le bleu et le rouge ; là où elles se
+ * chevauchent, leur surimpression donne l'encre du texte (indigo profond). Le surligneur jaune
+ * des sondages imprimés du QG marque ce qui change et ce qui décide. Papier froid recyclé le
+ * jour, encre de nuit le soir.
+ * - Titres, noms et grands chiffres : Anybody, grotesque à largeur variable (condensée pour les
+ *   titres comme sur une affiche, plus large pour les chiffres) ; texte et données : Atkinson
+ *   Hyperlegible Next, dessinée pour la lisibilité ; habillage télévisé (soirée électorale,
+ *   débats) : Archivo condensé, élément du monde du jeu.
+ * - Pas d'ombres floues : des filets d'encre, et un seul effet d'impression, le léger décalage
+ *   de calage (repérage) sous ce qui décide.
  */
 @theme {
   --font-sans:
-    'Hanken Grotesk Variable', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue',
-    Arial, sans-serif;
-  --font-display: 'Bodoni Moda Variable', 'Bodoni 72', Didot, Georgia, serif;
-  --font-broadcast: 'Archivo Variable', 'Hanken Grotesk Variable', system-ui, sans-serif;
+    'Atkinson Hyperlegible Next Variable', system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  --font-display: 'Anybody Variable', 'Arial Narrow', system-ui, sans-serif;
+  --font-broadcast: 'Archivo Variable', 'Anybody Variable', system-ui, sans-serif;
   --font-broadcast--font-variation-settings: 'wdth' 78;
 
-  /* Papier des affiches et des bulletins ; dorure sur fond de nuit. */
-  --color-papier: #f7f8fb;
-  --color-dorure: #e3c46c;
+  /* Feuille imprimée ; surligneur sur fond de nuit (accent du thème sombre). */
+  --color-papier: #fbfbfc;
+  --color-dorure: #ffe53d;
+  /* Surimpression du bleu et du rouge : l'encre du texte et de l'affiche-titre. */
+  --color-surimpression: #24164f;
 
-  --color-slate-50: #f3f5fb;
-  --color-slate-100: #e7ebf5;
-  --color-slate-200: #d2d9ea;
-  --color-slate-300: #aeb9d2;
-  --color-slate-400: #8794b4;
-  --color-slate-500: #5b6788;
-  --color-slate-600: #46506f;
-  --color-slate-700: #303a5a;
-  --color-slate-800: #1b2549;
-  --color-slate-900: #0d1634;
-  --color-slate-950: #050a1c;
+  /* Neutres : du papier froid à l'encre de surimpression (remplacent la gamme slate). */
+  --color-slate-50: #f1f2f5;
+  --color-slate-100: #e6e8ee;
+  --color-slate-200: #d3d6e0;
+  --color-slate-300: #b2b6c6;
+  --color-slate-400: #9297ae;
+  --color-slate-500: #62678a;
+  --color-slate-600: #4a4e70;
+  --color-slate-700: #353859;
+  --color-slate-800: #252647;
+  --color-slate-900: #1b1a3a;
+  --color-slate-950: #100f25;
 
-  --color-republique-50: #eef1ff;
-  --color-republique-100: #dce2ff;
-  --color-republique-200: #b9c5ff;
-  --color-republique-300: #93aaff;
-  --color-republique-400: #6286ff;
-  --color-republique-500: #3d57e6;
-  --color-republique-600: #2b46d9;
-  --color-republique-700: #2236b0;
-  --color-republique-800: #1d2e8c;
-  --color-republique-900: #1a2870;
-  --color-republique-950: #111a47;
+  /* Encre bleue. */
+  --color-republique-50: #eef1fe;
+  --color-republique-100: #dce3fd;
+  --color-republique-200: #b8c6fb;
+  --color-republique-300: #8ca2f7;
+  --color-republique-400: #5d7bf0;
+  --color-republique-500: #3657e3;
+  --color-republique-600: #2340c8;
+  --color-republique-700: #1c33a0;
+  --color-republique-800: #1a2d80;
+  --color-republique-900: #18286a;
+  --color-republique-950: #0f1a45;
 
-  --color-red-50: #fff0f2;
-  --color-red-100: #ffdde2;
-  --color-red-200: #ffbfc9;
-  --color-red-300: #ff91a2;
-  --color-red-400: #ff4d6a;
-  --color-red-500: #e5334b;
-  --color-red-600: #cc2240;
-  --color-red-700: #a81a35;
-  --color-red-800: #8b1a32;
-  --color-red-900: #74192f;
-  --color-red-950: #410814;
+  /* Encre rouge (écarlate de sérigraphie). */
+  --color-red-50: #fff1f1;
+  --color-red-100: #ffdfe0;
+  --color-red-200: #ffc2c4;
+  --color-red-300: #ff959a;
+  --color-red-400: #ff5c66;
+  --color-red-500: #f2343f;
+  --color-red-600: #d81f2c;
+  --color-red-700: #b01724;
+  --color-red-800: #911824;
+  --color-red-900: #781a24;
+  --color-red-950: #42080e;
 
-  --color-or-50: #fbf6e6;
-  --color-or-100: #f5eac2;
-  --color-or-200: #ebd488;
-  --color-or-300: #dfbc53;
-  --color-or-400: #d2a936;
-  --color-or-500: #c9a227;
-  --color-or-600: #a9831b;
-  --color-or-700: #866618;
-  --color-or-800: #634b14;
-  --color-or-900: #45340f;
+  /* Surligneur (ancienne dorure) : fonds jaunes, texte olive lisible sur papier. */
+  --color-or-50: #fffce0;
+  --color-or-100: #fff7b3;
+  --color-or-200: #ffef75;
+  --color-or-300: #ffe53d;
+  --color-or-400: #fada0a;
+  --color-or-500: #e3c400;
+  --color-or-600: #6f6000;
+  --color-or-700: #5a4e00;
+  --color-or-800: #463d00;
+  --color-or-900: #2e2800;
 
-  --radius-card: 1.25rem;
-  --radius-dossier: 1.75rem;
+  /* Feuilles d'imprimé : coins à peine adoucis, hiérarchie par l'épaisseur des filets. */
+  --radius-card: 0.5rem;
+  --radius-dossier: 0.625rem;
 
-  --radius-affiche: 0.25rem;
+  --radius-affiche: 0.125rem;
 
-  /* Ombres teintées de bleu nuit, jamais grises ; halos néon pour ce qui est actif. */
-  --shadow-card: 0 1px 2px rgb(16 27 59 / 0.06), 0 8px 24px -14px rgb(16 27 59 / 0.22);
-  --shadow-raised: 0 2px 6px rgb(16 27 59 / 0.08), 0 24px 48px -20px rgb(16 27 59 / 0.35);
-  --shadow-hud: 0 1px 0 rgb(16 27 59 / 0.06), 0 10px 30px -18px rgb(16 27 59 / 0.35);
-  --shadow-neon: 0 0 0 1px rgb(98 134 255 / 0.55), 0 0 28px -6px rgb(98 134 255 / 0.65);
-  --shadow-neon-rouge: 0 0 0 1px rgb(255 77 106 / 0.55), 0 0 28px -6px rgb(255 77 106 / 0.6);
-  --shadow-lueur: 0 0 14px rgb(98 134 255 / 0.75);
-  /* Lumière dorée du bouton décisif et des affiches éclairées. */
-  --shadow-dore: 0 0 0 1px rgb(227 196 108 / 0.55), 0 12px 32px -14px rgb(227 196 108 / 0.7);
-  --shadow-affiche: 0 1px 1px rgb(5 10 28 / 0.25), 0 18px 36px -18px rgb(5 10 28 / 0.75);
+  /* Pas d'ombre floue : un filet d'encre sous la feuille, le calage décalé sous ce qui décide. */
+  --shadow-card: 0 1px 0 rgb(27 26 58 / 0.1);
+  --shadow-raised: 0 2px 0 rgb(27 26 58 / 0.14);
+  --shadow-hud: 0 1px 0 rgb(27 26 58 / 0.12);
+  --shadow-neon: 0 0 0 1px rgb(93 123 240 / 0.55), 0 0 28px -6px rgb(93 123 240 / 0.6);
+  --shadow-neon-rouge: 0 0 0 1px rgb(255 92 102 / 0.55), 0 0 28px -6px rgb(255 92 102 / 0.6);
+  --shadow-lueur: 0 0 12px rgb(93 123 240 / 0.7);
+  /* Repérage : l'encre bleue décalée sous l'aplat jaune (bouton décisif). */
+  --shadow-dore: 3px 3px 0 0 var(--color-republique-600);
+  --shadow-affiche: 0 1px 0 rgb(16 15 37 / 0.3), 0 14px 26px -18px rgb(16 15 37 / 0.6);
 
   --ease-sortie: cubic-bezier(0.16, 1, 0.3, 1);
 
@@ -106,6 +114,8 @@
   --animate-colle: colle 700ms var(--ease-sortie) both;
   --animate-bascule: bascule 620ms var(--ease-sortie) both;
   --animate-titre: titre 900ms var(--ease-sortie) both;
+  --animate-calage: calage 900ms var(--ease-sortie) 120ms both;
+  --animate-tampon: tampon 520ms cubic-bezier(0.2, 0.9, 0.25, 1.15) 160ms both;
 
   @keyframes monte {
     from {
@@ -167,6 +177,30 @@
       transform-origin: top;
     }
   }
+  /* Coup de tampon : il tombe de haut, s'écrase un instant, puis reste de biais. */
+  @keyframes tampon {
+    from {
+      transform: scale(1.9) rotate(-16deg);
+      opacity: 0;
+    }
+    55% {
+      transform: scale(0.94) rotate(-5deg);
+      opacity: 1;
+    }
+    to {
+      transform: rotate(-6deg);
+    }
+  }
+  /* Second passage d'encre qui se cale sur le premier (affiche-titre). */
+  @keyframes calage {
+    from {
+      transform: translate(0.08em, -0.06em);
+      opacity: 0;
+    }
+    35% {
+      opacity: 1;
+    }
+  }
   /* Titre qui s'éclaire (écran-titre). */
   @keyframes titre {
     from {
@@ -205,8 +239,7 @@
   body {
     @apply bg-slate-50 text-slate-900 antialiased dark:bg-transparent dark:text-slate-100;
   }
-  /* Grand soir : lumière dorée des lustres en haut, bleu de scène à gauche, velours en bas à
-     droite ; fixes, derrière le contenu. */
+  /* Nuit : une lueur d'encre bleue au coin, comme une lampe d'atelier sur le papier sombre. */
   html.dark body::before {
     content: '';
     position: fixed;
@@ -214,39 +247,41 @@
     z-index: -1;
     pointer-events: none;
     background:
-      radial-gradient(56rem 26rem at 50% -12%, rgb(227 196 108 / 0.11), transparent 70%),
-      radial-gradient(60rem 44rem at -12% 8%, rgb(61 87 230 / 0.24), transparent 62%),
-      radial-gradient(52rem 34rem at 112% 104%, rgb(184 29 58 / 0.13), transparent 62%);
+      radial-gradient(48rem 30rem at -8% -10%, rgb(54 87 227 / 0.16), transparent 65%),
+      radial-gradient(40rem 26rem at 108% 108%, rgb(242 52 63 / 0.08), transparent 62%);
   }
-  /* Grain de papier très léger, sur les deux thèmes : la nuit n'est pas un aplat numérique. */
+  /* Grain du papier recyclé, sur les deux thèmes. */
   body::after {
     content: '';
     position: fixed;
     inset: 0;
     z-index: -1;
     pointer-events: none;
-    opacity: 0.05;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.5  0 0 0 0 0.5  0 0 0 0 0.6  0 0 0 1 0'/></filter><rect width='100%' height='100%' filter='url(%23g)'/></svg>");
+    opacity: 0.07;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.35  0 0 0 0 0.35  0 0 0 0 0.45  0 0 0 1 0'/></filter><rect width='100%' height='100%' filter='url(%23g)'/></svg>");
   }
+  /* Titres : la grotesque condensée des affiches, serrée, très grasse. */
   h1,
   h2,
   h3 {
     font-family: var(--font-display);
-    font-optical-sizing: auto;
-    font-weight: 700;
-    letter-spacing: -0.012em;
+    font-weight: 780;
+    font-stretch: 76%;
+    letter-spacing: -0.01em;
+    line-height: 1.05;
     text-wrap: balance;
   }
 
   :focus-visible {
     @apply outline-2 outline-offset-2 outline-republique-500 dark:outline-dorure;
   }
-  /* Grands chiffres : figures alignées du Didone (sondages, comptes à rebours, scores). */
+  /* Grands chiffres : largeur moyenne, chiffres alignés et tabulaires (sondages, scores). */
   .font-display {
-    font-variant-numeric: lining-nums;
+    font-stretch: 86%;
+    font-variant-numeric: lining-nums tabular-nums;
   }
   ::selection {
-    @apply bg-republique-500 text-white;
+    @apply bg-or-300 text-slate-950;
   }
   /* Chiffres alignés dans les tableaux et indicateurs. */
   table,

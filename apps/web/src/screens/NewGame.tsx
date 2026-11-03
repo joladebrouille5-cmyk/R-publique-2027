@@ -158,7 +158,7 @@ function Tiles<T extends string>({
                 {Icon && (
                   <Icon
                     aria-hidden="true"
-                    className="size-5 text-or-600 md:size-6 dark:text-dorure"
+                    className="size-5 text-red-600 md:size-6 dark:text-dorure"
                     strokeWidth={1.75}
                   />
                 )}
@@ -204,7 +204,7 @@ function Step({
       <header className="mb-4 flex items-start gap-4">
         <span
           aria-hidden="true"
-          className="w-9 shrink-0 font-display text-[2.6rem] leading-[0.9] font-bold text-or-600 dark:text-dorure"
+          className="w-9 shrink-0 font-display text-[2.6rem] leading-[0.9] font-bold text-red-600 dark:text-dorure"
         >
           {index + 1}
         </span>
@@ -579,7 +579,7 @@ export function NewGame() {
             )}
             {mode === 'observateur' && (
               <p className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300">
-                <Eye aria-hidden="true" className="size-8 shrink-0 text-or-600 dark:text-dorure" />
+                <Eye aria-hidden="true" className="size-8 shrink-0 text-red-600 dark:text-dorure" />
                 Vous suivez la campagne de tous les candidats, sans en diriger aucune.
               </p>
             )}

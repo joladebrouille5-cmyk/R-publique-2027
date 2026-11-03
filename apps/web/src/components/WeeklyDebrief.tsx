@@ -181,7 +181,8 @@ export function WeeklyDebrief({
     : [];
   const unexpected = report.events;
   // Son (phase 19) : un événement majeur dans la semaine s'annonce par le jingle d'une nouvelle.
-  useCue(unexpected.some((e) => e.majeur) ? 'flash' : null);
+  // Phase 21 : sinon, le coup de tampon de la semaine bouclée.
+  useCue(unexpected.some((e) => e.majeur) ? 'flash' : 'tampon');
   const decisionsImpact = playerId
     ? impactOf(report, playerId, (f) => f.source === 'decision')
     : [];
@@ -202,30 +203,30 @@ export function WeeklyDebrief({
         aria-labelledby={titleId}
         tabIndex={-1}
         onKeyDown={onKeyDown}
-        className="flex w-full max-w-3xl animate-feuille flex-col overflow-hidden bg-white outline-none sm:max-h-[90vh] sm:rounded-dossier sm:border sm:border-or-300/50 sm:shadow-raised dark:bg-slate-900 dark:sm:border-dorure/20"
+        className="flex w-full max-w-3xl animate-feuille flex-col overflow-hidden bg-papier outline-none sm:max-h-[90vh] sm:rounded-dossier sm:border-[1.5px] sm:border-slate-900 dark:bg-slate-900 dark:sm:border-white/25"
       >
-        <header className="relative shrink-0 border-b border-slate-200 bg-[linear-gradient(180deg,rgb(201_162_39/0.08),transparent)] px-4 pt-[calc(1.1rem+var(--sat))] pb-4 sm:px-6 sm:pt-7 dark:border-white/[0.08] dark:bg-[linear-gradient(180deg,rgb(227_196_108/0.08),transparent)]">
-          <span aria-hidden="true" className="absolute inset-x-0 top-0 flex h-1.5">
-            <span className="flex-1 bg-republique-600" />
-            <span className="flex-1 bg-white" />
-            <span className="flex-1 bg-red-600" />
-          </span>
+        <header className="relative shrink-0 border-b-[1.5px] border-slate-900 border-t-[6px] border-t-republique-600 px-4 pt-[calc(1.1rem+var(--sat))] pb-4 sm:px-6 sm:pt-6 dark:border-white/20 dark:border-t-republique-400">
           <div className="flex items-center gap-4">
-            {/* Page du calendrier, qui bascule à l'ouverture : la semaine qui vient de passer. */}
+            {/* Coup de tampon (phase 21) : la semaine qui vient de passer est bouclée. */}
             <span
               aria-hidden="true"
-              className="flex w-[4.5rem] shrink-0 animate-bascule flex-col overflow-hidden rounded-xl bg-white text-center shadow-affiche ring-1 ring-slate-200 dark:bg-papier dark:ring-0"
+              className="flex w-[5.4rem] shrink-0 animate-tampon flex-col items-center rounded-md border-[3px] border-red-600 py-1 text-red-600 mix-blend-multiply outline-[1.5px] outline-offset-[3px] outline-red-600 outline-solid dark:border-red-400 dark:text-red-400 dark:mix-blend-screen dark:outline-red-400"
             >
-              <span className="bg-red-600 py-0.5 text-[0.65rem] font-bold text-white">Semaine</span>
-              <span className="py-1 font-display text-[2.5rem] leading-none font-bold text-slate-950">
+              <span className="font-display text-[0.7rem] leading-none font-black tracking-[0.08em] uppercase [font-stretch:90%]">
+                Semaine
+              </span>
+              <span className="font-display text-[2.6rem] leading-[0.95] font-black [font-stretch:100%]">
                 {report.week}
+              </span>
+              <span className="font-display text-[0.7rem] leading-none font-black tracking-[0.08em] uppercase [font-stretch:90%]">
+                Bouclée
               </span>
             </span>
             <div className="min-w-0">
-              <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+              <p className="text-xs font-bold text-slate-600 dark:text-slate-400">
                 Semaine du {formatGameDate(report.date)}
               </p>
-              <h2 id={titleId} className="text-[1.75rem] leading-tight sm:text-4xl">
+              <h2 id={titleId} className="text-[1.9rem] leading-[0.95] sm:text-5xl">
                 Débriefing de la semaine {report.week}
               </h2>
             </div>
@@ -256,7 +257,7 @@ export function WeeklyDebrief({
           {report.succes.length > 0 && (
             <section
               aria-labelledby={`${titleId}-succes`}
-              className="space-y-2 rounded-card border border-or-400 bg-or-50 p-4 shadow-dore dark:border-dorure/60 dark:bg-dorure/[0.08]"
+              className="space-y-2 rounded-card border-[1.5px] border-slate-900 bg-or-100 p-4 shadow-dore dark:border-dorure dark:bg-dorure/[0.08]"
             >
               <h3 id={`${titleId}-succes`} className={title}>
                 {report.succes.length > 1 ? 'Succès débloqués' : 'Succès débloqué'}

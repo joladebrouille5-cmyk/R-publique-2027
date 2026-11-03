@@ -12,7 +12,7 @@ type ThemeState = {
 
 export const useThemeStore = create<ThemeState>()(
   // Par défaut : la nuit de la soirée électorale (thème sombre de l'identité du jeu).
-  persist((set) => ({ theme: 'sombre', setTheme: (theme) => set({ theme }) }), {
+  persist((set) => ({ theme: 'systeme', setTheme: (theme) => set({ theme }) }), {
     name: 'r2027-theme',
   }),
 );

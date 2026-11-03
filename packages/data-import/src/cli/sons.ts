@@ -1,6 +1,7 @@
-// Import de la musique du jeu (phase 19) : `pnpm data:sons`.
-// Source : Wikimedia Commons (morceaux de Kevin MacLeod sous licence CC BY 3.0) ; la licence et
-// l'auteur sont lus sur la page de chaque fichier, et un morceau sans licence libre reconnue est
+// Import de la musique du jeu (phases 19 et 21) : `pnpm data:sons`.
+// Source : Wikimedia Commons (enregistrements dans le domaine public ou sous licence CC BY) ; la
+// licence et l'auteur sont lus sur la page de chaque fichier — pour un enregistrement, la licence
+// de l'interprétation, pas celle de la partition — et un morceau sans licence libre reconnue est
 // refusé. Réseau requis ; ffmpeg et ffprobe requis (extrait, normalisation EBU R128, MP3).
 // Copies brutes : data/raw/sons (jamais commitées). Sorties commitées : apps/web/public/sons/ et
 // apps/web/src/audio/musiques.json. La musique n'est pas un paramètre de jeu : le jeu de règles
@@ -19,12 +20,7 @@ import {
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { MusicManifestSchema, type MusicTrack } from '@r2027/shared';
-import {
-  commonsFileTitle,
-  commonsPageUrl,
-  freeLicense,
-  originalUrl,
-} from '../personnalites/commons';
+import { commonsFileTitle, commonsPageUrl, originalUrl } from '../personnalites/commons';
 import {
   buildTrack,
   creditedAuthor,
@@ -33,6 +29,7 @@ import {
   MEASURE_FILTER,
   parseFfprobeDuration,
   parseLoudnorm,
+  recordingLicense,
 } from '../sons/build';
 import { MP3_KBPS, MUSIC_SELECTION } from '../sons/selection';
 
@@ -124,7 +121,7 @@ async function importTrack(selection: (typeof MUSIC_SELECTION)[number]): Promise
   await sleep(3_000);
   // Une page peut rediriger vers un autre fichier : c'est lui qu'il faut télécharger.
   const file = commonsFileTitle(page) ?? selection.fichier;
-  const license = freeLicense(page);
+  const license = recordingLicense(page);
   if ('refus' in license) throw new Error(`${selection.fichier} : ${license.refus}`);
   const { path, record } = await original(file, selection.id);
   const originalSeconds = ffprobeSeconds(path);
@@ -188,7 +185,7 @@ async function main() {
     if (!kept.has(file)) rmSync(join(OUT_FILES, file), { force: true });
   const manifest = MusicManifestSchema.parse({
     verifieLe: today(),
-    note: 'Musique : morceaux de Kevin MacLeod (incompetech.com) sous licence CC BY 3.0, hébergés sur Wikimedia Commons ; licence et auteur lus sur la page de chaque fichier lors de l’import (pnpm data:sons). Extraits, volume normalisé et réencodage déclarés pour chaque morceau. Les jingles des moments forts sont fabriqués par le jeu (synthèse dans le navigateur) et n’empruntent aucun enregistrement.',
+    note: 'Musique : enregistrements dans le domaine public ou sous licence Creative Commons, hébergés sur Wikimedia Commons ; licence (celle de l’interprétation) et auteur lus sur la page de chaque fichier lors de l’import (pnpm data:sons). Extraits, volume normalisé et réencodage déclarés pour chaque morceau. Les jingles des moments forts sont fabriqués par le jeu (synthèse dans le navigateur) et n’empruntent aucun enregistrement.',
     morceaux: tracks,
   });
   writeFileSync(OUT_JSON, `${JSON.stringify(manifest, null, 2)}\n`);

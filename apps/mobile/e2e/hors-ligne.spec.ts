@@ -78,7 +78,7 @@ test('partie complète sans réseau : création, semaine, reprise, carte, export
           .map((a) => new URL(a.src).pathname),
       ),
     )
-    .toEqual(['/sons/investigations.mp3']);
+    .toEqual(['/sons/catalyst.mp3']);
 
   await page.getByRole('button', { name: 'Ajouter Meeting public' }).click();
   await page.getByRole('button', { name: 'Résoudre la semaine 0' }).click();

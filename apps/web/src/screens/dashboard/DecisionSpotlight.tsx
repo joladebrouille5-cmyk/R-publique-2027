@@ -181,8 +181,8 @@ export function DecisionSpotlight({
                     onClick={() => choose(option.id)}
                     className={`relative flex w-full flex-col gap-1 rounded-card border-2 p-4 pr-12 text-left transition duration-150 active:scale-[0.99] ${
                       chosen
-                        ? 'border-or-500 bg-or-50/80 dark:border-dorure/70 dark:bg-dorure/[0.08]'
-                        : 'border-slate-200 bg-white hover:border-or-300 dark:border-white/10 dark:bg-white/[0.03] dark:hover:border-dorure/40'
+                        ? 'border-slate-900 bg-or-100 dark:border-dorure/70 dark:bg-dorure/[0.08]'
+                        : 'border-slate-200 bg-white hover:border-slate-500 dark:border-white/10 dark:bg-white/[0.03] dark:hover:border-dorure/40'
                     }`}
                   >
                     <span className="font-bold">{option.libelle}</span>
@@ -198,7 +198,7 @@ export function DecisionSpotlight({
                       aria-hidden="true"
                       className={`absolute top-4 right-4 inline-flex size-6 items-center justify-center rounded-full border-2 ${
                         chosen
-                          ? 'border-or-500 bg-or-500 text-white dark:border-dorure dark:bg-dorure dark:text-[#1d1503]'
+                          ? 'border-slate-900 bg-slate-900 text-white dark:border-dorure dark:bg-dorure dark:text-[#1d1503]'
                           : 'border-slate-300 dark:border-slate-600'
                       }`}
                     >

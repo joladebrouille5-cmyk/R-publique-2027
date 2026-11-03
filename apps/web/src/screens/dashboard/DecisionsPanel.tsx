@@ -12,7 +12,7 @@ import { Avatar } from '../../components/Avatar';
 import { Badge, type BadgeTone } from '../../components/Badge';
 import { BlocFaces, blocPeople } from '../../components/BlocFigures';
 import { FigureFilterBar, matchesFigure, NO_FILTER } from '../../components/FigureFilter';
-import { cardRaised } from '../../components/ui';
+import { cardRaisedBase } from '../../components/ui';
 import { memberInfo } from '../Government';
 import {
   portraitOf,
@@ -56,18 +56,58 @@ function optionPortrait(
 
 export const DECISION_KINDS: Record<
   PendingDecision['kind'],
-  { badge: string; tone: BadgeTone; accent: string }
+  { badge: string; tone: BadgeTone; accent: string; bandeau: string }
 > = {
-  consigne: { badge: 'Consigne de vote', tone: 'simule', accent: 'bg-republique-500' },
-  gouvernement: { badge: 'Nomination', tone: 'alerte', accent: 'bg-or-500' },
-  texte: { badge: 'Parlement', tone: 'alerte', accent: 'bg-or-500' },
-  crise: { badge: 'Crise fictive', tone: 'fictif', accent: 'bg-red-500' },
-  evenement: { badge: 'Événement fictif', tone: 'fictif', accent: 'bg-violet-500' },
-  alliance: { badge: 'Législatives', tone: 'simule', accent: 'bg-emerald-500' },
+  consigne: {
+    badge: 'Consigne de vote',
+    tone: 'simule',
+    accent: 'bg-republique-500',
+    bandeau: 'border-t-republique-500',
+  },
+  gouvernement: {
+    badge: 'Nomination',
+    tone: 'alerte',
+    accent: 'bg-or-500',
+    bandeau: 'border-t-or-500',
+  },
+  texte: { badge: 'Parlement', tone: 'alerte', accent: 'bg-or-500', bandeau: 'border-t-or-500' },
+  crise: {
+    badge: 'Crise fictive',
+    tone: 'fictif',
+    accent: 'bg-red-500',
+    bandeau: 'border-t-red-500',
+  },
+  evenement: {
+    badge: 'Événement fictif',
+    tone: 'fictif',
+    accent: 'bg-violet-500',
+    bandeau: 'border-t-violet-500',
+  },
+  alliance: {
+    badge: 'Législatives',
+    tone: 'simule',
+    accent: 'bg-emerald-500',
+    bandeau: 'border-t-emerald-500',
+  },
   // Phase 15 : rendez-vous d'élus, urgences ministérielles, questions au gouvernement.
-  parrainage: { badge: 'Rendez-vous d’élus (fictif)', tone: 'fictif', accent: 'bg-emerald-500' },
-  urgence: { badge: 'Urgence ministérielle (fictive)', tone: 'fictif', accent: 'bg-orange-500' },
-  qag: { badge: 'Questions au gouvernement', tone: 'simule', accent: 'bg-sky-500' },
+  parrainage: {
+    badge: 'Rendez-vous d’élus (fictif)',
+    tone: 'fictif',
+    accent: 'bg-emerald-500',
+    bandeau: 'border-t-emerald-500',
+  },
+  urgence: {
+    badge: 'Urgence ministérielle (fictive)',
+    tone: 'fictif',
+    accent: 'bg-orange-500',
+    bandeau: 'border-t-orange-500',
+  },
+  qag: {
+    badge: 'Questions au gouvernement',
+    tone: 'simule',
+    accent: 'bg-sky-500',
+    bandeau: 'border-t-sky-500',
+  },
 };
 
 /**
@@ -278,9 +318,8 @@ export function DecisionsPanel({
         return (
           <fieldset
             key={decision.id}
-            className={`${cardRaised} relative animate-revele space-y-4 overflow-hidden`}
+            className={`${cardRaisedBase} ${kind.bandeau} relative animate-revele space-y-4 overflow-hidden`}
           >
-            <span aria-hidden="true" className={`absolute inset-x-0 top-0 h-1.5 ${kind.accent}`} />
             <legend className="sr-only">{decision.label}</legend>
             <div className="space-y-2">
               <p className="flex flex-wrap gap-1.5">
@@ -326,8 +365,8 @@ export function DecisionsPanel({
                       key={option.id}
                       className={`relative flex min-h-24 cursor-pointer flex-col gap-1 rounded-card border-2 p-4 pr-12 transition duration-150 active:scale-[0.99] ${
                         checked
-                          ? 'border-or-500 bg-or-50/80 dark:border-dorure/70 dark:bg-dorure/[0.08]'
-                          : 'border-slate-200 bg-white hover:border-or-300 dark:border-white/10 dark:bg-white/[0.03] dark:hover:border-dorure/40'
+                          ? 'border-slate-900 bg-or-100 dark:border-dorure/70 dark:bg-dorure/[0.08]'
+                          : 'border-slate-200 bg-white hover:border-slate-500 dark:border-white/10 dark:bg-white/[0.03] dark:hover:border-dorure/40'
                       } has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-republique-500 dark:has-[:focus-visible]:outline-dorure`}
                     >
                       <input
@@ -350,7 +389,7 @@ export function DecisionsPanel({
                         aria-hidden="true"
                         className={`absolute top-4 right-4 inline-flex size-6 items-center justify-center rounded-full border-2 transition-colors ${
                           checked
-                            ? 'border-or-500 bg-or-500 text-white dark:border-dorure dark:bg-dorure dark:text-[#1d1503]'
+                            ? 'border-slate-900 bg-slate-900 text-white dark:border-dorure dark:bg-dorure dark:text-[#1d1503]'
                             : 'border-slate-300 dark:border-slate-600'
                         }`}
                       >

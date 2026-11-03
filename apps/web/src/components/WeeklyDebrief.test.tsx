@@ -58,17 +58,17 @@ function show(onClose = vi.fn(), rules: Ruleset = RULES) {
 }
 
 describe('débriefing de la semaine', () => {
-  it('annonce un événement majeur par le jingle d’une nouvelle importante, et lui seul (phase 19)', () => {
+  it('boucle la semaine d’un coup de tampon, ou annonce un événement majeur par une nouvelle (phases 19 et 21)', () => {
     const calls = recordSound();
     show();
-    expect(jingles(calls)).toEqual([]);
+    expect(jingles(calls)).toEqual(['jingle:tampon']);
     cleanup();
     // Même semaine, mais « Salle comble » déclaré majeur dans le jeu de règles du test.
     const major = JSON.parse(JSON.stringify(RULES)) as Ruleset;
     major.evenements.find((e) => e.id === 'salle-comble')!.majeur = true;
     const { report } = show(vi.fn(), major);
     expect(report.events.some((e) => e.majeur)).toBe(true);
-    expect(jingles(calls)).toEqual(['jingle:flash']);
+    expect(jingles(calls)).toEqual(['jingle:tampon', 'jingle:flash']);
   });
 
   it('résume l’impact des actions, les passages, les imprévus, les adversaires et les sondages', () => {
