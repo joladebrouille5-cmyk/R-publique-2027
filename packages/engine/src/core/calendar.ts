@@ -1,6 +1,8 @@
 import {
   addDays,
   daysFromCivil,
+  holidaysBetween,
+  holidaysInWorkWeek,
   parseIsoDate,
   type GameState,
   type Notice,
@@ -40,12 +42,22 @@ export function formatFrenchDate(iso: string): string {
   return `${weekday} ${civil.day === 1 ? '1er' : civil.day} ${MONTHS[civil.month - 1]} ${civil.year}`;
 }
 
-/** Échéances et scrutins des quatre prochaines semaines, à partir du lundi `weekStart`. */
+/**
+ * Échéances, scrutins et jours fériés (phase 20) des quatre prochaines semaines, à partir du
+ * lundi `weekStart`.
+ */
 export function upcomingNotices(weekStart: string, ruleset: Ruleset): Notice[] {
   const start = dayNumber(weekStart);
   const items = [
     ...ruleset.calendrier.scrutins.map((s) => ({ ...s, kind: 'scrutin' as const })),
     ...ruleset.calendrier.echeances.map((e) => ({ ...e, kind: 'echeance' as const })),
+    ...holidaysBetween(weekStart, addDays(weekStart, NOTICE_HORIZON_DAYS)).map((h) => ({
+      id: h.id,
+      libelle: `Jour férié : ${h.libelle}`,
+      date: h.date,
+      statut: 'deduit' as const,
+      kind: 'ferie' as const,
+    })),
   ];
   return items
     .map((item) => ({ item, days: dayNumber(item.date) - start }))
@@ -96,6 +108,31 @@ export function enterNextWeek(
         step,
       },
     ]);
+  }
+
+  // Phase 20 (calendrier réel) : une semaine qui compte un jour férié, du lundi au samedi,
+  // retire des heures de campagne aux candidats en lice (hypothèse de jeu).
+  const lost = ruleset.jeu.heuresSemaineFeriee;
+  const holidays = holidaysInWorkWeek(state.meta.date);
+  if (
+    lost > 0 &&
+    holidays.length > 0 &&
+    (state.meta.phase === 'campagne' || state.meta.phase === 'entre_deux_tours')
+  ) {
+    const names = holidays.map((h) => h.libelle).join(', ');
+    for (const actor of Object.values(state.actors).sort((a, b) => compareStrings(a.id, b.id))) {
+      if (actor.status !== 'candidat' && actor.status !== 'qualifie') continue;
+      const hours = Math.min(lost, ledger.current(actor.id, 'tempsHeures'));
+      if (hours === 0) continue;
+      ledger.apply(actor.id, 'tempsHeures', [
+        {
+          label: `Jour férié (${names}) : ${hours} h de campagne en moins (hypothèse de jeu)`,
+          value: -hours,
+          source: 'calendrier',
+          step,
+        },
+      ]);
+    }
   }
 
   const due = state.scheduled

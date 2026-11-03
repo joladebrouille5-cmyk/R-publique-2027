@@ -160,6 +160,19 @@ Remarque : la page de l'Élysée mentionne une consultation des partis « le 29 
 
 **Dans le jeu** : ces dates entrent dans le *ruleset* `presidentielle-2027` avec le statut `annoncé` (et non `officiel`) jusqu'à la publication du décret. La date de scrutin est portée **par territoire** (vote du samedi).
 
+### 4.2 Calendrier réel de la campagne (phase 20)
+
+| Fait | Valeur | Statut | Source |
+|---|---|---|---|
+| Jours fériés | onze jours fériés du droit national (« légalement définis par le code du travail », articles L. 3133-1 à 3) : 1er janvier, lundi de Pâques, 1er mai, 8 mai, jeudi de l'Ascension (« 40e jour à partir du dimanche de Pâques »), lundi de Pentecôte (« 50 jours après le dimanche de Pâques »), 14 juillet, 15 août, 1er novembre, 11 novembre, 25 décembre ; jours propres à l'Alsace-Moselle et aux outre-mer non retenus (jeu national) | vérifié par une source secondaire ; **texte Légifrance non relu** (accès refusé, 403, le 03/11/2026) | article Wikipédia « Fêtes et jours fériés en France », révision 239433226 du 12/09/2026 : https://fr.wikipedia.org/w/index.php?title=F%C3%AAtes_et_jours_f%C3%A9ri%C3%A9s_en_France&oldid=239433226 (consulté le 03/11/2026) |
+| Dates des jours fériés (2026-2027 et cycles suivants) | calculées par `publicHolidays` de `@r2027/shared` : dates fixes et dimanche de Pâques par le comput grégorien (algorithme de Meeus, Jones et Butcher ; Pâques 2027 le 28 mars, lundi de Pâques le 29 mars) ; aucune date écrite en dur | déduit | règle ci-dessus ; tests `feries.test.ts` |
+| Effet dans le jeu | une semaine qui compte un jour férié du lundi au samedi retire 6 h de campagne à chaque candidat en lice (`jeu.heuresSemaineFeriee`) | **hypothèse de jeu** | conception du jeu |
+| Ouverture de la campagne officielle et égalité du temps de parole | en 2022, « la campagne officielle débute le 28 mars 2022, deux semaines avant le premier tour, lançant ainsi la période d'égalité du temps de parole là où l'équité était la règle depuis la publication des candidats par le Conseil constitutionnel » ; pour 2027 : **lundi 5 avril 2027**, deux semaines avant le premier tour du 18 avril | **hypothèse** (précédent de 2022 ; date officielle fixée par décret, non publié) | article Wikipédia « Élection présidentielle française de 2022 », révision 240947813 du 02/11/2026 : https://fr.wikipedia.org/w/index.php?title=%C3%89lection_pr%C3%A9sidentielle_fran%C3%A7aise_de_2022&oldid=240947813 (consulté le 03/11/2026) |
+| Règles de l'Arcom en période électorale | « une recommandation propre à chaque scrutin », règles qui « s'appliquent généralement durant les six semaines précédant l'élection » ; l'Arcom veille « à l'égalité stricte pour l'élection présidentielle » | vérifié (relu sur la page le 03/11/2026, empreinte SHA-256 de la page `f5377979794e0281ae48a86ca2829432d74ba02234da45ff7f6193dc2cc772e0`) | Arcom, « Temps de parole politique » : https://www.arcom.fr/temps-parole |
+| Effet dans le jeu | de l'ouverture de la campagne officielle au second tour, la part de l'exposition qui suit la notoriété est la même pour chaque candidat en lice à la télévision et à la radio, sans propension par parti (`medias.periodeElectorale`) ; la presse écrite reste à la notoriété ; seules les actions font varier l'exposition à l'antenne | modélisation (hypothèse de jeu fondée sur la règle) | conception du jeu |
+
+Dans le jeu (jeu de règles `presidentielle-2027@19.0.0`) : les jours fériés figurent au calendrier électoral et dans les échéances proches du bilan (« date déduite d'une règle ») ; l'ouverture de la campagne officielle est une échéance du calendrier, transposée pour 2032 et 2037 comme les autres (`cycleRuleset`, statut « hypothèse »). Lieux réels : deux coups adverses (tractage, ralliement d'un maire fictif) se déroulent dans un département réel où le joueur a fait campagne, comme les événements locaux de la phase 11.
+
 ---
 
 ## 5. Parrainages (présentations)

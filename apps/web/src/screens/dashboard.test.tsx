@@ -296,7 +296,23 @@ describe('tableau de bord', () => {
       within(calendar).getByText("Premier tour de l'élection présidentielle"),
     ).toBeInTheDocument();
     expect(within(calendar).getAllByText('Date annoncée, décret non publié').length).toBe(2);
-    expect(within(calendar).getAllByText('Date déduite d’une règle').length).toBe(2);
+    // Deux échéances déduites de la loi électorale, et les jours fériés de la campagne (phase 20,
+    // code du travail) : Toussaint, 11-Novembre, Noël, jour de l'an, lundi de Pâques, 1er mai.
+    const holidays = within(calendar).getAllByText(/^Jour férié : /);
+    expect(holidays.map((h) => h.textContent)).toEqual([
+      'Jour férié : Toussaint',
+      'Jour férié : Armistice de 1918',
+      'Jour férié : Noël',
+      'Jour férié : Jour de l’an',
+      'Jour férié : Lundi de Pâques',
+      'Jour férié : Fête du Travail',
+    ]);
+    expect(within(calendar).getAllByText('Date déduite d’une règle').length).toBe(
+      2 + holidays.length,
+    );
+    expect(
+      within(calendar).getByText(/^Ouverture de la campagne officielle : égalité stricte/),
+    ).toBeInTheDocument();
   });
 });
 

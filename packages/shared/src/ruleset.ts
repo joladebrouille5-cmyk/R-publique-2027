@@ -1408,6 +1408,11 @@ export const RulesetSchema = z
         fraicheurEvenements: z
           .object({ facteur: Fraction, semaines: z.number().int().min(1).max(12) })
           .strict(),
+        /**
+         * Phase 20 : heures de campagne en moins dans une semaine qui compte un jour férié, du
+         * lundi au samedi (cérémonies, électeurs en congé) ; hypothèse de jeu, 0 pour aucun effet.
+         */
+        heuresSemaineFeriee: z.number().int().min(0).max(40).default(0),
         /** Qualité de l'équipe du candidat du joueur (0 à 1). */
         equipeJoueur: Fraction,
         /** Promesses de parrainage dont dispose le joueur au départ, selon la difficulté. */
@@ -1655,6 +1660,17 @@ export const RulesetSchema = z
         partCodiffusion: Fraction,
         /** Notoriété gagnée par point d'exposition pondérée par l'audience. */
         notorieteParExposition: z.number().min(0),
+        /**
+         * Phase 20 (rouage réel) : à compter de l'échéance `echeanceId` du calendrier (période
+         * électorale de l'Arcom), égalité stricte des temps de parole à la télévision et à la
+         * radio : la part de l'exposition qui suit la notoriété y est la même pour chaque
+         * candidat en lice, sans propension par parti ; seules les actions la font varier.
+         */
+        periodeElectorale: z
+          .object({ echeanceId: Id, sourceId: Id })
+          .strict()
+          .nullable()
+          .default(null),
       })
       .strict(),
     mediasReels: RealMediaSchema,
@@ -2188,6 +2204,15 @@ export const RulesetSchema = z
     if (min > max) issue('Participation : min > max');
     if (ruleset.modele.blancsNuls.blancsT2Min > ruleset.modele.blancsNuls.blancsT2Max) {
       issue('Blancs au second tour : min > max');
+    }
+
+    // Phase 20 : période électorale de l'Arcom, rattachée à une échéance et à une source.
+    const periode = ruleset.medias.periodeElectorale;
+    if (periode) {
+      if (!ruleset.calendrier.echeances.some((e) => e.id === periode.echeanceId))
+        issue(`Période électorale : échéance inconnue ${periode.echeanceId}`);
+      if (!(periode.sourceId in ruleset.sources))
+        issue(`Période électorale : source inconnue ${periode.sourceId}`);
     }
 
     for (const event of ruleset.evenements) {

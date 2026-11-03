@@ -78,12 +78,35 @@ describe('jeu de règles presidentielle-2027', () => {
       expect(ruleset.sources[item.sourceId]).toBeDefined();
     }
     // Échéances supposées : l'ouverture des présentations, liée à un décret non encore publié,
-    // et les débats télévisés (phase 10), hypothèses du jeu.
+    // les débats télévisés (phase 10), hypothèses du jeu, et l'ouverture de la campagne officielle
+    // (phase 20 : précédent de 2022, date officielle fixée par décret).
     const assumed = ruleset.calendrier.echeances.filter((e) => e.statut === 'hypothese');
     expect(assumed.map((e) => e.id).sort()).toEqual(
-      ['debat-t1-principaux', 'debat-t1-tous', 'debat-t2', 'ouverture-presentations'].sort(),
+      [
+        'debat-t1-principaux',
+        'debat-t1-tous',
+        'debat-t2',
+        'ouverture-campagne-officielle',
+        'ouverture-presentations',
+      ].sort(),
     );
-    for (const e of assumed) expect(e.sourceId).toBe('conception-du-jeu');
+    for (const e of assumed.filter((x) => x.id !== 'ouverture-campagne-officielle'))
+      expect(e.sourceId).toBe('conception-du-jeu');
+    // Deux semaines avant le premier tour, un lundi, comme le 28 mars 2022 pour le 10 avril.
+    const official = assumed.find((e) => e.id === 'ouverture-campagne-officielle')!;
+    expect(official).toMatchObject({
+      sourceId: 'wikipedia-presidentielle-2022',
+      date: '2027-04-05',
+    });
+    expect(weekday(official.date)).toBe(1);
+    expect(daysFromCivil(parseIsoDate(date('presidentielle-2027-t1'))!)).toBe(
+      daysFromCivil(parseIsoDate(official.date)!) + 13,
+    );
+    expect(official.regle).toMatch(/fixée par décret/);
+    expect(ruleset.medias.periodeElectorale).toEqual({
+      echeanceId: 'ouverture-campagne-officielle',
+      sourceId: 'arcom-temps-parole',
+    });
     expect(assumed.find((e) => e.id === 'ouverture-presentations')!.regle).toMatch(
       /non encore publié/,
     );
@@ -168,7 +191,7 @@ describe('jeu de règles presidentielle-2027', () => {
     for (const coup of coups) {
       expect(coup.adversaire, coup.id).not.toBeNull();
       // Une action simulée du rival, jamais un propos : l'avertissement figure dans le texte.
-      expect(coup.description, coup.id).toMatch(/Coup simulé par le jeu : aucun propos/);
+      expect(coup.description, coup.id).toMatch(/[Cc]oup simulé par le jeu : aucun propos/);
       expect(`${coup.libelle} ${coup.description}`, coup.id).not.toMatch(
         /déclare|affirme|accuse|dénonce|« /,
       );

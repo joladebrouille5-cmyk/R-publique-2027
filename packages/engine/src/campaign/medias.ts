@@ -51,6 +51,18 @@ export function propensity(ruleset: Ruleset, outlet: RealOutlet, party: string |
   return clamp(value, ruleset.medias.propension.min, ruleset.medias.propension.max);
 }
 
+/**
+ * Période électorale de l'Arcom (phase 20, rouage réel) : de son échéance au second tour, la
+ * télévision et la radio appliquent l'égalité stricte des temps de parole (`medias.periodeElectorale`).
+ */
+export function electoralPeriod(state: GameState, ruleset: Ruleset): boolean {
+  const periode = ruleset.medias.periodeElectorale;
+  if (!periode) return false;
+  if (state.meta.phase !== 'campagne' && state.meta.phase !== 'entre_deux_tours') return false;
+  const start = ruleset.calendrier.echeances.find((e) => e.id === periode.echeanceId);
+  return start !== undefined && state.meta.date >= start.date;
+}
+
 export function showsById(ruleset: Ruleset): ReadonlyMap<string, PoliticalShow> {
   return new Map(ruleset.mediasReels.emissions.map((e) => [e.id, e]));
 }
@@ -116,6 +128,7 @@ export function updateMedia(
   const shows = showsById(ruleset);
   const attention = actors.map((a) => Math.pow(Math.max(a.resources.notoriete, 100) / 10_000, 1.5));
   const totalAttention = attention.reduce((sum, v) => sum + v, 0);
+  const equal = electoralPeriod(state, ruleset);
   const parties = actors.map((a) => arcomParty(ruleset, a));
   // Aucun programme n'est prêté à une personnalité réelle adverse : facteur neutre.
   const tones = actors.map((a) =>
@@ -159,10 +172,14 @@ export function updateMedia(
     // Un flux d'aléa par organe, tiré candidat par candidat dans l'ordre des identifiants.
     const rng = stream(state.meta.seed, week, 'medias', outlet.id);
     actors.forEach((actor, i) => {
-      let exposure = Math.round(
-        ((NOTORIETY_SHARE * attention[i]!) / totalAttention) *
-          propensity(ruleset, outlet, parties[i]!),
-      );
+      // Période électorale (phase 20) : égalité stricte des temps de parole à l'antenne.
+      let exposure =
+        equal && outlet.type !== 'presse'
+          ? Math.round(NOTORIETY_SHARE / actors.length)
+          : Math.round(
+              ((NOTORIETY_SHARE * attention[i]!) / totalAttention) *
+                propensity(ruleset, outlet, parties[i]!),
+            );
       for (const action of actions)
         if (action.actorId === actor.id) exposure += actionExposure(ruleset, shows, outlet, action);
       exposure = clamp(exposure, 0, 10_000);
@@ -178,12 +195,13 @@ export function updateMedia(
   }
 
   const indice: MediaState['indice'] = {};
+  const label = equal
+    ? 'Couverture médiatique de la semaine (période électorale : égalité des temps de parole)'
+    : 'Couverture médiatique de la semaine';
   for (const actor of actors) {
     indice[actor.id] = Math.round((weighted.get(actor.id)! / totalWeight) * 1000) / 1000 + 0;
     const gain = Math.round(ruleset.medias.notorieteParExposition * reach.get(actor.id)!);
-    ledger.apply(actor.id, 'notoriete', [
-      { label: 'Couverture médiatique de la semaine', value: gain, source: 'opinion', step },
-    ]);
+    ledger.apply(actor.id, 'notoriete', [{ label, value: gain, source: 'opinion', step }]);
   }
   const interviews: Interview[] = actions
     .filter((a) => a.definition.cible === 'emission' && a.cible !== null && shows.has(a.cible))

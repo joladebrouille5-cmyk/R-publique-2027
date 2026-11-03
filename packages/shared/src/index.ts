@@ -31,3 +31,4 @@ export * from './precampagne';
 export * from './succes';
 export * from './objectifs';
 export * from './sons';
+export * from './feries';

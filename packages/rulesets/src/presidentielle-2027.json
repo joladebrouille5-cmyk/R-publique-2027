@@ -1,8 +1,8 @@
 {
   "id": "presidentielle-2027",
-  "version": "18.0.0",
+  "version": "19.0.0",
   "libelle": "Présidentielle 2027 et quinquennat — campagne, parrainages, financement, médias réels, présidence, gouvernement et figures réelles nominables, Parlement, économie, crises et législatives",
-  "verifieLe": "2026-10-28",
+  "verifieLe": "2026-11-03",
   "sources": {
     "elysee-cm-2026-07-01": {
       "titre": "Compte rendu du Conseil des ministres du mercredi 1er juillet 2026 — communication relative au calendrier électoral 2027",
@@ -123,6 +123,21 @@
       "titre": "Article Wikipédia « Questions au gouvernement » (révision 236418454 du 22/05/2026) : à l'Assemblée nationale, séances de questions au gouvernement le mardi et le mercredi pendant la session parlementaire",
       "url": "https://fr.wikipedia.org/w/index.php?title=Questions_au_gouvernement&oldid=236418454",
       "consulteLe": "2026-10-28"
+    },
+    "arcom-temps-parole": {
+      "titre": "Arcom — « Temps de parole politique » : en période électorale, règles « définies par une recommandation propre à chaque scrutin », qui « s'appliquent généralement durant les six semaines précédant l'élection » ; « égalité stricte pour l'élection présidentielle »",
+      "url": "https://www.arcom.fr/temps-parole",
+      "consulteLe": "2026-11-03"
+    },
+    "code-du-travail-feries": {
+      "titre": "Code du travail, articles L. 3133-1 à 3 (onze jours fériés) — liste et règles des fêtes mobiles citées par l'article Wikipédia « Fêtes et jours fériés en France » (révision 239433226 du 12/09/2026) ; texte de Légifrance non relu (accès refusé)",
+      "url": "https://fr.wikipedia.org/w/index.php?title=F%C3%AAtes_et_jours_f%C3%A9ri%C3%A9s_en_France&oldid=239433226",
+      "consulteLe": "2026-11-03"
+    },
+    "wikipedia-presidentielle-2022": {
+      "titre": "Wikipédia, « Élection présidentielle française de 2022 » (révision 240947813 du 02/11/2026) : « La campagne officielle débute le 28 mars 2022, deux semaines avant le premier tour, lançant ainsi la période d'égalité du temps de parole là où l'équité était la règle depuis la publication des candidats par le Conseil constitutionnel »",
+      "url": "https://fr.wikipedia.org/w/index.php?title=%C3%89lection_pr%C3%A9sidentielle_fran%C3%A7aise_de_2022&oldid=240947813",
+      "consulteLe": "2026-11-03"
     }
   },
   "calendrier": {
@@ -173,6 +188,15 @@
         "sourceId": "conception-du-jeu"
       },
       {
+        "id": "ouverture-campagne-officielle",
+        "libelle": "Ouverture de la campagne officielle : égalité stricte des temps de parole à la télévision et à la radio",
+        "date": "2027-04-05",
+        "heure": null,
+        "statut": "hypothese",
+        "regle": "Comme en 2022, où la campagne officielle s’est ouverte le lundi 28 mars, deux semaines avant le premier tour, et a lancé l’égalité du temps de parole (l’équité s’appliquant depuis la publication de la liste des candidats) : date supposée le lundi 5 avril 2027, la date officielle étant fixée par décret",
+        "sourceId": "wikipedia-presidentielle-2022"
+      },
+      {
         "id": "debat-t1-tous",
         "libelle": "Débat télévisé de tous les candidats (premier tour)",
         "date": "2027-04-06",
@@ -205,6 +229,7 @@
     "statut": "hypothese",
     "sourceId": "conception-du-jeu",
     "tempsHebdomadaireHeures": 70,
+    "heuresSemaineFeriee": 6,
     "actionsMaxParSemaine": 8,
     "evenementsMaxParSemaine": 2,
     "fraicheurEvenements": {
@@ -3394,8 +3419,8 @@
     },
     {
       "id": "tractage-adverse",
-      "libelle": "Tractage massif de l’équipe de {adversaire}",
-      "description": "Les militants de {adversaire} quadrillent les marchés où vous faisiez campagne. Coup simulé par le jeu : aucun propos n’est prêté à quiconque.",
+      "libelle": "Tractage massif de l’équipe de {adversaire} dans {departement}",
+      "description": "Les militants de {adversaire} quadrillent les marchés de {departement}, où vous faisiez campagne. Coup simulé par le jeu : aucun propos n’est prêté à quiconque.",
       "nature": "fictif",
       "famille": "coup-adversaire",
       "majeur": false,
@@ -3416,7 +3441,8 @@
       "choixParDefaut": null,
       "campagne": null,
       "contexte": {
-        "phases": ["campagne", "entre_deux_tours"]
+        "phases": ["campagne", "entre_deux_tours"],
+        "local": true
       },
       "adversaire": {
         "effets": [
@@ -3607,8 +3633,8 @@
     },
     {
       "id": "ralliement-adverse",
-      "libelle": "Un maire de votre camp rallie {adversaire}",
-      "description": "Un maire jusqu’ici proche de vos idées appelle à voter pour {adversaire}. Coup simulé par le jeu : aucun propos n’est prêté à quiconque.",
+      "libelle": "Un maire de {departement} rallie {adversaire}",
+      "description": "Un maire de {departement}, jusqu’ici proche de vos idées, appelle à voter pour {adversaire}. Personnage fictif ; coup simulé par le jeu : aucun propos n’est prêté à quiconque.",
       "nature": "fictif",
       "famille": "coup-adversaire",
       "majeur": false,
@@ -3636,7 +3662,8 @@
       "choixParDefaut": null,
       "campagne": null,
       "contexte": {
-        "phases": ["campagne", "entre_deux_tours"]
+        "phases": ["campagne", "entre_deux_tours"],
+        "local": true
       },
       "adversaire": {
         "effets": [
@@ -5882,7 +5909,11 @@
       "max": 2
     },
     "partCodiffusion": 0.5,
-    "notorieteParExposition": 0.02
+    "notorieteParExposition": 0.02,
+    "periodeElectorale": {
+      "echeanceId": "ouverture-campagne-officielle",
+      "sourceId": "arcom-temps-parole"
+    }
   },
   "numerique": {
     "statut": "hypothese",

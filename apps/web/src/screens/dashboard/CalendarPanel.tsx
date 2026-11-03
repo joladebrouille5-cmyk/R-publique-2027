@@ -1,4 +1,4 @@
-import type { Ruleset } from '@r2027/shared';
+import { addDays, holidaysBetween, type Ruleset } from '@r2027/shared';
 import { Badge } from '../../components/Badge';
 import { ScreenHeading } from '../../components/Disclosure';
 import { card } from '../../components/ui';
@@ -8,12 +8,26 @@ const DAY_MS = 86_400_000;
 const days = (from: string, to: string) =>
   Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / DAY_MS);
 
-/** Calendrier du jeu de règles, avec le statut de chaque date (sources : Paramètres). */
+/**
+ * Calendrier du jeu de règles, avec le statut de chaque date (sources : Paramètres). Phase 20 :
+ * les jours fériés jusqu'au dernier scrutin, dates déduites du code du travail (`@r2027/shared`).
+ */
 export function CalendarPanel({ ruleset, today }: { ruleset: Ruleset; today: string }) {
-  const items = [
+  const dated = [
     ...ruleset.calendrier.scrutins.map((s) => ({ ...s, heure: null })),
     ...ruleset.calendrier.echeances,
-  ].sort((a, b) => a.date.localeCompare(b.date));
+  ];
+  // Jours fériés de la campagne : de la date en jeu (ou de la première échéance) au dernier tour.
+  const first = dated.reduce((min, d) => (d.date < min ? d.date : min), today);
+  const last = ruleset.calendrier.scrutins.reduce((max, d) => (d.date > max ? d.date : max), today);
+  const holidays = holidaysBetween(first, addDays(last, 1)).map((h) => ({
+    id: h.id,
+    libelle: `Jour férié : ${h.libelle}`,
+    date: h.date,
+    heure: null,
+    statut: 'deduit' as const,
+  }));
+  const items = [...dated, ...holidays].sort((a, b) => a.date.localeCompare(b.date));
 
   return (
     <section aria-labelledby="titre-calendrier" className={`${card} space-y-3`}>

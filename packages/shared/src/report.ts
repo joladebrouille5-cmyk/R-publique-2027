@@ -103,7 +103,8 @@ export const AppliedDecisionSchema = z
 export const NoticeSchema = z
   .object({
     id: z.string(),
-    kind: z.enum(['scrutin', 'echeance']),
+    /** Phase 20 : `ferie`, jour férié du code du travail (date déduite de la loi). */
+    kind: z.enum(['scrutin', 'echeance', 'ferie']),
     label: z.string(),
     date: IsoDateSchema,
     statut: DataStatusSchema,
