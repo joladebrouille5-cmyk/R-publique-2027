@@ -27,5 +27,8 @@ un candidat de droite, la proximité linéaire lui donne une majorité structure
 | (a) | | 0,6 | 91 % | 4 | 3 | insuffisant |
 | (a) | | 0,4 | 81 % | 4 | 3 | insuffisant |
 | (a) | | 0,3 | 77 % | 4 | 3 | insuffisant |
+| (a) | | 0,2 | 77 % | 4 | 3 | insuffisant |
+| (a) + (d) moyens de Boussole réduits (notoriété 45 %, budget 5 M€) | `saturationProximite`, `candidatsFictifs[adv-boussole].ressources` | 0,3 | 44 % | 4 | 3 | critères atteints, de justesse |
+| (a) + (d) moyens de Boussole réduits (notoriété 35 %, budget 4 M€, popularité 30 %) | idem | 0,3 | 35 % (Rivière 41 %) | 4 | 3 | critères atteints |
 | (b) fidélité de camp (1er tour) | `modele.fideliteCamp` | 0,5 | 100 % | 1 | 2 | écartée (aggrave) |
 | (c) abstention différentielle (2nd tour) | `modele.secondTour.abstentionDifferentielle` | 0,4 (au lieu de 0,12) | 98 % | 3 | 2 | écartée (sans effet) |
