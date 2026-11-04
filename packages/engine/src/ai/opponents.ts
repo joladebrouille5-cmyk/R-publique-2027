@@ -1,3 +1,4 @@
+import { blocPositions, departmentInscrits } from '@r2027/shared';
 import type {
   ActionDefinition,
   Actor,
@@ -25,7 +26,8 @@ import { formatFrenchDate } from '../core/calendar';
 import { compareStrings } from '../core/ledger';
 import { stream } from '../core/random';
 import { upcomingDebate } from '../election/debats';
-import { softmax } from '../election/model';
+import { distance, softmax } from '../election/model';
+import { blocOfNuance } from '../presidency/legislatives';
 
 // IA des adversaires (§7) : chaque adversaire analyse sa situation, en déduit une priorité
 // motivée (sa stratégie de la semaine), évalue le coût et le bénéfice de chaque action
@@ -245,6 +247,61 @@ function bestDepartement(
   return best;
 }
 
+const DOMINANT_BLOCS = new WeakMap<Ruleset, Map<string, string>>();
+
+/** Bloc arrivé en tête au premier tour des législatives de 2024, dans chaque département. */
+function dominantBlocs(ruleset: Ruleset): Map<string, string> {
+  let cached = DOMINANT_BLOCS.get(ruleset);
+  if (!cached) {
+    const nuances = blocOfNuance(ruleset);
+    const votes = new Map<string, Map<string, number>>();
+    for (const c of ruleset.legislatives2024.circonscriptions) {
+      const row = votes.get(c.departement) ?? new Map<string, number>();
+      for (const [nuance, n] of Object.entries(c.voix)) {
+        const bloc = nuances.get(nuance);
+        if (bloc) row.set(bloc, (row.get(bloc) ?? 0) + n);
+      }
+      votes.set(c.departement, row);
+    }
+    cached = new Map(
+      [...votes.entries()].map(([dep, row]) => [
+        dep,
+        [...row.entries()].sort((a, b) => b[1] - a[1] || compareStrings(a[0], b[0]))[0]![0],
+      ]),
+    );
+    DOMINANT_BLOCS.set(ruleset, cached);
+  }
+  return cached;
+}
+
+/**
+ * Département où une carte Terrain rapporte le plus (phase 25) : inscrits × proximité du
+ * candidat au bloc arrivé en tête localement (législatives de 2024) × terrain qui reste à
+ * prendre (1 − implantation / 100) ; égalités départagées par le code.
+ */
+export function bestDepartment(state: GameState, ruleset: Ruleset, actorId: string): string {
+  const actor = state.actors[actorId]!;
+  const inscrits = departmentInscrits(ruleset);
+  const blocs = dominantBlocs(ruleset);
+  const positions = blocPositions(ruleset);
+  const map = state.implantation[actorId] ?? {};
+  let best = departements(ruleset)[0]!;
+  let bestValue = -1;
+  for (const dep of departements(ruleset)) {
+    const bloc = blocs.get(dep);
+    const position = bloc ? positions.get(bloc) : undefined;
+    const closeness = position
+      ? Math.max(0, 1 - distance(actor.candidate.positionnement, position))
+      : 0;
+    const value = (inscrits[dep] ?? 0) * closeness * (1 - (map[dep] ?? 0) / 100);
+    if (value > bestValue) {
+      bestValue = value;
+      best = dep;
+    }
+  }
+  return best;
+}
+
 /** Audience touchée par un passage sur un organe, selon l'exposition mesurée de son parti. */
 function outletValue(ruleset: Ruleset, outlet: RealOutlet, party: string | null): number {
   return outletAudience(ruleset, outlet) * propensity(ruleset, outlet, party);
@@ -353,7 +410,10 @@ export function planOpponentActions(state: GameState, ruleset: Ruleset): Opponen
             let cible: string | undefined;
             // Valeur d'une négociation : probabilité d'obtenir le soutien (phase 15).
             let bonus = 0;
-            if (action.cible === 'departement') {
+            if (action.cible === 'departement' && action.cibleFacultative) {
+              // Phase 25 : une carte Terrain va là où l'implantation rapporte le plus.
+              cible = bestDepartment(state, ruleset, actor.id);
+            } else if (action.cible === 'departement') {
               cible = bestDepartement(state, ruleset, actor, usedDeps, engaged) ?? undefined;
             } else if (action.cible === 'media') {
               cible = bestOutlet(ruleset, actor, usedOutlets);
