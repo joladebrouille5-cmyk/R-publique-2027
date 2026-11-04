@@ -700,6 +700,32 @@ describe('stockage IndexedDB de l’appareil', () => {
   });
 });
 
+describe('serveur local : départ « Sondages actuels » (phase 24)', () => {
+  it('suit les mêmes règles que l’API : socle par défaut avec des réels, refus sans réels', async () => {
+    const api = server(new MemoryStore());
+    const body = { name: 'Départ', mode: 'candidat_personnalise', candidate };
+    const refused = await call(api, 'POST', '/api/games', { ...body, depart: 'sondages' });
+    expect([refused.status, error(refused)]).toEqual([422, 'depart_sans_personnalites']);
+    const invalid = await call(api, 'POST', '/api/games', { ...body, depart: 'pronostic' });
+    expect([invalid.status, error(invalid)]).toEqual([400, 'requete_invalide']);
+    const sondages = GameDetailSchema.parse(
+      (await call(api, 'POST', '/api/games', { ...body, adversaires: 'reels' })).body,
+    );
+    expect(sondages.state.player.depart).toBe('sondages');
+    expect(sondages.state.socle?.t1['reel-le-pen']).toBeTypeOf('number');
+    const equitable = GameDetailSchema.parse(
+      (
+        await call(api, 'POST', '/api/games', {
+          ...body,
+          adversaires: 'reels',
+          depart: 'equitable',
+        })
+      ).body,
+    );
+    expect(equitable.state.socle).toBeNull();
+  });
+});
+
 describe('serveur local : progression (phase 20)', () => {
   it('suit les mêmes règles que l’API : verrous, graine réservée, défi du jour, déblocage', async () => {
     const store = new MemoryStore();

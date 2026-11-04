@@ -9,7 +9,7 @@ import { formatSummary, runScenario, scenarios, summarize } from '../src/sim/equ
 const args = process.argv.slice(2);
 const at = args.indexOf('--parties');
 const parties = at >= 0 ? Number(args[at + 1]) : 300;
-const wanted = args.filter((a, i) => !a.startsWith('--') && i !== at + 1);
+const wanted = args.filter((a, i) => !a.startsWith('--') && (at < 0 || i !== at + 1));
 const ruleset = getRuleset(CURRENT_RULESET_KEY);
 const all = scenarios(ruleset);
 const ids = wanted.length

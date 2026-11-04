@@ -1,3 +1,4 @@
+import { formatGameDate } from '../labels';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
@@ -153,7 +154,18 @@ describe('création de partie', () => {
       within(group).getByRole('img', { name: 'Portrait de Marine Tondelier' }),
     ).toHaveAttribute('src', '/personnalites/reel-tondelier.webp');
     await wizardTo(user, 'Le terrain');
+    // Phase 24 : point de départ « Sondages actuels » par défaut, avec son étiquette fixe.
+    expect(screen.queryByRole('group', { name: 'Point de départ' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('radio', { name: /Personnalités réelles/ }));
+    const depart = screen.getByRole('group', { name: 'Point de départ' });
+    expect(within(depart).getByRole('radio', { name: /Sondages actuels/ })).toBeChecked();
+    expect(
+      screen.getByText(
+        'Simulation : point de départ issu des sondages publiés, la suite est simulée.',
+      ),
+    ).toBeInTheDocument();
+    await user.click(within(depart).getByRole('radio', { name: /Départ équitable/ }));
+    expect(screen.queryByText(/la suite est simulée/)).not.toBeInTheDocument();
     await advancedOptions(user, { name: 'Réel' });
     await user.click(screen.getByRole('button', { name: 'Créer la partie' }));
     await waitFor(() => expect(calls.some((c) => c.method === 'POST')).toBe(true));
@@ -165,6 +177,7 @@ describe('création de partie', () => {
       startDate: '2026-09-28',
       personnaliteId: 'reel-tondelier',
       adversaires: 'reels',
+      depart: 'equitable',
       scenarioId: 'standard',
     });
   });
@@ -331,6 +344,20 @@ describe('élection présidentielle', () => {
     renderRoute(`/parties/${GAME_ID}/sondages`);
     const polls = await screen.findByRole('region', { name: 'Sondages' });
     expect(within(polls).getByText(/Aucun sondage publié pour l’instant/)).toBeInTheDocument();
+    // Départ équitable : aucune mention des sondages réels.
+    expect(within(polls).queryByText(/la suite est simulée/)).not.toBeInTheDocument();
+  });
+
+  it('signale le départ « Sondages actuels » (phase 24)', async () => {
+    const state = playedState(() => true);
+    mockApi(withState({ ...state, socle: { date: '2026-10-29', t1: {}, t2: {} } }));
+    renderRoute(`/parties/${GAME_ID}/sondages`);
+    const polls = await screen.findByRole('region', { name: 'Sondages' });
+    const notice = within(polls).getByText(/la suite est simulée/);
+    expect(notice).toHaveTextContent(
+      'Sondages actuels Simulation : point de départ issu des sondages publiés, la suite est simulée',
+    );
+    expect(notice).toHaveTextContent(`publiés au ${formatGameDate('2026-10-29')}`);
   });
 
   it('affiche les résultats simulés des deux tours', async () => {

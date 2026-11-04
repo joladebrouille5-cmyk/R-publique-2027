@@ -540,6 +540,7 @@ export class LocalApi {
           scenarioId: body.scenarioId,
           orientationId: body.orientationId,
           format: body.format,
+          depart: body.depart,
         },
         ruleset,
       );

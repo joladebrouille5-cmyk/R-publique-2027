@@ -73,6 +73,7 @@ export async function createNewGame(
         scenarioId: body.scenarioId,
         orientationId: body.orientationId,
         format: body.format,
+        depart: body.depart,
       },
       ruleset,
     );

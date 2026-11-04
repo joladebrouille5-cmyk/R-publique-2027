@@ -55,6 +55,10 @@ describe('paramètres', () => {
       expect(links.get(source.titre)).toBe(source.url);
       expect(text).toContain(source.licence);
     }
+    // Phase 24 : sondages réels du départ « Sondages actuels », chacun avec sa source.
+    expect(links.get(RULESET.sondagesReels.source.titre)).toBe(RULESET.sondagesReels.source.url);
+    for (const e of RULESET.sondagesReels.enquetes)
+      expect(links.get(`${e.institut} pour ${e.commanditaire}`)).toBe(e.source);
     // Cartographie : référentiel géographique et bibliothèque de rendu.
     for (const source of manifest.sources) expect(text).toContain(source.licence);
     expect(links.has('MapLibre GL JS')).toBe(true);

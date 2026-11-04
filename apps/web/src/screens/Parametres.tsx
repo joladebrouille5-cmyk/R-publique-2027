@@ -9,7 +9,7 @@ import { MusicCredits, SoundSettings } from '../components/SoundSettings';
 import { SectionNav } from '../components/SectionNav';
 import { ThemeChoice } from '../components/ThemeChoice';
 import { card, input, screenTitle } from '../components/ui';
-import { formatGameDate } from '../labels';
+import { DEPART_SONDAGES_NOTICE, formatGameDate } from '../labels';
 import { useGeoManifest } from '../map/data';
 import { platform } from '../platform';
 
@@ -239,6 +239,32 @@ function Credits({ ruleset }: { ruleset: Ruleset }) {
                 : 'Données personnelles : la version web garde vos parties sur le serveur du jeu, rattachées à une session anonyme (cookie de session signé, sans compte ni adresse électronique).'}
             </p>
           </div>
+        </Sub>
+
+        <Sub title="Sondages réels (départ « Sondages actuels »)">
+          <p className="text-sm">
+            {DEPART_SONDAGES_NOTICE}. Chiffres relus dans la{' '}
+            <a href={ruleset.sondagesReels.source.url} {...external}>
+              {ruleset.sondagesReels.source.titre}
+            </a>{' '}
+            (révision {ruleset.sondagesReels.source.revision}, vérifiée le{' '}
+            {formatGameDate(ruleset.sondagesReels.verifieLe)}). {ruleset.sondagesReels.methode}
+          </p>
+          <ul className="space-y-1 text-sm">
+            {ruleset.sondagesReels.enquetes.map((e) => (
+              <li key={e.id}>
+                <a href={e.source} {...external}>
+                  {e.institut} pour {e.commanditaire}
+                </a>
+                , terrain du {formatGameDate(e.terrain.debut)} au {formatGameDate(e.terrain.fin)},{' '}
+                {e.echantillon.toLocaleString('fr-FR')} personnes ({e.hypothese}).
+              </li>
+            ))}
+            <li>
+              {ruleset.sondagesReels.duels.length} duels de second tour de 2026, chacun avec sa
+              source, relus dans la même révision.
+            </li>
+          </ul>
         </Sub>
 
         <Sub title="Sources du jeu de règles">

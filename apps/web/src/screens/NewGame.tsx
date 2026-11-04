@@ -3,6 +3,7 @@ import {
   DEFAULT_START_DATE,
   START_DATE_MAX,
   START_DATE_MIN,
+  type Depart,
   type Difficulty,
   type GameFormat,
   type GameMode,
@@ -40,6 +41,8 @@ import {
   FORMAT_LABELS,
   formatGameDate,
   MODE_LABELS,
+  DEPART_LABELS,
+  DEPART_SONDAGES_NOTICE,
   OPPONENT_SET_LABELS,
 } from '../labels';
 import { familyOf } from '../portraits';
@@ -85,6 +88,19 @@ const OPPONENTS: { value: OpponentSet; description: string }[] = [
     value: 'reels',
     description:
       'Les personnalités ayant déclaré leur candidature et retenues pour le jeu (fiches sourcées) ; leur comportement est simulé.',
+  },
+];
+
+const DEPARTS: { value: Depart; description: string }[] = [
+  {
+    value: 'sondages',
+    description:
+      'Chaque personnalité part de sa moyenne dans les derniers sondages publiés (sources en crédits) ; la suite de la campagne est simulée.',
+  },
+  {
+    value: 'equitable',
+    description:
+      'Toutes les personnalités partent des seuls moyens de leur fiche, sans socle électoral : la campagne fait la différence.',
   },
 ];
 
@@ -250,6 +266,7 @@ export function NewGame() {
   const [candidate, setCandidate] = useState<CandidateDraft>(EMPTY_CANDIDATE);
   const [personality, setPersonality] = useState<string | null>(null);
   const [opponents, setOpponents] = useState<OpponentSet>('fictifs');
+  const [depart, setDepart] = useState<Depart>('sondages');
   const [scenario, setScenario] = useState('standard');
   const [orientation, setOrientation] = useState<string | null>(null);
   const [missing, setMissing] = useState<string | null>(null);
@@ -334,6 +351,8 @@ export function NewGame() {
           : {}),
         ...(withPersonality && personality ? { personnaliteId: personality } : {}),
         adversaires: opponents,
+        // Phase 24 : le point de départ ne se choisit qu'avec des personnalités réelles.
+        ...(opponents === 'reels' ? { depart } : {}),
         ...((withCandidate || withPersonality) && orientation
           ? { orientationId: orientation }
           : {}),
@@ -348,6 +367,9 @@ export function NewGame() {
     ? [
         ['Mode', MODE_LABELS[mode]],
         ['Adversaires', OPPONENT_SET_LABELS[opponents]],
+        ...(opponents === 'reels'
+          ? ([['Point de départ', DEPART_LABELS[depart]]] as [string, string][])
+          : []),
         ['Défi', formatGameDate(defi.date)],
         ['Difficulté', DIFFICULTY_LABELS[defi.difficulte]],
         ['Scénario', scenarioLabel(defi.scenarioId)],
@@ -356,6 +378,9 @@ export function NewGame() {
     : [
         ['Mode', MODE_LABELS[mode]],
         ['Adversaires', OPPONENT_SET_LABELS[opponents]],
+        ...(opponents === 'reels'
+          ? ([['Point de départ', DEPART_LABELS[depart]]] as [string, string][])
+          : []),
         ['Difficulté', DIFFICULTY_LABELS[difficulty]],
         ['Scénario', scenarioLabel(scenario)],
         ['Format', FORMAT_LABELS[format]],
@@ -420,6 +445,22 @@ export function NewGame() {
                   labelOf={(v) => OPPONENT_SET_LABELS[v]}
                   columns="sm:grid-cols-2"
                 />
+                {opponents === 'reels' && (
+                  <>
+                    <Tiles
+                      name="point-de-depart"
+                      legend="Point de départ"
+                      options={DEPARTS}
+                      value={depart}
+                      onChange={setDepart}
+                      labelOf={(v) => DEPART_LABELS[v]}
+                      columns="sm:grid-cols-2"
+                    />
+                    {depart === 'sondages' && (
+                      <p className="text-sm text-encre-2">{DEPART_SONDAGES_NOTICE}.</p>
+                    )}
+                  </>
+                )}
                 {!defi && (
                   <>
                     <DifficultyPicker

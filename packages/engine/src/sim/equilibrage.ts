@@ -287,7 +287,25 @@ export function scenarios(ruleset: Ruleset): Record<string, Scenario> {
       id: 'observateur-reels-equitable',
       libelle: 'Observateur, personnalités réelles (départ équitable)',
       create: (seed, r) =>
-        short(r, seed, { mode: 'observateur', difficulty: 'standard', adversaires: 'reels' }),
+        short(r, seed, {
+          mode: 'observateur',
+          difficulty: 'standard',
+          adversaires: 'reels',
+          depart: 'equitable',
+        }),
+      strategy: 'passif',
+      programme: false,
+    },
+    {
+      id: 'observateur-reels-sondages',
+      libelle: 'Observateur, personnalités réelles (sondages actuels)',
+      create: (seed, r) =>
+        short(r, seed, {
+          mode: 'observateur',
+          difficulty: 'standard',
+          adversaires: 'reels',
+          depart: 'sondages',
+        }),
       strategy: 'passif',
       programme: false,
     },
@@ -345,6 +363,7 @@ export function scenarios(ruleset: Ruleset): Record<string, Scenario> {
           difficulty: 'standard',
           personnaliteId: personality.id,
           adversaires: 'reels',
+          depart: 'sondages',
         }),
       strategy: 'ia',
       programme: false,

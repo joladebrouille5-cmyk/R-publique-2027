@@ -14,6 +14,7 @@ import { compareStrings } from '../core/ledger';
 import { stream } from '../core/random';
 import { largestRemainder } from './apportion';
 import { debateVoteFactors } from './debats';
+import { socleFactors } from './socleFactors';
 import {
   blankRate,
   distance,
@@ -236,6 +237,8 @@ export function distribute(
           model.alea;
       const extra = [
         ...campaignFactors(state, ruleset, group, contender),
+        // Phase 24 : socle électoral « Sondages actuels » (départ calibré sur les sondages).
+        ...socleFactors(state, ruleset, contender.id, round),
         ...(round === 2
           ? secondRoundFactors(state, ruleset, group.id, contender)
           : debateVoteFactors(state, ruleset, contender.id)),

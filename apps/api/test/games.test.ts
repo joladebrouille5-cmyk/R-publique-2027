@@ -260,6 +260,8 @@ describe('création de partie', () => {
     ],
     [{ ...newGame, personnaliteId: 'reel-attal' }, 400, 'requete_invalide'],
     [{ ...newGame, adversaires: 'imaginaires' }, 400, 'requete_invalide'],
+    [{ ...newGame, depart: 'sondages' }, 422, 'depart_sans_personnalites'],
+    [{ ...newGame, adversaires: 'reels', depart: 'pronostic' }, 400, 'requete_invalide'],
     [{ ...newGame, scenarioId: 'scenario-inconnu' }, 422, 'scenario_inconnu'],
     [{ ...newGame, scenarioId: 'Tempête !' }, 400, 'requete_invalide'],
     [{ ...newGame, candidate: undefined }, 400, 'requete_invalide'],

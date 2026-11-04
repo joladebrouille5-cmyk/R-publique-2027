@@ -8,6 +8,7 @@ import { PollTrend } from '../components/PollTrend';
 import { ShareBar } from '../components/ShareBar';
 import { buttonSecondary, card } from '../components/ui';
 import {
+  DEPART_SONDAGES_NOTICE,
   formatCount,
   formatGameDate,
   formatPollDelta,
@@ -253,6 +254,14 @@ export function Polls() {
         biais propre à l’institut, atténués par le redressement. Ce n’est jamais une prédiction du
         résultat.
       </p>
+      {state.socle && (
+        <p className="text-sm text-encre-2">
+          <Badge tone="simule">Sondages actuels</Badge> {DEPART_SONDAGES_NOTICE} : chaque
+          personnalité réelle est partie de sa moyenne dans les sondages publiés au{' '}
+          {formatGameDate(state.socle.date)} (sources : Paramètres → Crédits). Ce socle s’érode
+          ensuite semaine après semaine.
+        </p>
+      )}
 
       {polls.length === 0 && (
         <p className={card}>

@@ -3,6 +3,7 @@ import type {
   AiObjective,
   CandidateStatus,
   DataStatus,
+  Depart,
   EconomicIndicator,
   Difficulty,
   FactorSource,
@@ -27,6 +28,16 @@ export const OPPONENT_SET_LABELS: Record<OpponentSet, string> = {
   fictifs: 'Adversaires fictifs',
   reels: 'Personnalités réelles',
 };
+
+/** Point de départ d'une partie avec des personnalités réelles (phase 24). */
+export const DEPART_LABELS: Record<Depart, string> = {
+  sondages: 'Sondages actuels',
+  equitable: 'Départ équitable',
+};
+
+/** Étiquette fixe du départ « Sondages actuels » (phase 24). */
+export const DEPART_SONDAGES_NOTICE =
+  'Simulation : point de départ issu des sondages publiés, la suite est simulée';
 
 /** Méthode de placement d'une personnalité réelle sur les axes (enquête d'experts CHES). */
 export const POSITION_METHOD_LABELS: Record<PositionMethod, string> = {

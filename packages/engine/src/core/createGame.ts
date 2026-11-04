@@ -1,3 +1,4 @@
+import { calibrateSocle } from '../election/socle';
 import {
   candidateName,
   DEFAULT_START_DATE,
@@ -508,5 +509,9 @@ export function createGame(input: CreateGameInput, ruleset: Ruleset): GameState 
     succes: [],
   };
   distributeInitialPromises(state, ruleset);
+  // Phase 24 : socle « Sondages actuels », calibré sur les sondages publiés (cycle 2027).
+  if (depart === 'sondages' && state.cycle.annee === ruleset.departSondages.cycle) {
+    state.socle = calibrateSocle(state, ruleset);
+  }
   return state;
 }
