@@ -7,6 +7,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { initialState, jingles, recordSound, reduceMotion, RULESET } from '../test/utils';
 import { formatEuros } from '../labels';
 import { teamBriefing } from '../components/CampaignTeam';
+import { DEMO_DEPARTEMENTS } from '../test/geo';
+import { boardShapes } from './geometry';
 import { Verdict, VERDICT_STEP_MS } from './Verdict';
 
 // Verdict de la semaine (phase 25, ancien débriefing de la phase 11) : un vrai bilan du moteur,
@@ -258,6 +260,30 @@ describe('verdict de la semaine : la séquence (phase 25)', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('la carte du verdict montre le gain d’implantation sur le département joué', () => {
+    const { state, report } = terrainWeek();
+    reduceMotion();
+    render(
+      <MemoryRouter>
+        <Verdict
+          report={report}
+          state={state}
+          gameId="partie"
+          ruleset={RULES}
+          shapes={boardShapes(DEMO_DEPARTEMENTS)}
+          onDone={vi.fn()}
+        />
+      </MemoryRouter>,
+    );
+    const dialog = screen.getByRole('dialog');
+    expect(
+      within(dialog).getByRole('img', {
+        name: 'Votre implantation par département après la semaine',
+      }),
+    ).toBeInTheDocument();
+    expect(within(dialog).getByText('+24 implantation')).toBeInTheDocument();
   });
 
   it('un toucher affiche tout d’un coup', async () => {

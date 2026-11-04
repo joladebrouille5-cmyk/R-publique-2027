@@ -84,7 +84,7 @@ describe('navigation de partie', () => {
     renderRoute(`/parties/${GAME_ID}`);
     expect(await screen.findByRole('heading', { name: 'Plateau' })).toBeInTheDocument();
     expect(screen.getAllByText(/28 sept\. 2026/).length).toBeGreaterThan(0);
-    expect(await screen.findByRole('button', { name: 'Résoudre la semaine 0' })).toBeEnabled();
+    expect(await screen.findByRole('button', { name: 'Jouer la semaine 0' })).toBeEnabled();
   });
 
   it('garde le QG détaillé à son adresse', async () => {

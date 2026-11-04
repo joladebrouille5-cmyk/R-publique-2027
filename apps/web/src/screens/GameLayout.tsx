@@ -1,5 +1,5 @@
 import type { GameDetail } from '@r2027/shared';
-import { Link, Outlet, useOutletContext, useParams } from 'react-router';
+import { Link, Outlet, useMatch, useOutletContext, useParams } from 'react-router';
 import { ApiRequestError } from '../api/client';
 import { useGame, useRuleset } from '../api/hooks';
 import { ambianceForPhase } from '../audio/ambiance';
@@ -18,6 +18,10 @@ function Game({ game }: { game: GameDetail }) {
   const withRealPeople = Object.values(game.state.actors).some(
     (a) => a.candidate.nature === 'reel',
   );
+  // Phase 25 : le plateau est un écran de jeu plein cadre (ni bandeau ni barre d'espaces) ; la
+  // boîte de jeu y donne accès à tout le reste.
+  const immersive = useMatch('/parties/:gameId/plateau') !== null;
+  if (immersive) return <Outlet context={game} />;
   return (
     <div className="mx-auto max-w-7xl px-4 pb-28 lg:grid lg:grid-cols-[11rem_minmax(0,1fr)] lg:gap-8 lg:pb-10">
       <GameNav />

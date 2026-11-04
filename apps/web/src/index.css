@@ -100,7 +100,7 @@
    * Identité « Feutrine » (phase 25) : la boîte de jeu. Feutrine bleu nuit du tapis, plateau en
    * carton crème bordé d'or, cartes épaisses à bord sombre et bandeau de famille, pions dorés.
    * Texte de craie sur la feutrine, encre brune sur le carton. Implantation : une seule teinte,
-   * du blanc au rouge, chaque palier avec la couleur de texte qui s'y lit.
+   * du crème à l'orange brûlé, chaque palier avec la couleur de texte qui s'y lit.
    */
   --color-feutrine: #16234f;
   --color-feutrine-2: #1f3166;
@@ -116,15 +116,16 @@
   --color-sur-or: #2a1d00;
   --color-or-ombre: #9a6b00;
   --color-bord-carte: #3b2f22;
-  --color-implantation-0: #fbf6f0;
-  --color-implantation-1: #f8cfc0;
-  --color-implantation-2: #ee9a80;
-  --color-implantation-3: #c9442f;
-  --color-implantation-4: #a8161f;
+  /* Implantation (maquette validée) : du crème à l'orange brûlé, une seule teinte. */
+  --color-implantation-0: #fbf3e4;
+  --color-implantation-1: #fbd9a6;
+  --color-implantation-2: #f5a65b;
+  --color-implantation-3: #e8702a;
+  --color-implantation-4: #c2410c;
   --color-sur-implantation-0: #2a1f14;
   --color-sur-implantation-1: #2a1f14;
   --color-sur-implantation-2: #2a1f14;
-  --color-sur-implantation-3: #ffffff;
+  --color-sur-implantation-3: #2a1f14;
   --color-sur-implantation-4: #ffffff;
   /* Bandeaux de famille des cartes : couleurs franches, texte blanc. */
   --color-famille-terrain: #1f7a46;
@@ -174,6 +175,8 @@
   --animate-imprime: imprime 420ms var(--ease-sortie) both;
   --animate-rebond: rebond 220ms var(--ease-sortie);
   --animate-tampon: tampon 520ms cubic-bezier(0.2, 0.9, 0.25, 1.15) 160ms both;
+  /* Phase 25 : la bannière dorée d'un combo claque sur la table, à peine penchée. */
+  --animate-banniere: banniere 560ms cubic-bezier(0.2, 0.9, 0.25, 1.15) both;
 
   @keyframes monte {
     from {
@@ -248,6 +251,19 @@
   @keyframes rebond {
     45% {
       transform: scale(1.12);
+    }
+  }
+  @keyframes banniere {
+    from {
+      transform: scale(1.6) rotate(-6deg);
+      opacity: 0;
+    }
+    60% {
+      transform: scale(0.97) rotate(-1.5deg);
+      opacity: 1;
+    }
+    to {
+      transform: rotate(-1.5deg);
     }
   }
   @keyframes tampon {

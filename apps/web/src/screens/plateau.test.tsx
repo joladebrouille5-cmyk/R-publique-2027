@@ -62,7 +62,7 @@ describe('plateau de jeu', () => {
     expect(
       screen.getByRole('button', { name: /^Finistère \(29\).*1 carte posée/ }),
     ).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Résoudre la semaine 0' }));
+    await user.click(screen.getByRole('button', { name: 'Jouer la semaine 0' }));
     await waitFor(() => expect(calls.some((c) => c.method === 'POST')).toBe(true));
     const post = calls.find((c) => c.method === 'POST')!;
     expect(post.body).toEqual({
@@ -121,9 +121,7 @@ describe('plateau de jeu', () => {
     renderRoute(`/parties/${GAME_ID}/plateau`);
     expect(await screen.findByRole('dialog')).toBeVisible();
     // Derrière la carte plein écran (modale), la barre de résolution attend la réponse.
-    expect(
-      screen.getByRole('button', { name: /^Résoudre la semaine/, hidden: true }),
-    ).toBeDisabled();
+    expect(screen.getByRole('button', { name: /^Jouer la semaine/, hidden: true })).toBeDisabled();
   });
 
   it('garde l’alerte « Programme trop court »', async () => {
@@ -137,6 +135,6 @@ describe('plateau de jeu', () => {
     renderRoute(`/parties/${GAME_ID}/plateau`);
     expect(await screen.findByText(/Mode observateur : aucune campagne/)).toBeVisible();
     expect(screen.queryByRole('region', { name: /^Main/ })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Résoudre la semaine 0' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Jouer la semaine 0' })).toBeEnabled();
   });
 });

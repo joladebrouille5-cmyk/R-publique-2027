@@ -70,6 +70,9 @@ export function AppLayout() {
   useAmbiance('accueil', 0);
   const { storageNotice } = platform();
   const inGame = useMatch('/parties/:gameId/*') !== null;
+  // Phase 25 : le plateau est plein cadre, sur la feutrine ; son bandeau porte le son et la boîte
+  // de jeu (Paramètres et accueil compris).
+  const immersive = useMatch('/parties/:gameId/plateau') !== null;
   return (
     <div className="flex min-h-dvh flex-col">
       <a
@@ -81,29 +84,31 @@ export function AppLayout() {
       {/* Fond sous la barre d'état de l'appareil : le contenu qui défile ne passe pas dessous. */}
       <div
         aria-hidden="true"
-        className="fixed inset-x-0 top-0 z-40 h-(--sat) bg-slate-50 dark:bg-slate-950"
+        className={`fixed inset-x-0 top-0 z-40 h-(--sat) ${immersive ? 'bg-feutrine' : 'bg-slate-50 dark:bg-slate-950'}`}
       />
-      <header className="border-b border-slate-200/80 pt-(--sat) pr-(--sar) pl-(--sal) dark:border-white/[0.07]">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 pt-3 pb-2 sm:gap-4">
-          <Brand />
-          <div className="flex items-center gap-0.5 sm:gap-2">
-            <SoundToggle />
-            <ThemeToggle />
-            <Link
-              to="/parametres"
-              className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-md px-3 text-sm font-bold text-slate-800 hover:bg-slate-200/70 dark:text-slate-200 dark:hover:bg-white/[0.08] dark:hover:text-white"
-            >
-              <Settings aria-hidden="true" className="size-5" />
-              <span className="sr-only sm:not-sr-only">Paramètres</span>
-            </Link>
+      {!immersive && (
+        <header className="border-b border-slate-200/80 pt-(--sat) pr-(--sar) pl-(--sal) dark:border-white/[0.07]">
+          <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 pt-3 pb-2 sm:gap-4">
+            <Brand />
+            <div className="flex items-center gap-0.5 sm:gap-2">
+              <SoundToggle />
+              <ThemeToggle />
+              <Link
+                to="/parametres"
+                className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-md px-3 text-sm font-bold text-slate-800 hover:bg-slate-200/70 dark:text-slate-200 dark:hover:bg-white/[0.08] dark:hover:text-white"
+              >
+                <Settings aria-hidden="true" className="size-5" />
+                <span className="sr-only sm:not-sr-only">Paramètres</span>
+              </Link>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
+      )}
       <main id="contenu" className="flex-1">
         <Outlet />
       </main>
       <footer
-        className={`border-t border-slate-200 text-xs text-slate-600 dark:border-white/[0.07] dark:text-slate-400 ${inGame ? 'max-lg:pb-[calc(6rem+var(--sab))]' : ''}`}
+        className={`border-t text-xs ${immersive ? 'border-white/10 bg-feutrine-3 pb-[calc(6rem+var(--sab))] text-craie-2' : `border-slate-200 text-slate-600 dark:border-white/[0.07] dark:text-slate-400 ${inGame ? 'max-lg:pb-[calc(6rem+var(--sab))]' : ''}`}`}
       >
         <div className="mx-auto flex max-w-7xl flex-col gap-1 px-4 py-4 sm:flex-row sm:justify-between">
           <ServerStatus />

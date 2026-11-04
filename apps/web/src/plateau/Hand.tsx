@@ -1,8 +1,9 @@
-import { FAMILLE_LABELS, type ActionDefinition, type Famille, type Ruleset } from '@r2027/shared';
+import type { ActionDefinition, Famille, Ruleset } from '@r2027/shared';
 import { Card } from './Card';
 
-// La main (phase 25) : toutes les cartes jouables de la semaine, rangées par famille, en
-// défilement horizontal. Pendant le quinquennat, l'agenda du président en une seule rangée.
+// La main (phase 25, maquette validée) : les cartes jouables de la semaine en éventail, rangées
+// par famille, qui défilent sous le pouce ; la carte prise se soulève. Pendant le quinquennat,
+// l'agenda du président.
 
 export type HandCard = {
   definition: ActionDefinition;
@@ -11,6 +12,7 @@ export type HandCard = {
 };
 
 const ORDER: Famille[] = ['terrain', 'medias', 'numerique', 'organisation'];
+const TILTS = ['-rotate-6', '-rotate-3', 'rotate-0', 'rotate-3', 'rotate-6'];
 
 export function Hand({
   cards,
@@ -25,36 +27,32 @@ export function Hand({
   armed: string | null;
   onPlay: (actionId: string) => void;
 }) {
-  const rows = presidency
-    ? [{ id: 'agenda', label: 'Agenda du président', cards }]
-    : ORDER.map((famille) => ({
-        id: famille,
-        label: FAMILLE_LABELS[famille],
-        cards: cards.filter((c) => (c.definition.famille ?? 'organisation') === famille),
-      })).filter((row) => row.cards.length > 0);
+  const ordered = presidency
+    ? cards
+    : [...cards].sort(
+        (a, b) =>
+          ORDER.indexOf(a.definition.famille ?? 'organisation') -
+          ORDER.indexOf(b.definition.famille ?? 'organisation'),
+      );
   return (
-    <section aria-label="Main" className="space-y-3">
-      <h2 className="font-display text-xl text-craie">Votre main</h2>
-      {rows.map((row) => (
-        <section key={row.id} aria-label={`Main : ${row.label}`} className="space-y-1.5">
-          <h3 className="font-display text-sm font-bold text-craie-2">{row.label}</h3>
-          <ul className="-mx-3 flex snap-x gap-3 overflow-x-auto px-3 pt-2 pb-3">
-            {row.cards.map((card) => (
-              <li key={card.definition.id} className="flex">
-                <Card
-                  definition={card.definition}
-                  ruleset={ruleset}
-                  presidency={presidency}
-                  reason={card.reason}
-                  combo={card.combo}
-                  armed={armed === card.definition.id}
-                  onPick={onPlay}
-                />
-              </li>
-            ))}
-          </ul>
-        </section>
-      ))}
+    <section aria-label="Main" className="relative">
+      <h2 className="sr-only">Votre main</h2>
+      <ul className="-mx-3 flex snap-x overflow-x-auto px-4 pt-6 pb-1 [scrollbar-width:none]">
+        {ordered.map((card, i) => (
+          <li key={card.definition.id} className="-ml-5 flex snap-center first:ml-0">
+            <Card
+              definition={card.definition}
+              ruleset={ruleset}
+              presidency={presidency}
+              reason={card.reason}
+              combo={card.combo}
+              armed={armed === card.definition.id}
+              tilt={TILTS[i % TILTS.length]}
+              onPick={onPlay}
+            />
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }

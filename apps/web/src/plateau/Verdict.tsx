@@ -4,6 +4,7 @@ import {
   type ActionOutcome,
   type EventFamily,
   type Factor,
+  type Famille,
   type GameState,
   type Poll,
   type ReportEvent,
@@ -13,6 +14,7 @@ import {
 } from '@r2027/shared';
 import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { Play } from 'lucide-react';
 import { Link } from 'react-router';
 import {
   EVENT_FAMILY_LABELS,
@@ -28,17 +30,21 @@ import { useCue } from '../audio/hooks';
 import { sound } from '../audio/systeme';
 import { Badge } from '../components/Badge';
 import { CampaignTeam } from '../components/CampaignTeam';
-import { boutonOr, buttonSecondary } from '../components/ui';
+import { boutonCraie, boutonOr } from '../components/ui';
 import { useCountUp } from '../components/useCountUp';
 import { useModal } from '../components/useModal';
 import { candidacies, CandidaciesSection, withoutCandidacies } from '../components/Candidacies';
 import { PrestationDetail } from '../components/WeeklyReportView';
+import { BOARD_VIEWBOX, type BoardShape } from './geometry';
+import { paintDepartment } from './readings';
 
-// Verdict de la semaine (phase 25, ancien débriefing de la phase 11) : plein écran, ouvert après
-// « Résoudre la semaine ». Les cartes jouées se retournent une à une (effet ou refus), puis les
-// combos, les départements qui changent de palier, le sondage avant / après, et le reste du
-// bilan. Un toucher affiche tout ; mouvement réduit : tout d'un coup. Il ne montre que le bilan
-// calculé par le moteur, sans rien recalculer.
+// Verdict de la semaine (phase 25, maquette validée ; ancien débriefing de la phase 11) : plein
+// écran sur la feutrine, ouvert après « Jouer la semaine ». « Le verdict » en lettres dorées, la
+// carte avec les gains d'implantation qui flottent sur les départements joués, les tuiles des
+// cartes qui se retournent une à une (la suivante hachurée « ? »), la bannière dorée des combos,
+// les paliers franchis, la carte « Votre sondage » avant → après, puis le reste du bilan. Un
+// toucher affiche tout ; mouvement réduit : tout d'un coup. Il ne montre que le bilan calculé par
+// le moteur, sans rien recalculer.
 
 /** Ressources résumées en tête du débriefing (le temps, rechargé chaque semaine, n'y figure pas). */
 const SUMMARY: ResourceKey[] = [
@@ -123,13 +129,16 @@ function BriefDelta({ ressource, delta, index }: Impact & { index: number }) {
       <span className="sr-only">
         {RESOURCE_LABELS[ressource]} {formatDelta(ressource, delta)}
       </span>
-      <span aria-hidden="true" className="block truncate text-xs font-semibold text-encre-2">
+      <span
+        aria-hidden="true"
+        className="block truncate text-[0.7rem] font-bold text-encre-carton-2"
+      >
         {RESOURCE_LABELS[ressource]}
       </span>{' '}
       <span
         aria-hidden="true"
-        className={`block font-display text-2xl leading-tight font-bold whitespace-nowrap tabular-nums ${
-          delta > 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'
+        className={`block font-display text-xl leading-tight font-extrabold whitespace-nowrap tabular-nums ${
+          delta > 0 ? 'text-famille-terrain' : 'text-famille-medias'
         }`}
       >
         <span className="mr-0.5 font-sans text-[0.8em] font-bold">{sign}</span>
@@ -139,9 +148,95 @@ function BriefDelta({ ressource, delta, index }: Impact & { index: number }) {
   );
 }
 
+/** La feuille de papier (thème clair ou nuit) posée sur la feutrine : le bilan détaillé. */
+const sheet =
+  'rounded-plateau bg-papier p-3 text-encre shadow-carte sm:p-4 dark:bg-slate-900 dark:text-slate-100';
 const section =
   'space-y-2 rounded-card border border-slate-200/90 p-4 dark:border-white/[0.08] dark:bg-white/[0.02]';
 const title = 'text-lg';
+/** Sections du spectacle : à même la feutrine, titres à la craie. */
+const stage = 'space-y-2';
+const stageTitle = 'font-display text-lg font-extrabold text-craie';
+
+/** Effet d'une carte en tuile : couleurs lisibles sur le carton, de jour comme de nuit. */
+function TileImpacts({ impacts }: { impacts: Impact[] }) {
+  if (impacts.length === 0)
+    return <p className="text-xs text-encre-carton-2">Sans effet mesurable.</p>;
+  return (
+    <p className="flex flex-wrap gap-x-2.5 gap-y-0.5 text-sm font-extrabold">
+      {impacts.map((i) => (
+        <span
+          key={i.ressource}
+          className={`whitespace-nowrap ${i.delta > 0 ? 'text-famille-terrain' : 'text-famille-medias'}`}
+        >
+          {RESOURCE_LABELS[i.ressource]} {formatDelta(i.ressource, i.delta)}
+        </span>
+      ))}
+    </p>
+  );
+}
+
+/**
+ * La carte de la semaine : les départements à leur implantation d'après la semaine, et le gain
+ * d'implantation qui flotte sur chaque département joué (dévoilé avec sa carte).
+ */
+function VerdictMap({
+  shapes,
+  state,
+  ruleset,
+  chips,
+}: {
+  shapes: readonly BoardShape[];
+  state: GameState;
+  ruleset: Ruleset;
+  chips: { code: string; text: string }[];
+}) {
+  const [x, y, width, height] = BOARD_VIEWBOX;
+  return (
+    <div className="relative mx-auto aspect-[1000/1180] w-full max-w-[calc(34dvh*1000/1180)]">
+      <svg
+        viewBox={`${x} ${y} ${width} ${height}`}
+        role="img"
+        aria-label="Votre implantation par département après la semaine"
+        className="absolute inset-0 h-full w-full"
+      >
+        {shapes.map((shape) => (
+          <path
+            key={shape.code}
+            d={shape.d}
+            className={`${paintDepartment(state, ruleset, 'implantation', shape.code).fillClass} stroke-trait`}
+            strokeWidth={1}
+            strokeLinejoin="round"
+          />
+        ))}
+      </svg>
+      {chips.map((chip) => {
+        const anchor = shapes.find((s) => s.code === chip.code);
+        if (!anchor) return null;
+        return (
+          <span
+            key={chip.code}
+            aria-hidden="true"
+            className="absolute z-10 -translate-x-1/2 -translate-y-1/2 animate-tampon rounded-full border-2 border-sur-or bg-or px-2 py-0.5 font-display text-xs font-extrabold whitespace-nowrap text-sur-or shadow-pion"
+            style={{
+              left: `${Math.min(85, Math.max(15, (anchor.label[0] / width) * 100))}%`,
+              top: `${(anchor.label[1] / height) * 100}%`,
+            }}
+          >
+            {chip.text}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+const FAMILY_BAND: Record<Famille, string> = {
+  terrain: 'bg-famille-terrain',
+  medias: 'bg-famille-medias',
+  numerique: 'bg-famille-numerique',
+  organisation: 'bg-famille-organisation',
+};
 
 /** Délai entre deux cartes retournées (le toucher ou le mouvement réduit l'abolit). */
 export const VERDICT_STEP_MS = 520;
@@ -158,6 +253,7 @@ export function Verdict({
   ruleset,
   eventFamily = () => null,
   achievement = () => null,
+  shapes = null,
   onDone,
 }: {
   report: WeeklyReport;
@@ -168,6 +264,8 @@ export function Verdict({
   eventFamily?: (refId: string) => EventFamily | null;
   /** Libellé et description d'un succès du jeu de règles (phase 15). */
   achievement?: (id: string) => { libelle: string; description: string } | null;
+  /** Formes des départements (la carte du verdict) ; sans elles, pas de carte. */
+  shapes?: readonly BoardShape[] | null;
   onDone: () => void;
 }) {
   const onClose = onDone;
@@ -231,7 +329,7 @@ export function Verdict({
     }
   }, [step, cards.length, combos.length, total]);
   const showAll = () => setStep(total);
-  const shown = (stage: number) => step > stage;
+  const shown = (n: number) => step > n;
   const depName = (code: string) => {
     const dep = ruleset?.parrainages.reservoir.departements[code];
     return dep ? `${dep.nom} (${code})` : code;
@@ -243,10 +341,29 @@ export function Verdict({
         .sort((a, b) => b.value - a.value)
         .findIndex((r) => r.actorId === playerId) + 1
     : 0;
+  const leader = mainPoll ? Math.max(...mainPoll.results.map((r) => r.value), 1) : 1;
+  // Gains d'implantation par département joué, dévoilés avec la première carte qui le vise.
+  // Le bilan porte la cible en libellé (« Finistère (29) ») : son code vient du jeu de règles.
+  const departements = ruleset?.parrainages.reservoir.departements ?? {};
+  const codeOf = (cible: string | null) =>
+    cible === null
+      ? undefined
+      : cible in departements
+        ? cible
+        : Object.entries(departements).find(([code, d]) => `${d.nom} (${code})` === cible)?.[0];
+  const ownImplantation = report.implantation.filter((c) => c.actorId === playerId);
+  const chips = cards.flatMap((a, i) => {
+    const code = codeOf(a.cible);
+    if (!shown(i) || !code || cards.findIndex((c) => c.cible === a.cible) !== i) return [];
+    const change = ownImplantation.find((c) => c.departement === code);
+    if (!change || change.after === change.before) return [];
+    const delta = change.after - change.before;
+    return [{ code, text: `${delta > 0 ? '+' : '−'}${Math.abs(delta)} implantation` }];
+  });
 
   // Portail sur le corps du document : aucun parent animé ne peut le placer sous la navigation.
   return createPortal(
-    <div className="fixed inset-0 z-[60] flex animate-apparait items-stretch justify-center bg-slate-950/75 backdrop-blur-sm sm:items-center sm:p-6">
+    <div className="fixed inset-0 z-[60] flex animate-apparait items-stretch justify-center bg-feutrine-3/80 backdrop-blur-sm sm:items-center sm:p-6">
       <div
         ref={dialog}
         role="dialog"
@@ -254,46 +371,22 @@ export function Verdict({
         aria-labelledby={titleId}
         tabIndex={-1}
         onKeyDown={onKeyDown}
-        className="flex w-full max-w-3xl animate-feuille flex-col overflow-hidden bg-papier outline-none sm:max-h-[90vh] sm:rounded-dossier sm:border-[1.5px] sm:border-slate-900 dark:bg-slate-900 dark:sm:border-white/25"
+        className="feutrine flex w-full max-w-3xl animate-feuille flex-col overflow-hidden text-craie outline-none sm:max-h-[92vh] sm:rounded-plateau sm:shadow-plateau"
       >
-        <header className="relative shrink-0 border-b-[1.5px] border-slate-900 border-t-[6px] border-t-republique-600 px-4 pt-[calc(1.1rem+var(--sat))] pb-4 sm:px-6 sm:pt-6 dark:border-white/20 dark:border-t-republique-400">
-          <div className="flex items-center gap-4">
-            {/* Coup de tampon (phase 21) : la semaine qui vient de passer est bouclée. */}
-            <span
-              aria-hidden="true"
-              className="flex w-[5.4rem] shrink-0 animate-tampon flex-col items-center rounded-md border-[3px] border-red-600 py-1 text-red-600 mix-blend-multiply outline-[1.5px] outline-offset-[3px] outline-red-600 outline-solid dark:border-red-400 dark:text-red-400 dark:mix-blend-screen dark:outline-red-400"
-            >
-              <span className="font-display text-[0.7rem] leading-none font-black tracking-[0.08em] uppercase [font-stretch:90%]">
-                Semaine
-              </span>
-              <span className="font-display text-[2.6rem] leading-[0.95] font-black [font-stretch:100%]">
-                {report.week}
-              </span>
-              <span className="font-display text-[0.7rem] leading-none font-black tracking-[0.08em] uppercase [font-stretch:90%]">
-                Bouclée
-              </span>
+        <header className="shrink-0 px-4 pt-[calc(1rem+var(--sat))] pb-2 text-center sm:px-6 sm:pt-6">
+          <p className="font-display text-base font-extrabold text-craie-2">
+            Semaine {report.week}
+            <span className="ml-2 font-sans text-xs font-semibold">
+              du {formatGameDate(report.date)}
             </span>
-            <div className="min-w-0">
-              <p className="text-xs font-bold text-encre-2">
-                Semaine du {formatGameDate(report.date)}
-              </p>
-              <h2 id={titleId} className="text-[1.9rem] leading-[0.95] sm:text-5xl">
-                Verdict de la semaine {report.week}
-              </h2>
-            </div>
-          </div>
-          {summary.length > 0 && (
-            <ul
-              aria-label="Votre semaine en bref"
-              className="mt-4 grid grid-cols-[repeat(auto-fill,minmax(8.5rem,1fr))] gap-x-5 gap-y-2"
-            >
-              {summary.map((i, index) => (
-                <li key={i.ressource} className="min-w-0">
-                  <BriefDelta {...i} index={index} />
-                </li>
-              ))}
-            </ul>
-          )}
+          </p>
+          <h2
+            id={titleId}
+            className="font-display text-[2.75rem] leading-none font-extrabold text-or [text-shadow:0_3px_0_var(--color-or-ombre)] sm:text-6xl"
+          >
+            <span className="sr-only">Verdict de la semaine {report.week}</span>
+            <span aria-hidden="true">Le verdict</span>
+          </h2>
         </header>
 
         <div
@@ -301,62 +394,114 @@ export function Verdict({
           aria-label="Détail de la semaine"
           tabIndex={0}
           onPointerDown={step < total ? showAll : undefined}
-          className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4 text-sm outline-none focus-visible:ring-2 focus-visible:ring-republique-500 focus-visible:ring-inset sm:px-6"
+          className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 pt-2 pb-4 text-sm outline-none focus-visible:ring-2 focus-visible:ring-or focus-visible:ring-inset sm:px-6"
         >
+          {shapes && ruleset && playerId && (
+            <div className="rounded-plateau bg-carton p-3 shadow-plateau">
+              <VerdictMap shapes={shapes} state={state} ruleset={ruleset} chips={chips} />
+            </div>
+          )}
+
+          {summary.length > 0 && (
+            <ul
+              aria-label="Votre semaine en bref"
+              className="grid grid-cols-[repeat(auto-fill,minmax(7rem,1fr))] gap-2"
+            >
+              {summary.map((i, index) => (
+                <li
+                  key={i.ressource}
+                  className="min-w-0 rounded-xl bg-carton px-2.5 py-1.5 text-encre-carton shadow-carte"
+                >
+                  <BriefDelta {...i} index={index} />
+                </li>
+              ))}
+            </ul>
+          )}
+
           {playerId && (
-            <section aria-labelledby={`${titleId}-actions`} className={section}>
-              <h3 id={`${titleId}-actions`} className={title}>
+            <section aria-labelledby={`${titleId}-actions`} className={stage}>
+              <h3 id={`${titleId}-actions`} className={stageTitle}>
                 Vos cartes de la semaine
               </h3>
               {cards.length === 0 && (
-                <p className="text-encre-2">Aucune carte jouée cette semaine.</p>
+                <p className="text-craie-2">Aucune carte jouée cette semaine.</p>
               )}
-              <ol className="grid gap-2 sm:grid-cols-2">
-                {cards.map((a, i) =>
-                  shown(i) ? (
+              <ol className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+                {cards.map((a, i) => {
+                  const famille = ruleset?.actions.find((d) => d.id === a.actionId)?.famille;
+                  return shown(i) ? (
                     <li
                       key={a.index}
-                      className="animate-revele space-y-1 rounded-carte border-2 border-bord-carte bg-carton p-3 text-encre-carton shadow-carte"
+                      className="flex animate-revele flex-col overflow-hidden rounded-2xl border-2 border-bord-carte bg-carton text-encre-carton shadow-carte"
                     >
-                      <p className="font-display font-bold">
-                        {a.label}
-                        {a.cible && <span className="font-sans font-normal"> — {a.cible}</span>}
-                      </p>
-                      {a.status === 'validee' ? (
-                        <>
-                          <Impacts impacts={impactOf(report, playerId, from('action', a.label))} />
-                          {a.prestation && <PrestationDetail prestation={a.prestation} />}
-                        </>
-                      ) : (
-                        <p>
-                          <Badge tone="danger">Refusée</Badge> {a.reason}
-                        </p>
-                      )}
+                      <span
+                        aria-hidden="true"
+                        className={`h-2 ${famille ? FAMILY_BAND[famille] : 'bg-encre-carton'}`}
+                      />
+                      <span className="flex flex-1 flex-col gap-1 p-2.5">
+                        <span className="font-display text-[0.95rem] leading-tight font-extrabold">
+                          {a.label}
+                        </span>
+                        {a.cible && (
+                          <span className="text-xs text-encre-carton-2">{depName(a.cible)}</span>
+                        )}
+                        {a.status === 'validee' ? (
+                          <TileImpacts
+                            impacts={impactOf(report, playerId, from('action', a.label))}
+                          />
+                        ) : (
+                          <span className="text-xs">
+                            <span className="mr-1 rounded bg-famille-medias px-1.5 font-extrabold text-white">
+                              Refusée
+                            </span>
+                            {a.reason}
+                          </span>
+                        )}
+                      </span>
                     </li>
                   ) : (
                     <li
                       key={a.index}
                       aria-hidden="true"
-                      className="h-20 rounded-carte border-2 border-bord-carte bg-feutrine-2 shadow-carte"
-                    />
-                  ),
-                )}
+                      className="grid min-h-24 place-items-center rounded-2xl border-2 border-dashed border-craie-2/60 bg-feutrine-2 bg-[repeating-linear-gradient(135deg,transparent_0_8px,rgb(255_255_255/0.07)_8px_16px)] font-display text-3xl font-extrabold text-craie-2"
+                    >
+                      ?
+                    </li>
+                  );
+                })}
               </ol>
+              {cards.some((a, i) => shown(i) && a.prestation) && (
+                <div className={`${sheet} space-y-3`}>
+                  {cards.map((a, i) =>
+                    shown(i) && a.prestation ? (
+                      <div key={a.index} className="space-y-1">
+                        <p className="text-xs font-bold">Passage « {a.label} »</p>
+                        <PrestationDetail prestation={a.prestation} />
+                      </div>
+                    ) : null,
+                  )}
+                </div>
+              )}
             </section>
           )}
 
           {shown(cards.length) && combos.length > 0 && (
-            <section aria-labelledby={`${titleId}-combos`} className={section}>
-              <h3 id={`${titleId}-combos`} className={title}>
+            <section aria-labelledby={`${titleId}-combos`} className={stage}>
+              <h3 id={`${titleId}-combos`} className="sr-only">
                 Combos
               </h3>
-              <ul className="flex flex-wrap gap-1.5">
+              <ul className="space-y-2">
                 {combos.map((c, i) => (
                   <li
                     key={`${c.kind}-${i}`}
-                    className="animate-tampon rounded-full bg-or px-3 py-1 text-xs font-extrabold text-sur-or"
+                    className="animate-banniere rounded-2xl border-[3px] border-sur-or bg-or px-4 py-2.5 text-center text-sur-or shadow-[0_5px_0_0_var(--color-or-ombre)]"
                   >
-                    {c.libelle}
+                    <span aria-hidden="true" className="block text-xs font-extrabold uppercase">
+                      Combo
+                    </span>
+                    <span className="block font-display text-lg leading-tight font-extrabold uppercase">
+                      {c.libelle}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -364,8 +509,11 @@ export function Verdict({
           )}
 
           {shown(cards.length + 1) && tiers.length > 0 && (
-            <section aria-labelledby={`${titleId}-paliers`} className={section}>
-              <h3 id={`${titleId}-paliers`} className={title}>
+            <section
+              aria-labelledby={`${titleId}-paliers`}
+              className="space-y-1.5 rounded-2xl bg-carton p-3 text-encre-carton shadow-carte"
+            >
+              <h3 id={`${titleId}-paliers`} className="font-display text-base font-extrabold">
                 Départements qui changent de palier
               </h3>
               <ul className="space-y-0.5">
@@ -382,24 +530,58 @@ export function Verdict({
           )}
 
           {shown(cards.length + 2) && mainPoll && mine && (
-            <section aria-labelledby={`${titleId}-verdict-sondage`} className={section}>
-              <h3 id={`${titleId}-verdict-sondage`} className={title}>
+            <section
+              aria-labelledby={`${titleId}-verdict-sondage`}
+              className="animate-revele space-y-2 rounded-2xl bg-carton p-3 text-encre-carton shadow-carte"
+            >
+              <h3 id={`${titleId}-verdict-sondage`} className="sr-only">
                 Le sondage dévoilé
               </h3>
-              <p className="font-display text-xl font-bold tabular-nums">
-                {mine.variation === null
-                  ? formatShare(mine.value)
-                  : `${formatShare(mine.value - mine.variation)} → ${formatShare(mine.value)}`}{' '}
-                <span className="font-sans text-sm font-normal text-encre-2">
-                  ({myRank === 1 ? '1er' : `${myRank}e`} sur {mainPoll.results.length},{' '}
-                  {mainPoll.institute}, sondage simulé)
-                </span>
+              <div className="flex items-center justify-between gap-3">
+                <p className="min-w-0">
+                  <span className="block text-xs font-bold text-encre-carton-2">Votre sondage</span>
+                  <span className="font-display text-2xl leading-tight font-extrabold tabular-nums">
+                    {mine.variation === null
+                      ? formatShare(mine.value)
+                      : `${formatShare(mine.value - mine.variation)} → ${formatShare(mine.value)}`}
+                  </span>
+                </p>
+                {mine.variation !== null && mine.variation !== 0 && (
+                  <span
+                    className={`shrink-0 rounded-full px-2.5 py-1 font-display text-sm font-extrabold tabular-nums text-white ${
+                      mine.variation > 0 ? 'bg-famille-terrain' : 'bg-famille-medias'
+                    }`}
+                  >
+                    {formatPollDelta(mine.variation)}
+                  </span>
+                )}
+              </div>
+              <span
+                aria-hidden="true"
+                className="relative block h-3 overflow-hidden rounded-full bg-carton-2"
+              >
+                <span
+                  className="absolute inset-y-0 left-0 rounded-full bg-or"
+                  style={{ width: `${Math.min(100, (mine.value / leader) * 100)}%` }}
+                />
+                {mine.variation !== null && (
+                  <span
+                    className="absolute inset-y-0 w-0.5 bg-encre-carton"
+                    style={{
+                      left: `${Math.min(100, Math.max(0, ((mine.value - mine.variation) / leader) * 100))}%`,
+                    }}
+                  />
+                )}
+              </span>
+              <p className="text-xs text-encre-carton-2">
+                {myRank === 1 ? '1er' : `${myRank}e`} sur {mainPoll.results.length} (barre : la part
+                du premier), {mainPoll.institute}, sondage simulé
               </p>
             </section>
           )}
 
           {shown(cards.length + 3) && (
-            <>
+            <div className={`${sheet} space-y-4`}>
               {/* Phase 20 : l'équipe de campagne résume la semaine, le détail suit. */}
               <CampaignTeam report={report} state={state} />
 
@@ -549,6 +731,15 @@ export function Verdict({
                 <h3 id={`${titleId}-sondages`} className={title}>
                   Sondages de la semaine
                 </h3>
+                {!(mainPoll && mine) && polls.length > 0 && (
+                  <Link
+                    to={`/parties/${gameId}/sondages`}
+                    className="text-sm font-bold underline"
+                    onClick={onClose}
+                  >
+                    Pourquoi les sondages bougent
+                  </Link>
+                )}
                 {polls.length === 0 ? (
                   <p className="text-encre-2">Aucun sondage d’intentions publié cette semaine.</p>
                 ) : (
@@ -579,23 +770,23 @@ export function Verdict({
                   </ul>
                 )}
               </section>
-            </>
+            </div>
           )}
         </div>
 
-        <footer className="flex shrink-0 flex-col gap-2 border-t border-slate-200 px-4 pt-3 pb-[calc(0.75rem+var(--sab))] sm:flex-row sm:items-center sm:justify-end sm:px-6 sm:pb-4 dark:border-white/[0.08]">
-          {polls.length > 0 && (
-            <Link to={`/parties/${gameId}/sondages`} className={buttonSecondary} onClick={onClose}>
-              Pourquoi les sondages bougent
-            </Link>
-          )}
+        <footer className="flex shrink-0 items-center gap-2 border-t border-white/10 bg-feutrine-3/60 px-4 pt-3 pb-[calc(0.75rem+var(--sab))] sm:justify-end sm:px-6 sm:pb-4">
           {step < total && (
-            <button type="button" className={buttonSecondary} onClick={showAll}>
+            <button type="button" className={`${boutonCraie} px-3`} onClick={showAll}>
               Tout afficher
             </button>
           )}
-          <button type="button" className={`${boutonOr} px-8`} onClick={onClose}>
+          <button
+            type="button"
+            className={`${boutonOr} min-h-14 flex-1 px-8 text-lg sm:flex-none`}
+            onClick={onClose}
+          >
             Semaine suivante
+            <Play aria-hidden="true" className="size-5 fill-current" />
           </button>
         </footer>
       </div>

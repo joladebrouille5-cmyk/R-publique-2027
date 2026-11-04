@@ -30,3 +30,6 @@ Object.defineProperty(Element.prototype, 'scrollIntoView', {
   writable: true,
   value: () => {},
 });
+
+// Le plateau (phase 25) revient en haut de la page à son arrivée ; jsdom ne défile pas.
+Object.defineProperty(window, 'scrollTo', { configurable: true, writable: true, value: () => {} });

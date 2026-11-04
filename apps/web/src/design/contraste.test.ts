@@ -90,7 +90,7 @@ describe('identité « Feutrine » (phase 25)', () => {
     }
   });
 
-  it('une seule teinte du blanc au rouge, chaque palier lisible avec son texte', () => {
+  it('une seule teinte du crème à l’orange brûlé, chaque palier lisible avec son texte', () => {
     const steps = [0, 1, 2, 3, 4].map((i) => tokenIn(day, `implantation-${i}`));
     for (let i = 1; i < steps.length; i++)
       expect(luminance(steps[i]!), `palier ${i}`).toBeLessThan(luminance(steps[i - 1]!));
