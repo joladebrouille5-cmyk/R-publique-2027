@@ -30,7 +30,8 @@
     "data:legislatives": "pnpm --filter @r2027/data-import run legislatives",
     "data:sons": "pnpm --filter @r2027/data-import run sons",
     "mesure:carte": "node scripts/spike-carte/spike.mjs",
-    "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test"
+    "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test",
+    "sim:equilibrage": "pnpm --filter @r2027/engine exec tsx scripts/sim-equilibrage.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",

@@ -37,3 +37,4 @@ apps/api/src/generated/
 
 # Captures de l’essai Android (apps/mobile/scripts/essai-android.mjs)
 essai-android/
+data/sim/
