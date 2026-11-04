@@ -1,5 +1,6 @@
 import type { GroupBehavior, Ruleset } from '@r2027/shared';
 import { largestRemainder } from '../election/apportion';
+import { adjustProbabilities } from '../election/implantation';
 import type { VoteCounts } from './aggregate';
 import type { TerritorialBaseline, TerritorialUnit } from './baseline';
 
@@ -34,6 +35,8 @@ export function tallyUnit(
   ruleset: Ruleset,
   candidates: readonly string[],
   behavior: readonly GroupBehavior[],
+  /** Phase 25 : multiplicateurs d'implantation du département de l'unité, par candidat. */
+  multipliers?: readonly number[],
 ): UnitTally {
   const parts = ruleset.electorat.groupes.map((g, i) => g.part * (unit.affinite[i] ?? 1));
   const inscrits = unit.inscrits > 0 ? largestRemainder(unit.inscrits, parts) : parts.map(() => 0);
@@ -46,8 +49,9 @@ export function tallyUnit(
     const blancs = Math.round(votants * b.blancs);
     const nuls = Math.round(votants * b.nuls);
     const exprimes = votants - blancs - nuls;
+    const probabilities = adjustProbabilities(b.probabilities, multipliers);
     const voix =
-      exprimes > 0 ? largestRemainder(exprimes, b.probabilities) : b.probabilities.map(() => 0);
+      exprimes > 0 ? largestRemainder(exprimes, probabilities) : probabilities.map(() => 0);
     counts.inscrits = ins;
     counts.votants = votants;
     counts.blancs = blancs;
@@ -74,6 +78,8 @@ export function tallyBaseline(
   ruleset: Ruleset,
   candidates: readonly string[],
   behavior: readonly GroupBehavior[],
+  /** Phase 25 : multiplicateurs d'implantation par département (à défaut : aucun). */
+  multipliers: Readonly<Record<string, readonly number[]>> = {},
 ): TerritorialTally {
   const national = zero(candidates);
   const groups = behavior.map(() => zero(candidates));
@@ -81,7 +87,13 @@ export function tallyBaseline(
   const regions: Record<string, VoteCounts> = {};
   const horsCarte: Record<string, VoteCounts> = {};
   for (const unit of baseline.units) {
-    const tally = tallyUnit(unit, ruleset, candidates, behavior);
+    const tally = tallyUnit(
+      unit,
+      ruleset,
+      candidates,
+      behavior,
+      unit.departement === null ? undefined : multipliers[unit.departement],
+    );
     tally.groups.forEach((counts, g) => addInto(groups[g]!, counts));
     if (unit.departement === null || unit.region === null) {
       horsCarte[unit.code] = tally.total;

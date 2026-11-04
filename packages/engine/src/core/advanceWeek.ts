@@ -36,6 +36,7 @@ import {
 import { applyProgramme, programmeReport, validateProgrammeChange } from '../campaign/programme';
 import { drawRendezVous, meetingHours, RECEIVE_OPTION } from '../campaign/rendezvous';
 import { distribute, groupShares, summarize } from '../election/distribution';
+import { projectDepartments } from '../election/implantation';
 import { resolveWeekDebates, scheduleDebates } from '../election/debats';
 import { concludeRound, scrutinOfWeek } from '../election/flow';
 import { weeklyDrift } from '../election/opinion';
@@ -324,7 +325,12 @@ export function advanceWeek(
   if (phase === 'campagne' || phase === 'entre_deux_tours') {
     const round = phase === 'campagne' ? 1 : 2;
     const distributions = distribute(state, ruleset, round, 'opinion');
-    const opinion = summarize(distributions, week, round);
+    const summary = summarize(distributions, week, round);
+    // Phase 25 : projection simulée par département, avec une base territoriale.
+    const opinion = summary && {
+      ...summary,
+      departements: territory ? projectDepartments(state, ruleset, distributions, territory) : {},
+    };
     state.opinion = opinion;
     if (opinion) {
       intentions = { round, participation: opinion.participation, values: opinion.intentions };

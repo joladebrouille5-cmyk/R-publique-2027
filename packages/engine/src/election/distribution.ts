@@ -14,6 +14,7 @@ import { compareStrings } from '../core/ledger';
 import { stream } from '../core/random';
 import { largestRemainder } from './apportion';
 import { debateVoteFactors } from './debats';
+import { implantationFactor } from './implantation';
 import { socleFactors } from './socleFactors';
 import {
   blankRate,
@@ -106,6 +107,8 @@ function campaignFactors(
     ...supportFactors(state, ruleset, group, contender.id),
     // Phase 23 : bilan du quinquennat écoulé (président sortant et son camp).
     ...recordFactors(state, contender.id),
+    // Phase 25 : implantation moyenne du candidat dans les départements.
+    ...implantationFactor(state, ruleset, contender.id),
   ];
   for (const alliance of state.alliances) {
     if (alliance.vers !== contender.id) continue;

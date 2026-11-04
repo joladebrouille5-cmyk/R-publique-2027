@@ -33,7 +33,13 @@ export function communeResults(
     if (unit.niveau !== 'commune' || unit.departement !== departement) continue;
     results.set(
       unit.code,
-      tallyUnit(unit, ruleset, territoire.candidats, territoire.comportement).total,
+      tallyUnit(
+        unit,
+        ruleset,
+        territoire.candidats,
+        territoire.comportement,
+        territoire.implantation?.[departement],
+      ).total,
     );
   }
   return results;

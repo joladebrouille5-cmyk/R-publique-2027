@@ -566,6 +566,11 @@ export const TerritorialResultSchema = z
     nature: z.enum(['reel', 'fictif', 'national']),
     candidats: z.array(Id),
     comportement: z.array(GroupBehaviorSchema),
+    /**
+     * Phase 25 : multiplicateurs d'implantation appliqués par département (ordre des
+     * candidats) ; absents pour un tour dépouillé avant la phase 25 ou sans géographie.
+     */
+    implantation: z.record(z.string(), z.array(z.number().positive())).optional(),
     departements: z.record(z.string(), CountsSchema),
     regions: z.record(z.string(), CountsSchema),
     horsCarte: z.record(z.string(), CountsSchema),

@@ -3,6 +3,7 @@ import { compareStrings } from '../core/ledger';
 import type { TerritorialBaseline } from '../territory/baseline';
 import { tallyBaseline } from '../territory/tally';
 import { distribute, type Round } from './distribution';
+import { implantationMultipliers } from './implantation';
 
 /**
  * Dépouillement simulé d'un tour (§5.1, §3.3) : le comportement de chaque groupe d'électeurs
@@ -28,7 +29,10 @@ export function resolveRound(
     nuls: d.nuls,
     probabilities: d.probabilities,
   }));
-  const tally = tallyBaseline(baseline, ruleset, candidats, comportement);
+  // Phase 25 : l'implantation déplace le score d'un département à l'autre (multiplicateur
+  // enregistré avec le résultat, pour recalculer le détail communal à l'identique).
+  const multipliers = implantationMultipliers(state, ruleset, candidats, baseline);
+  const tally = tallyBaseline(baseline, ruleset, candidats, comportement, multipliers);
   const { national } = tally;
   const { voix, exprimes } = national;
 
@@ -65,6 +69,7 @@ export function resolveRound(
       nature: baseline.nature,
       candidats,
       comportement,
+      ...(Object.keys(multipliers).length > 0 ? { implantation: multipliers } : {}),
       departements: tally.departements,
       regions: tally.regions,
       horsCarte: tally.horsCarte,
