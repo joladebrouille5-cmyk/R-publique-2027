@@ -11,7 +11,7 @@ import {
   type SupportProspects,
 } from '@r2027/shared';
 import { Clock, Crosshair, Info, Plus, Users, Wallet, X } from 'lucide-react';
-import { useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Avatar } from '../../components/Avatar';
 import { Badge } from '../../components/Badge';
 import { Drawer } from '../../components/Drawer';
@@ -589,6 +589,23 @@ export function ActionPlanner({
   const catalog = presidency ? ruleset.quinquennat.actions : ruleset.actions;
   // Fiche d'une action ouverte dans un tiroir (phase 12), sans quitter le QG.
   const [details, setDetails] = useState<string | null>(null);
+  // Phase 22 : la tuile ajoutée « s'imprime » (aplat de surligneur qui s'efface en 420 ms) et le
+  // compteur du plan rebondit à chaque changement — retours d'action, jamais au chargement.
+  const [added, setAdded] = useState<{ id: string; n: number } | null>(null);
+  const addedTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(addedTimer.current), []);
+  const add = (actionId: string) => {
+    onAdd(actionId);
+    setAdded((previous) => ({ id: actionId, n: (previous?.n ?? 0) + 1 }));
+    clearTimeout(addedTimer.current);
+    addedTimer.current = setTimeout(() => setAdded(null), 450);
+  };
+  const [bump, setBump] = useState(0);
+  const [seenLength, setSeenLength] = useState(plan.length);
+  if (seenLength !== plan.length) {
+    setSeenLength(plan.length);
+    setBump(bump + 1);
+  }
   const remaining = remainingAfter(plan, catalog, actor, reservedHours);
   const full = plan.length >= ruleset.jeu.actionsMaxParSemaine;
   const summary = `Reste après le plan : ${
@@ -621,7 +638,10 @@ export function ActionPlanner({
           />
           <div className="shrink-0 text-right">
             <p className="text-xs font-semibold text-encre-2">Actions</p>
-            <p className="font-display text-sm font-bold tabular-nums">
+            <p
+              key={bump}
+              className={`font-display text-sm font-bold tabular-nums ${bump > 0 ? 'animate-rebond' : ''}`}
+            >
               {plan.length}/{ruleset.jeu.actionsMaxParSemaine}
             </p>
           </div>
@@ -715,11 +735,23 @@ export function ActionPlanner({
             ? `${action.cout.tempsHeures} h`
             : `${action.cout.budgetCentimes > 0 ? `${compactEuros.format(action.cout.budgetCentimes / 100)} · ` : ''}${action.cout.tempsHeures} h`;
           return (
-            <li key={action.id} className="relative" aria-label={action.libelle}>
+            <li
+              key={action.id}
+              className="relative"
+              aria-label={action.libelle}
+              data-ajoutee={added?.id === action.id ? '' : undefined}
+            >
+              {added?.id === action.id && (
+                <span
+                  key={added.n}
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-0 z-10 animate-imprime rounded-lg bg-or-300 mix-blend-multiply dark:bg-dorure dark:mix-blend-screen"
+                />
+              )}
               <button
                 type="button"
                 disabled={reason !== null}
-                onClick={() => onAdd(action.id)}
+                onClick={() => add(action.id)}
                 aria-label={`Ajouter ${action.libelle}`}
                 className="group flex h-full min-h-32 w-full flex-col items-start gap-2 rounded-lg border-[1.5px] border-slate-200 bg-papier p-3.5 pr-11 text-left transition duration-150 ease-sortie hover:border-slate-900 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-55 dark:border-white/10 dark:bg-white/[0.03] dark:hover:border-slate-200"
               >
@@ -791,7 +823,7 @@ export function ActionPlanner({
                   className={`${buttonPrimary} w-full`}
                   disabled={reason !== null}
                   onClick={() => {
-                    onAdd(action.id);
+                    add(action.id);
                     setDetails(null);
                   }}
                 >

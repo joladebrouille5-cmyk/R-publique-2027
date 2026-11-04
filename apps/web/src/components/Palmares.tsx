@@ -11,6 +11,11 @@ import { card } from './ui';
 
 const share = (value: number) => formatShare(Math.round(value * 10_000));
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n > 1 ? many : one}`;
+/** Mois abrégé d'une date ISO (« nov. »), lu en UTC comme la date du jeu. */
+const monthOf = (iso: string) =>
+  new Intl.DateTimeFormat('fr-FR', { month: 'short', timeZone: 'UTC' }).format(
+    new Date(`${iso}T00:00:00Z`),
+  );
 
 function Level({ progression }: { progression: Progression }) {
   const { niveau, points } = progression;
@@ -113,9 +118,21 @@ export function Palmares() {
           Même campagne pour tous ce {formatGameDate(defi.date)}, en format court. Votre score :
           votre part des voix au premier tour.
         </p>
-        <p className="font-display text-5xl leading-[0.95] font-black tabular-nums [font-stretch:78%]">
-          {defi.meilleurScore === null ? 'Pas encore de score' : share(defi.meilleurScore)}
-        </p>
+        {/* Phase 22 : la date du défi, frappée comme un tampon, à côté du score. */}
+        <div className="flex flex-1 items-center gap-4 sm:gap-5">
+          <p
+            aria-hidden="true"
+            className="flex shrink-0 flex-col items-center rounded-md border-[2.5px] border-white/85 px-3 pt-1 pb-1.5 leading-none"
+          >
+            <span className="font-display text-[3.4rem] font-black tabular-nums [font-stretch:80%]">
+              {Number(defi.date.slice(8, 10))}
+            </span>
+            <span className="text-sm font-bold">{monthOf(defi.date)}</span>
+          </p>
+          <p className="font-display text-[2.6rem] leading-[0.95] font-black tabular-nums [font-stretch:78%] sm:text-5xl">
+            {defi.meilleurScore === null ? 'Pas encore de score' : share(defi.meilleurScore)}
+          </p>
+        </div>
         <p className="text-sm text-white/90">
           {defi.tentatives === 0
             ? 'Aucune tentative aujourd’hui.'

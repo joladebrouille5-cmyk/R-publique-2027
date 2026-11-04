@@ -159,6 +159,21 @@ describe('tableau de bord', () => {
     expect(within(reasons).getByText('−20')).toBeInTheDocument();
   });
 
+  it('imprime brièvement la tuile de l’action ajoutée (phase 22)', async () => {
+    mockApi(base());
+    renderRoute(`/parties/${GAME_ID}/tableau-de-bord`);
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Ajouter Meeting public' }));
+    const catalog = screen.getByRole('list', { name: 'Catalogue des actions' });
+    const tile = within(catalog).getByRole('listitem', { name: 'Meeting public' });
+    expect(tile).toHaveAttribute('data-ajoutee');
+    // L'aplat s'efface : la tuile redevient ordinaire.
+    await waitFor(() => expect(tile).not.toHaveAttribute('data-ajoutee'), { timeout: 1500 });
+    expect(
+      within(catalog).getByRole('listitem', { name: 'Interview dans un média' }),
+    ).not.toHaveAttribute('data-ajoutee');
+  });
+
   it('désactive une action dont le prérequis n’est pas rempli', async () => {
     const game = gameFixture();
     game.state.actors.joueur!.resources.militants = 10;
