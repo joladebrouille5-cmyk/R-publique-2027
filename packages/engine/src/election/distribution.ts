@@ -229,6 +229,15 @@ export function distribute(
       : null;
 
   return groups.map((group, g) => {
+    // Phase 24 : fidélité de camp, au premier tour, pour le candidat le plus proche du groupe.
+    const closest =
+      round === 1 && model.fideliteCamp > 0
+        ? contenders.reduce((best, c) =>
+            distance(group.position, c.position) < distance(group.position, best.position)
+              ? c
+              : best,
+          ).id
+        : null;
     const factors = contenders.map((contender, c) => {
       const alea = persistent
         ? persistent[c]![g]!
@@ -239,6 +248,9 @@ export function distribute(
         ...campaignFactors(state, ruleset, group, contender),
         // Phase 24 : socle électoral « Sondages actuels » (départ calibré sur les sondages).
         ...socleFactors(state, ruleset, contender.id, round),
+        ...(contender.id === closest
+          ? [{ label: 'Fidélité de camp', value: model.fideliteCamp }]
+          : []),
         ...(round === 2
           ? secondRoundFactors(state, ruleset, group.id, contender)
           : debateVoteFactors(state, ruleset, contender.id)),

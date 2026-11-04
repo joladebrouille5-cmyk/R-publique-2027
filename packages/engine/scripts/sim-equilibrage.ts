@@ -13,17 +13,24 @@ const wanted = args.filter((a, i) => !a.startsWith('--') && (at < 0 || i !== at 
 // Réglage au banc : surcharge JSON fusionnée dans le jeu de règles (jamais en jeu), par exemple
 // R2027_SIM_SURCHARGE='{"departSondages":{"decroissance":0.97}}'.
 const surcharge = process.env.R2027_SIM_SURCHARGE;
-const merge = (base: unknown, patch: unknown): unknown =>
-  patch && typeof patch === 'object' && !Array.isArray(patch) && base && typeof base === 'object'
-    ? Object.fromEntries(
-        [...new Set([...Object.keys(base), ...Object.keys(patch)])].map((k) => [
-          k,
-          k in patch
-            ? merge((base as Record<string, unknown>)[k], (patch as Record<string, unknown>)[k])
-            : (base as Record<string, unknown>)[k],
-        ]),
-      )
-    : patch;
+type Json = Record<string, unknown>;
+const isObject = (v: unknown): v is Json => !!v && typeof v === 'object' && !Array.isArray(v);
+// Objets fusionnés clé par clé ; listes d'objets à `id` fusionnées élément par élément.
+const merge = (base: unknown, patch: unknown): unknown => {
+  if (Array.isArray(base) && Array.isArray(patch) && patch.every((p) => isObject(p) && 'id' in p))
+    return base.map((item) => {
+      const match = patch.find((p) => (p as Json).id === (item as Json).id);
+      return match ? merge(item, match) : item;
+    });
+  if (isObject(base) && isObject(patch))
+    return Object.fromEntries(
+      [...new Set([...Object.keys(base), ...Object.keys(patch)])].map((k) => [
+        k,
+        k in patch ? merge(base[k], patch[k]) : base[k],
+      ]),
+    );
+  return patch;
+};
 const ruleset = (
   surcharge
     ? merge(getRuleset(CURRENT_RULESET_KEY), JSON.parse(surcharge))

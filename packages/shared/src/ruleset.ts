@@ -1477,6 +1477,11 @@ export const RulesetSchema = z
          * proximité ne pénalise plus davantage (hypothèse) ; 3 ou plus : aucune saturation.
          */
         saturationProximite: z.number().min(0).max(3),
+        /**
+         * Phase 24 : bonus d'utilité, au premier tour, du candidat le plus proche de chaque groupe
+         * d'électeurs (fidélité de camp, hypothèse) ; 0 : aucun effet.
+         */
+        fideliteCamp: z.number().min(0).max(3),
         notoriete: Coefficient,
         popularite: Coefficient,
         dynamique: Coefficient,
