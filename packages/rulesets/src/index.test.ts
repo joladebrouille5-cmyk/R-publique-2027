@@ -1183,7 +1183,7 @@ describe('rééquilibrage : sondages réels et départ « Sondages actuels » (p
     expect(ruleset.modele.fideliteCamp).toBe(0);
     expect(ruleset.modele.note).toContain('Phase 24');
     expect(ruleset.departSondages).toMatchObject({
-      decroissance: 0.98,
+      decroissance: 0.985,
       decroissanceSecondTour: 0.95,
     });
     expect(ruleset.rattrapageNotoriete.statut).toBe('hypothese');
