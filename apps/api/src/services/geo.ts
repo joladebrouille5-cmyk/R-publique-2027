@@ -1,10 +1,11 @@
 import {
+  buildTerritorySearch,
   CommuneIndexSchema,
   GeoManifestSchema,
-  normalizeName,
-  zoneOfDepartement,
+  searchTerritories,
   type CommuneIndexEntry,
   type GeoManifest,
+  type TerritorySearchEntry,
   type TerritorySearchResult,
 } from '@r2027/shared';
 import { existsSync, readFileSync } from 'node:fs';
@@ -26,14 +27,12 @@ export function geoDirectories(configured: string | undefined): string[] {
   ];
 }
 
-type Searchable = { result: TerritorySearchResult; name: string; rank: number };
-
 /** Référentiel chargé en mémoire : manifeste, index de recherche et fichiers servis (compressés). */
 export class GeoRepository {
   readonly manifest: GeoManifest;
   /** Index des communes : [code, nom, département, région, emprise…]. */
   readonly index: CommuneIndexEntry[];
-  private readonly entries: Searchable[];
+  private readonly entries: TerritorySearchEntry[];
   private readonly allowed: Set<string>;
   private readonly cache = new Map<string, { raw: Buffer; gzip: Buffer }>();
 
@@ -48,47 +47,7 @@ export class GeoRepository {
       this.manifest.index,
       ...this.manifest.departements.flatMap((d) => (d.fichier ? [d.fichier] : [])),
     ]);
-    this.entries = [
-      ...this.manifest.regions.map((r) => ({
-        result: {
-          level: 'region' as const,
-          code: r.code,
-          nom: r.nom,
-          departement: null,
-          zone: zoneOf(r.code, this.manifest),
-          bbox: r.bbox,
-        },
-        name: normalizeName(r.nom),
-        rank: 0,
-      })),
-      ...this.manifest.departements.map((d) => ({
-        result: {
-          level: 'departement' as const,
-          code: d.code,
-          nom: d.nom,
-          departement: d.code,
-          zone: d.zone,
-          bbox: d.bbox,
-        },
-        name: normalizeName(d.nom),
-        rank: 1,
-      })),
-      ...index.map((entry: CommuneIndexEntry) => {
-        const [code, nom, departement, , w, s, e, n] = entry;
-        return {
-          result: {
-            level: 'commune' as const,
-            code,
-            nom,
-            departement,
-            zone: zoneOfDepartement(departement),
-            bbox: [w, s, e, n] as [number, number, number, number],
-          },
-          name: normalizeName(nom),
-          rank: 2,
-        };
-      }),
-    ];
+    this.entries = buildTerritorySearch(this.manifest, index);
   }
 
   /** Lit le premier référentiel disponible ; erreur explicite si aucun n'existe. */
@@ -114,38 +73,8 @@ export class GeoRepository {
     return cached;
   }
 
-  /**
-   * Recherche par code (exact puis préfixe) ou par nom (sans accents ni casse : égalité, début,
-   * puis contenu). À pertinence égale : régions, départements, puis communes, et ordre des codes.
-   */
+  /** Recherche de territoires (voir `searchTerritories`, partagée avec le serveur local). */
   search(query: string, limit = 10): TerritorySearchResult[] {
-    const q = normalizeName(query);
-    if (q.length === 0) return [];
-    const code = query.trim().toUpperCase();
-    const scored: { entry: Searchable; score: number }[] = [];
-    for (const entry of this.entries) {
-      let score: number | null = null;
-      if (entry.result.code === code) score = 0;
-      else if (code.length >= 2 && /^[0-9AB]+$/.test(code) && entry.result.code.startsWith(code))
-        score = 1;
-      else if (entry.name === q) score = 2;
-      else if (entry.name.startsWith(q)) score = 3;
-      else if (q.length >= 3 && entry.name.includes(q)) score = 4;
-      if (score !== null) scored.push({ entry, score });
-    }
-    return scored
-      .sort(
-        (a, b) =>
-          a.score - b.score ||
-          a.entry.rank - b.entry.rank ||
-          a.entry.name.length - b.entry.name.length ||
-          (a.entry.result.code < b.entry.result.code ? -1 : 1),
-      )
-      .slice(0, limit)
-      .map((s) => s.entry.result);
+    return searchTerritories(this.entries, query, limit);
   }
-}
-
-function zoneOf(regionCode: string, manifest: GeoManifest) {
-  return manifest.departements.find((d) => d.region === regionCode)?.zone ?? 'metropole';
 }

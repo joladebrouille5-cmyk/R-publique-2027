@@ -1,4 +1,5 @@
 import {
+  DIFFICULTIES,
   relationKey,
   totalReceipts,
   type GameState,
@@ -138,7 +139,7 @@ function advanceWeekWith(
 describe('parrainages (§6)', () => {
   it('un élu ne s’engage qu’une fois : aucun département ne dépasse son réservoir', () => {
     fc.assert(
-      fc.property(fc.constantFrom('accessible', 'standard', 'expert'), fc.nat(1000), (d, n) => {
+      fc.property(fc.constantFrom(...DIFFICULTIES), fc.nat(1000), (d, n) => {
         const state = newGame({ difficulty: d, seed: `res-${n}` });
         const engaged = committedByDepartement(state);
         for (const [dep, count] of engaged) expect(count).toBeLessThanOrEqual(pool(RULESET, dep));
@@ -443,9 +444,10 @@ describe('médias et débats (§8)', () => {
   });
 
   it('les adversaires choisissent eux aussi des émissions réelles, selon les mêmes règles', () => {
+    // Six mois de campagne : les adversaires y mènent aussi parrainages et négociations de soutien.
     const { reports } = playUntil(
       newGame({ mode: 'observateur', adversaires: 'reels' }),
-      (s) => s.meta.week >= 12,
+      (s) => s.meta.week >= 24,
       QUIET,
     );
     const definition = RULESET.actions.find((a) => a.id === 'emission-politique')!;
@@ -591,7 +593,7 @@ describe('difficulté (§1.3)', () => {
 
   it('la difficulté ne modifie jamais le décompte des voix', () => {
     fc.assert(
-      fc.property(fc.constantFrom('accessible', 'standard', 'expert'), (difficulty) => {
+      fc.property(fc.constantFrom(...DIFFICULTIES), (difficulty) => {
         const other = clone(t1);
         other.meta.difficulty = difficulty;
         const scrutin = RULESET.calendrier.scrutins[0]!;
@@ -600,19 +602,20 @@ describe('difficulté (§1.3)', () => {
           resolveRound(t1, RULESET, scrutin, 1, baseline),
         );
       }),
-      { numRuns: 6 },
+      { numRuns: 10 },
     );
   });
 
   it('les règles (seuil des parrainages, plafonds) ne dépendent pas de la difficulté', () => {
-    for (const actor of Object.values(t1.actors)) {
-      const other = clone(t1);
-      other.meta.difficulty = 'expert';
-      expect(meetsThreshold(other.actors[actor.id]!.parrainages, RULESET)).toBe(
-        meetsThreshold(actor.parrainages, RULESET),
-      );
-      expect(spendingCap(other, actor.id, RULESET)).toBe(spendingCap(t1, actor.id, RULESET));
-    }
+    for (const difficulty of DIFFICULTIES)
+      for (const actor of Object.values(t1.actors)) {
+        const other = clone(t1);
+        other.meta.difficulty = difficulty;
+        expect(meetsThreshold(other.actors[actor.id]!.parrainages, RULESET)).toBe(
+          meetsThreshold(actor.parrainages, RULESET),
+        );
+        expect(spendingCap(other, actor.id, RULESET)).toBe(spendingCap(t1, actor.id, RULESET));
+      }
   });
 
   it('elle change les moyens des adversaires et la pression sur le joueur', () => {
@@ -624,5 +627,35 @@ describe('difficulté (§1.3)', () => {
     expect(player(easy).resources.budgetCentimes).toBeGreaterThan(
       player(hard).resources.budgetCentimes,
     );
+  });
+
+  it('cinq niveaux en échelle : le joueur part avec moins, ses adversaires avec plus', () => {
+    const games = DIFFICULTIES.map((difficulty) => newGame({ difficulty, seed: 'echelle' }));
+    const opponents = (s: GameState) =>
+      Object.values(s.actors).filter((a) => a.kind === 'adversaire');
+    const total = (s: GameState, r: 'budgetCentimes' | 'notoriete') =>
+      opponents(s).reduce((n, a) => n + a.resources[r], 0);
+    for (let i = 1; i < games.length; i++) {
+      const [easier, harder] = [games[i - 1]!, games[i]!];
+      for (const r of ['budgetCentimes', 'militants', 'popularite'] as const)
+        expect(player(harder).resources[r]).toBeLessThan(player(easier).resources[r]);
+      // Phase 24 : notoriété du joueur plus faible, rapportée à celle de ses adversaires.
+      const relative = (s: GameState) => player(s).resources.notoriete / total(s, 'notoriete');
+      expect(relative(harder)).toBeLessThan(relative(easier));
+      expect(total(harder, 'budgetCentimes')).toBeGreaterThan(total(easier, 'budgetCentimes'));
+      expect(total(harder, 'notoriete')).toBeGreaterThanOrEqual(total(easier, 'notoriete'));
+    }
+    // Notoriété de départ des adversaires : celle de leur fiche aux trois niveaux historiques,
+    // divisée par deux en Découverte, majorée de 15 % en Légende.
+    for (const [i, difficulty] of DIFFICULTIES.entries())
+      for (const fiche of RULESET.candidatsFictifs)
+        expect(games[i]!.actors[fiche.id]!.resources.notoriete).toBe(
+          Math.round(fiche.ressources.notoriete * RULESET.ia[difficulty].multiplicateurNotoriete),
+        );
+    expect(RULESET.ia.decouverte.multiplicateurNotoriete).toBe(0.5);
+    expect(RULESET.ia.legende.multiplicateurNotoriete).toBe(1.15);
+    // Popularité des adversaires : la même à tous les niveaux.
+    for (const fiche of RULESET.candidatsFictifs)
+      expect(new Set(games.map((g) => g.actors[fiche.id]!.resources.popularite)).size).toBe(1);
   });
 });

@@ -11,7 +11,12 @@
     "geo": "node --disable-warning=ExperimentalWarning --max-old-space-size=8192 --import tsx src/cli/geo.ts",
     "resultats": "node --disable-warning=ExperimentalWarning --max-old-space-size=4096 --import tsx src/cli/resultats.ts",
     "personnalites": "node --disable-warning=ExperimentalWarning --import tsx src/cli/personnalites.ts",
-    "medias": "node --disable-warning=ExperimentalWarning --import tsx src/cli/medias.ts"
+    "gouvernement": "node --disable-warning=ExperimentalWarning --import tsx src/cli/gouvernement.ts",
+    "medias": "node --disable-warning=ExperimentalWarning --import tsx src/cli/medias.ts",
+    "assemblee": "node --disable-warning=ExperimentalWarning --import tsx src/cli/assemblee.ts",
+    "economie": "node --disable-warning=ExperimentalWarning --import tsx src/cli/economie.ts",
+    "legislatives": "node --disable-warning=ExperimentalWarning --import tsx src/cli/legislatives.ts",
+    "sons": "node --disable-warning=ExperimentalWarning --import tsx src/cli/sons.ts"
   },
   "dependencies": {
     "7zip-bin": "5.2.0",

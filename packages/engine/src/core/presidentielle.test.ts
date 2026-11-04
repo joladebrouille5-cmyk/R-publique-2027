@@ -34,9 +34,7 @@ describe('présidentielle complète', () => {
     expect(t1.phaseChange).toEqual({ from: 'campagne', to: 'entre_deux_tours' });
     expect(t2).toMatchObject({ week: 30, date: '2027-04-26' });
     expect(t2!.election).toMatchObject({ scrutinId: 'presidentielle-2027-t2', date: '2027-05-02' });
-    expect(reports.some((r) => r.events.some((e) => e.refId === 'debat-entre-deux-tours'))).toBe(
-      true,
-    );
+    expect(reports.some((r) => r.events.some((e) => e.refId === 'debat-t2'))).toBe(true);
     expect(state.elections.debate).not.toBeNull();
   });
 
@@ -53,7 +51,7 @@ describe('présidentielle complète', () => {
     expect(Object.keys(state.elections.t1!.voix)).toContain(PLAYER_ACTOR_ID);
   });
 
-  it('termine sur un élu, met à jour les statuts et bloque la progression', () => {
+  it('termine sur un élu, met à jour les statuts et ouvre le quinquennat', () => {
     const statuses = Object.values(state.actors).map((a) => a.status);
     const ran = Object.keys(state.elections.t1!.voix).length;
     expect(statuses.filter((s) => s === 'elu')).toHaveLength(1);
@@ -64,12 +62,21 @@ describe('présidentielle complète', () => {
     );
     const winner = Object.values(state.actors).find((a) => a.status === 'elu')!;
     expect(state.elections.t2!.winner).toBe(winner.id);
-    expect(state.meta.phase).toBe(winner.id === PLAYER_ACTOR_ID ? 'presidence' : 'bilan');
-    expect(state.calendar.blockedBy).toBe('fin-de-la-presidentielle');
-    expect(reports.at(-1)!.blocked?.message).toMatch(/phases? 6/);
-    expect(() => advanceWeek(state, { actions: [], decisions: [] }, { ruleset: RULESET })).toThrow(
-      EngineInputError,
-    );
+    // Critère 10 : la fin de la présidentielle ouvre la présidence (joueur ou IA).
+    expect(state.meta.phase).toBe('presidence');
+    expect(state.calendar.blockedBy).toBeNull();
+    expect(reports.at(-1)!.phaseChange).toEqual({ from: 'entre_deux_tours', to: 'presidence' });
+    expect(state.quinquennat).toMatchObject({
+      mandat: { presidentId: winner.id, debut: '2027-05-14', fin: '2032-05-13', numero: 1 },
+      gouvernement: null,
+    });
+    expect(() =>
+      advanceWeek(
+        state,
+        { actions: [{ actionId: 'meeting' }], decisions: [] },
+        { ruleset: RULESET },
+      ),
+    ).toThrow(EngineInputError);
   });
 
   it('ne modifie pas l’état reçu, même la semaine d’un scrutin', () => {
@@ -132,7 +139,7 @@ describe('mode observateur', () => {
     expect(reports.flatMap((r) => r.actions).every((a) => a.actorId !== PLAYER_ACTOR_ID)).toBe(
       true,
     );
-    expect(state.meta.phase).toBe('bilan');
+    expect(state.meta.phase).toBe('presidence');
     expect(Object.values(state.actors).filter((a) => a.status === 'elu')).toHaveLength(1);
   });
 });

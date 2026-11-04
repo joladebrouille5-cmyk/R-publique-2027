@@ -46,7 +46,7 @@ export function Relations({ state, ruleset, proposed, onPropose }: Props) {
       <h2 id="titre-relations" className="text-lg font-semibold">
         {player ? 'Vos relations avec les autres candidats' : 'Relations entre candidats'}
       </h2>
-      <p className="text-sm text-slate-600 dark:text-slate-400">
+      <p className="text-sm text-encre-2">
         Proximité : distance des positionnements (0 à 100). Confiance (−100 à +100) : elle suit la
         proximité au départ, baisse avec la rivalité et les refus, monte avec les accords. Rivalité
         (0 à 100) : intentions de vote proches sur un électorat commun.{' '}
@@ -63,7 +63,7 @@ export function Relations({ state, ruleset, proposed, onPropose }: Props) {
         <table className="w-full min-w-[34rem] text-left text-sm">
           <caption className="sr-only">Relations entre candidats</caption>
           <thead>
-            <tr className="text-xs text-slate-500 dark:text-slate-400">
+            <tr className="text-xs text-encre-3">
               <th scope="col" className="py-1 font-medium">
                 {player ? 'Candidat' : 'Paire'}
               </th>

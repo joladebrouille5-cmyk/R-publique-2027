@@ -1,9 +1,10 @@
-import { useJournal } from '../api/hooks';
+import { useJournal, useRuleset } from '../api/hooks';
 import { ErrorMessage } from '../components/ErrorMessage';
 import { buttonSecondary, card } from '../components/ui';
 import { WeeklyReportView } from '../components/WeeklyReportView';
 import { formatGameDate, formatTimestamp, JOURNAL_TYPE_LABELS } from '../labels';
 import { useCurrentGame } from './GameLayout';
+import { ScreenHeading } from '../components/Disclosure';
 
 function describe(type: string, details: Record<string, unknown>): string {
   switch (type) {
@@ -25,14 +26,17 @@ function describe(type: string, details: Record<string, unknown>): string {
 export function Journal() {
   const game = useCurrentGame();
   const journal = useJournal(game.id);
+  const ruleset = useRuleset(game.rulesetVersion, game.state.cycle);
   const entries = journal.data?.pages.flatMap((page) => page.entries) ?? [];
+  const blocLabel = (id: string) =>
+    ruleset.data?.legislatives.blocs.find((b) => b.id === id)?.libelle ?? id;
+  const eventFamily = (id: string) =>
+    ruleset.data?.evenements.find((e) => e.id === id)?.famille ?? null;
 
   return (
     <section aria-labelledby="titre-journal" className="space-y-4">
-      <h1 id="titre-journal" className="text-2xl font-bold">
-        Journal
-      </h1>
-      <p className="text-sm text-slate-600 dark:text-slate-400">
+      <ScreenHeading id="titre-journal">Journal</ScreenHeading>
+      <p className="text-sm text-encre-2">
         Historique immuable de la partie, du plus récent au plus ancien. Une restauration de
         sauvegarde n’efface rien : elle apparaît comme une entrée.
       </p>
@@ -50,7 +54,7 @@ export function Journal() {
                   <span className="font-semibold">
                     Semaine {entry.report.week} — {formatGameDate(entry.report.date)}
                   </span>
-                  <span className="block text-xs text-slate-500 dark:text-slate-400">
+                  <span className="block text-xs text-encre-3">
                     {entry.report.election &&
                       `${entry.report.election.round === 1 ? 'Premier' : 'Second'} tour · `}
                     {
@@ -63,7 +67,12 @@ export function Journal() {
                   </span>
                 </summary>
                 <div className="mt-4">
-                  <WeeklyReportView report={entry.report} state={game.state} />
+                  <WeeklyReportView
+                    report={entry.report}
+                    state={game.state}
+                    blocLabel={blocLabel}
+                    eventFamily={eventFamily}
+                  />
                 </div>
               </details>
             </li>
@@ -74,7 +83,7 @@ export function Journal() {
             >
               <span className="font-medium">{JOURNAL_TYPE_LABELS[entry.type] ?? entry.type}</span>
               {describe(entry.type, entry.details) && ` — ${describe(entry.type, entry.details)}`}
-              <span className="block text-xs text-slate-500 dark:text-slate-400">
+              <span className="block text-xs text-encre-3">
                 Semaine {entry.week} · {formatTimestamp(entry.createdAt)}
               </span>
             </li>

@@ -2,15 +2,25 @@ import {
   advanceWeek,
   createGame,
   ENGINE_VERSION,
+  playDebate,
   presentationWindow,
   SAVE_SCHEMA_VERSION,
+  type TerritorialBaseline,
 } from '@r2027/engine';
 import { CURRENT_RULESET_KEY, getRuleset } from '@r2027/rulesets';
-import type { GameDetail, GameState, SaveSummary, WeeklyReport } from '@r2027/shared';
+import {
+  debateAwaitingPlayer,
+  type GameDetail,
+  type GameState,
+  type SaveSummary,
+  type WeeklyReport,
+} from '@r2027/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import type { UserEvent } from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { vi } from 'vitest';
+import { setSound } from '../audio/systeme';
 import { routes } from '../routes';
 
 export const GAME_ID = '11111111-1111-4111-8111-111111111111';
@@ -57,13 +67,32 @@ function sponsorship(state: GameState) {
   }));
 }
 
-/** Fait avancer le vrai moteur jusqu'à `done(state)` (décisions par défaut, parrainages). */
+/**
+ * Débat obligatoire (phase 17) : mène à son terme, par la fin simulée que le joueur demande
+ * depuis le plateau, chaque débat de la semaine qui l'attend (vrai moteur).
+ */
+export function concludeDebates(state: GameState): GameState {
+  let current = state;
+  for (let debate = debateAwaitingPlayer(current); debate; debate = debateAwaitingPlayer(current))
+    current = playDebate(current, RULESET, debate.id, {
+      action: 'finir',
+      sequence: debate.enCours?.index ?? 0,
+    }).state;
+  return current;
+}
+
+/**
+ * Fait avancer le vrai moteur jusqu'à `done(state)` (décisions par défaut, parrainages), sur la
+ * base électorale nationale ou, si elle est fournie, sur une base territoriale.
+ */
 export function playedState(
   done: (state: GameState) => boolean,
   start = initialState(),
+  territory?: TerritorialBaseline,
 ): GameState {
   let state = start;
   for (let i = 0; i < 80 && !done(state) && !state.calendar.blockedBy; i++) {
+    state = concludeDebates(state);
     const decisions = state.pendingDecisions.map((d) => ({
       decisionId: d.id,
       optionId: d.defaultOptionId,
@@ -71,7 +100,7 @@ export function playedState(
     state = advanceWeek(
       state,
       { actions: sponsorship(state), decisions },
-      { ruleset: RULESET },
+      { ruleset: RULESET, ...(territory ? { territory } : {}) },
     ).state;
   }
   return state;
@@ -191,6 +220,7 @@ export function reportFixture(overrides: Partial<WeeklyReport> = {}): WeeklyRepo
         reason: null,
         cible: null,
         cost: { budgetCentimes: 12_000_000, tempsHeures: 8 },
+        prestation: null,
       },
     ],
     changes: [
@@ -218,6 +248,55 @@ export function reportFixture(overrides: Partial<WeeklyReport> = {}): WeeklyRepo
     relations: [],
     alliances: [],
     strategies: [],
+    economie: [],
+    legislatives: null,
+    numerique: [],
+    conseil: null,
+    succes: [],
     ...overrides,
   };
+}
+
+/**
+ * Double du système sonore (phase 19) : note, dans l'ordre, les ambiances publiées
+ * (« ambiance:… »), les jingles joués (« jingle:… ») et les écoutes depuis Paramètres
+ * (« essai:… »). Remis à zéro après chaque test (setup.ts).
+ */
+export function recordSound(): string[] {
+  const calls: string[] = [];
+  setSound({
+    unlock: () => undefined,
+    setAmbiance: (ambiance) => calls.push(`ambiance:${ambiance}`),
+    setSettings: () => undefined,
+    setActive: () => undefined,
+    play: (cue) => calls.push(`jingle:${cue}`),
+    preview: (cue) => calls.push(`essai:${cue}`),
+  });
+  return calls;
+}
+
+/** Jingles joués, dans l'ordre. */
+export const jingles = (calls: readonly string[]) => calls.filter((c) => c.startsWith('jingle:'));
+/** Dernière ambiance publiée. */
+export const lastAmbiance = (calls: readonly string[]) =>
+  calls.filter((c) => c.startsWith('ambiance:')).at(-1);
+
+/** Assistant de création (phase 20) : « Suivant » jusqu'à l'étape intitulée `titre`. */
+export async function wizardTo(user: UserEvent, titre: string): Promise<void> {
+  for (let i = 0; i < 6; i++) {
+    if (screen.queryByRole('heading', { level: 2, name: titre })) return;
+    await user.click(screen.getByRole('button', { name: 'Suivant' }));
+  }
+  throw new Error(`Étape de l'assistant introuvable : ${titre}`);
+}
+
+/** Dernière étape de l'assistant : nom de la partie et graine dans les options avancées. */
+export async function advancedOptions(
+  user: UserEvent,
+  options: { name?: string; seed?: string },
+): Promise<void> {
+  await wizardTo(user, 'Le format');
+  await user.click(screen.getByText('Options avancées'));
+  if (options.name) await user.type(screen.getByLabelText('Nom de la partie'), options.name);
+  if (options.seed) await user.type(screen.getByLabelText('Graine (facultative)'), options.seed);
 }

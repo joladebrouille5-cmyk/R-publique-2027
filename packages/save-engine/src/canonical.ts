@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { sha256Hex } from '@r2027/engine';
 import { GameStateSchema, type GameState } from '@r2027/shared';
 
 /**
@@ -43,8 +43,12 @@ function serialize(value: unknown, path: string): string {
   }
 }
 
+/**
+ * SHA-256 hexadécimal (UTF-8) en TypeScript pur, identique à `node:crypto` (testé par le
+ * moteur) : les sauvegardes se vérifient aussi dans l'application mobile, sans serveur.
+ */
 export function sha256(text: string): string {
-  return createHash('sha256').update(text, 'utf8').digest('hex');
+  return sha256Hex(text);
 }
 
 /** Empreinte SHA-256 de la forme canonique d'un état de partie. */

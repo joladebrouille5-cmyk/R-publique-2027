@@ -5,12 +5,13 @@ import type {
   Interview,
   MediaState,
   PoliticalShow,
+  Prestation,
   RealOutlet,
   Ruleset,
 } from '@r2027/shared';
 import { compareStrings, type Ledger } from '../core/ledger';
 import { stream } from '../core/random';
-import type { ValidatedAction } from './actions';
+import { actionKey, type ValidatedAction } from './actions';
 import { credibility } from './programme';
 
 // Médias réels (§8, phase 5 ter) : chaînes de télévision et de radio suivies par l'Arcom,
@@ -50,6 +51,18 @@ export function propensity(ruleset: Ruleset, outlet: RealOutlet, party: string |
   return clamp(value, ruleset.medias.propension.min, ruleset.medias.propension.max);
 }
 
+/**
+ * Période électorale de l'Arcom (phase 20, rouage réel) : de son échéance au second tour, la
+ * télévision et la radio appliquent l'égalité stricte des temps de parole (`medias.periodeElectorale`).
+ */
+export function electoralPeriod(state: GameState, ruleset: Ruleset): boolean {
+  const periode = ruleset.medias.periodeElectorale;
+  if (!periode) return false;
+  if (state.meta.phase !== 'campagne' && state.meta.phase !== 'entre_deux_tours') return false;
+  const start = ruleset.calendrier.echeances.find((e) => e.id === periode.echeanceId);
+  return start !== undefined && state.meta.date >= start.date;
+}
+
 export function showsById(ruleset: Ruleset): ReadonlyMap<string, PoliticalShow> {
   return new Map(ruleset.mediasReels.emissions.map((e) => [e.id, e]));
 }
@@ -82,9 +95,21 @@ function actionExposure(
 }
 
 /**
+ * Organes d'un passage dans les médias : l'organe de l'interview, ou celui de l'émission et ses
+ * autres diffuseurs.
+ */
+function plateauOutlets(shows: ReadonlyMap<string, PoliticalShow>, action: ValidatedAction) {
+  if (action.cible === null) return [];
+  if (action.definition.cible === 'media') return [action.cible];
+  const show = action.definition.cible === 'emission' ? shows.get(action.cible) : undefined;
+  return show ? [show.organeId, ...show.autresOrganes] : [];
+}
+
+/**
  * Étape 6 : couverture de la semaine par chaque organe réel, indice médiatique de chaque
  * candidat (−1 à +1), interviews tenues dans les émissions politiques et gain de notoriété
- * proportionnel à l'audience touchée (inscrit au registre avec son facteur).
+ * proportionnel à l'audience touchée (inscrit au registre avec son facteur). Sur l'organe d'un
+ * passage noté (phase 11), la part variable de la tonalité suit le score du passage, sans tirage.
  */
 export function updateMedia(
   state: GameState,
@@ -93,6 +118,7 @@ export function updateMedia(
   actions: readonly ValidatedAction[],
   incidents: ReadonlySet<string>,
   step: number,
+  prestations: ReadonlyMap<string, Prestation> = new Map(),
 ): MediaState | null {
   const actors = Object.values(state.actors)
     .filter((a) => ACTIVE.has(a.status))
@@ -102,6 +128,7 @@ export function updateMedia(
   const shows = showsById(ruleset);
   const attention = actors.map((a) => Math.pow(Math.max(a.resources.notoriete, 100) / 10_000, 1.5));
   const totalAttention = attention.reduce((sum, v) => sum + v, 0);
+  const equal = electoralPeriod(state, ruleset);
   const parties = actors.map((a) => arcomParty(ruleset, a));
   // Aucun programme n'est prêté à une personnalité réelle adverse : facteur neutre.
   const tones = actors.map((a) =>
@@ -116,6 +143,23 @@ export function updateMedia(
     ),
   );
 
+  // Tonalité des passages notés, par organe et par candidat (moyenne des scores de la semaine).
+  const scored = new Map<string, number[]>();
+  for (const action of actions) {
+    const prestation = prestations.get(actionKey(action.actorId, action.index));
+    if (!prestation) continue;
+    for (const outletId of plateauOutlets(shows, action)) {
+      const key = `${outletId}#${action.actorId}`;
+      scored.set(key, [...(scored.get(key) ?? []), prestation.score]);
+    }
+  }
+  const scoredTone = (outletId: string, actorId: string) => {
+    const scores = scored.get(`${outletId}#${actorId}`);
+    if (!scores) return undefined;
+    const mean = scores.reduce((sum, v) => sum + v, 0) / scores.length;
+    return (ruleset.prestations.tonalite * mean) / 100;
+  };
+
   const couverture: MediaState['couverture'] = {};
   const weighted = new Map<string, number>(actors.map((a) => [a.id, 0]));
   const reach = new Map<string, number>(actors.map((a) => [a.id, 0]));
@@ -128,15 +172,21 @@ export function updateMedia(
     // Un flux d'aléa par organe, tiré candidat par candidat dans l'ordre des identifiants.
     const rng = stream(state.meta.seed, week, 'medias', outlet.id);
     actors.forEach((actor, i) => {
-      let exposure = Math.round(
-        ((NOTORIETY_SHARE * attention[i]!) / totalAttention) *
-          propensity(ruleset, outlet, parties[i]!),
-      );
+      // Période électorale (phase 20) : égalité stricte des temps de parole à l'antenne.
+      let exposure =
+        equal && outlet.type !== 'presse'
+          ? Math.round(NOTORIETY_SHARE / actors.length)
+          : Math.round(
+              ((NOTORIETY_SHARE * attention[i]!) / totalAttention) *
+                propensity(ruleset, outlet, parties[i]!),
+            );
       for (const action of actions)
         if (action.actorId === actor.id) exposure += actionExposure(ruleset, shows, outlet, action);
       exposure = clamp(exposure, 0, 10_000);
       const alea = rng.nextFloat() * 50 - 25;
-      const tone = Math.round(clamp(tones[i]! + alea, -100, 100));
+      const tone = Math.round(
+        clamp(tones[i]! + (scoredTone(outlet.id, actor.id) ?? alea), -100, 100),
+      );
       const coverage: Coverage = { exposition: exposure, tonalite: tone + 0 };
       couverture[outlet.id]![actor.id] = coverage;
       weighted.set(actor.id, weighted.get(actor.id)! + (weight * exposure * tone) / 1_000_000);
@@ -145,12 +195,13 @@ export function updateMedia(
   }
 
   const indice: MediaState['indice'] = {};
+  const label = equal
+    ? 'Couverture médiatique de la semaine (période électorale : égalité des temps de parole)'
+    : 'Couverture médiatique de la semaine';
   for (const actor of actors) {
     indice[actor.id] = Math.round((weighted.get(actor.id)! / totalWeight) * 1000) / 1000 + 0;
     const gain = Math.round(ruleset.medias.notorieteParExposition * reach.get(actor.id)!);
-    ledger.apply(actor.id, 'notoriete', [
-      { label: 'Couverture médiatique de la semaine', value: gain, source: 'opinion', step },
-    ]);
+    ledger.apply(actor.id, 'notoriete', [{ label, value: gain, source: 'opinion', step }]);
   }
   const interviews: Interview[] = actions
     .filter((a) => a.definition.cible === 'emission' && a.cible !== null && shows.has(a.cible))

@@ -1,0 +1,122 @@
+name: Android (APK)
+
+# Phase 8 : construit l'APK de l'application hors ligne et l'essaie sur un émulateur Android.
+# L'APK de débogage est publié comme artefact du workflow (onglet Actions → exécution →
+# « Artifacts »). Un APK de publication signé n'est produit que sur la branche main ou une
+# étiquette de version (v…), et seulement si les secrets de signature R2027_KEYSTORE_BASE64,
+# R2027_KEYSTORE_PASSWORD, R2027_KEY_ALIAS et R2027_KEY_PASSWORD sont configurés dans le dépôt
+# (Settings → Secrets and variables → Actions) : une branche de travail ne voit jamais la clé.
+
+# Sur push seulement (un push sur la branche d'une demande de fusion suffit : l'essai sur
+# émulateur prend plusieurs minutes et n'a pas à tourner deux fois pour le même commit).
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      SIGN_RELEASE: ${{ secrets.R2027_KEYSTORE_BASE64 != '' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) }}
+    steps:
+      - uses: actions/checkout@v4
+      # Le gradle-wrapper.jar commité doit être un binaire officiel de Gradle.
+      - uses: gradle/actions/wrapper-validation@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+      - run: pnpm install --frozen-lockfile
+
+      - name: Paquet web hors ligne et projet Android (Capacitor)
+        run: pnpm --filter @r2027/mobile run android:sync
+
+      - name: APK de débogage
+        working-directory: apps/mobile/android
+        run: ./gradlew --no-daemon assembleDebug
+
+      - name: Publier l'APK de débogage
+        uses: actions/upload-artifact@v4
+        with:
+          name: republique-2027-apk-debug
+          path: apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: APK de publication signé (main ou étiquette, si les secrets existent)
+        if: env.SIGN_RELEASE == 'true'
+        working-directory: apps/mobile/android
+        env:
+          R2027_KEYSTORE_BASE64: ${{ secrets.R2027_KEYSTORE_BASE64 }}
+          R2027_KEYSTORE_PASSWORD: ${{ secrets.R2027_KEYSTORE_PASSWORD }}
+          R2027_KEY_ALIAS: ${{ secrets.R2027_KEY_ALIAS }}
+          R2027_KEY_PASSWORD: ${{ secrets.R2027_KEY_PASSWORD }}
+        run: |
+          export R2027_KEYSTORE_FILE="$RUNNER_TEMP/republique-2027.jks"
+          echo "$R2027_KEYSTORE_BASE64" | base64 --decode > "$R2027_KEYSTORE_FILE"
+          ./gradlew --no-daemon assembleRelease
+          rm -f "$R2027_KEYSTORE_FILE"
+
+      - name: Publier l'APK signé
+        if: env.SIGN_RELEASE == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: republique-2027-apk-release
+          path: apps/mobile/android/app/build/outputs/apk/release/app-release.apk
+          retention-days: 30
+          if-no-files-found: error
+
+      # L'image de l'émulateur et sa partition de données exigent plusieurs Go : on libère de
+      # l'espace (outils préinstallés inutiles ici, sorties de Gradle déjà publiées).
+      - name: Libérer de l'espace disque pour l'émulateur
+        run: |
+          df -h /
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost /usr/local/.ghcup \
+            "$AGENT_TOOLSDIRECTORY/CodeQL" /usr/local/share/powershell /usr/share/swift
+          cp apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/"
+          rm -rf apps/mobile/android/app/build apps/mobile/android/build ~/.gradle/caches/transforms-*
+          df -h /
+
+      - name: Activer KVM pour l'émulateur
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      # Image Android 14 sans services Google Play (« default ») : sur l'émulateur de la CI,
+      # sans accélération graphique, ces services cessent souvent de répondre juste après le
+      # démarrage (ANR) ; Android les tue alors avec leurs clients, dont la WebView de toute
+      # application (fournisseur de polices des services Google Play). L'application n'en
+      # dépend pas : elle fonctionne hors ligne, sans compte ni service Google.
+      - name: Essai sur émulateur Android 14 (hors réseau)
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: default
+          disable-animations: true
+          disk-size: 2048M
+          script: node apps/mobile/scripts/essai-android.mjs ${{ runner.temp }}/app-debug.apk essai-android
+
+      - name: Captures de l'essai
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: essai-android-captures
+          path: essai-android/
+          retention-days: 7
+          if-no-files-found: ignore

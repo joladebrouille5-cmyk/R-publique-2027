@@ -13,6 +13,7 @@ import { ErrorMessage } from '../components/ErrorMessage';
 import { card } from '../components/ui';
 import { formatCount, formatEuros, RECEIPT_LABELS, REFUSAL_LABELS } from '../labels';
 import { useCurrentGame } from './GameLayout';
+import { ScreenHeading } from '../components/Disclosure';
 
 const pct = (rate: number) => `${(rate * 100).toFixed(2).replace('.', ',').replace(',00', '')} %`;
 
@@ -34,7 +35,7 @@ function Account({ state, actor, ruleset }: { state: GameState; actor: Actor; ru
             ['Plafond applicable', formatEuros(cap)],
           ].map(([term, value]) => (
             <div key={term}>
-              <dt className="text-xs text-slate-500 dark:text-slate-400">{term}</dt>
+              <dt className="text-xs text-encre-3">{term}</dt>
               <dd className="font-semibold tabular-nums">{value}</dd>
             </div>
           ))}
@@ -157,23 +158,20 @@ function Account({ state, actor, ruleset }: { state: GameState; actor: Actor; ru
  */
 export function Finances() {
   const game = useCurrentGame();
-  const ruleset = useRuleset(game.rulesetVersion);
+  const ruleset = useRuleset(game.rulesetVersion, game.state.cycle);
   const { state } = game;
   const actor = state.player.actorId ? state.actors[state.player.actorId] : undefined;
   if (ruleset.isError)
     return <ErrorMessage error={ruleset.error} onRetry={() => void ruleset.refetch()} />;
   if (!ruleset.data) return <p>Chargement du jeu de règles…</p>;
   const rules = ruleset.data;
-  const source = rules.sources[rules.finances.sourceId];
   const candidates = Object.values(state.actors).sort(
     (a, b) => b.finances.depenses - a.finances.depenses,
   );
 
   return (
     <section aria-labelledby="titre-finances" className="space-y-6">
-      <h1 id="titre-finances" className="text-2xl font-bold">
-        Finances
-      </h1>
+      <ScreenHeading id="titre-finances">Finances</ScreenHeading>
       {actor ? (
         <Account state={state} actor={actor} ruleset={rules} />
       ) : (
@@ -193,7 +191,7 @@ export function Finances() {
           <table className="w-full min-w-[30rem] text-left">
             <caption className="sr-only">Dépenses et dons de chaque candidat</caption>
             <thead>
-              <tr className="text-xs text-slate-500 dark:text-slate-400">
+              <tr className="text-xs text-encre-3">
                 <th scope="col" className="py-1 font-medium">
                   Candidat
                 </th>
@@ -257,17 +255,10 @@ export function Finances() {
             limite des dépenses et de l’apport personnel.
           </li>
         </ul>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
-          Source :{' '}
-          {source?.url ? (
-            <a href={source.url} className="underline" rel="noreferrer" target="_blank">
-              {source.titre}
-            </a>
-          ) : (
-            source?.titre
-          )}
-          . {rules.finances.note} Emprunts bancaires, part d’apport personnel des fonds de départ et
-          montants des collectes : hypothèses de jeu.
+        <p className="text-xs text-encre-3">
+          <Badge tone="reel">Règles réelles</Badge> Emprunts bancaires, part d’apport personnel des
+          fonds de départ et montants des collectes : hypothèses de jeu. Sources : Paramètres →
+          Crédits.
         </p>
       </section>
     </section>

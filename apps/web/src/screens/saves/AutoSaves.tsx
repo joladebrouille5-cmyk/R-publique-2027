@@ -36,7 +36,7 @@ export function AutoSaves({ gameId, version, saves }: Props) {
       </p>
       {restore.isError && <ErrorMessage error={restore.error} />}
       {automatic.length === 0 ? (
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+        <p className="text-sm text-encre-3">
           Aucune pour l’instant : une sauvegarde est créée à chaque semaine résolue.
         </p>
       ) : (
@@ -55,9 +55,7 @@ export function AutoSaves({ gameId, version, saves }: Props) {
                       {KIND_LABELS[save.kind] ?? save.kind}
                     </Badge>
                   </p>
-                  <p className="text-slate-500 dark:text-slate-400">
-                    Enregistrée le {formatTimestamp(save.createdAt)}
-                  </p>
+                  <p className="text-encre-3">Enregistrée le {formatTimestamp(save.createdAt)}</p>
                 </div>
                 {confirming === save.id ? (
                   <div className="flex flex-wrap items-center gap-2">

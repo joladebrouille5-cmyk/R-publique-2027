@@ -1,0 +1,33 @@
+{
+  "name": "@r2027/mobile",
+  "version": "1.16.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -p tsconfig.json",
+    "android:sync": "vite build && cap sync android",
+    "android:apk": "vite build && cap sync android && cd android && ./gradlew assembleDebug"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.5.3",
+    "@capacitor/app": "8.1.2",
+    "@capacitor/core": "8.5.3",
+    "@capacitor/filesystem": "8.1.4",
+    "@capacitor/local-notifications": "8.3.1",
+    "@capacitor/share": "8.0.3",
+    "@r2027/local-api": "workspace:*"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.5.3",
+    "@r2027/shared": "workspace:*",
+    "@tailwindcss/vite": "4.3.3",
+    "@vitejs/plugin-react": "6.1.2",
+    "fake-indexeddb": "6.2.5",
+    "tailwindcss": "4.3.3",
+    "vite": "8.3.4",
+    "zod": "4.6.7"
+  }
+}

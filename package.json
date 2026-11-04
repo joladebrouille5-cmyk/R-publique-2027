@@ -16,14 +16,22 @@
     "test": "vitest run",
     "test:integration": "pnpm --filter @r2027/api run test:integration",
     "test:e2e": "playwright test",
+    "test:mobile": "playwright test -c playwright.mobile.config.ts",
+    "mobile:apk": "pnpm --filter @r2027/mobile run android:apk",
     "db:migrate": "pnpm --filter @r2027/api run db:migrate",
     "db:deploy": "pnpm --filter @r2027/api run db:deploy",
     "data:geo": "pnpm --filter @r2027/data-import run geo",
     "data:resultats": "pnpm --filter @r2027/data-import run resultats",
     "data:personnalites": "pnpm --filter @r2027/data-import run personnalites",
+    "data:gouvernement": "pnpm --filter @r2027/data-import run gouvernement",
     "data:medias": "pnpm --filter @r2027/data-import run medias",
+    "data:assemblee": "pnpm --filter @r2027/data-import run assemblee",
+    "data:economie": "pnpm --filter @r2027/data-import run economie",
+    "data:legislatives": "pnpm --filter @r2027/data-import run legislatives",
+    "data:sons": "pnpm --filter @r2027/data-import run sons",
     "mesure:carte": "node scripts/spike-carte/spike.mjs",
-    "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test"
+    "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test",
+    "sim:equilibrage": "pnpm --filter @r2027/engine exec tsx scripts/sim-equilibrage.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",

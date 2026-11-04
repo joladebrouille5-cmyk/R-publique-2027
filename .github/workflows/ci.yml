@@ -54,6 +54,8 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
       - name: Tests de bout en bout (bureau + mobile)
         run: pnpm test:e2e
+      - name: Application Android hors ligne (paquet de l'APK, réseau coupé)
+        run: pnpm test:mobile
       - run: pnpm build
       - name: Rapport Playwright
         if: failure()

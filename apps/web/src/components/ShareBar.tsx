@@ -5,21 +5,29 @@ type Props = {
   max: number;
   /** Marge d'erreur à 95 %, en centièmes de point : intervalle tracé autour de la valeur. */
   margin?: number;
-  /** La ligne est celle du joueur : barre dans la couleur d'accent, les autres en gris. */
+  /** La ligne est celle du joueur : barre soulignée d'or (dans la couleur d'accent sans couleur). */
   emphasis?: boolean;
+  /** Couleur de la famille politique du candidat (phase 16) ; gris par défaut. */
+  color?: string;
 };
 
 /**
  * Barre horizontale d'une part (résultat, sondage). Purement visuelle : la valeur est
  * toujours écrite dans la cellule voisine du tableau, qui reste la vue de référence.
  */
-export function ShareBar({ value, max, margin, emphasis = false }: Props) {
+export function ShareBar({ value, max, margin, emphasis = false, color }: Props) {
   const scale = (v: number) => `${Math.max(0, Math.min(100, (v / Math.max(max, 1)) * 100))}%`;
+  const fill = color
+    ? // Liseré clair sur fond de nuit : une couleur sombre (bleu marine) reste visible.
+      `dark:ring-1 dark:ring-white/25 dark:ring-inset ${emphasis ? 'outline-2 outline-offset-1 outline-republique-600 dark:outline-dorure' : ''}`
+    : emphasis
+      ? 'bg-republique-600 dark:bg-republique-500'
+      : 'bg-slate-400 dark:bg-slate-500';
   return (
     <span aria-hidden="true" className="relative block h-3 w-full min-w-16">
       <span
-        className={`absolute inset-y-0 left-0 rounded-r ${emphasis ? 'bg-republique-600 dark:bg-republique-500' : 'bg-slate-400 dark:bg-slate-500'}`}
-        style={{ width: scale(value) }}
+        className={`absolute inset-y-0 left-0 rounded-r ${fill}`}
+        style={{ width: scale(value), ...(color ? { backgroundColor: color } : {}) }}
       />
       {margin !== undefined && margin > 0 && (
         <span

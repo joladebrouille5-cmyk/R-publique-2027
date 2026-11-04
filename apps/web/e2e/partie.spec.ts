@@ -1,12 +1,22 @@
 import { readFile } from 'node:fs/promises';
+import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { advanceViaApi, createGame, openScreen, resolveWeek } from './helpers';
+import {
+  advanceViaApi,
+  createGame,
+  fillCandidate,
+  finishWizard,
+  openScreen,
+  openSection,
+  resolveWeek,
+  wizardTo,
+} from './helpers';
 
+/** Empreinte de l'état : paramètres techniques de la section « La partie » du QG. */
 async function readStateHash(page: Page): Promise<string> {
-  await page.getByText('Paramètres techniques').click();
+  await openSection(page, 'partie');
   const hash = (await page.getByTestId('empreinte').textContent()) ?? '';
   expect(hash).toMatch(/^[0-9a-f]{64}$/);
-  await page.getByText('Paramètres techniques').click();
   return hash;
 }
 
@@ -17,6 +27,8 @@ test('boucle complète : actions, progression, bilan, sauvegarde, restauration, 
   context,
 }) => {
   await createGame(page, 'Campagne Playwright');
+  // Le détail des ressources est replié en bas du QG.
+  await openSection(page, 'ressources');
   const budget = page.getByTestId('ressource-budgetCentimes');
   await expect(budget).toHaveText(/3\s000\s000\s€/);
 
@@ -32,6 +44,7 @@ test('boucle complète : actions, progression, bilan, sauvegarde, restauration, 
 
   // Effet visible : coût débité exactement, détaillé par facteurs dans le bilan.
   await expect(budget).toHaveText(/2\s870\s000\s€/);
+  await openSection(page, 'bilan-semaine');
   const report = page.getByRole('region', { name: /Bilan de la semaine 0/ });
   const budgetChange = report.locator('details', {
     has: page.getByText('Budget', { exact: true }),
@@ -67,12 +80,15 @@ test('boucle complète : actions, progression, bilan, sauvegarde, restauration, 
 
   // Journal : semaines résolues et restauration, rien n'est effacé.
   await openScreen(page, 'Journal');
-  await expect(page.getByText(/^Semaine 1 — /)).toBeVisible();
-  await expect(page.getByText(/^Semaine 0 — /)).toBeVisible();
+  const journal = page.getByRole('region', { name: 'Journal', exact: true });
+  await expect(journal.getByText(/^Semaine 1 — /)).toBeVisible();
+  await expect(journal.getByText(/^Semaine 0 — /)).toBeVisible();
   await expect(page.getByText('Sauvegarde restaurée')).toBeVisible();
 
   // Reprise après « fermeture » : nouvel onglet, état relu depuis le serveur.
-  const gameUrl = page.url().replace(/\/journal$/, '/tableau-de-bord');
+  // Les sections se déplient sur place : l'adresse reste celle du QG.
+  const gameUrl = page.url();
+  expect(gameUrl).toMatch(/\/tableau-de-bord$/);
   await page.close();
   const resumed = await context.newPage();
   await resumed.goto(gameUrl);
@@ -103,13 +119,74 @@ test('export puis import dans une nouvelle partie identique', async ({ page }) =
   expect(await readStateHash(page)).toBe(hash);
 });
 
-test('les écrans non implémentés sont annoncés comme tels', async ({ page }) => {
+test('tous les écrans du cahier des charges ont leur moteur', async ({ page }) => {
   await createGame(page, 'Écrans', 'e2e-ecrans');
-  await openScreen(page, 'Gouvernement');
-  await expect(page.getByText('Non disponible — prévu en phase 6')).toBeVisible();
+  await openScreen(page, 'Bilan du quinquennat');
+  await expect(
+    page
+      .getByRole('region', { name: 'Bilan du quinquennat', exact: true })
+      .getByText(/Aucun quinquennat achevé/),
+  ).toBeVisible();
+  await expect(page.getByText(/Non disponible/)).toHaveCount(0);
 });
 
-test('présidentielle complète : candidat, sondages, deux tours et résultats', async ({ page }) => {
+test('fin du quinquennat : bilan, puis campagne de la présidentielle 2032', async ({ page }) => {
+  test.setTimeout(180_000);
+  await createGame(page, 'Cycle 2032', 'e2e-cycle');
+  await advanceViaApi(page, (g) => g.state.quinquennat !== null);
+  // De l'investiture à un premier vote à l'Assemblée (votes simulés par groupe).
+  const voted = await advanceViaApi(
+    page,
+    (g) => g.state.parlement?.textes.some((b) => b.votes.length > 0) ?? false,
+    13,
+  );
+  expect(voted.state.meta.phase).toBe('presidence');
+  await page.reload();
+  await openScreen(page, 'Parlement');
+  await expect(
+    page.getByRole('img', { name: /^Hémicycle de l’Assemblée nationale/ }),
+  ).toBeVisible();
+  await expect(page.getByText(/votes de groupe simulés/).first()).toBeVisible();
+  const parliamentAudit = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze();
+  expect(
+    parliamentAudit.violations.map((v) => `Parlement — ${v.id} : ${v.help} (${v.nodes.length})`),
+  ).toEqual([]);
+  // Avance rapide du quinquennat (président IA) jusqu'à la campagne suivante (critère 17).
+  const campaign = await advanceViaApi(page, (g) => g.state.cycle.annee === 2032, 52);
+  expect(campaign.state.meta).toMatchObject({ phase: 'campagne', date: '2031-09-29' });
+  await page.reload();
+  await openScreen(page, 'Tableau de bord');
+  const panel = page.getByRole('region', { name: 'Présidentielle 2032' });
+  await expect(panel).toContainText('Le quinquennat 2027–2032');
+  await openSection(page, 'calendrier');
+  await expect(
+    page.getByRole('region', { name: 'Calendrier électoral' }).getByText(/dimanche 18 avril 2032/),
+  ).toBeVisible();
+  // Le joueur, battu en 2027, fait de nouveau campagne.
+  await expect(page.getByRole('list', { name: 'Catalogue des actions' })).toBeVisible();
+  await resolveWeek(page, campaign.week);
+
+  await openScreen(page, 'Bilan du quinquennat');
+  const review = page.getByRole('region', { name: /Quinquennat 2027–2032/ });
+  await expect(review.getByRole('rowheader', { name: 'Popularité du président' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Présidentielles précédentes' })).toContainText(
+    '2027',
+  );
+  const audit = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze();
+  expect(audit.violations.map((v) => `Bilan — ${v.id} : ${v.help} (${v.nodes.length})`)).toEqual(
+    [],
+  );
+});
+
+test('présidentielle complète puis quinquennat : deux tours, résultats, gouvernement, avance rapide', async ({
+  page,
+}) => {
+  // Une présidentielle entière puis cinq audits axe de l'espace Pouvoir (vue du mandat comprise).
+  test.setTimeout(90_000);
   await createGame(page, 'Présidentielle', 'e2e-presidentielle');
   await openScreen(page, 'Candidats');
   const mine = page.getByRole('listitem', { name: 'Camille Durand' });
@@ -119,12 +196,14 @@ test('présidentielle complète : candidat, sondages, deux tours et résultats',
   await openScreen(page, 'Tableau de bord');
   await resolveWeek(page, 0);
   await openScreen(page, 'Sondages');
-  const latest = page.getByRole('region', { name: /Dernier sondage/ });
+  const latest = page.getByRole('region', { name: /^Dernier sondage/ });
   await expect(latest.getByText(/1\s000 personnes/)).toBeVisible();
   await expect(latest.getByText('Camille Durand (vous)')).toBeVisible();
 
-  const final = await advanceViaApi(page, (g) => g.state.calendar.blockedBy !== null);
-  expect(final.state.calendar.blockedBy).toBe('fin-de-la-presidentielle');
+  // Critère 10 : la fin de la présidentielle ouvre la présidence (ici celle de l'IA).
+  const final = await advanceViaApi(page, (g) => g.state.quinquennat !== null);
+  expect(final.state.meta.phase).toBe('presidence');
+  expect(final.state.calendar.blockedBy).toBeNull();
   await page.reload();
   await openScreen(page, 'Résultats');
   const t2 = page.getByRole('region', { name: 'Second tour' });
@@ -132,24 +211,94 @@ test('présidentielle complète : candidat, sondages, deux tours et résultats',
   await expect(
     t2.getByText(`${winner.prenom} ${winner.nom} est élu(e) président(e) de la République.`),
   ).toBeVisible();
-  await expect(page.getByRole('region', { name: 'Premier tour' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Premier tour', exact: true })).toBeVisible();
 
   await openScreen(page, 'Tableau de bord');
-  // Alerte du tableau de bord (le bilan de la dernière semaine, chargé ensuite, en a une autre).
-  const blocked = page
-    .getByRole('alert')
-    .filter({ has: page.getByRole('link', { name: 'Voir les résultats' }) });
-  await expect(blocked).toContainText(/élu\(e\)/);
-  await expect(page.getByRole('button', { name: /Résoudre la semaine/ })).toBeDisabled();
+  const quinquennat = page.getByRole('region', { name: /Quinquennat 2027–2032/ });
+  await expect(quinquennat).toContainText(
+    `${winner.prenom} ${winner.nom} est président(e) de la République`,
+  );
+  await expect(quinquennat).toContainText('Vous n’êtes pas président(e)');
+  await page.getByLabel('Avance rapide').selectOption('13');
+  await page.getByRole('button', { name: 'Avancer' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Avance rapide' })).toHaveText(
+    'Avance rapide : 13 semaine(s) résolue(s) sur 13.',
+  );
+  await expect(
+    page.getByRole('button', { name: `Résoudre la semaine ${final.week + 13}` }),
+  ).toBeVisible();
+
+  await openScreen(page, 'Gouvernement');
+  await expect(page.getByRole('heading', { name: 'Gouvernement n° 1' })).toBeVisible();
+  await expect(page.getByText('Premier ministre', { exact: true })).toBeVisible();
+  const audit = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze();
+  expect(audit.violations.map((v) => `${v.id} : ${v.help} (${v.nodes.length})`)).toEqual([]);
+
+  // Parlement : composition réelle, votes simulés par groupe.
+  await openScreen(page, 'Parlement');
+  const assembly = page.getByRole('region', { name: /Assemblée nationale \(17e législature\)/ });
+  await expect(assembly.getByRole('table', { name: 'Groupes politiques et sièges' })).toBeVisible();
+  await expect(assembly.getByText(/sans aucun nom de député/)).toBeVisible();
+  const parliamentAudit = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze();
+  expect(parliamentAudit.violations.map((v) => `${v.id} : ${v.help} (${v.nodes.length})`)).toEqual(
+    [],
+  );
+
+  // Économie (valeurs de départ de l'Insee, évolution simulée), crises fictives et législatives
+  // (Assemblée élue en 2024, résultats réels par circonscription).
+  for (const [screenName, landmark] of [
+    ['Économie', page.getByRole('listitem', { name: 'Taux de chômage' })],
+    ['Crises', page.getByRole('region', { name: 'Crises possibles (fictives)' })],
+    ['Législatives', page.getByRole('region', { name: 'Dernières élections' })],
+  ] as const) {
+    await openScreen(page, screenName);
+    await expect(landmark).toBeVisible();
+    const screenAudit = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .analyze();
+    expect(
+      screenAudit.violations.map((v) => `${screenName} — ${v.id} : ${v.help} (${v.nodes.length})`),
+    ).toEqual([]);
+  }
+  const districts = page.getByRole('region', {
+    name: 'Résultats par circonscription en 2024 (réels)',
+  });
+  await districts.getByLabel('Département').selectOption('2A');
+  await expect(
+    districts.getByRole('rowheader', { name: /^Corse-du-Sud — 1ère circonscription$/ }),
+  ).toBeVisible();
+});
+
+test('scénario de départ fictif : choisi à la création, affiché pendant la partie', async ({
+  page,
+}) => {
+  await page.goto('/nouvelle-partie');
+  await fillCandidate(page);
+  await wizardTo(page, 'Le terrain');
+  const scenarios = page.getByRole('group', { name: 'Scénario de départ' });
+  await scenarios.getByRole('radio', { name: /Colère sociale/ }).check();
+  await expect(scenarios.getByText(/Événements de campagne × 1,5/)).toBeVisible();
+  await finishWizard(page, { name: 'Scénario' });
+  await expect(page.getByRole('heading', { name: 'Tableau de bord' })).toBeVisible();
+  // Le scénario se lit dans la ligne d'état de la section « La partie », et dans ses faits.
+  await expect(page.getByRole('button', { name: /^La partie/ })).toContainText('Colère sociale');
+  await openSection(page, 'partie');
+  await expect(page.getByText('Colère sociale', { exact: true })).toBeVisible();
+  await openScreen(page, 'Crises');
+  await expect(page.getByRole('region', { name: 'Conséquences durables' })).toContainText(
+    'Aucune conséquence durable en cours.',
+  );
+  await expect(page.getByText(/probabilité des crises × 1,2/)).toBeVisible();
 });
 
 test('une date de départ invalide est refusée par le serveur', async ({ page }) => {
   await page.goto('/nouvelle-partie');
-  await page.getByLabel('Nom de la partie').fill('Date invalide');
-  await page.getByLabel(/^Nom \*/).fill('Durand');
-  await page.getByLabel(/^Parti ou mouvement/).fill('Mouvement Playwright');
-  await page.getByLabel('Date de départ').fill('2026-09-29');
-  await page.getByRole('button', { name: 'Créer la partie' }).click();
+  await fillCandidate(page);
+  await finishWizard(page, { name: 'Date invalide', startDate: '2026-09-29' });
   await expect(page.getByRole('alert')).toContainText('doit être un lundi');
 });
 
@@ -162,6 +311,12 @@ test('aucun défilement horizontal de la page', async ({ page }) => {
     'Candidats',
     'Sondages',
     'Résultats',
+    'Gouvernement',
+    'Parlement',
+    'Économie',
+    'Crises',
+    'Législatives',
+    'Bilan du quinquennat',
     'Journal',
     'Sauvegardes',
   ]) {

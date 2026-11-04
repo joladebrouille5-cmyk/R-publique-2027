@@ -17,9 +17,11 @@ enum GameMode {
 }
 
 enum Difficulty {
+  decouverte
   accessible
   standard
   expert
+  legende
 }
 
 enum SaveKind {

@@ -5,8 +5,8 @@ import { compareStrings, type Ledger } from '../core/ledger';
 /**
  * Étape 6 : dynamique hebdomadaire de l'opinion et de l'équipe, sans action du joueur :
  * érosion de la notoriété, retour de la popularité vers une valeur de référence, attrition
- * des militants. Paramètres de jeu (hypothèses) du jeu de règles. Les médias seront
- * modélisés en phase 5.
+ * des militants, usure de l'écho chez les jeunes et retombée du buzz (phase 9). Paramètres de
+ * jeu (hypothèses) du jeu de règles.
  */
 export function weeklyDrift(
   state: GameState,
@@ -31,6 +31,26 @@ export function weeklyDrift(
       {
         label: `Retour progressif vers ${formatPercent(popularite.reference)} (${pct(popularite.rappel)} de l'écart)`,
         value: -Math.round((pop - popularite.reference) * popularite.rappel),
+        source: 'opinion',
+        step,
+      },
+    ]);
+    // Réseaux et nouveaux médias (phase 9) : l'écho chez les jeunes s'use, le buzz retombe.
+    const { erosionJeunesse, retombeeDynamique } = ruleset.numerique;
+    const jeunesse = ledger.current(actorId, 'jeunesse');
+    ledger.apply(actorId, 'jeunesse', [
+      {
+        label: `Érosion hebdomadaire de l'écho chez les 18-34 ans (${pct(erosionJeunesse)})`,
+        value: -Math.round(jeunesse * erosionJeunesse),
+        source: 'opinion',
+        step,
+      },
+    ]);
+    const dynamique = ledger.current(actorId, 'dynamique');
+    ledger.apply(actorId, 'dynamique', [
+      {
+        label: `Retombée du buzz (${pct(retombeeDynamique)})`,
+        value: -Math.round(dynamique * retombeeDynamique),
         source: 'opinion',
         step,
       },

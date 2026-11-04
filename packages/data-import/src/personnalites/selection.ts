@@ -88,6 +88,11 @@ export type Selected = {
     fait: string | null;
   };
   implantation: Implantation[];
+  /**
+   * Photo choisie sur Wikimedia Commons quand celle de la source n'est pas sous licence libre :
+   * fichier Commons et motif consigné ; sa licence est vérifiée comme celle des autres photos.
+   */
+  photo?: { fichier: string; motif: string };
 };
 
 export const METHODE = {
@@ -288,6 +293,11 @@ export const SELECTION: Selected[] = [
       fait: "l'emporte le 11 octobre",
     },
     implantation: [],
+    photo: {
+      fichier: 'Raphaël_Glucksmann.jpg',
+      motif:
+        'La photo de la source, diffusée par le Parlement européen, n’est pas sous licence libre ; portrait sous licence libre choisi sur Wikimedia Commons.',
+    },
   },
   {
     id: 'reel-le-pen',

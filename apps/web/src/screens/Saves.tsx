@@ -7,6 +7,7 @@ import { formatGameDate, formatTimestamp } from '../labels';
 import { useCurrentGame } from './GameLayout';
 import { AutoSaves } from './saves/AutoSaves';
 import { ExchangePanel } from './saves/ExchangePanel';
+import { ScreenHeading } from '../components/Disclosure';
 
 type Pending = { kind: 'ecraser' | 'restaurer'; slot: number } | null;
 
@@ -48,10 +49,8 @@ export function Saves() {
 
   return (
     <section aria-labelledby="titre-sauvegardes" className="space-y-6">
-      <h1 id="titre-sauvegardes" className="text-2xl font-bold">
-        Sauvegardes
-      </h1>
-      <p className="text-sm text-slate-600 dark:text-slate-400">
+      <ScreenHeading id="titre-sauvegardes">Sauvegardes</ScreenHeading>
+      <p className="text-sm text-encre-2">
         Les sauvegardes sont conservées sur le serveur. Chaque sauvegarde garde l’empreinte de
         l’état : une restauration redonne exactement la même partie.
       </p>
@@ -93,7 +92,7 @@ export function Saves() {
                   <div>
                     <p className="font-semibold">Emplacement {slot}</p>
                     {existing ? (
-                      <p className="text-sm text-slate-600 dark:text-slate-400">
+                      <p className="text-sm text-encre-2">
                         {existing.label ? `${existing.label} — ` : ''}Semaine {existing.week},{' '}
                         {formatGameDate(existing.date)} · enregistrée le{' '}
                         {formatTimestamp(existing.createdAt)}

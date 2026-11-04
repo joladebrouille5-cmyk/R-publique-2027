@@ -1,0 +1,833 @@
+import {
+  addDays,
+  candidateName,
+  figureMainFunction,
+  parseSuccessorOptionId,
+  REPRESENT_OPTION_ID,
+  successorOptionId,
+  type Actor,
+  type CandidateIdentity,
+  type GameState,
+  type Government,
+  type MemberRef,
+  type PendingDecision,
+  type Position,
+  type PresidentialArchive,
+  type QuinquennatReview,
+  type RecordRole,
+  type ReportEvent,
+  type Resources,
+  type Ruleset,
+  type Succession,
+  type SuccessionAnnouncement,
+  type SuccessorSource,
+  type UtilityFactor,
+} from '@r2027/shared';
+import { openingAccount } from '../campaign/finances';
+import { emptyParrainages } from '../campaign/parrainages';
+import { formatFrenchDate } from '../core/calendar';
+import { compareStrings, type Ledger } from '../core/ledger';
+import { stream } from '../core/random';
+import { distance } from '../election/model';
+import { nextCycle, shiftToCycle } from './dates';
+import { figureById, memberTraits, profileById } from './members';
+
+// Présidentielle suivante (phase 23) : décision de candidature du joueur, candidatures simulées
+// des autres candidats, entrants et poids du bilan du quinquennat sur les intentions de vote.
+// Paramètres : bloc `succession` du jeu de règles (hypothèses). Tirages par la graine de la
+// partie ; aucun propos n'est prêté à une personne réelle : les annonces décrivent des faits de
+// jeu, avec leur motif chiffré.
+
+/** Libellé du facteur d'utilité du bilan, dans « Pourquoi ça bouge ? » et le détail. */
+export const RECORD_FACTOR_LABEL = 'Bilan du quinquennat';
+
+const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+/** Arrondi au dix-millième : valeur stable une fois enregistrée dans l'état. */
+const round4 = (value: number) => Math.round(value * 10_000) / 10_000;
+
+/**
+ * Score du bilan du quinquennat (spec §5) : popularité finale du président au-dessus ou en
+ * dessous du pivot, note du mandat sur 20 autour de 10 (10 sans objectifs fixés) et variation du
+ * chômage en points (une baisse compte en faveur du sortant), borné à ± `bilan.max`.
+ */
+export function recordScore(review: QuinquennatReview, ruleset: Ruleset): number {
+  const params = ruleset.succession.bilan;
+  const popularity = review.fin.popularite ?? params.pivotPopularite;
+  const grade = review.note?.valeur ?? 10;
+  const start = review.debut.indicateurs?.chomage;
+  const end = review.fin.indicateurs?.chomage;
+  const unemployment = start !== undefined && end !== undefined ? (end - start) / 100 : 0;
+  const raw =
+    (params.poidsPopularite * (popularity - params.pivotPopularite)) / 10_000 +
+    (params.poidsNote * (grade - 10)) / 10 -
+    params.poidsChomage * unemployment;
+  return round4(clamp(raw, -params.max, params.max));
+}
+
+/**
+ * Facteur « Bilan du quinquennat » d'un candidat pendant la campagne qui suit le quinquennat
+ * (arrêté à l'ouverture de la campagne) ; aucun facteur hors de cette campagne.
+ */
+export function recordFactors(state: GameState, contenderId: string): UtilityFactor[] {
+  const succession = state.succession;
+  if (!succession || state.meta.phase !== 'campagne' || succession.annee !== state.cycle.annee)
+    return [];
+  const entry = succession.bilan[contenderId];
+  return entry ? [{ label: RECORD_FACTOR_LABEL, value: entry.facteur }] : [];
+}
+
+// ————————————————————————————————————————————————————————————————————————————————
+// Candidatures à l'ouverture de la campagne suivante (spec §2 à §4).
+
+/** Contexte de la présidentielle qui s'achève, relevé avant l'ouverture de la suivante. */
+export type SuccessionContext = {
+  presidentId: string;
+  /** Le président achève son deuxième mandat consécutif (Constitution, art. 6). */
+  termLimited: boolean;
+  /** Présidentielle archivée du cycle qui s'achève (null si la partie n'en a pas). */
+  previous: PresidentialArchive | null;
+  /** Dernier gouvernement du quinquennat (null s'il n'y en avait pas en fonction). */
+  government: Government | null;
+  /** Popularité prêtée des membres du gouvernement (`quinquennat.suivi`). */
+  suivi: Record<string, { popularite: number }>;
+  /** Candidats retirés de la présidentielle précédente par un ralliement. */
+  rallied: readonly string[];
+};
+
+/** Source d'un candidat entrant : figure réelle du vivier ou profil fictif du jeu de règles. */
+export type EntrantSource = { nature: 'figure' | 'profil'; ref: string };
+
+const pct = (fraction: number) => `${(fraction * 100).toFixed(1).replace('.', ',')} %`;
+const pctCentiemes = (centiemes: number) => pct(centiemes / 10_000);
+
+/** Identifiant de l'acteur entrant : année du cycle et fiche d'origine. */
+export const entrantId = (annee: number, source: EntrantSource) => `entrant-${annee}-${source.ref}`;
+const ENTRANT_ID = /^entrant-\d{4}-(.+)$/;
+
+/** Fiche d'origine d'un acteur entré lors d'une présidentielle suivante, ou null. */
+export function entrantSourceOf(actor: Actor): EntrantSource | null {
+  if (actor.candidate.figureId) return { nature: 'figure', ref: actor.candidate.figureId };
+  const match = ENTRANT_ID.exec(actor.id);
+  return match && match[1]!.startsWith('profil-') ? { nature: 'profil', ref: match[1]! } : null;
+}
+
+/** Acteur de la partie qui incarne déjà un membre du gouvernement (ou une fiche), s'il y en a un. */
+export function actorOfMember(state: GameState, member: MemberRef | EntrantSource) {
+  if (member.nature === 'acteur') return state.actors[member.ref];
+  return Object.values(state.actors).find((actor) => {
+    const source = entrantSourceOf(actor);
+    return source?.nature === member.nature && source.ref === member.ref;
+  });
+}
+
+/** Moyens de départ d'un candidat entrant (hypothèses du jeu de règles, `succession.entrants`). */
+export function entrantResources(ruleset: Ruleset, source: EntrantSource): Resources {
+  const params = ruleset.succession.entrants;
+  const figure = source.nature === 'figure' ? figureById(ruleset, source.ref) : undefined;
+  return {
+    ...ruleset.numerique.initial,
+    budgetCentimes: params.budgetCentimes,
+    militants: params.militants,
+    notoriete: figure ? params.notoriete[figure.notoriete.niveau - 1]! : params.notorieteProfil,
+    popularite: params.popularite,
+    tempsHeures: ruleset.jeu.tempsHebdomadaireHeures,
+  };
+}
+
+const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
+
+/**
+ * Candidat entrant (spec §3) : une figure réelle du vivier (position estimée d'après l'enquête
+ * CHES, aucun programme prêté, candidature simulée) ou un profil fictif du jeu de règles, avec
+ * les moyens de départ d'un entrant. Joué par l'IA, ou par le joueur s'il lui passe la main.
+ */
+export function createEntrantActor(
+  source: EntrantSource,
+  state: GameState,
+  ruleset: Ruleset,
+  asPlayer: boolean,
+): Actor {
+  const figure = source.nature === 'figure' ? figureById(ruleset, source.ref) : undefined;
+  const profile = source.nature === 'profil' ? profileById(ruleset, source.ref) : undefined;
+  if (!figure && !profile) throw new Error(`Fiche inconnue : ${source.ref}`);
+  const candidate: CandidateIdentity = figure
+    ? {
+        prenom: figure.prenom,
+        nom: figure.nom,
+        parti: figure.parti,
+        positionnement: { economie: figure.position.economie, societe: figure.position.societe },
+        parcours: '',
+        nature: 'reel',
+        profilId: null,
+        personnaliteId: null,
+        figureId: figure.id,
+        photo: null,
+      }
+    : {
+        prenom: profile!.prenom,
+        nom: profile!.nom,
+        parti: capitalize(profile!.famille),
+        positionnement: profile!.positionnement,
+        parcours: profile!.parcours,
+        nature: 'fictif',
+        profilId: null,
+        personnaliteId: null,
+        photo: null,
+      };
+  const resources = entrantResources(ruleset, source);
+  const ai = ruleset.personnalitesReelles;
+  return {
+    id: entrantId(state.cycle.annee, source),
+    kind: asPlayer ? 'joueur' : 'adversaire',
+    label: `Campagne de ${candidateName(candidate)}`,
+    candidate,
+    style: asPlayer ? null : ai.style,
+    toleranceRisque: asPlayer ? null : ai.toleranceRisque,
+    resources,
+    status: 'candidat',
+    history: { popularite: [resources.popularite] },
+    equipe: asPlayer ? ruleset.jeu.equipeJoueur : ai.organisation.moyenne.equipe,
+    implantation: [],
+    objectif: asPlayer ? null : ai.objectif,
+    programme: { propositions: [], revirements: 0 },
+    parrainages: emptyParrainages(),
+    finances: openingAccount(resources.budgetCentimes, ruleset),
+    preparationDebat: 0,
+    strategie: null,
+  };
+}
+
+/** Ancien candidat du joueur, devenu acteur de l'IA en passant la main : il ne revient pas. */
+const formerPlayer = (actor: Actor) => actor.kind === 'adversaire' && actor.style === null;
+
+/**
+ * Probabilité qu'un candidat de la présidentielle précédente se représente (spec §2) : président
+ * sortant selon sa popularité finale (0 au terme de deux mandats consécutifs), finaliste battu,
+ * éliminé au premier tour selon son score, écarté ou retiré.
+ */
+export function runProbability(
+  actorId: string,
+  state: GameState,
+  ruleset: Ruleset,
+  context: Pick<SuccessionContext, 'presidentId' | 'termLimited' | 'previous'>,
+): number {
+  const actor = state.actors[actorId]!;
+  const params = ruleset.succession.representation;
+  if (formerPlayer(actor)) return 0;
+  if (actorId === context.presidentId) {
+    if (context.termLimited) return 0;
+    const { base, pente, pivot, min, max } = params.sortant;
+    return clamp(base + (pente * (actor.resources.popularite - pivot)) / 10_000, min, max);
+  }
+  if (actor.status === 'battu') return params.finaliste;
+  if (actor.status === 'elimine') {
+    const { base, pente, min, max } = params.elimine;
+    return clamp(base + pente * firstRoundShare(context.previous, actorId), min, max);
+  }
+  return params.autre;
+}
+
+function firstRoundShare(previous: PresidentialArchive | null, actorId: string): number {
+  if (!previous || previous.t1.exprimes === 0) return 0;
+  return (previous.t1.voix[actorId] ?? 0) / previous.t1.exprimes;
+}
+
+/** Motif de jeu, chiffré, de la décision d'un candidat de la présidentielle précédente. */
+function runMotive(
+  actor: Actor,
+  context: Pick<SuccessionContext, 'presidentId' | 'termLimited' | 'previous' | 'rallied'>,
+): string {
+  const year = context.previous?.annee;
+  const of = year ? ` en ${year}` : '';
+  if (actor.id === context.presidentId)
+    return context.termLimited
+      ? 'président(e) sortant(e) au terme de deux mandats consécutifs (Constitution, art. 6)'
+      : `président(e) sortant(e), popularité finale de ${pctCentiemes(actor.resources.popularite)}`;
+  if (actor.status === 'battu') return `finaliste battu(e) au second tour${of}`;
+  if (actor.status === 'elimine')
+    return `score au premier tour${of} : ${pct(firstRoundShare(context.previous, actor.id))}`;
+  if (actor.status === 'ecarte') return `écarté(e) faute de parrainages${of}`;
+  if (actor.status === 'retire' && context.rallied.includes(actor.id))
+    return `retiré(e) de la course par un ralliement${of}`;
+  return `absent de la présidentielle${of}`;
+}
+
+/** Plus courte distance entre une position et les candidats déclarés (Infinity sans candidat). */
+function nearestDeclared(state: GameState, position: Position): number {
+  const declared = Object.values(state.actors).filter((a) => a.status === 'candidat');
+  return Math.min(Infinity, ...declared.map((a) => distance(position, a.candidate.positionnement)));
+}
+
+const declaredCount = (state: GameState) =>
+  Object.values(state.actors).filter((a) => a.status === 'candidat').length;
+
+/** Popularité prêtée d'un membre du gouvernement (suivi du quinquennat, sinon celle du jeu). */
+function memberPopularity(
+  state: GameState,
+  ruleset: Ruleset,
+  member: MemberRef,
+  suivi: SuccessionContext['suivi'],
+) {
+  return suivi[member.ref]?.popularite ?? memberTraits(state, ruleset, member).popularite;
+}
+
+/** Annonce enregistrée dans l'état et dans le bilan de la semaine (copie fixe, sans propos). */
+function announce(
+  state: GameState,
+  annonces: SuccessionAnnouncement[],
+  events: ReportEvent[],
+  announcement: SuccessionAnnouncement,
+  majeur: boolean,
+): void {
+  annonces.push(announcement);
+  const name = candidateName(state.actors[announcement.actorId]!.candidate);
+  const year = state.cycle.annee;
+  const label = {
+    candidat: `Candidature simulée : ${name} se représente`,
+    retrait: `Candidature simulée : ${name} ne se présente pas à la présidentielle ${year}`,
+    entree: `Candidature simulée : ${name} entre dans la course`,
+    successeur: `Vous passez la main : ${name} porte votre camp en ${year}`,
+  }[announcement.choix];
+  events.push({
+    id: `candidature-${year}-${announcement.actorId}`,
+    kind: 'evenement',
+    refId: 'succession',
+    label,
+    description: `Motif du jeu : ${announcement.motif}.`,
+    nature: 'simule',
+    majeur,
+    decisionId: null,
+  });
+}
+
+/**
+ * Applique les candidatures de la présidentielle suivante (spec §4), une fois le quinquennat
+ * archivé et le cycle suivant ouvert, avant les moyens de départ : décisions des candidats de la
+ * présidentielle précédente (tirages), choix du joueur, entrants (héritier du camp sortant,
+ * ministre ambitieux, familles sans candidat), dans la limite de `maxCandidats`, puis facteurs
+ * de bilan. Écrit `state.succession` ; renvoie les annonces du bilan de la semaine.
+ */
+export function applySuccession(
+  state: GameState,
+  ruleset: Ruleset,
+  ledger: Ledger,
+  step: number,
+  review: QuinquennatReview,
+  context: SuccessionContext,
+): ReportEvent[] {
+  const params = ruleset.succession;
+  const year = state.cycle.annee;
+  const week = state.meta.week;
+  const seed = state.meta.seed;
+  const playerId = state.player.actorId;
+  const annonces: SuccessionAnnouncement[] = [];
+  const events: ReportEvent[] = [];
+  // Candidats de la présidentielle précédente : leur décision est annoncée ; un acteur resté à
+  // l'écart n'est annoncé que s'il revient.
+  const participated = (actor: Actor) =>
+    actor.id === context.presidentId ||
+    ['elu', 'battu', 'elimine', 'ecarte'].includes(actor.status) ||
+    context.previous?.t1.voix[actor.id] !== undefined ||
+    context.rallied.includes(actor.id);
+
+  // 1. Le joueur (spec §1) : il se représente, ou passe la main au successeur choisi (à défaut
+  // de choix, il se représente s'il le peut, sinon le premier successeur proposé).
+  const roles: Record<string, RecordRole> = {};
+  let successorId: string | null = null;
+  const player = playerId ? state.actors[playerId] : undefined;
+  if (player) {
+    const eligible = !(context.termLimited && player.id === context.presidentId);
+    const options = successorOptionsFor(state, ruleset, context);
+    const chosen = state.succession?.annee === year ? state.succession.choixJoueur : null;
+    // Le choix tient même si le gouvernement a changé depuis la décision (remaniement) : le
+    // successeur doit seulement exister encore et ne pas être le président sortant de l'IA.
+    const valid = (id: string | null) => {
+      if (id === null) return false;
+      if (id === REPRESENT_OPTION_ID) return eligible;
+      const source = parseSuccessorOptionId(id);
+      return source !== null && successorExists(state, ruleset, source, context.presidentId);
+    };
+    const choice = valid(chosen)
+      ? chosen!
+      : eligible
+        ? REPRESENT_OPTION_ID
+        : (options[0]?.id ?? null);
+    const source = choice ? parseSuccessorOptionId(choice) : null;
+    if (!source) {
+      player.status = eligible ? 'candidat' : 'ineligible';
+      if (eligible)
+        announce(
+          state,
+          annonces,
+          events,
+          { actorId: player.id, choix: 'candidat', motif: 'choix du joueur' },
+          false,
+        );
+    } else {
+      const successor = handOver(state, ruleset, ledger, step, player, source);
+      successorId = successor.id;
+      player.status = eligible ? 'retire' : 'ineligible';
+      const name = candidateName(successor.candidate);
+      announce(
+        state,
+        annonces,
+        events,
+        { actorId: player.id, choix: 'retrait', motif: `passe la main à ${name}` },
+        false,
+      );
+      announce(
+        state,
+        annonces,
+        events,
+        {
+          actorId: successor.id,
+          choix: 'successeur',
+          motif: `choix du joueur ; ${Math.round(params.transmissionMilitants * 100)} % des militants de ${candidateName(player.candidate)} transmis`,
+        },
+        true,
+      );
+      if (player.id === context.presidentId) roles[successor.id] = 'heritier';
+    }
+  }
+
+  // 2. Les autres candidats de la présidentielle précédente décident (tirages de la graine), le
+  // plus probable d'abord, dans la limite du plafond. Probabilités et motifs sont relevés sur la
+  // présidentielle qui s'achève, avant tout changement de statut.
+  const others = Object.values(state.actors)
+    .filter((a) => a.id !== playerId && a.id !== successorId)
+    .map((actor) => ({
+      actor,
+      p: runProbability(actor.id, state, ruleset, context),
+      motif: runMotive(actor, context),
+      announced: participated(actor) && !formerPlayer(actor),
+    }))
+    .sort((a, b) => b.p - a.p || compareStrings(a.actor.id, b.actor.id));
+  for (const { actor } of others) actor.status = 'retire';
+  for (const { actor, p, motif, announced } of others) {
+    const draw = stream(seed, week, 'candidature', year, actor.id).nextFloat();
+    const runs = draw < p && declaredCount(state) < params.maxCandidats;
+    if (runs) actor.status = 'candidat';
+    else if (actor.id === context.presidentId && context.termLimited) actor.status = 'ineligible';
+    if (!announced && !runs) continue;
+    announce(
+      state,
+      annonces,
+      events,
+      {
+        actorId: actor.id,
+        choix: runs ? 'candidat' : 'retrait',
+        motif:
+          draw < p && !runs ? `plafond du jeu : ${params.maxCandidats} candidats déclarés` : motif,
+      },
+      actor.id === context.presidentId,
+    );
+  }
+
+  // 3. Entrants, dans l'ordre, sans dépasser le plafond.
+  const room = () => declaredCount(state) < params.maxCandidats;
+  const enter = (source: EntrantSource, motif: string, majeur: boolean) => {
+    const actor = createEntrantActor(source, state, ruleset, false);
+    state.actors[actor.id] = actor;
+    announce(state, annonces, events, { actorId: actor.id, choix: 'entree', motif }, majeur);
+    return actor;
+  };
+  const government = context.government;
+  const president = state.actors[context.presidentId];
+  const presidentRuns = president?.status === 'candidat';
+  const presidentIsPlayer = context.presidentId === playerId;
+  const available = (member: MemberRef) =>
+    member.nature !== 'acteur' && actorOfMember(state, member) === undefined;
+  const ministersByPopularity = (government?.ministres ?? [])
+    .map((m) => ({
+      member: m as MemberRef,
+      popularite: memberPopularity(state, ruleset, m, context.suivi),
+    }))
+    .sort((a, b) => b.popularite - a.popularite || compareStrings(a.member.ref, b.member.ref));
+
+  // 3a. Héritier du camp sortant : le président (IA) ne se représente pas.
+  let heirRef: string | null = null;
+  if (government && !presidentIsPlayer && !presidentRuns && room()) {
+    const pm = government.premierMinistre;
+    const heir = available(pm)
+      ? {
+          member: pm,
+          motif: 'Premier ministre du gouvernement sortant, camp du président(e) sortant(e)',
+        }
+      : ministersByPopularity
+          .filter(({ member }) => available(member))
+          .map(({ member, popularite }) => ({
+            member,
+            motif: `ministre du gouvernement sortant, popularité prêtée de ${pctCentiemes(popularite)}, camp du président(e) sortant(e)`,
+          }))[0];
+    if (heir) {
+      const actor = enter(
+        { nature: heir.member.nature as EntrantSource['nature'], ref: heir.member.ref },
+        heir.motif,
+        true,
+      );
+      roles[actor.id] = 'heritier';
+      heirRef = heir.member.ref;
+    }
+  }
+
+  // 3b. Ministre ambitieux : le plus populaire, s'il atteint le seuil et que sa place est libre.
+  const ambitious = ministersByPopularity.find(
+    ({ member }) => member.ref !== heirRef && available(member),
+  );
+  if (
+    ambitious &&
+    room() &&
+    ambitious.popularite >= params.ministreSeuilPopularite &&
+    nearestDeclared(state, memberTraits(state, ruleset, ambitious.member).position) >=
+      params.distanceMinistre &&
+    stream(seed, week, 'candidature', year, 'ministre', ambitious.member.ref).nextFloat() <
+      params.ministreProbabilite
+  ) {
+    enter(
+      { nature: ambitious.member.nature as EntrantSource['nature'], ref: ambitious.member.ref },
+      `ministre du gouvernement sortant, popularité prêtée de ${pctCentiemes(ambitious.popularite)}`,
+      false,
+    );
+  }
+
+  // 3c. Familles sans candidat : le profil fictif le plus proche de chaque groupe d'électeurs
+  // qu'aucun candidat déclaré ne représente ; au moins deux candidats déclarés en tout cas.
+  const freeProfiles = () =>
+    ruleset.quinquennat.profils.filter(
+      (p) => actorOfMember(state, { nature: 'profil', ref: p.id }) === undefined,
+    );
+  const closestProfile = (position: Position) =>
+    [...freeProfiles()].sort(
+      (a, b) =>
+        distance(position, a.positionnement) - distance(position, b.positionnement) ||
+        compareStrings(a.id, b.id),
+    )[0];
+  for (const group of ruleset.electorat.groupes) {
+    if (!room() || nearestDeclared(state, group.position) < params.distanceFamille) continue;
+    const profile = closestProfile(group.position);
+    if (profile)
+      enter(
+        { nature: 'profil', ref: profile.id },
+        `famille ${group.libelle.toLowerCase()} sans candidat proche`,
+        false,
+      );
+  }
+  const byWeight = [...ruleset.electorat.groupes].sort(
+    (a, b) => b.part - a.part || compareStrings(a.id, b.id),
+  );
+  for (const group of byWeight) {
+    if (declaredCount(state) >= 2) break;
+    const profile = closestProfile(group.position);
+    if (profile)
+      enter(
+        { nature: 'profil', ref: profile.id },
+        `famille ${group.libelle.toLowerCase()}, champ de candidats réduit`,
+        false,
+      );
+  }
+
+  // 4. Facteurs de bilan (spec §5) : président sortant, héritier, membres du dernier gouvernement.
+  const score = recordScore(review, ruleset);
+  const members = new Set(
+    government
+      ? [government.premierMinistre, ...government.ministres].map((m) => `${m.nature}:${m.ref}`)
+      : [],
+  );
+  const bilan: Succession['bilan'] = {};
+  for (const actor of Object.values(state.actors).sort((a, b) => compareStrings(a.id, b.id))) {
+    if (actor.status !== 'candidat') continue;
+    const source = entrantSourceOf(actor);
+    const key = source ? `${source.nature}:${source.ref}` : `acteur:${actor.id}`;
+    const role: RecordRole | undefined =
+      actor.id === context.presidentId
+        ? 'sortant'
+        : (roles[actor.id] ?? (members.has(key) ? 'ministre' : undefined));
+    if (!role) continue;
+    const weight =
+      role === 'sortant' ? 1 : role === 'heritier' ? params.bilan.heritier : params.bilan.ministre;
+    bilan[actor.id] = { facteur: round4(weight * score), role };
+  }
+
+  state.succession = {
+    annee: year,
+    choixJoueur: state.succession?.annee === year ? state.succession.choixJoueur : null,
+    annonces,
+    bilan,
+  };
+  return events;
+}
+
+// ————————————————————————————————————————————————————————————————————————————————
+// Décision du joueur et passation (spec §1 et §3).
+
+/** Événement de la décision de candidature du joueur. */
+export const CANDIDACY_DECISION_EVENT = 'candidature';
+
+/** Successeur proposé au joueur, avec ce que la décision en dit. */
+export type SuccessorOption = {
+  id: string;
+  source: SuccessorSource;
+  label: string;
+  description: string;
+};
+
+const sameParty = (a: string, b: string) => {
+  const parts = (text: string) => text.split('/').map((p) => p.trim().toLowerCase());
+  const mine = parts(a);
+  return parts(b).some((p) => mine.includes(p));
+};
+
+/** Source de successeur d'un membre du gouvernement : l'acteur qui l'incarne déjà, sinon sa fiche. */
+function successorSource(state: GameState, member: MemberRef): SuccessorSource {
+  const actor = actorOfMember(state, member);
+  return actor ? { nature: 'acteur', ref: actor.id } : { nature: member.nature, ref: member.ref };
+}
+
+function describeSuccessor(
+  state: GameState,
+  ruleset: Ruleset,
+  source: SuccessorSource,
+  role: string | null,
+): Omit<SuccessorOption, 'id' | 'source'> | null {
+  const real = 'personnalité réelle, candidature simulée';
+  const fictional = 'personnage fictif';
+  if (source.nature === 'acteur') {
+    const actor = state.actors[source.ref];
+    if (!actor) return null;
+    const nature = actor.candidate.nature === 'reel' ? real : fictional;
+    return {
+      label: candidateName(actor.candidate),
+      description: [actor.candidate.parti, role, nature].filter(Boolean).join(' ; '),
+    };
+  }
+  if (source.nature === 'figure') {
+    const figure = figureById(ruleset, source.ref);
+    if (!figure) return null;
+    const fonction = figureMainFunction(figure);
+    return {
+      label: `${figure.prenom} ${figure.nom}`,
+      description: [
+        figure.parti,
+        role ?? `${fonction.libelle}${fonction.enCours ? '' : ' (ancienne fonction)'}`,
+        real,
+      ].join(' ; '),
+    };
+  }
+  const profile = profileById(ruleset, source.ref);
+  if (!profile) return null;
+  return {
+    label: `${profile.prenom} ${profile.nom}`,
+    description: [capitalize(profile.famille), role ?? profile.parcours, fictional].join(' ; '),
+  };
+}
+
+/**
+ * Successeurs proposés au joueur (spec §3), au plus `maxSuccesseurs` : s'il préside, son Premier
+ * ministre puis ses ministres les plus proches de sa position (popularité prêtée en départage) ;
+ * sinon, les figures réelles du vivier de son parti puis les profils fictifs les plus proches.
+ */
+export function successorOptionsFor(
+  state: GameState,
+  ruleset: Ruleset,
+  context: Pick<SuccessionContext, 'presidentId' | 'government' | 'suivi'>,
+): SuccessorOption[] {
+  const playerId = state.player.actorId;
+  const player = playerId ? state.actors[playerId] : undefined;
+  if (!player) return [];
+  const max = ruleset.succession.maxSuccesseurs;
+  const position = player.candidate.positionnement;
+  const picked: { source: SuccessorSource; role: string | null }[] = [];
+  const taken = (source: SuccessorSource) =>
+    picked.some((p) => p.source.nature === source.nature && p.source.ref === source.ref) ||
+    (source.nature === 'acteur' && (source.ref === playerId || source.ref === context.presidentId));
+  const push = (source: SuccessorSource, role: string | null) => {
+    if (picked.length < max && !taken(source)) picked.push({ source, role });
+  };
+  const government = context.government;
+  if (government && context.presidentId === playerId) {
+    push(successorSource(state, government.premierMinistre), 'Premier ministre du gouvernement');
+    const postes = new Map(ruleset.quinquennat.postes.map((p) => [p.id, p.libelle]));
+    const ministers = government.ministres
+      .map((m) => ({
+        m,
+        d: distance(position, memberTraits(state, ruleset, m).position),
+        p: memberPopularity(state, ruleset, m, context.suivi),
+      }))
+      .sort((a, b) => a.d - b.d || b.p - a.p || compareStrings(a.m.ref, b.m.ref));
+    for (const { m } of ministers)
+      push(successorSource(state, m), `ministre (${postes.get(m.posteId) ?? m.posteId})`);
+  } else {
+    const figures = ruleset.figures.figures
+      .filter((f) => sameParty(player.candidate.parti, f.parti))
+      .map((f) => ({ f, d: distance(position, f.position) }))
+      .sort((a, b) => a.d - b.d || compareStrings(a.f.id, b.f.id))
+      .slice(0, Math.ceil(max / 2));
+    for (const { f } of figures)
+      push(successorSource(state, { nature: 'figure', ref: f.id }), null);
+  }
+  const profiles = [...ruleset.quinquennat.profils].sort(
+    (a, b) =>
+      distance(position, a.positionnement) - distance(position, b.positionnement) ||
+      compareStrings(a.id, b.id),
+  );
+  for (const profile of profiles)
+    push(successorSource(state, { nature: 'profil', ref: profile.id }), null);
+  return picked.flatMap(({ source, role }) => {
+    const text = describeSuccessor(state, ruleset, source, role);
+    return text ? [{ id: successorOptionId(source), source, ...text }] : [];
+  });
+}
+
+/** Successeurs proposés pendant le quinquennat (gouvernement en fonction). */
+export function successorOptions(state: GameState, ruleset: Ruleset): SuccessorOption[] {
+  const quinquennat = state.quinquennat;
+  if (!quinquennat) return [];
+  return successorOptionsFor(state, ruleset, {
+    presidentId: quinquennat.mandat.presidentId,
+    government: quinquennat.gouvernement,
+    suivi: quinquennat.suivi,
+  });
+}
+
+/**
+ * Décision de candidature du joueur (spec §1) : la semaine où la date de la partie atteint
+ * l'ouverture de la campagne suivante moins `delaiDecisionSemaines`, s'il a un candidat et n'a
+ * pas déjà choisi pour ce cycle. Options : se représenter (s'il est éligible), puis les
+ * successeurs de son camp ; par défaut, se représenter, sinon le premier successeur.
+ */
+export function requestCandidacy(state: GameState, ruleset: Ruleset): void {
+  const quinquennat = state.quinquennat;
+  const playerId = state.player.actorId;
+  const next = nextCycle(ruleset, state.cycle);
+  if (!quinquennat || !playerId || !next) return;
+  const start = shiftToCycle(state.meta.startDate, next);
+  const date = state.meta.date;
+  if (date < addDays(start, -7 * ruleset.succession.delaiDecisionSemaines) || date >= start) return;
+  const id = `candidature-${next.annee}`;
+  if (state.succession?.annee === next.annee && state.succession.choixJoueur !== null) return;
+  if (state.pendingDecisions.some((d) => d.id === id)) return;
+  const termLimited =
+    quinquennat.mandat.presidentId === playerId &&
+    quinquennat.mandat.numero >= ruleset.quinquennat.mandat.mandatsConsecutifsMax;
+  const successors = successorOptions(state, ruleset);
+  const options = [
+    ...(termLimited
+      ? []
+      : [
+          {
+            id: REPRESENT_OPTION_ID,
+            libelle: 'Me représenter',
+            description: `Vous êtes candidat(e) à la présidentielle ${next.annee} ; votre campagne repart avec ses moyens de départ.`,
+          },
+        ]),
+    ...successors.map((s) => ({
+      id: s.id,
+      libelle: `Passer la main à ${s.label}`,
+      description: s.description,
+    })),
+  ];
+  if (options.length === 0) return;
+  state.pendingDecisions.push({
+    id,
+    kind: 'candidature',
+    eventId: CANDIDACY_DECISION_EVENT,
+    actorId: playerId,
+    createdWeek: state.meta.week,
+    label: `Votre candidature à la présidentielle ${next.annee}`,
+    description:
+      `La campagne s'ouvre le ${formatFrenchDate(start)}. Vous pouvez vous représenter, ou passer la main à une personnalité de votre camp : vous jouerez alors sa campagne, avec ${Math.round(ruleset.succession.transmissionMilitants * 100)} % de vos militants. ` +
+      (termLimited
+        ? 'Au terme de deux mandats consécutifs, vous ne pouvez pas vous représenter (Constitution, art. 6). '
+        : '') +
+      'Les candidatures des personnalités réelles sont simulées par le jeu ; aucun propos ne leur est prêté.',
+    options,
+    defaultOptionId: options[0]!.id,
+  });
+}
+
+/** Successeur encore possible : la personne existe, ce n'est ni le joueur ni le président (IA). */
+function successorExists(
+  state: GameState,
+  ruleset: Ruleset,
+  source: SuccessorSource,
+  presidentId: string,
+): boolean {
+  if (source.nature === 'figure') return figureById(ruleset, source.ref) !== undefined;
+  if (source.nature === 'profil') return profileById(ruleset, source.ref) !== undefined;
+  return (
+    state.actors[source.ref] !== undefined &&
+    source.ref !== state.player.actorId &&
+    (source.ref !== presidentId || presidentId === state.player.actorId)
+  );
+}
+
+/**
+ * Passation (spec §3) : le successeur choisi devient le candidat du joueur — l'acteur qui
+ * l'incarne déjà, ou un nouvel entrant — et reçoit, par le registre, une part des militants de
+ * son prédécesseur ; le prédécesseur devient un acteur de l'IA retiré de la course.
+ */
+function handOver(
+  state: GameState,
+  ruleset: Ruleset,
+  ledger: Ledger,
+  step: number,
+  predecessor: Actor,
+  source: SuccessorSource,
+): Actor {
+  const existing =
+    source.nature === 'acteur'
+      ? state.actors[source.ref]
+      : actorOfMember(state, { nature: source.nature, ref: source.ref });
+  const successor =
+    existing ??
+    createEntrantActor(
+      { nature: source.nature as EntrantSource['nature'], ref: source.ref },
+      state,
+      ruleset,
+      true,
+    );
+  state.actors[successor.id] = successor;
+  successor.kind = 'joueur';
+  successor.style = null;
+  successor.toleranceRisque = null;
+  successor.objectif = null;
+  successor.status = 'candidat';
+  predecessor.kind = 'adversaire';
+  state.player.actorId = successor.id;
+  ledger.apply(successor.id, 'militants', [
+    {
+      label: 'Passation de la campagne : militants du camp',
+      value: Math.round(ruleset.succession.transmissionMilitants * predecessor.resources.militants),
+      source: 'calendrier',
+      step,
+    },
+  ]);
+  return successor;
+}
+
+/**
+ * Réponse du joueur à sa décision de candidature : le choix est enregistré et s'appliquera à
+ * l'ouverture de la campagne (spec §1).
+ */
+export function answerCandidacy(
+  state: GameState,
+  ruleset: Ruleset,
+  decision: PendingDecision,
+  optionId: string,
+): ReportEvent | null {
+  const next = nextCycle(ruleset, state.cycle);
+  if (!next) return null;
+  state.succession = { annee: next.annee, choixJoueur: optionId, annonces: [], bilan: {} };
+  const option = decision.options.find((o) => o.id === optionId)!;
+  const start = shiftToCycle(state.meta.startDate, next);
+  return {
+    id: `candidature-choix-${next.annee}`,
+    kind: 'evenement',
+    refId: 'succession',
+    label: `Présidentielle ${next.annee} : ${option.libelle}`,
+    description: `Votre choix s'appliquera à l'ouverture de la campagne, le ${formatFrenchDate(start)}.`,
+    nature: 'simule',
+    majeur: false,
+    decisionId: decision.id,
+  };
+}

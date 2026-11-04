@@ -1,22 +1,30 @@
-import type {
-  AlliancePlan,
-  DecisionAnswer,
-  GameState,
-  PlannedAction,
-  Poll,
-  ProgrammeChange,
-  ProgrammeReport,
-  ReportEvent,
-  RoundResult,
-  Ruleset,
-  StepSummary,
-  WeeklyReport,
+import {
+  cycleRuleset,
+  debateAwaitingPlayer,
+  type AlliancePlan,
+  type DecisionAnswer,
+  type GameState,
+  type PlannedAction,
+  type Poll,
+  type ProgrammeChange,
+  type ProgrammeReport,
+  type ReportEvent,
+  type RoundResult,
+  type Ruleset,
+  type StepSummary,
+  type WeeklyReport,
 } from '@r2027/shared';
 import { planOpponentActions } from '../ai/opponents';
 import { resolveAlliances, updateRelations } from '../ai/relations';
-import { consumeActions, resolveActionEffects, validateActions } from '../campaign/actions';
+import {
+  actionKey,
+  consumeActions,
+  resolveActionEffects,
+  validateActions,
+} from '../campaign/actions';
 import { FinanceBook } from '../campaign/finances';
 import { updateMedia } from '../campaign/medias';
+import { publishDigital } from '../campaign/numerique';
 import {
   ParrainageBook,
   presentationWindow,
@@ -24,16 +32,24 @@ import {
   weeklyParrainages,
 } from '../campaign/parrainages';
 import { applyProgramme, programmeReport, validateProgrammeChange } from '../campaign/programme';
-import { distribute, summarize } from '../election/distribution';
-import { concludeRound, holdDebate, scrutinOfWeek } from '../election/flow';
+import { drawRendezVous, meetingHours, RECEIVE_OPTION } from '../campaign/rendezvous';
+import { distribute, groupShares, summarize } from '../election/distribution';
+import { resolveWeekDebates, scheduleDebates } from '../election/debats';
+import { concludeRound, scrutinOfWeek } from '../election/flow';
 import { weeklyDrift } from '../election/opinion';
-import { publishPolls } from '../election/polls';
+import { archivePolls, publishPolls } from '../election/polls';
 import { resolveRound } from '../election/rounds';
 import { applyDecisions, drawEvents, validateDecisionAnswers } from '../event/events';
+import { requestGovernment } from '../presidency/government';
+import { advancePresidencyWeek } from '../presidency/week';
 import { nationalBaseline, type TerritorialBaseline } from '../territory/baseline';
 import { enterNextWeek } from './calendar';
 import { EngineInputError } from './errors';
+import { unlockAchievements } from './succes';
+import { WEEKLY_STEPS } from './steps';
 import { compareStrings, Ledger } from './ledger';
+
+export { WEEKLY_STEPS };
 
 export type AdvanceInput = {
   actions: readonly PlannedAction[];
@@ -56,22 +72,6 @@ export type AdvanceResult = {
   /** Vrai si un événement majeur ou un scrutin a eu lieu : l'API sauvegarde l'état d'avant (§12). */
   majorEvent: boolean;
 };
-
-/** Libellés des 12 étapes du cycle hebdomadaire (§2), dans l'ordre stable et documenté. */
-export const WEEKLY_STEPS = [
-  { step: 1, module: 'campagne', label: 'Valider les actions' },
-  { step: 2, module: 'campagne', label: 'Consommer les ressources' },
-  { step: 3, module: 'ia', label: 'Calculer les décisions adverses' },
-  { step: 4, module: 'ia', label: 'Mettre à jour alliances et relations' },
-  { step: 5, module: 'evenements', label: 'Résoudre les événements et les effets des actions' },
-  { step: 6, module: 'opinion', label: 'Mettre à jour médias et opinion' },
-  { step: 7, module: 'economie', label: 'Calculer indicateurs économiques et sociaux' },
-  { step: 8, module: 'election', label: 'Mettre à jour intentions de vote' },
-  { step: 9, module: 'calendrier', label: 'Vérifier échéances' },
-  { step: 10, module: 'journal', label: 'Générer le journal' },
-  { step: 11, module: 'sauvegarde', label: 'Sauvegarder' },
-  { step: 12, module: 'bilan', label: 'Afficher le bilan hebdomadaire' },
-] as const;
 
 const HISTORY_LENGTH = 8;
 const plural = (n: number, word: string) => `${n} ${word}${n > 1 ? 's' : ''}`;
@@ -102,12 +102,34 @@ function hopelessCandidates(state: GameState, ruleset: Ruleset): Set<string> {
 export function advanceWeek(
   input: GameState,
   plan: AdvanceInput,
-  { ruleset, territory }: EngineContext,
+  context: EngineContext,
 ): AdvanceResult {
+  // Calendrier de campagne du cycle en cours (2027, puis transposé pour 2032, 2037…).
+  const ruleset = cycleRuleset(context.ruleset, input.cycle);
+  const { territory } = context;
   if (input.calendar.blockedBy) {
     throw new EngineInputError(
       'progression_bloquee',
       input.calendar.blockedMessage ?? 'La partie ne peut pas avancer davantage pour l’instant.',
+    );
+  }
+  // Débat obligatoire (phase 17) : la semaine attend que le joueur l'ait joué, simulé jusqu'à la
+  // fin depuis le plateau, ou refusé (chaise vide).
+  const debate = debateAwaitingPlayer(input);
+  if (debate) {
+    throw new EngineInputError(
+      'debat_requis',
+      `${debate.libelle} : le débat vous attend. Jouez-le (ou refusez-le) avant de résoudre la semaine.`,
+    );
+  }
+  if (input.meta.phase === 'presidence') {
+    const campaignRequests =
+      (plan.programme?.ajouter.length ?? 0) + (plan.programme?.retirer.length ?? 0) > 0 ||
+      (plan.alliances?.proposer.length ?? 0) > 0;
+    return advancePresidencyWeek(
+      input,
+      { actions: plan.actions, decisions: plan.decisions, campaignRequests },
+      ruleset,
     );
   }
   const state = JSON.parse(JSON.stringify(input)) as GameState;
@@ -162,8 +184,13 @@ export function advanceWeek(
     const report = programmeReport(player.id, validation);
     if (report) programmeReports.push(report);
   }
+  // Délégations d'élus reçues (phase 15) : leurs heures passent avant les actions du joueur.
+  const meetings = playerActive
+    ? answers.filter((a) => a.decision.kind === 'parrainage' && a.optionId === RECEIVE_OPTION)
+    : [];
+  const meetingTime = meetingHours(ruleset, meetings);
   const own = playerActive
-    ? validateActions(state, playerId!, plan.actions, ruleset, programmeHours)
+    ? validateActions(state, playerId!, plan.actions, ruleset, programmeHours + meetingTime)
     : { outcomes: [], validated: [] };
   const rejected = own.outcomes.filter((o) => o.status === 'rejetee').length;
   const announced = programmeReports[0]?.ajoutees.length ?? 0;
@@ -186,10 +213,26 @@ export function advanceWeek(
       },
     ]);
   }
+  if (meetings.length > 0) {
+    ledger.apply(
+      playerId!,
+      'tempsHeures',
+      meetings.map(({ decision }) => ({
+        label: decision.label,
+        value: -ruleset.parrainages.rendezVous.tempsHeures,
+        source: 'decision' as const,
+        step: 2,
+      })),
+    );
+  }
   consumeActions(ledger, finances, own.validated, 2);
   const spent = own.validated.reduce((sum, v) => sum + v.definition.cout.budgetCentimes, 0);
   const hours = own.validated.reduce((sum, v) => sum + v.definition.cout.tempsHeures, 0);
-  set(2, true, `Dépenses : ${Math.round(spent / 100)} € et ${hours + programmeHours} h`);
+  set(
+    2,
+    true,
+    `Dépenses : ${Math.round(spent / 100)} € et ${hours + programmeHours + meetingTime} h`,
+  );
 
   // 3. Décisions adverses : analyse, stratégie, actions ciblées ; mêmes règles que le joueur.
   const plans = planOpponentActions(state, ruleset);
@@ -218,11 +261,11 @@ export function advanceWeek(
     `${plural(allianceOutcome.alliances.length, 'ralliement')}, ${plural(relationNotes.length, 'fait')} marquant(s) entre candidats.`,
   );
 
-  // 5. Décisions de la semaine passée, débat, effets des actions, nouveaux événements.
-  const decisions = applyDecisions(state, ruleset, ledger, finances, answers, 5);
-  const debate = holdDebate(state, ruleset);
+  // 5. Décisions de la semaine passée, débats télévisés, effets des actions, nouveaux événements.
+  const decisions = applyDecisions(state, ruleset, ledger, { finances, parrainages }, answers, 5);
+  const debates = resolveWeekDebates(state, ruleset, ledger, 5);
   const allValidated = [...own.validated, ...opponentValidated];
-  const { risks, incidents } = resolveActionEffects(
+  const { risks, incidents, prestations, supports } = resolveActionEffects(
     state,
     ruleset,
     ledger,
@@ -230,20 +273,31 @@ export function advanceWeek(
     allValidated,
     5,
   );
+  const posts = publishDigital(state, ruleset, allValidated, risks, prestations);
   const events = drawEvents(state, ruleset, ledger, finances, 5);
+  // Rendez-vous d'élus (phase 15) : au plus un en attente, décision la semaine suivante.
+  const rendezVous = drawRendezVous(state, ruleset);
+  if (rendezVous) events.push(rendezVous);
   set(
     5,
     true,
     `${plural(events.length, 'événement')}, ${plural(risks.length, 'aléa')} d'action, ${plural(decisions.length, 'décision appliquée')}` +
-      (debate ? ', débat d’entre-deux-tours' : ''),
+      (supports.length ? `, ${plural(supports.length, 'négociation')} de soutien` : '') +
+      (posts.length ? `, ${plural(posts.length, 'publication')} sur les réseaux` : '') +
+      (debates.length ? `, ${plural(debates.length, 'débat télévisé')}` : ''),
   );
 
   // 6. Médias, puis dynamique de l'opinion et historique de popularité.
-  state.medias = updateMedia(state, ruleset, ledger, allValidated, incidents, 6) ?? state.medias;
+  state.medias =
+    updateMedia(state, ruleset, ledger, allValidated, incidents, 6, prestations) ?? state.medias;
   weeklyDrift(state, ruleset, ledger, 6);
   for (const actor of Object.values(state.actors)) {
     actor.history.popularite = [...actor.history.popularite, actor.resources.popularite].slice(
       -HISTORY_LENGTH,
+    );
+    // La préparation des débats s'use d'une semaine à l'autre (hypothèse du jeu).
+    actor.preparationDebat = Math.floor(
+      actor.preparationDebat * (1 - ruleset.debats.usurePreparation),
     );
   }
   set(6, true, 'Couverture médiatique, érosion, retour à la moyenne et attrition appliqués.');
@@ -257,12 +311,15 @@ export function advanceWeek(
   const phase = state.meta.phase;
   if (phase === 'campagne' || phase === 'entre_deux_tours') {
     const round = phase === 'campagne' ? 1 : 2;
-    const opinion = summarize(distribute(state, ruleset, round, 'opinion'), week, round);
+    const distributions = distribute(state, ruleset, round, 'opinion');
+    const opinion = summarize(distributions, week, round);
     state.opinion = opinion;
     if (opinion) {
       intentions = { round, participation: opinion.participation, values: opinion.intentions };
-      polls = publishPolls(state, ruleset, round, opinion.intentions);
-      state.polls.push(...polls);
+      const published = publishPolls(state, ruleset, round, opinion, groupShares(distributions));
+      polls = published.polls;
+      state.polls = [...archivePolls(state.polls, polls), ...polls];
+      state.sondagesBase = { ...state.sondagesBase, ...published.bases };
     }
   }
   set(
@@ -298,6 +355,10 @@ export function advanceWeek(
     electionEvents.push(...concluded.events);
   }
   const { notices, appliedScheduled } = enterNextWeek(state, ruleset, ledger, finances, 9);
+  // Débats de la nouvelle semaine : invitations d'après le dernier sondage publié.
+  scheduleDebates(state, ruleset);
+  // Victoire : nomination du Premier ministre dès la semaine de l'investiture.
+  if (state.quinquennat) requestGovernment(state, ruleset);
   set(
     9,
     true,
@@ -306,6 +367,9 @@ export function advanceWeek(
       `semaine ${state.meta.week} : ${plural(appliedScheduled, 'effet différé')} appliqué(s), ` +
       `${plural(notices.length, 'échéance')} dans les 4 semaines.`,
   );
+
+  // Succès du joueur débloqués cette semaine (phase 15).
+  const succes = unlockAchievements(state, ruleset, week);
 
   // 10. Journal ; 11. sauvegarde (API) ; 12. bilan.
   const changes = ledger.list();
@@ -316,17 +380,19 @@ export function advanceWeek(
   const steps: StepSummary[] = WEEKLY_STEPS.map((s) => ({ ...s, ...summaries.get(s.step)! }));
   const allEvents = [
     ...events,
+    ...supports,
     ...allianceOutcome.events,
-    ...(debate ? [debate] : []),
+    ...debates,
     ...nominationEvents,
     ...electionEvents,
     ...risks,
   ];
   // Actions du joueur d'abord, puis celles des adversaires par identifiant, dans l'ordre du plan.
   const rank = (actorId: string) => (actorId === playerId ? '' : actorId);
-  const actions = [...own.outcomes, ...opponents.flatMap((o) => o.outcomes)].sort(
-    (a, b) => compareStrings(rank(a.actorId), rank(b.actorId)) || a.index - b.index,
-  );
+  // Passages dans les médias : posture, format, score et ses raisons (phase 11).
+  const actions = [...own.outcomes, ...opponents.flatMap((o) => o.outcomes)]
+    .map((o) => ({ ...o, prestation: prestations.get(actionKey(o.actorId, o.index)) ?? null }))
+    .sort((a, b) => compareStrings(rank(a.actorId), rank(b.actorId)) || a.index - b.index);
   return {
     state,
     majorEvent: allEvents.some((e) => e.majeur) || election !== null,
@@ -358,6 +424,11 @@ export function advanceWeek(
         priorite: p.strategie.priorite,
         motif: p.strategie.motif,
       })),
+      economie: [],
+      legislatives: null,
+      numerique: posts,
+      conseil: null,
+      succes,
     },
   };
 }

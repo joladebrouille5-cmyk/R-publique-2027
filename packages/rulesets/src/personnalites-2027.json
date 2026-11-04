@@ -1,5 +1,5 @@
 {
-  "verifieLe": "2026-10-21",
+  "verifieLe": "2026-10-22",
   "decision": "Décision de l’utilisateur du 21/10/2026 : personnalités réelles jouables et adversaires ; candidatures déclarées seulement ; photos sous licence libre créditées ; position d’après l’enquête d’experts Chapel Hill (CHES) ; candidatures dont aucun parti n’est noté par CHES non intégrées, sauf Nathalie Arthaud, François Asselineau, David Lisnard et François Ruffin (position « hypothèse »).",
   "sources": [
     {
@@ -34,9 +34,9 @@
       "titre": "Wikidata — identifiants et partis des personnalités (propriété P102)",
       "url": "https://query.wikidata.org/",
       "licence": "CC0 1.0",
-      "version": "requête du 2026-10-21",
-      "consulteLe": "2026-10-21",
-      "sha256": "25589713a2f7c7da54fc37062bc8ed6d7c0f3c13387c8d4b574af51b499c1fe1"
+      "version": "requête du 2026-10-22",
+      "consulteLe": "2026-10-22",
+      "sha256": "d9c8db1f69fabca4dc61f4f732d3c842bd5278dfd1acc2a8f63e8e8b0449f8de"
     },
     {
       "id": "insee-cog-communes",
@@ -494,8 +494,16 @@
         },
         "detail": "Position du PS, qui soutient officiellement la candidature, dans l’enquête CHES 2024."
       },
-      "photo": null,
-      "photoAbsente": "Photo non reprise : licence non reconnue comme libre (European Parliament).",
+      "photo": {
+        "fichier": "personnalites/reel-glucksmann.webp",
+        "auteur": "Librairie Mollat",
+        "licence": "CC BY-SA 4.0",
+        "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+        "source": "https://commons.wikimedia.org/wiki/File:Rapha%C3%ABl_Glucksmann.jpg",
+        "modification": "Redimensionnée (240 pixels de large) et convertie en WebP ; métadonnées retirées.",
+        "choix": "La photo de la source, diffusée par le Parlement européen, n’est pas sous licence libre ; portrait sous licence libre choisi sur Wikimedia Commons."
+      },
+      "photoAbsente": null,
       "implantation": {
         "departements": [],
         "regions": [],

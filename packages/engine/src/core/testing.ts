@@ -1,26 +1,41 @@
 // Outils partagés par les tests du moteur (non exportés par le paquet).
 import { CURRENT_RULESET_KEY, getRuleset } from '@r2027/rulesets';
-import type {
-  DecisionAnswer,
-  GameState,
-  PlannedAction,
-  Resources,
-  Ruleset,
-  WeeklyReport,
+import {
+  cycleRuleset,
+  debateAwaitingPlayer,
+  type DecisionAnswer,
+  type GameState,
+  type PlannedAction,
+  type Resources,
+  type Ruleset,
+  type WeeklyReport,
 } from '@r2027/shared';
 import { departements, presentationWindow } from '../campaign/parrainages';
+import { playDebate } from '../election/debats';
+import { RENDEZ_VOUS_EVENT } from '../campaign/rendezvous';
+import { QAG_EVENT } from '../presidency/qag';
 import { advanceWeek } from './advanceWeek';
 import { createGame, PLAYER_ACTOR_ID, type CreateGameInput } from './createGame';
 
 export const RULESET = getRuleset(CURRENT_RULESET_KEY);
 
-/** Copie du jeu de règles où seuls les événements listés peuvent survenir (probabilité donnée). */
+/**
+ * Copie du jeu de règles où seuls les événements listés peuvent survenir (probabilité donnée).
+ * Phase 15 : rendez-vous d'élus (`rendez-vous-elus`) et urgences ministérielles suivent la même
+ * règle ; les questions au gouvernement n'ont lieu que si `questions-au-gouvernement` est listé
+ * (sinon, aucun mois de séance).
+ */
 export function withEvents(
   probabilities: Record<string, number>,
   ruleset: Ruleset = RULESET,
 ): Ruleset {
   const copy = JSON.parse(JSON.stringify(ruleset)) as Ruleset;
   for (const event of copy.evenements) event.probabiliteHebdomadaire = probabilities[event.id] ?? 0;
+  copy.parrainages.rendezVous.probabiliteHebdo = probabilities[RENDEZ_VOUS_EVENT] ?? 0;
+  for (const urgency of copy.urgences.liste)
+    urgency.probabiliteHebdomadaire = probabilities[urgency.id] ?? 0;
+  if (!(QAG_EVENT in probabilities))
+    copy.parlement.qag.moisSansSeance = Array.from({ length: 12 }, (_, i) => i + 1);
   return copy;
 }
 export const QUIET = withEvents({});
@@ -69,7 +84,8 @@ export function advance(
  * les présentations restent ouvertes — de quoi atteindre le seuil des parrainages.
  */
 export function sponsorship(state: GameState, ruleset: Ruleset = RULESET): string[] {
-  if (state.meta.phase !== 'campagne' || presentationWindow(state.meta.date, ruleset).closed)
+  const calendar = cycleRuleset(ruleset, state.cycle);
+  if (state.meta.phase !== 'campagne' || presentationWindow(state.meta.date, calendar).closed)
     return [];
   const deps = departements(ruleset);
   const week = state.meta.week;
@@ -100,6 +116,23 @@ export function deepFreeze<T>(value: T): T {
 }
 
 /**
+ * Débat obligatoire (phase 17) : mène à son terme, par la fin simulée que le joueur demande
+ * depuis le plateau, chaque débat de la semaine qui l'attend.
+ */
+export function concludeDebates(state: GameState, ruleset: Ruleset = RULESET): GameState {
+  let current = state;
+  for (let i = 0; i < 4; i++) {
+    const debate = debateAwaitingPlayer(current);
+    if (!debate) return current;
+    current = playDebate(current, ruleset, debate.id, {
+      action: 'finir',
+      sequence: debate.enCours?.index ?? 0,
+    }).state;
+  }
+  return current;
+}
+
+/**
  * Joue jusqu'à ce que `done(state)` soit vrai (ou que la partie soit bloquée), en répondant
  * aux décisions par l'option par défaut ; `plan(state)` fournit les actions du joueur.
  */
@@ -112,6 +145,7 @@ export function playUntil(
   let state = start;
   const reports: WeeklyReport[] = [];
   for (let i = 0; i < 80 && !state.calendar.blockedBy && !done(state); i++) {
+    state = concludeDebates(state, ruleset);
     const decisions = state.pendingDecisions.map((d) => ({
       decisionId: d.id,
       optionId: d.defaultOptionId,
@@ -126,13 +160,13 @@ export function playUntil(
   return { state, reports };
 }
 
-/** Joue jusqu'à la fin de la présidentielle (calendrier bloqué). */
+/** Joue jusqu'à la fin de la présidentielle (élection du président, quinquennat ouvert). */
 export function playToEnd(
   start: GameState,
   ruleset: Ruleset = RULESET,
   plan: (state: GameState) => string[] = () => [],
 ): { state: GameState; reports: WeeklyReport[] } {
-  const result = playUntil(start, () => false, ruleset, plan);
-  if (!result.state.calendar.blockedBy) throw new Error('La présidentielle aurait dû se terminer');
+  const result = playUntil(start, (s) => s.quinquennat !== null, ruleset, plan);
+  if (!result.state.quinquennat) throw new Error('La présidentielle aurait dû se terminer');
   return result;
 }

@@ -96,8 +96,19 @@ describe('progression hebdomadaire', () => {
     expect(next).toMatchObject({ week: 1, date: '2026-10-05', version: game.version + 1 });
     expect(report).toMatchObject({ week: 0, nextWeek: 1 });
     const meeting = ruleset.actions.find((a) => a.id === 'meeting')!;
+    // Le coût du meeting, plus ce que les événements de la semaine ont apporté ou coûté (dons,
+    // coups adverses…), chacun inscrit au registre.
+    const budget = report.changes.find(
+      (c) => c.actorId === 'joueur' && c.ressource === 'budgetCentimes',
+    )!;
+    const fromEvents = budget.factors
+      .filter((f) => f.source === 'evenement')
+      .reduce((sum, f) => sum + f.value, 0);
+    expect(budget.factors.filter((f) => f.source === 'action').map((f) => f.value)).toEqual([
+      -meeting.cout.budgetCentimes,
+    ]);
     expect(next.state.actors.joueur!.resources.budgetCentimes).toBe(
-      game.state.actors.joueur!.resources.budgetCentimes - meeting.cout.budgetCentimes,
+      game.state.actors.joueur!.resources.budgetCentimes - meeting.cout.budgetCentimes + fromEvents,
     );
 
     const actions = await db.gameAction.findMany({
@@ -371,6 +382,63 @@ describe('journal', () => {
   });
 });
 
+describe('durcissement (phase 8)', () => {
+  it('une avance rapide rend la main au serveur entre deux semaines', async () => {
+    const client = new Client(app);
+    const game = await createGameVia(client, { mode: 'observateur' });
+    const ticks: number[] = [];
+    const timer = setInterval(() => ticks.push(performance.now()), 5);
+    const start = performance.now();
+    const response = await advanceVia(client, game, {
+      expectedWeek: game.week,
+      actions: [],
+      decisions: [],
+      semaines: 52,
+    });
+    const duration = performance.now() - start;
+    clearInterval(timer);
+    expect(response.statusCode).toBe(200);
+    const { avanceRapide } = AdvanceResponseSchema.parse(response.json());
+    expect(avanceRapide!.resolues).toBeGreaterThanOrEqual(10);
+    // Sans pause entre les semaines, la boucle d'événements resterait bloquée pendant tout le
+    // calcul : le plus long intervalle entre deux tops serait proche de la durée totale.
+    const gaps = ticks.slice(1).map((t, i) => t - ticks[i]!);
+    expect(Math.max(...gaps)).toBeLessThan(duration / 3);
+  });
+
+  it('pagine le journal sans sauter les entrées de même horodatage', async () => {
+    // Les événements écrits ensemble (createMany) partagent leur horodatage.
+    const client = new Client(app);
+    const game = await createGameVia(client);
+    const createdAt = new Date('2026-10-21T12:00:00.000Z');
+    await db.gameEvent.createMany({
+      data: [1, 2, 3, 4, 5].map((n) => ({
+        gameId: game.id,
+        week: 0,
+        type: `egalite_${n}`,
+        nature: 'simule' as const,
+        payload: {},
+        createdAt,
+      })),
+    });
+    const all = JournalPageSchema.parse(
+      (await client.get(`/api/games/${game.id}/journal?limit=50`)).json(),
+    );
+    const paged: string[] = [];
+    let before: string | null = null;
+    do {
+      const query: string = before ? `&before=${encodeURIComponent(before)}` : '';
+      const page = JournalPageSchema.parse(
+        (await client.get(`/api/games/${game.id}/journal?limit=2${query}`)).json(),
+      );
+      paged.push(...page.entries.map((e) => e.id));
+      before = page.nextBefore;
+    } while (before);
+    expect(all.entries.filter((e) => e.type.startsWith('egalite_'))).toHaveLength(5);
+    expect(paged).toEqual(all.entries.map((e) => e.id));
+  });
+});
+
 describe('export et import', () => {
   it('exporte un fichier et l’importe dans une nouvelle partie sans perte', async () => {
     const alice = new Client(app);
@@ -515,7 +583,11 @@ describe('migration des parties des phases 1 et 2', () => {
       saveSchemaVersion: SAVE_SCHEMA_VERSION,
       rulesetVersion: CURRENT_RULESET_KEY,
     });
-    expect(migrated.state.actors.joueur!.resources).toEqual(V2.state.actors.joueur.resources);
+    // Ressources conservées ; jauges Jeunesse et Dynamique de départ ajoutées (format 14).
+    expect(migrated.state.actors.joueur!.resources).toEqual({
+      ...V2.state.actors.joueur.resources,
+      ...getRuleset(CURRENT_RULESET_KEY).numerique.initial,
+    });
     const { report } = await advanceDefault(client, migrated);
     expect(report.decisions).toHaveLength(1);
     expect(report.intentions).not.toBeNull();

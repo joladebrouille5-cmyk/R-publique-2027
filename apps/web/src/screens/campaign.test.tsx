@@ -30,16 +30,15 @@ const base = (game = gameFixture()) => ({
   }),
 });
 
-/** Résumé (balise <summary>) du domaine du programme, pour l'ouvrir. */
-const domain = (name: string) =>
-  [...document.querySelectorAll('summary')].find((el) => el.textContent?.startsWith(`${name} `))!;
+/** Tuile d'un domaine du programme (phase 22), qui ouvre son panneau. */
+const domain = (name: string) => screen.getByRole('button', { name: new RegExp(`^${name},`) });
 
 describe('programme', () => {
   it('annonce une proposition, signale une dépendance manquante, puis l’envoie avec la semaine', async () => {
     const calls = mockApi(base());
     renderRoute(`/parties/${GAME_ID}/programme`);
     const user = userEvent.setup();
-    await screen.findByRole('heading', { name: 'Programme', level: 1 });
+    await screen.findByRole('region', { name: 'Programme' });
     await user.click(domain('Emploi'));
     const guarantee = screen.getByRole('listitem', {
       name: 'Garantie d’emploi pour les chômeurs de longue durée',
@@ -49,10 +48,22 @@ describe('programme', () => {
       within(guarantee).getByText(/Suppose d’abord : Plan d’investissement public/),
     ).toBeInTheDocument();
 
+    // Une tuile par domaine, son compte écrit ; un seul panneau ouvert à la fois.
+    expect(domain('Économie')).toHaveAccessibleName('Économie, 0 retenue sur 3');
     await user.click(domain('Économie'));
+    expect(domain('Emploi')).toHaveAttribute('aria-expanded', 'false');
     await user.click(screen.getByRole('button', { name: 'Annoncer Plan d’investissement public' }));
     expect(screen.getAllByText('Annonce prévue')).toHaveLength(1);
-    expect(within(guarantee).getByRole('button', { name: /^Annoncer/ })).toBeEnabled();
+    expect(domain('Économie')).toHaveAccessibleName('Économie, 1 retenue sur 3');
+    await user.click(domain('Emploi'));
+    expect(
+      within(
+        screen.getByRole('listitem', {
+          name: 'Garantie d’emploi pour les chômeurs de longue durée',
+        }),
+      ).getByRole('button', { name: /^Annoncer/ }),
+    ).toBeEnabled();
+    expect(guarantee).not.toBeInTheDocument();
     expect(
       screen.getByText(/Prévu cette semaine : 1 annonce\(s\) \(3 h de préparation\)/),
     ).toBeInTheDocument();
@@ -66,6 +77,19 @@ describe('programme', () => {
     expect(calls.find((c) => c.method === 'POST')!.body).toMatchObject({
       programme: { ajouter: ['eco-investissement-public'], retirer: [] },
     });
+  });
+
+  it('se consulte en observateur : tuiles ouvrables, aucune annonce possible', async () => {
+    mockApi(base(gameFixture({ state: initialState('observateur') })));
+    renderRoute(`/parties/${GAME_ID}/programme`);
+    const user = userEvent.setup();
+    await screen.findByRole('region', { name: 'Programme' });
+    await user.click(domain('Économie'));
+    expect(domain('Économie')).toHaveAttribute('aria-expanded', 'true');
+    expect(
+      screen.getByRole('listitem', { name: 'Plan d’investissement public' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Annoncer/ })).not.toBeInTheDocument();
   });
 
   it('montre les programmes des adversaires', async () => {
@@ -102,7 +126,13 @@ describe('actions ciblées', () => {
   it('présente les parrainages et le compte de campagne sur le tableau de bord', async () => {
     mockApi(base());
     renderRoute(`/parties/${GAME_ID}/tableau-de-bord`);
-    const panel = await screen.findByRole('region', { name: 'Parrainages' });
+    // Tuile de la vue d'ensemble, puis le détail replié en bas du QG.
+    const tile = await screen.findByRole('button', { name: /^Parrainages\s*0\/500/ });
+    expect(tile).toHaveAttribute('aria-haspopup', 'dialog');
+    await userEvent.click(
+      screen.getByRole('button', { name: /^Parrainages et compte de campagne/ }),
+    );
+    const panel = screen.getByRole('region', { name: 'Parrainages' });
     expect(within(panel).getByText(/présentations comptées sur 500 requises/)).toBeInTheDocument();
     expect(within(panel).getByText('Seuil non atteint')).toBeInTheDocument();
     const account = screen.getByRole('region', { name: 'Compte de campagne' });
@@ -134,9 +164,9 @@ describe('finances', () => {
     expect(within(refused).getByText(/Semaine 3 — Don d’une personne morale/)).toBeInTheDocument();
     const rules = screen.getByRole('region', { name: 'Règles appliquées' });
     expect(within(rules).getByText('Règles officielles')).toBeInTheDocument();
-    expect(
-      within(rules).getByRole('link', { name: /Guide à l'usage des candidats/ }),
-    ).toHaveAttribute('href', expect.stringContaining('cnccfp.fr'));
+    // Phase 11 : la source (guide de la CNCCFP) est dans Paramètres → Crédits, pas à l'écran.
+    expect(within(rules).getByText(/Sources : Paramètres → Crédits/)).toBeInTheDocument();
+    expect(within(rules).queryAllByRole('link')).toEqual([]);
   });
 });
 

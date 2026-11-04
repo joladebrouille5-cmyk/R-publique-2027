@@ -1,0 +1,236 @@
+{
+  "verifieLe": "2026-10-21",
+  "legislature": 17,
+  "siegesTotal": 577,
+  "sources": [
+    {
+      "id": "an-deputes-en-exercice",
+      "titre": "Assemblée nationale — liste des députés en exercice (17e législature), fichier CSV ; seuls les groupes sont lus",
+      "url": "https://data.assemblee-nationale.fr/static/openData/repository/17/amo/deputes_actifs_csv_opendata/liste_deputes_libre_office.csv",
+      "licence": "Licence Ouverte / Open Licence (version non précisée sur la page)",
+      "version": "fichier modifié le 2026-10-19",
+      "consulteLe": "2026-10-21",
+      "sha256": "66a105803e912d5009ac4095059afa28e121900322b9397f2a6af9b8b068bdb9"
+    },
+    {
+      "id": "ches-2024",
+      "titre": "Chapel Hill Expert Survey 2024 — positions moyennes des partis",
+      "url": "https://github.com/chesdata/chesdata.github.io/releases/download/ches-europe/CHES_2024_final_v2.csv",
+      "licence": "non précisée ; usage avec citation demandé (Rovny et al., « The 2024 Chapel Hill Expert Survey on political party positioning in Europe », 2025)",
+      "version": "vague 2024 (fichier final v2)",
+      "consulteLe": "2026-10-21",
+      "sha256": "1c1ec0532afa2a0a13317122cbbe40eb9ff35425191892d1fff24fbef6acc6a8"
+    }
+  ],
+  "methode": {
+    "composition": "Nombre de députés en exercice par groupe politique, compté dans la liste ouverte de l’Assemblée nationale ; seules les colonnes du groupe sont lues, aucun nom de député n’est conservé. Sièges non pourvus : 577 moins les députés listés.",
+    "position": "Position du parti de référence du groupe dans l’enquête d’experts Chapel Hill (CHES) 2024, convertie sur les axes du jeu par (x − 5) × 20 (statut « estimation ») ; groupes sans parti noté : hypothèse motivée."
+  },
+  "groupes": [
+    {
+      "id": "rn",
+      "sigle": "RN",
+      "libelle": "Rassemblement National",
+      "sieges": 121,
+      "nonInscrits": false,
+      "position": {
+        "economie": 20,
+        "societe": 67
+      },
+      "positionStatut": "estimation",
+      "ches": {
+        "parti": "RN",
+        "lrecon": 6,
+        "galtan": 8.36
+      },
+      "positionDetail": "Position du parti RN dans l’enquête CHES 2024."
+    },
+    {
+      "id": "epr",
+      "sigle": "EPR",
+      "libelle": "Ensemble pour la République",
+      "sieges": 90,
+      "nonInscrits": false,
+      "position": {
+        "economie": 24,
+        "societe": -18
+      },
+      "positionStatut": "estimation",
+      "ches": {
+        "parti": "RE",
+        "lrecon": 6.18,
+        "galtan": 4.09
+      },
+      "positionDetail": "Position du parti RE dans l’enquête CHES 2024."
+    },
+    {
+      "id": "lfi-nfp",
+      "sigle": "LFI-NFP",
+      "libelle": "La France insoumise - Nouveau Front Populaire",
+      "sieges": 70,
+      "nonInscrits": false,
+      "position": {
+        "economie": -82,
+        "societe": -64
+      },
+      "positionStatut": "estimation",
+      "ches": {
+        "parti": "FI",
+        "lrecon": 0.91,
+        "galtan": 1.82
+      },
+      "positionDetail": "Position du parti FI dans l’enquête CHES 2024."
+    },
+    {
+      "id": "soc",
+      "sigle": "SOC",
+      "libelle": "Socialistes et apparentés",
+      "sieges": 68,
+      "nonInscrits": false,
+      "position": {
+        "economie": -33,
+        "societe": -45
+      },
+      "positionStatut": "estimation",
+      "ches": {
+        "parti": "PS",
+        "lrecon": 3.36,
+        "galtan": 2.73
+      },
+      "positionDetail": "Position du parti PS dans l’enquête CHES 2024."
+    },
+    {
+      "id": "dr",
+      "sigle": "DR",
+      "libelle": "Droite Républicaine",
+      "sieges": 47,
+      "nonInscrits": false,
+      "position": {
+        "economie": 56,
+        "societe": 44
+      },
+      "positionStatut": "estimation",
+      "ches": {
+        "parti": "LR",
+        "lrecon": 7.82,
+        "galtan": 7.18
+      },
+      "positionDetail": "Position du parti LR dans l’enquête CHES 2024."
+    },
+    {
+      "id": "ecos",
+      "sigle": "EcoS",
+      "libelle": "Écologiste et Social",
+      "sieges": 38,
+      "nonInscrits": false,
+      "position": {
+        "economie": -54,
+        "societe": -66
+      },
+      "positionStatut": "estimation",
+      "ches": {
+        "parti": "LE/EELV",
+        "lrecon": 2.3,
+        "galtan": 1.7
+      },
+      "positionDetail": "Position du parti LE/EELV dans l’enquête CHES 2024."
+    },
+    {
+      "id": "dem",
+      "sigle": "Dem",
+      "libelle": "Les Démocrates",
+      "sieges": 37,
+      "nonInscrits": false,
+      "position": {
+        "economie": 14,
+        "societe": -10
+      },
+      "positionStatut": "estimation",
+      "ches": {
+        "parti": "MoDem",
+        "lrecon": 5.7,
+        "galtan": 4.5
+      },
+      "positionDetail": "Position du parti MoDem dans l’enquête CHES 2024."
+    },
+    {
+      "id": "hor",
+      "sigle": "HOR",
+      "libelle": "Horizons & Indépendants",
+      "sieges": 35,
+      "nonInscrits": false,
+      "position": {
+        "economie": 36,
+        "societe": 6
+      },
+      "positionStatut": "estimation",
+      "ches": {
+        "parti": "Horizons",
+        "lrecon": 6.8,
+        "galtan": 5.3
+      },
+      "positionDetail": "Position du parti Horizons dans l’enquête CHES 2024."
+    },
+    {
+      "id": "liot",
+      "sigle": "LIOT",
+      "libelle": "Libertés, Indépendants, Outre-mer et Territoires",
+      "sieges": 23,
+      "nonInscrits": false,
+      "position": {
+        "economie": 0,
+        "societe": 0
+      },
+      "positionStatut": "hypothese",
+      "ches": null,
+      "positionDetail": "Groupe composite sans parti de référence noté par l’enquête CHES 2024 : position centrale (hypothèse de jeu)."
+    },
+    {
+      "id": "gdr",
+      "sigle": "GDR",
+      "libelle": "Gauche Démocrate et Républicaine",
+      "sieges": 17,
+      "nonInscrits": false,
+      "position": {
+        "economie": -75,
+        "societe": -29
+      },
+      "positionStatut": "estimation",
+      "ches": {
+        "parti": "PCF",
+        "lrecon": 1.27,
+        "galtan": 3.55
+      },
+      "positionDetail": "Position du parti PCF dans l’enquête CHES 2024."
+    },
+    {
+      "id": "udr",
+      "sigle": "UDR",
+      "libelle": "Union des droites pour la République",
+      "sieges": 17,
+      "nonInscrits": false,
+      "position": {
+        "economie": 48,
+        "societe": 64
+      },
+      "positionStatut": "hypothese",
+      "ches": null,
+      "positionDetail": "Groupe sans parti noté par l’enquête CHES 2024 : position moyenne des partis français des familles CHES « droite radicale » et « conservateurs » en 2024, d’après l’intitulé du groupe (« Union des droites ») (hypothèse de jeu)."
+    },
+    {
+      "id": "ni",
+      "sigle": "NI",
+      "libelle": "Non inscrit",
+      "sieges": 11,
+      "nonInscrits": true,
+      "position": {
+        "economie": 0,
+        "societe": 0
+      },
+      "positionStatut": "hypothese",
+      "ches": null,
+      "positionDetail": "Députés non inscrits : aucune position commune ; position centrale et vote sans discipline de groupe (hypothèse de jeu)."
+    }
+  ],
+  "vacants": 3
+}

@@ -9,7 +9,7 @@ const CATEGORICAL = {
   dark: ['#3987e5', '#d95926', '#199e70'],
 };
 const OTHER = { light: '#94a3b8', dark: '#64748b' };
-const NO_DATA = { light: '#e2e8f0', dark: '#1e293b' };
+const NO_DATA = { light: '#e9edf6', dark: '#212a46' };
 const SEQUENTIAL = {
   light: ['#cde2fb', '#86b6ef', '#3987e5', '#256abf', '#104281'],
   dark: ['#184f95', '#256abf', '#3987e5', '#6da7ec', '#b7d3f6'],
@@ -247,6 +247,15 @@ export function motifBackground(motif: Motif, mode: Mode): string | undefined {
   return `${stripes(135)}, ${stripes(45)}`;
 }
 
-export const MAP_SURFACE = { light: '#f8fafc', dark: '#020617' };
-export const BORDER = { light: '#ffffff', dark: '#0f172a' };
-export const SELECTED = { light: '#0f172a', dark: '#f8fafc' };
+/** Mer et fond de carte : bleu brumeux en clair, bleu nuit en sombre (palette de la phase 9). */
+export const MAP_SURFACE = { light: '#d3dcef', dark: '#070d22' };
+export const BORDER = { light: '#ffffff', dark: '#0b1229' };
+export const SELECTED = { light: '#0b1229', dark: '#f4f6fb' };
+
+/** Mélange de deux couleurs « #rrggbb » : `t` = 1 donne `a`, 0 donne `b`. */
+export function mixColors(a: string, b: string, t: number): string {
+  const channel = (hex: string, shift: number) => (parseInt(hex.slice(1), 16) >> shift) & 255;
+  const blend = (shift: number) => Math.round(channel(a, shift) * t + channel(b, shift) * (1 - t));
+  const rgb = (blend(16) << 16) | (blend(8) << 8) | blend(0);
+  return `#${rgb.toString(16).padStart(6, '0')}`;
+}

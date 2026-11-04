@@ -54,21 +54,32 @@ export const EstimatedPositionSchema = PositionSchema.extend({
 }).strict();
 export type EstimatedPosition = z.infer<typeof EstimatedPositionSchema>;
 
+/**
+ * Licences libres acceptées pour une photo : domaine public, CC0, CC BY et CC BY-SA (versions
+ * 1.0 à 4.0, adaptations nationales comprises), Licence Ouverte d'Etalab.
+ */
 export const FREE_LICENSES =
-  /^(CC0( 1\.0)?|Public domain|Domaine public|CC BY(-SA)? [1-4]\.0( [A-Za-z]+)?)$/;
+  /^(CC0( 1\.0)?|Public domain|Domaine public|CC BY(-SA)? (1\.0|2\.0|2\.5|3\.0|4\.0)( [A-Za-z]+)?|Licence Ouverte( [12]\.0)?)$/;
 
-export const PhotoCreditSchema = z
-  .object({
-    /** Chemin servi par l'interface (`apps/web/public`). */
-    fichier: z.string().regex(/^personnalites\/[a-z0-9-]+\.webp$/),
-    auteur: z.string().min(1),
-    licence: z.string().regex(FREE_LICENSES, 'licence libre attendue'),
-    licenceUrl: z.url().nullable(),
-    /** Page du fichier sur Wikimedia Commons. */
-    source: z.url(),
-    modification: z.string().min(1),
-  })
-  .strict();
+/** Crédit d'une photo de Wikimedia Commons, servie depuis le dossier `dossier` de l'interface. */
+export function photoCreditSchema(dossier: 'personnalites' | 'gouvernement') {
+  return z
+    .object({
+      /** Chemin servi par l'interface (`apps/web/public`). */
+      fichier: z.string().regex(new RegExp(`^${dossier}/[a-z0-9-]+\\.webp$`)),
+      auteur: z.string().min(1),
+      licence: z.string().regex(FREE_LICENSES, 'licence libre attendue'),
+      licenceUrl: z.url().nullable(),
+      /** Page du fichier sur Wikimedia Commons. */
+      source: z.url(),
+      modification: z.string().min(1),
+      /** Photo choisie hors de la source (celle de la source n'étant pas libre) : motif consigné. */
+      choix: z.string().min(1).optional(),
+    })
+    .strict();
+}
+
+export const PhotoCreditSchema = photoCreditSchema('personnalites');
 export type PhotoCredit = z.infer<typeof PhotoCreditSchema>;
 
 /** Fait public cité mot pour mot depuis la ligne de la personnalité (révision de l'article). */

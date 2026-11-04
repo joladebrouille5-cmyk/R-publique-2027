@@ -1,3 +1,4 @@
+import { calibrateSocle } from '../election/socle';
 import {
   candidateName,
   DEFAULT_START_DATE,
@@ -9,17 +10,23 @@ import {
   START_DATE_MIN,
   type Actor,
   type CandidateInput,
+  type Depart,
   type Difficulty,
+  type GameFormat,
   type GameMode,
   type GameState,
   type OpponentSet,
   type RealPersonality,
   type Resources,
+  type ResourcesV1,
   type Ruleset,
 } from '@r2027/shared';
 import { initialRelations } from '../ai/relations';
 import { openingAccount } from '../campaign/finances';
+import { orientationById } from '../campaign/orientation';
 import { emptyParrainages, initialPromises } from '../campaign/parrainages';
+import { FIRST_CYCLE } from '../presidency/dates';
+import { entrantResources, entrantSourceOf } from '../presidency/succession';
 import { compareStrings } from './ledger';
 import { ENGINE_VERSION, SAVE_SCHEMA_VERSION } from './versions';
 
@@ -36,6 +43,14 @@ export type CreateGameInput = {
   personnaliteId?: string | undefined;
   /** Adversaires : fictifs (par défaut) ou personnalités réelles. */
   adversaires?: OpponentSet | undefined;
+  /** Scénario de départ (phase 7) ; « standard » par défaut. */
+  scenarioId?: string | undefined;
+  /** Orientation stratégique du mouvement du joueur (phase 15), facultative. */
+  orientationId?: string | undefined;
+  /** Format de la partie (phase 20) : complet par défaut, ou court (fin au soir de l'élection). */
+  format?: GameFormat | undefined;
+  /** Point de départ avec des personnalités réelles (phase 24) ; par défaut : sondages actuels. */
+  depart?: Depart | undefined;
 };
 
 export class GameCreationError extends Error {
@@ -45,7 +60,11 @@ export class GameCreationError extends Error {
       | 'candidat_requis'
       | 'profil_inconnu'
       | 'personnalite_requise'
-      | 'personnalite_inconnue',
+      | 'personnalite_inconnue'
+      | 'scenario_inconnu'
+      | 'orientation_inconnue'
+      | 'orientation_sans_candidat'
+      | 'depart_sans_personnalites',
     message: string,
   ) {
     super(message);
@@ -53,8 +72,15 @@ export class GameCreationError extends Error {
   }
 }
 
-const bounded = (resources: Resources): Resources => {
-  const result = { ...resources };
+/**
+ * Ressources de départ bornées. Jauges Jeunesse et Dynamique (phase 9) : valeurs de départ du
+ * jeu de règles, identiques pour tous les candidats, sauf si elles sont déjà fixées.
+ */
+const bounded = (
+  ruleset: Ruleset,
+  resources: ResourcesV1 & Partial<Pick<Resources, 'jeunesse' | 'dynamique'>>,
+): Resources => {
+  const result: Resources = { ...ruleset.numerique.initial, ...resources };
   for (const key of Object.keys(result) as (keyof Resources)[]) {
     const { min, max } = RESOURCE_BOUNDS[key];
     result[key] = Math.min(max, Math.max(min, result[key]));
@@ -82,7 +108,7 @@ export function createPlayerActor(
   }
   const base = ruleset.jeu.ressourcesInitiales[difficulty];
   const modifiers = profile?.modificateurs ?? {};
-  const resources = bounded({
+  const resources = bounded(ruleset, {
     budgetCentimes: base.budgetCentimes + (modifiers.budgetCentimes ?? 0),
     militants: base.militants + (modifiers.militants ?? 0),
     notoriete: base.notoriete + (modifiers.notoriete ?? 0),
@@ -98,6 +124,8 @@ export function createPlayerActor(
     nature: 'personnalise' as const,
     profilId: candidate.profilId ?? null,
     personnaliteId: null,
+    // Photo choisie par le joueur (phase 13), déjà contrôlée par le schéma de la requête.
+    photo: candidate.photo ?? null,
   };
   return {
     id: PLAYER_ACTOR_ID,
@@ -120,14 +148,18 @@ export function createPlayerActor(
   };
 }
 
-/** Adversaires fictifs du jeu de règles ; leurs moyens dépendent de la difficulté (§1.3). */
+/**
+ * Adversaires fictifs du jeu de règles ; leurs moyens dépendent de la difficulté (§1.3) : budget
+ * et, depuis la phase 18, notoriété de départ (moins connus en Découverte, plus en Légende).
+ */
 export function createOpponents(difficulty: Difficulty, ruleset: Ruleset): Record<string, Actor> {
   const level = ruleset.ia[difficulty];
   const opponents: Record<string, Actor> = {};
   for (const c of ruleset.candidatsFictifs) {
-    const resources = bounded({
+    const resources = bounded(ruleset, {
       ...c.ressources,
       budgetCentimes: Math.round(c.ressources.budgetCentimes * level.multiplicateurBudget),
+      notoriete: Math.round(c.ressources.notoriete * level.multiplicateurNotoriete),
       tempsHeures: ruleset.jeu.tempsHebdomadaireHeures,
     });
     opponents[c.id] = {
@@ -143,6 +175,7 @@ export function createOpponents(difficulty: Difficulty, ruleset: Ruleset): Recor
         nature: 'fictif',
         profilId: null,
         personnaliteId: null,
+        photo: null,
       },
       style: c.style,
       toleranceRisque: c.toleranceRisque,
@@ -201,10 +234,14 @@ export function createRealActor(
   const scale = asPlayer
     ? playerScale(ruleset, difficulty)
     : { budget: ruleset.ia[difficulty].multiplicateurBudget, militants: 1, promesses: 1 };
-  const resources = bounded({
+  const notoriete = params.notoriete[personality.moyens.notoriete - 1]!;
+  const resources = bounded(ruleset, {
     budgetCentimes: Math.round(means.budgetCentimes * scale.budget),
     militants: Math.round(means.militants * scale.militants),
-    notoriete: params.notoriete[personality.moyens.notoriete - 1]!,
+    // Adversaire : notoriété de sa fiche, selon le niveau de difficulté (phase 18).
+    notoriete: asPlayer
+      ? notoriete
+      : Math.round(notoriete * ruleset.ia[difficulty].multiplicateurNotoriete),
     popularite: asPlayer
       ? ruleset.jeu.ressourcesInitiales[difficulty].popularite
       : params.popularite,
@@ -222,6 +259,7 @@ export function createRealActor(
     nature: 'reel' as const,
     profilId: null,
     personnaliteId: personality.id,
+    photo: null,
   };
   return {
     id: asPlayer ? PLAYER_ACTOR_ID : personality.id,
@@ -244,31 +282,74 @@ export function createRealActor(
   };
 }
 
-/** Promesses de parrainage de départ d'un candidat (jeu de règles, difficulté pour le joueur). */
+/**
+ * Promesses de parrainage de départ d'un candidat (jeu de règles, difficulté pour le joueur) ;
+ * pour le joueur, à la première présidentielle de la partie, plus celles de l'orientation de son
+ * mouvement (phase 15), jamais moins de zéro.
+ */
 function initialPromiseCount(state: GameState, ruleset: Ruleset, actor: Actor): number {
   const personalityId = actor.candidate.personnaliteId;
+  let count: number;
   if (personalityId) {
     const personality = findPersonality(ruleset, personalityId);
     const base = ruleset.personnalitesReelles.organisation[personality.moyens.organisation];
     const scale =
       actor.kind === 'joueur' ? playerScale(ruleset, state.meta.difficulty).promesses : 1;
-    return Math.round(base.promessesInitiales * scale);
+    count = Math.round(base.promessesInitiales * scale);
+  } else {
+    count =
+      actor.kind === 'joueur'
+        ? ruleset.jeu.promessesInitialesJoueur[state.meta.difficulty]
+        : (ruleset.candidatsFictifs.find((c) => c.id === actor.id)?.promessesInitiales ?? 0);
   }
-  return actor.kind === 'joueur'
-    ? ruleset.jeu.promessesInitialesJoueur[state.meta.difficulty]
-    : (ruleset.candidatsFictifs.find((c) => c.id === actor.id)?.promessesInitiales ?? 0);
+  const orientation =
+    actor.kind === 'joueur' && state.player.orientation && state.cycle.annee === FIRST_CYCLE.annee
+      ? orientationById(ruleset, state.player.orientation)
+      : undefined;
+  return Math.max(0, count + (orientation?.promesses ?? 0));
 }
 
 /**
  * Promesses de parrainage de départ : celles des partis (jeu de règles) et, pour le joueur,
- * selon la difficulté. Attribuées dans l'ordre des identifiants, dans la limite des élus libres.
+ * selon la difficulté. Attribuées dans l'ordre des identifiants, dans la limite des élus libres,
+ * aux seuls candidats en lice (pas à un président sortant inéligible).
  */
 export function distributeInitialPromises(state: GameState, ruleset: Ruleset): void {
   for (const id of Object.keys(state.actors).sort(compareStrings)) {
     const actor = state.actors[id]!;
+    if (actor.status !== 'candidat') continue;
     const total = initialPromiseCount(state, ruleset, actor);
     actor.parrainages.promesses = initialPromises(state, ruleset, total, actor.implantation);
   }
+}
+
+/**
+ * Moyens de départ d'un candidat, recalculés comme à la création de la partie (budget,
+ * militants, notoriété) : ils dotent chaque candidat au début d'une nouvelle présidentielle
+ * (phase 6, P6-08).
+ */
+export function initialMeans(state: GameState, ruleset: Ruleset, actor: Actor): Resources {
+  const { difficulty } = state.meta;
+  const personalityId = actor.candidate.personnaliteId;
+  if (personalityId) {
+    const personality = findPersonality(ruleset, personalityId);
+    return createRealActor(personality, difficulty, ruleset, actor.kind === 'joueur').resources;
+  }
+  if (actor.kind === 'joueur') {
+    const { prenom, nom, parti, positionnement, parcours, profilId } = actor.candidate;
+    return createPlayerActor(difficulty, ruleset, {
+      prenom,
+      nom,
+      parti,
+      positionnement,
+      parcours,
+      profilId,
+    }).resources;
+  }
+  // Candidat entré lors d'une présidentielle suivante (phase 23) : moyens d'un entrant.
+  const entrant = entrantSourceOf(actor);
+  if (entrant) return entrantResources(ruleset, entrant);
+  return createOpponents(difficulty, ruleset)[actor.id]?.resources ?? actor.resources;
 }
 
 export function createGame(input: CreateGameInput, ruleset: Ruleset): GameState {
@@ -280,6 +361,36 @@ export function createGame(input: CreateGameInput, ruleset: Ruleset): GameState 
       'personnalite_requise',
       'Choisissez la personnalité que vous incarnez dans ce mode.',
     );
+  }
+  // Orientation stratégique (phase 15) : seulement pour un candidat du joueur.
+  const orientation = input.orientationId
+    ? orientationById(ruleset, input.orientationId)
+    : undefined;
+  if (input.orientationId && !orientation) {
+    throw new GameCreationError(
+      'orientation_inconnue',
+      `Orientation stratégique inconnue : ${input.orientationId}`,
+    );
+  }
+  if (orientation && input.mode === 'observateur') {
+    throw new GameCreationError(
+      'orientation_sans_candidat',
+      'Le mode observateur n’a pas de mouvement à orienter : choisissez un candidat.',
+    );
+  }
+  // Départ « Sondages actuels » (phase 24) : il faut des personnalités réelles en lice.
+  const withReal = input.adversaires === 'reels';
+  if (input.depart === 'sondages' && !withReal) {
+    throw new GameCreationError(
+      'depart_sans_personnalites',
+      'Le départ « Sondages actuels » demande des personnalités réelles comme adversaires.',
+    );
+  }
+  const depart: Depart = input.depart ?? (withReal ? 'sondages' : 'equitable');
+  const scenarioId = input.scenarioId ?? 'standard';
+  const scenario = ruleset.scenarios.find((s) => s.id === scenarioId);
+  if (!scenario) {
+    throw new GameCreationError('scenario_inconnu', `Scénario inconnu : ${scenarioId}`);
   }
   const personality =
     input.mode === 'candidat_reel' ? findPersonality(ruleset, input.personnaliteId!) : null;
@@ -317,6 +428,37 @@ export function createGame(input: CreateGameInput, ruleset: Ruleset): GameState 
   } else if (personality) {
     actors[PLAYER_ACTOR_ID] = createRealActor(personality, input.difficulty, ruleset, true);
   }
+  // Orientation du mouvement (phase 15) : écarts sur les moyens de départ du joueur (hypothèses).
+  const player = actors[PLAYER_ACTOR_ID];
+  if (orientation && player) {
+    const m = orientation.modificateurs;
+    player.resources = bounded(ruleset, {
+      ...player.resources,
+      budgetCentimes: player.resources.budgetCentimes + (m.budgetCentimes ?? 0),
+      militants: player.resources.militants + (m.militants ?? 0),
+      notoriete: player.resources.notoriete + (m.notoriete ?? 0),
+      popularite: player.resources.popularite + (m.popularite ?? 0),
+      jeunesse: player.resources.jeunesse + (m.jeunesse ?? 0),
+      dynamique: player.resources.dynamique + (m.dynamique ?? 0),
+    });
+    player.history = { popularite: [player.resources.popularite] };
+    player.finances = openingAccount(player.resources.budgetCentimes, ruleset);
+  }
+  // Scénario de départ : écarts sur les moyens du joueur et de ses adversaires (hypothèses).
+  for (const actor of Object.values(actors)) {
+    const modifiers =
+      actor.kind === 'joueur' ? scenario.campagne.joueur : scenario.campagne.adversaires;
+    if (Object.keys(modifiers).length === 0) continue;
+    actor.resources = bounded(ruleset, {
+      ...actor.resources,
+      budgetCentimes: actor.resources.budgetCentimes + (modifiers.budgetCentimes ?? 0),
+      militants: actor.resources.militants + (modifiers.militants ?? 0),
+      notoriete: actor.resources.notoriete + (modifiers.notoriete ?? 0),
+      popularite: actor.resources.popularite + (modifiers.popularite ?? 0),
+    });
+    actor.history = { popularite: [actor.resources.popularite] };
+    actor.finances = openingAccount(actor.resources.budgetCentimes, ruleset);
+  }
   const state: GameState = {
     meta: {
       seed: input.seed,
@@ -333,20 +475,43 @@ export function createGame(input: CreateGameInput, ruleset: Ruleset): GameState 
       mode: input.mode,
       actorId: input.mode === 'observateur' ? null : PLAYER_ACTOR_ID,
       adversaires,
+      orientation: orientation?.id ?? null,
+      format: input.format ?? 'complet',
+      depart,
     },
     actors,
     scheduled: [],
     pendingDecisions: [],
     eventHistory: {},
+    suites: [],
+    succession: null,
+    socle: null,
     opinion: null,
     polls: [],
+    sondagesBase: {},
     elections: { t1: null, t2: null, consignes: [], debate: null, debateDetail: null },
     calendar: { blockedBy: null, blockedMessage: null },
     campagne: { parrainages: 'modelise', finances: 'complet' },
     medias: null,
     relations: initialRelations(actors),
     alliances: [],
+    cycle: { ...FIRST_CYCLE },
+    quinquennat: null,
+    historique: { presidentielles: [], quinquennats: [] },
+    parlement: null,
+    economie: null,
+    legislatives: null,
+    scenario: scenario.id,
+    consequences: [],
+    numerique: { publications: [], passages: {} },
+    debats: { seances: [] },
+    negociations: [],
+    succes: [],
   };
   distributeInitialPromises(state, ruleset);
+  // Phase 24 : socle « Sondages actuels », calibré sur les sondages publiés (cycle 2027).
+  if (depart === 'sondages' && state.cycle.annee === ruleset.departSondages.cycle) {
+    state.socle = calibrateSocle(state, ruleset);
+  }
   return state;
 }

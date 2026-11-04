@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { CandidatePhotoSchema } from './portrait';
 
 // Identité politique des candidats (§1.2) et positionnement sur deux axes.
 
@@ -38,17 +39,70 @@ export type CandidateNature = z.infer<typeof CandidateNatureSchema>;
 
 export const PersonalityIdSchema = z.string().regex(/^reel-[a-z0-9-]+$/);
 
-/** Identité d'un candidat (format 6). */
-export const CandidateIdentitySchema = CandidateIdentityV5Schema.extend({
+const CandidateIdentityV6Shape = CandidateIdentityV5Schema.extend({
   nature: CandidateNatureSchema,
   /** Fiche de la personnalité réelle dans le jeu de règles ; null sinon. */
   personnaliteId: PersonalityIdSchema.nullable(),
+}).strict();
+
+const realHasFiche = {
+  check: (c: { nature: CandidateNature; personnaliteId: string | null }) =>
+    (c.nature === 'reel') === (c.personnaliteId !== null),
+  message: 'Une personnalité réelle, et elle seule, renvoie à sa fiche',
+};
+
+/** Identité d'un candidat aux formats 6 à 16 (figée pour les migrations). */
+export const CandidateIdentityV16Schema = CandidateIdentityV6Shape.refine(realHasFiche.check, {
+  message: realHasFiche.message,
+  path: ['personnaliteId'],
+});
+export type CandidateIdentityV16 = z.infer<typeof CandidateIdentityV16Schema>;
+
+/** Photo choisie par le joueur : candidat personnalisé seulement (format 17, phase 13). */
+const photoOnlyForCustom = {
+  check: (c: { photo: string | null; nature: CandidateNature }) =>
+    c.photo === null || c.nature === 'personnalise',
+  message: 'Seul un candidat personnalisé porte une photo choisie par le joueur',
+};
+
+const CandidateIdentityV17Shape = CandidateIdentityV6Shape.extend({
+  photo: CandidatePhotoSchema.nullable(),
+}).strict();
+
+/**
+ * Identité d'un candidat aux formats 17 à 22 (phase 13, figée pour les migrations) : photo
+ * choisie par le joueur pour son candidat personnalisé (URL de données contrôlée), null sinon.
+ */
+export const CandidateIdentityV22Schema = CandidateIdentityV17Shape.refine(realHasFiche.check, {
+  message: realHasFiche.message,
+  path: ['personnaliteId'],
+}).refine(photoOnlyForCustom.check, { message: photoOnlyForCustom.message, path: ['photo'] });
+export type CandidateIdentityV22 = z.infer<typeof CandidateIdentityV22Schema>;
+
+export const FigureIdSchema = z.string().regex(/^figure-[a-z0-9-]+$/);
+
+/**
+ * Identité d'un candidat (format 23, phase 23) : en plus, la fiche de figure du vivier
+ * (`figureId`) d'une personnalité réelle entrée dans la course à la présidentielle suivante
+ * (membre d'un gouvernement de la partie, par exemple). Une personnalité réelle renvoie à
+ * exactement une fiche : sa fiche de candidate (`personnaliteId`) ou sa fiche de figure
+ * (`figureId`) ; un candidat inventé n'en a aucune. Sa candidature est simulée, sans propos.
+ */
+export const CandidateIdentitySchema = CandidateIdentityV17Shape.extend({
+  figureId: FigureIdSchema.optional(),
 })
   .strict()
-  .refine((c) => (c.nature === 'reel') === (c.personnaliteId !== null), {
-    message: 'Une personnalité réelle, et elle seule, renvoie à sa fiche',
-    path: ['personnaliteId'],
-  });
+  .refine(
+    (c) =>
+      c.nature === 'reel'
+        ? (c.personnaliteId !== null) !== (c.figureId !== undefined)
+        : c.personnaliteId === null && c.figureId === undefined,
+    {
+      message: 'Une personnalité réelle, et elle seule, renvoie à exactement une fiche',
+      path: ['personnaliteId'],
+    },
+  )
+  .refine(photoOnlyForCustom.check, { message: photoOnlyForCustom.message, path: ['photo'] });
 export type CandidateIdentity = z.infer<typeof CandidateIdentitySchema>;
 
 export function candidateName(candidate: Pick<CandidateIdentity, 'prenom' | 'nom'>): string {

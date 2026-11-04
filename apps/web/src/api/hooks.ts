@@ -1,15 +1,21 @@
 import {
+  cycleRuleset,
   AdvanceResponseSchema,
   GameDetailSchema,
   GameSummarySchema,
   HealthResponseSchema,
   IDEMPOTENCY_HEADER,
   JournalPageSchema,
+  ProgressionSchema,
   RulesetSchema,
   SaveSummarySchema,
+  SupportProspectsSchema,
   type AdvanceRequest,
   type CreateGameRequest,
   type CreateSaveRequest,
+  type Cycle,
+  type DebateRequest,
+  type Ruleset,
 } from '@r2027/shared';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, ApiRequestError } from './client';
@@ -20,8 +26,18 @@ export const queryKeys = {
   game: (id: string) => ['games', id] as const,
   saves: (id: string) => ['games', id, 'saves'] as const,
   journal: (id: string) => ['games', id, 'journal'] as const,
+  supports: (id: string, week: number) => ['games', id, 'soutiens', week] as const,
   ruleset: (key: string) => ['rulesets', key] as const,
+  progression: ['progression'] as const,
 };
+
+/** Palmarès, niveau, déblocages et défi du jour (phase 20), calculés par le serveur. */
+export function useProgression() {
+  return useQuery({
+    queryKey: queryKeys.progression,
+    queryFn: () => api.get('/api/progression', ProgressionSchema),
+  });
+}
 
 export function useHealth() {
   return useQuery({
@@ -54,11 +70,18 @@ export function useSaves(gameId: string) {
 }
 
 /** Jeu de règles de la partie (catalogue d'actions, calendrier sourcé), servi par l'API. */
-export function useRuleset(key: string) {
+/**
+ * Jeu de règles d'une partie. Avec le cycle électoral de la partie, le calendrier de campagne
+ * est celui de ce cycle (2027, puis transposé pour 2032…), exactement comme pour le moteur.
+ */
+export function useRuleset(key: string, cycle?: Cycle) {
   return useQuery({
     queryKey: queryKeys.ruleset(key),
     queryFn: () => api.get(`/api/rulesets/${encodeURIComponent(key)}`, RulesetSchema),
+    // Clé vide : la partie n'est pas encore chargée, rien à demander.
+    enabled: key !== '',
     staleTime: Infinity,
+    select: (ruleset: Ruleset) => (cycle ? cycleRuleset(ruleset, cycle) : ruleset),
   });
 }
 
@@ -67,6 +90,19 @@ export function useCurrentRuleset() {
   return useQuery({
     queryKey: queryKeys.ruleset('courant'),
     queryFn: () => api.get('/api/rulesets/courant', RulesetSchema),
+    staleTime: Infinity,
+  });
+}
+
+/**
+ * Vivier des négociations de soutien du candidat du joueur (phase 15), calculé par le serveur
+ * (ou le moteur local) pour la semaine en cours : l'interface l'affiche sans rien recalculer.
+ */
+export function useSupports(gameId: string, week: number, enabled: boolean) {
+  return useQuery({
+    queryKey: queryKeys.supports(gameId, week),
+    queryFn: () => api.get(`/api/games/${gameId}/soutiens`, SupportProspectsSchema),
+    enabled,
     staleTime: Infinity,
   });
 }
@@ -91,6 +127,7 @@ export function useCreateGame() {
     onSuccess: (game) => {
       queryClient.setQueryData(queryKeys.game(game.id), game);
       void queryClient.invalidateQueries({ queryKey: queryKeys.games, exact: true });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.progression });
     },
   });
 }
@@ -150,6 +187,23 @@ export function useAdvance(gameId: string) {
       void queryClient.invalidateQueries({ queryKey: queryKeys.games, exact: true });
       void queryClient.invalidateQueries({ queryKey: queryKeys.saves(gameId) });
       void queryClient.invalidateQueries({ queryKey: queryKeys.journal(gameId) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.progression });
+    },
+  });
+}
+
+/**
+ * Débat télévisé de la semaine (phase 10) : ouvrir, refuser, jouer une carte, simuler la fin.
+ * Le serveur (ou le moteur local) joue la demande ; l'interface ne calcule rien.
+ */
+export function useDebate(gameId: string, debatId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: DebateRequest) =>
+      api.post(`/api/games/${gameId}/debats/${debatId}`, GameDetailSchema, body),
+    onSuccess: (game) => {
+      queryClient.setQueryData(queryKeys.game(gameId), game);
+      void queryClient.invalidateQueries({ queryKey: queryKeys.games, exact: true });
     },
   });
 }

@@ -1,4 +1,4 @@
-import { GameStateSchema } from '@r2027/shared';
+import { GameStateSchema, type Difficulty } from '@r2027/shared';
 import { describe, expect, it } from 'vitest';
 import { advanceWeek } from './advanceWeek';
 import { createGame, PLAYER_ACTOR_ID } from './createGame';
@@ -34,6 +34,7 @@ describe('personnalités réelles', () => {
       nature: 'reel',
       profilId: null,
       personnaliteId: 'reel-tondelier',
+      photo: null,
     });
     expect(player.programme.propositions).toEqual([]);
     expect(player.implantation).toEqual(f.implantation.regions);
@@ -42,6 +43,9 @@ describe('personnalités réelles', () => {
       mode: 'candidat_reel',
       actorId: PLAYER_ACTOR_ID,
       adversaires: 'fictifs',
+      orientation: null,
+      format: 'complet',
+      depart: 'equitable',
     });
     expect(
       Object.keys(state.actors)
@@ -99,7 +103,7 @@ describe('personnalités réelles', () => {
   });
 
   it('moyens de départ : niveaux de la fiche ; la difficulté ne joue que sur les budgets et la pression du joueur', () => {
-    const make = (difficulty: 'accessible' | 'standard' | 'expert') =>
+    const make = (difficulty: Difficulty) =>
       createGame(
         {
           seed: 'reel-5',
@@ -116,13 +120,22 @@ describe('personnalités réelles', () => {
     expect(hard.actors['reel-le-pen']!.resources.budgetCentimes).toBe(
       Math.round(means.budgetCentimes * ruleset.ia.expert.multiplicateurBudget),
     );
-    // Notoriété et popularité des adversaires : identiques à toutes les difficultés.
-    for (const s of [easy, hard]) {
+    // Notoriété des adversaires : celle de la fiche aux trois niveaux historiques, divisée par
+    // deux en Découverte, majorée en Légende ; popularité identique à tous les niveaux.
+    const [discovery, legend] = [make('decouverte'), make('legende')];
+    for (const s of [easy, hard])
       expect(s.actors['reel-le-pen']!.resources.notoriete).toBe(
         normal.actors['reel-le-pen']!.resources.notoriete,
       );
+    const notoriety = normal.actors['reel-le-pen']!.resources.notoriete;
+    expect(discovery.actors['reel-le-pen']!.resources.notoriete).toBe(Math.round(notoriety * 0.5));
+    expect(legend.actors['reel-le-pen']!.resources.notoriete).toBe(Math.round(notoriety * 1.15));
+    for (const s of [discovery, easy, hard, legend])
       expect(s.actors['reel-zemmour']!.resources.popularite).toBe(params.popularite);
-    }
+    // La personnalité incarnée garde sa notoriété réelle quel que soit le niveau.
+    expect(discovery.actors[PLAYER_ACTOR_ID]!.resources.notoriete).toBe(
+      legend.actors[PLAYER_ACTOR_ID]!.resources.notoriete,
+    );
     const player = (s: typeof normal) => s.actors[PLAYER_ACTOR_ID]!.resources.budgetCentimes;
     expect(player(easy)).toBeGreaterThan(player(normal));
     expect(player(hard)).toBeLessThan(player(normal));

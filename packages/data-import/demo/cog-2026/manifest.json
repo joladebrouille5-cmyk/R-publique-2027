@@ -66,7 +66,7 @@
     "apercu": "tolérance 1000 m, départements et régions fusionnés à partir des communes"
   },
   "effectifs": {
-    "communes": 880,
+    "communes": 1651,
     "communesDuReferentiel": 34875,
     "departements": 101,
     "regions": 18
@@ -1469,7 +1469,7 @@
         3.2028,
         50.3677
       ],
-      "fichier": null
+      "fichier": "communes/80.topo.json"
     },
     {
       "code": "81",

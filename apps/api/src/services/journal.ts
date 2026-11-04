@@ -1,4 +1,9 @@
-import { WeeklyReportSchema, type JournalPage } from '@r2027/shared';
+import {
+  journalCursor,
+  WeeklyReportSchema,
+  type JournalCursor,
+  type JournalPage,
+} from '@r2027/shared';
 import type { Database } from '../db';
 import { findOwnedGame } from './state';
 
@@ -9,14 +14,24 @@ export async function journalPage(
   db: Database,
   userId: string,
   gameId: string,
-  { before, limit }: { before?: string | undefined; limit: number },
+  { before, limit }: { before?: JournalCursor | undefined; limit: number },
 ): Promise<JournalPage> {
   await findOwnedGame(db, userId, gameId);
   const rows = await db.gameEvent.findMany({
     where: {
       gameId,
       type: { notIn: SUMMARIZED_IN_REPORT },
-      ...(before ? { createdAt: { lt: new Date(before) } } : {}),
+      // Curseur (date, id) : les entrées d'une même progression partagent leur horodatage.
+      ...(before
+        ? {
+            OR: [
+              { createdAt: { lt: new Date(before.createdAt) } },
+              ...(before.id
+                ? [{ createdAt: new Date(before.createdAt), id: { lt: before.id } }]
+                : []),
+            ],
+          }
+        : {}),
     },
     orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     take: limit + 1,
@@ -36,6 +51,6 @@ export async function journalPage(
   });
   return {
     entries,
-    nextBefore: rows.length > limit ? entries[entries.length - 1]!.createdAt : null,
+    nextBefore: rows.length > limit ? journalCursor(entries[entries.length - 1]!) : null,
   };
 }

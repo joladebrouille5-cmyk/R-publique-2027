@@ -25,7 +25,8 @@ export function commonsFileTitle(html: string): string | null {
   return m ? (JSON.parse(m[1]!) as string) : null;
 }
 
-const decode = (html: string) =>
+/** Texte d'un fragment HTML : balises retirées, entités décodées, espaces normalisées. */
+export const decodeHtml = (html: string) =>
   html
     .replace(/<[^>]+>/g, ' ')
     .replace(/&#95;/g, '_')
@@ -52,17 +53,22 @@ export function parseLicenses(html: string): { licence: string; licenceUrl: stri
     .map((block) => {
       const short = field(block, 'short');
       const link = field(block, 'link');
-      return short ? { licence: decode(short), licenceUrl: link ? decode(link) : null } : null;
+      return short
+        ? { licence: decodeHtml(short), licenceUrl: link ? decodeHtml(link) : null }
+        : null;
     })
     .filter((l) => l !== null);
 }
 
-/** Auteur : cellule qui suit l'en-tête `fileinfotpl_aut`. */
+/**
+ * Auteur : cellule qui suit l'en-tête `fileinfotpl_aut`. Les feuilles de style intégrées à la
+ * cellule (modèle « Creator » de Commons) ne sont pas du texte : elles sont retirées.
+ */
 export function parseAuthor(html: string): string | null {
   const text = html.replace(/&#95;/g, '_');
   const m = /id="fileinfotpl_aut"[\s\S]*?<\/td>\s*<td[^>]*>([\s\S]*?)<\/td>/.exec(text);
   if (!m) return null;
-  const author = decode(m[1]!);
+  const author = decodeHtml(m[1]!.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, ' '));
   // Certains modèles répètent le texte (libellé visible et libellé accessible) : « X X » → « X ».
   const words = author.split(' ');
   const half = words.length / 2;

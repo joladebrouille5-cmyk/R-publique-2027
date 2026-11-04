@@ -2,7 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { advanceViaApi, createGame, openScreen } from './helpers';
 
-// Carte électorale (P4-05 à P4-10) avec le jeu de démonstration commité (Ain, Corse, DROM).
+// Carte électorale (P4-05 à P4-10) avec le jeu de démonstration commité (Ain, Corse, Somme, DROM).
 
 const DROM = [
   ['Guadeloupe', '971'],
@@ -89,6 +89,8 @@ test('la recherche centre la carte et ouvre la fiche (métropole et DROM)', asyn
     ['Mamoudzou', /Mamoudzou \(commune 97611\)/, 'Mamoudzou'],
     ['97411', /Saint-Denis \(commune 97411\)/, 'Saint-Denis'],
     ['Ajaccio', /Ajaccio \(commune 2A004\)/, 'Ajaccio'],
+    // Somme (phase 9) : Amiens et ses communes dans le jeu de démonstration embarqué.
+    ['Amiens', /Amiens \(commune 80021\)/, 'Amiens'],
     ['2A004', /Ajaccio \(commune 2A004\)/, 'Ajaccio'],
   ];
   for (const [query, result, name] of cases) {
@@ -138,6 +140,9 @@ test('après le premier tour, la carte colore les territoires et donne le détai
     'data-ready',
     'oui',
   );
+  // Filtres repliés par défaut : la carte occupe toute la place.
+  await page.getByRole('button', { name: 'Filtres' }).click();
+  await expect(page.getByLabel('Résultats affichés')).toBeVisible();
   await expect(page.getByLabel('Résultats affichés')).toHaveValue('0');
   await expect(page.getByText('Démonstration fictive').first()).toBeVisible();
   const legend = page.getByRole('region', { name: 'Légende' });
@@ -145,6 +150,8 @@ test('après le premier tour, la carte colore les territoires et donne le détai
   // Motifs (daltonisme, impression) : la carte se redessine, la légende montre les hachures.
   await page.getByLabel('Motifs (daltonisme, impression)').check();
   await expect(legend.locator('[data-motif="hachures"]')).toHaveCount(1);
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('group', { name: 'Filtres de la carte' })).toBeHidden();
   await expect(page.getByRole('region', { name: 'Carte de la métropole' })).toHaveAttribute(
     'data-ready',
     'oui',

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { colorScheme, motifBackground, motifImage } from './colors';
+import { colorScheme, mixColors, motifBackground, motifImage } from './colors';
 import type { ResultCandidate, TerritoryResult } from './data';
 
 const candidats: ResultCandidate[] = ['A', 'B', 'C', 'D'].map((label) => ({
@@ -77,5 +77,12 @@ describe('motifs de la carte', () => {
       /^repeating-linear-gradient\(45deg/,
     );
     expect(motifBackground('croisillons', 'light')?.split('repeating-')).toHaveLength(3);
+  });
+
+  it('mélange deux couleurs (soirée électorale : territoire en cours de dépouillement)', () => {
+    expect(mixColors('#ff0000', '#0000ff', 1)).toBe('#ff0000');
+    expect(mixColors('#ff0000', '#0000ff', 0)).toBe('#0000ff');
+    expect(mixColors('#ffffff', '#000000', 0.5)).toBe('#808080');
+    expect(mixColors('#000000', '#000010', 0)).toBe('#000010');
   });
 });

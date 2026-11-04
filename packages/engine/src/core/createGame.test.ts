@@ -32,6 +32,9 @@ describe('createGame', () => {
       mode: 'candidat_personnalise',
       actorId: PLAYER_ACTOR_ID,
       adversaires: 'fictifs',
+      orientation: null,
+      format: 'complet',
+      depart: 'equitable',
     });
     expect(state.actors[PLAYER_ACTOR_ID]).toMatchObject({
       kind: 'joueur',
@@ -69,7 +72,11 @@ describe('createGame', () => {
     expect(resources).toEqual({
       ...ruleset.jeu.ressourcesInitiales.standard,
       tempsHeures: ruleset.jeu.tempsHebdomadaireHeures,
+      // Jauges des réseaux : mêmes valeurs de départ pour tous les candidats (phase 9).
+      ...ruleset.numerique.initial,
     });
+    for (const actor of Object.values(createGame(base, ruleset).actors))
+      expect(actor.resources).toMatchObject(ruleset.numerique.initial);
     const civil = createGame(
       { ...base, candidate: { ...candidate, profilId: 'societe-civile' } },
       ruleset,
@@ -109,7 +116,14 @@ describe('createGame', () => {
 
   it('crée une partie sans candidat du joueur en mode observateur', () => {
     const state = createGame({ seed: 'obs', mode: 'observateur', difficulty: 'standard' }, ruleset);
-    expect(state.player).toEqual({ mode: 'observateur', actorId: null, adversaires: 'fictifs' });
+    expect(state.player).toEqual({
+      mode: 'observateur',
+      actorId: null,
+      adversaires: 'fictifs',
+      orientation: null,
+      format: 'complet',
+      depart: 'equitable',
+    });
     expect(Object.values(state.actors).every((a) => a.kind === 'adversaire')).toBe(true);
   });
 });

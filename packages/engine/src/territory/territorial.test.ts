@@ -140,14 +140,14 @@ describe('dépouillement territorial', () => {
 
   it('une présidentielle complète se joue sur la base territoriale', () => {
     let s = newGame({}, QUIET);
-    for (let i = 0; i < 40 && !s.calendar.blockedBy; i++) {
+    for (let i = 0; i < 40 && !s.quinquennat; i++) {
       const decisions = s.pendingDecisions.map((d) => ({
         decisionId: d.id,
         optionId: d.defaultOptionId,
       }));
       s = advanceWeek(s, { actions: [], decisions }, { ruleset: QUIET, territory: BASE }).state;
     }
-    expect(s.calendar.blockedBy).toBe('fin-de-la-presidentielle');
+    expect(s.quinquennat?.mandat.presidentId).toBe(s.elections.t2!.winner);
     expect(s.elections.t1!.territoire!.baselineId).toBe('test-base');
     expect(s.elections.t2!.inscrits).toBe(s.elections.t1!.inscrits);
     expect(Object.keys(s.elections.t2!.territoire!.departements).sort()).toEqual([
@@ -275,10 +275,7 @@ describe('base de démonstration', () => {
   it('est fictive, déterministe et totalise les inscrits du jeu de règles', () => {
     expect(demo.nature).toBe('fictif');
     expect(demo.units.reduce((s, u) => s + u.inscrits, 0)).toBe(RULESET.electorat.inscrits.valeur);
-    expect(demo.units.find((u) => u.code === '75')).toMatchObject({
-      niveau: 'departement',
-      affinite: flat(1),
-    });
+    expect(demo.units.find((u) => u.code === '75')).toMatchObject({ niveau: 'departement' });
     expect(
       demoBaseline(
         RULESET,
@@ -289,5 +286,28 @@ describe('base de démonstration', () => {
         [{ code: '75', region: '11', population: 2_100_000 }],
       ),
     ).toEqual(demo);
+  });
+
+  it('contraste les territoires (région, département, commune) dans des bornes', () => {
+    const units = demoBaseline(
+      RULESET,
+      [
+        { code: '80021', departement: '80', region: '32', population: 133_000 },
+        { code: '80001', departement: '80', region: '32', population: 22_000 },
+      ],
+      [
+        { code: '59', region: '32', population: 2_600_000 },
+        { code: '13', region: '93', population: 2_000_000 },
+      ],
+    ).units;
+    const byCode = new Map(units.map((u) => [u.code, u]));
+    for (const u of units) {
+      expect(u.affinite.every((a) => a >= 0.2 && a <= 2.1)).toBe(true);
+      expect(u.participation).toBeGreaterThan(0.85);
+      expect(u.participation).toBeLessThan(1.15);
+    }
+    // Deux départements, deux communes d'un même département : jamais identiques.
+    expect(byCode.get('59')!.affinite).not.toEqual(byCode.get('13')!.affinite);
+    expect(byCode.get('80021')!.affinite).not.toEqual(byCode.get('80001')!.affinite);
   });
 });

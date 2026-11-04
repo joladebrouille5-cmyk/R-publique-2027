@@ -1,6 +1,8 @@
 import { useState, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router';
+import { api } from '../../api/client';
 import { useImportGame } from '../../api/hooks';
+import { platform } from '../../platform';
 import { ErrorMessage } from '../../components/ErrorMessage';
 import { buttonSecondary, card, label } from '../../components/ui';
 
@@ -11,6 +13,22 @@ export function ExchangePanel({ gameId }: { gameId: string }) {
   const navigate = useNavigate();
   const importGame = useImportGame();
   const [fileError, setFileError] = useState('');
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<Error | null>(null);
+
+  // Application mobile : l'export est produit sur l'appareil puis enregistré ou partagé.
+  const onExport = async () => {
+    setExporting(true);
+    setExportError(null);
+    try {
+      const { body, fileName } = await api.file(`/api/games/${gameId}/export`);
+      await platform().saveFile(fileName ?? 'republique-2027-partie.json', JSON.stringify(body));
+    } catch (error) {
+      setExportError(error instanceof Error ? error : new Error(String(error)));
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const onFile = async (event: ChangeEvent<HTMLInputElement>) => {
     setFileError('');
@@ -39,14 +57,27 @@ export function ExchangePanel({ gameId }: { gameId: string }) {
       <h2 id="titre-echange" className="text-lg font-semibold">
         Exporter ou importer
       </h2>
-      <p className="text-sm text-slate-600 dark:text-slate-400">
+      <p className="text-sm text-encre-2">
         L’export produit un fichier JSON versionné contenant l’état complet et son empreinte.
         L’import crée toujours une <strong>nouvelle</strong> partie : aucune partie existante n’est
-        écrasée, et un fichier modifié ou corrompu est refusé.
+        écrasée, et un fichier corrompu ou incohérent (empreinte, format, contenu) est refusé.
+        L’empreinte détecte une altération accidentelle ; elle n’est pas une signature.
       </p>
-      <a href={`/api/games/${gameId}/export`} download className={buttonSecondary}>
-        Exporter la partie (JSON)
-      </a>
+      {platform().kind === 'web' ? (
+        <a href={`/api/games/${gameId}/export`} download className={buttonSecondary}>
+          Exporter la partie (JSON)
+        </a>
+      ) : (
+        <button
+          type="button"
+          className={buttonSecondary}
+          disabled={exporting}
+          onClick={() => void onExport()}
+        >
+          {exporting ? 'Export…' : 'Exporter la partie (JSON)'}
+        </button>
+      )}
+      {exportError && <ErrorMessage error={exportError} />}
       <div className="space-y-1">
         <label htmlFor="import" className={label}>
           Importer un fichier de partie

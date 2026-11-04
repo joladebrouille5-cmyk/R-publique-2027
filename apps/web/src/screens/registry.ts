@@ -72,29 +72,54 @@ export const GAME_SCREENS: readonly GameScreen[] = [
     path: 'gouvernement',
     label: 'Gouvernement',
     phase: 6,
-    available: false,
-    description: 'Premier ministre, ministres et feuille de route après une victoire.',
+    available: true,
+    description: 'Président, mandat, Premier ministre, ministres et feuille de route.',
+  },
+  {
+    path: 'conseil',
+    label: 'Conseil des ministres',
+    phase: 15,
+    available: true,
+    description:
+      'Popularité prêtée et loyauté de chaque ministre, faits de la semaine, départs simulés et alertes.',
   },
   {
     path: 'parlement',
     label: 'Parlement',
     phase: 6,
-    available: false,
-    description: 'Groupes, sièges, coalitions et votes à l’Assemblée nationale.',
+    available: true,
+    description:
+      'Groupes et sièges réels de l’Assemblée nationale, textes de la feuille de route et votes simulés par groupe.',
   },
   {
     path: 'economie',
     label: 'Économie',
     phase: 6,
-    available: false,
+    available: true,
     description: 'Croissance, inflation, chômage, dette, déficit et pouvoir d’achat.',
   },
   {
     path: 'crises',
     label: 'Crises',
     phase: 6,
-    available: false,
-    description: 'Crises en cours, choix possibles et conséquences.',
+    available: true,
+    description: 'Crises fictives en cours et passées, choix possibles et conséquences.',
+  },
+  {
+    path: 'legislatives',
+    label: 'Législatives',
+    phase: 6,
+    available: true,
+    description:
+      'Élections législatives sur les 577 circonscriptions, dissolution et recomposition de l’Assemblée.',
+  },
+  {
+    path: 'bilan',
+    label: 'Bilan du quinquennat',
+    phase: 6,
+    available: true,
+    description:
+      'Bilan de fin de mandat (indicateurs, réformes, popularité, gouvernements) et présidentielles précédentes.',
   },
   {
     path: 'journal',

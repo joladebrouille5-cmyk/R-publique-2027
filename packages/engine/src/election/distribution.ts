@@ -6,10 +6,15 @@ import {
   type Ruleset,
   type UtilityFactor,
 } from '@r2027/shared';
+import { orientationFactors } from '../campaign/orientation';
 import { credibility, programmeAppeal } from '../campaign/programme';
+import { supportFactors } from '../campaign/soutiens';
+import { recordFactors } from '../presidency/succession';
 import { compareStrings } from '../core/ledger';
 import { stream } from '../core/random';
 import { largestRemainder } from './apportion';
+import { debateVoteFactors } from './debats';
+import { socleFactors } from './socleFactors';
 import {
   blankRate,
   distance,
@@ -34,31 +39,42 @@ export type GroupDistribution = {
   factors: UtilityFactor[][];
 };
 
+const mean = (values: readonly number[]) => values.reduce((a, b) => a + b, 0) / values.length;
+
+/**
+ * Dynamique de campagne (phase 11) : pente de la popularité, écart entre la moyenne des trois
+ * dernières semaines et celle des trois précédentes (au début de la partie, des semaines
+ * disponibles). Plus lisse qu'un écart de semaine à semaine : une variation passagère ne fait
+ * pas osciller les intentions.
+ */
+export function momentum(popularity: readonly number[]): number {
+  if (popularity.length < 2) return 0;
+  const recent = popularity.slice(-3);
+  const before = popularity.slice(-6, -3);
+  const older = before.length > 0 ? before : popularity.slice(0, 1);
+  return Math.round(mean(recent) - mean(older));
+}
+
 /** Candidats en lice : au premier tour tous les candidats, au second les deux qualifiés. */
 export function contendersFromState(state: GameState, round: Round): Contender[] {
   const status = round === 1 ? 'candidat' : 'qualifie';
   return Object.values(state.actors)
     .filter((actor) => actor.status === status)
     .sort((a, b) => compareStrings(a.id, b.id))
-    .map((actor) => {
-      const history = actor.history.popularite;
-      const past =
-        history.length >= 4
-          ? history[history.length - 4]!
-          : (history[0] ?? actor.resources.popularite);
-      return {
-        id: actor.id,
-        position: actor.candidate.positionnement,
-        notoriete: actor.resources.notoriete,
-        popularite: actor.resources.popularite,
-        dynamique: actor.resources.popularite - past,
-      };
-    });
+    .map((actor) => ({
+      id: actor.id,
+      position: actor.candidate.positionnement,
+      notoriete: actor.resources.notoriete,
+      popularite: actor.resources.popularite,
+      dynamique: momentum([...actor.history.popularite, actor.resources.popularite]),
+    }));
 }
 
 /**
  * Facteurs de campagne (phase 5, §5.1) : attrait du programme pour le groupe, crédibilité du
- * programme, indice médiatique de la semaine passée et soutien des candidats ralliés.
+ * programme, indice médiatique de la semaine passée et soutien des candidats ralliés ; phase 15 :
+ * base électorale de départ du joueur (orientation) et soutiens des personnalités (simulés) ;
+ * phase 23 : bilan du quinquennat écoulé pour le président sortant et son camp.
  */
 function campaignFactors(
   state: GameState,
@@ -85,6 +101,11 @@ function campaignFactors(
         : 0,
     },
     { label: 'Médias', value: model.medias * (state.medias?.indice[contender.id] ?? 0) },
+    ...digitalFactors(ruleset, group, actor.resources),
+    ...orientationFactors(state, ruleset, group, contender.id),
+    ...supportFactors(state, ruleset, group, contender.id),
+    // Phase 23 : bilan du quinquennat écoulé (président sortant et son camp).
+    ...recordFactors(state, contender.id),
   ];
   for (const alliance of state.alliances) {
     if (alliance.vers !== contender.id) continue;
@@ -98,6 +119,27 @@ function campaignFactors(
     });
   }
   return factors;
+}
+
+/**
+ * Facteurs des réseaux et nouveaux médias (phase 9, hypothèses du jeu) : écho chez les 18-34 ans,
+ * pondéré par groupe d'électeurs autour d'une valeur neutre, et dynamique de campagne (buzz).
+ */
+export function digitalFactors(
+  ruleset: Ruleset,
+  group: ElectorateGroup,
+  resources: { jeunesse: number; dynamique: number },
+): UtilityFactor[] {
+  const { modele } = ruleset.numerique;
+  return [
+    {
+      label: 'Écho chez les 18-34 ans',
+      value:
+        ((modele.jeunesse[group.id] ?? 0) * (resources.jeunesse - modele.referenceJeunesse)) /
+        10_000,
+    },
+    { label: 'Buzz sur les réseaux', value: (modele.elan * resources.dynamique) / 10_000 },
+  ];
 }
 
 /** Facteurs propres au second tour : consignes de vote partielles et débat (§5.3). */
@@ -125,6 +167,37 @@ function secondRoundFactors(
   return factors;
 }
 
+/** Semaines de chocs passés retenues dans l'incertitude persistante de l'opinion. */
+const MEMOIRE_INCERTITUDE = 12;
+
+/**
+ * Part d'incertitude de l'opinion (phase 11), pour un candidat et chaque groupe d'électeurs :
+ * moyenne des chocs des dernières semaines, pondérée par la persistance du jeu de règles et
+ * normalisée pour garder l'amplitude d'un choc unique ; elle varie donc peu d'une semaine à
+ * l'autre (persistance nulle : tirage indépendant). Un flux par candidat et par semaine tire les
+ * chocs de tous les groupes, dans l'ordre du jeu de règles.
+ */
+function persistentAleas(
+  seed: string,
+  week: number,
+  round: Round,
+  contenderId: string,
+  groupCount: number,
+  model: Ruleset['modele'],
+): number[] {
+  const rho = model.persistanceIncertitude;
+  const sums = new Array<number>(groupCount).fill(0);
+  let norm = 0;
+  for (let k = 0; k < MEMOIRE_INCERTITUDE && week - k >= 0; k++) {
+    const weight = rho ** k;
+    if (weight === 0) break;
+    const rng = stream(seed, week - k, 'opinion', round, contenderId);
+    for (let g = 0; g < groupCount; g++) sums[g]! += weight * (rng.nextFloat() * 2 - 1);
+    norm += weight * weight;
+  }
+  return sums.map((sum) => (model.alea * sum) / Math.sqrt(norm));
+}
+
 /**
  * Comportement de chaque groupe d'électeurs pour un tour. `purpose` sépare les tirages
  * d'incertitude de l'opinion hebdomadaire de ceux du jour du scrutin.
@@ -146,13 +219,41 @@ export function distribute(
   const week = state.meta.week;
   const differential = round === 2 ? model.secondTour.abstentionDifferentielle : 0;
 
+  // Opinion de la semaine : incertitude persistante (moyenne pondérée des chocs passés) ;
+  // jour du scrutin : tirage propre au scrutin.
+  const persistent =
+    purpose === 'opinion'
+      ? contenders.map((c) =>
+          persistentAleas(state.meta.seed, week, round, c.id, groups.length, model),
+        )
+      : null;
+
   return groups.map((group, g) => {
-    const factors = contenders.map((contender) => {
-      const rng = stream(state.meta.seed, week, purpose, round, group.id, contender.id);
-      const alea = (rng.nextFloat() * 2 - 1) * model.alea;
+    // Phase 24 : fidélité de camp, au premier tour, pour le candidat le plus proche du groupe.
+    const closest =
+      round === 1 && model.fideliteCamp > 0
+        ? contenders.reduce((best, c) =>
+            distance(group.position, c.position) < distance(group.position, best.position)
+              ? c
+              : best,
+          ).id
+        : null;
+    const factors = contenders.map((contender, c) => {
+      const alea = persistent
+        ? persistent[c]![g]!
+        : (stream(state.meta.seed, week, purpose, round, group.id, contender.id).nextFloat() * 2 -
+            1) *
+          model.alea;
       const extra = [
         ...campaignFactors(state, ruleset, group, contender),
-        ...(round === 2 ? secondRoundFactors(state, ruleset, group.id, contender) : []),
+        // Phase 24 : socle électoral « Sondages actuels » (départ calibré sur les sondages).
+        ...socleFactors(state, ruleset, contender.id, round),
+        ...(contender.id === closest
+          ? [{ label: 'Fidélité de camp', value: model.fideliteCamp }]
+          : []),
+        ...(round === 2
+          ? secondRoundFactors(state, ruleset, group.id, contender)
+          : debateVoteFactors(state, ruleset, contender.id)),
       ];
       return utilityFactors(group, contender, model, alea, extra);
     });
@@ -167,6 +268,18 @@ export function distribute(
       factors,
     };
   });
+}
+
+/** Poids électoral (part des suffrages exprimés attendus) et parts des candidats, par groupe. */
+export type GroupShares = { poids: number; parts: Record<string, number> }[];
+
+export function groupShares(distributions: readonly GroupDistribution[]): GroupShares {
+  const expressed = distributions.map((d) => d.inscrits * d.turnout * (1 - d.blancs - d.nuls));
+  const total = expressed.reduce((a, b) => a + b, 0) || 1;
+  return distributions.map((d, g) => ({
+    poids: expressed[g]! / total,
+    parts: Object.fromEntries(d.contenders.map((c, i) => [c.id, d.probabilities[i]!])),
+  }));
 }
 
 // `+ 0` ramène −0 à 0 : l'état doit survivre à un aller-retour JSON sans différence.

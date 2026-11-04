@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Cog } from '../cog/cog';
 import { ImportError } from '../geometry/coverage';
-import { buildPersonalities, mentionsCommune, type BuildInput } from './build';
+import { buildPersonalities, mentionsCommune, photoFiles, type BuildInput } from './build';
 import { familyAt, parseChes, partyAt, toAxis } from './ches';
 import { freeLicense, originalUrl, parseAuthor, parseLicenses } from './commons';
 import type { Selected } from './selection';
@@ -283,6 +283,15 @@ describe('Commons, CHES et Wikidata', () => {
       { licence: 'CC BY-SA 4.0', licenceUrl: 'https://creativecommons.org/licenses/by-sa/4.0' },
     ]);
     expect(parseAuthor(COMMONS_PAGE)).toBe('Photographe Libre');
+    // Modèle « Creator » : sa feuille de style intégrée n'est pas reprise dans le nom.
+    expect(
+      parseAuthor(
+        COMMONS_PAGE.replace(
+          'Photographe Libre',
+          '<style data-mw-deduplicate="TemplateStyles:r1">.mw-parser-output .commons-creator-table{color:inherit}</style><span>Photographe Libre</span>',
+        ),
+      ),
+    ).toBe('Photographe Libre');
     expect(freeLicense(COMMONS_PAGE)).toEqual({
       licence: 'CC BY-SA 4.0',
       licenceUrl: 'https://creativecommons.org/licenses/by-sa/4.0',
@@ -438,6 +447,33 @@ describe('assemblage des fiches', () => {
       photo: null,
       photoAbsente: 'Photo non reprise : licence non reconnue comme libre (EP).',
     });
+  });
+
+  it('reprend la photo libre choisie sur Commons quand celle de la source ne l’est pas', () => {
+    const selection = selectionFor().map((s) =>
+      s.id === 'reel-exemple'
+        ? { ...s, photo: { fichier: 'Camille_Libre.jpg', motif: 'Photo de la source non libre.' } }
+        : s,
+    );
+    expect(photoFiles(ARTICLE_TEXT, selection).get('reel-exemple')).toBe('Camille_Libre.jpg');
+    // Licence vérifiée comme les autres : refusée, pas de photo.
+    const refused = buildPersonalities(
+      input({ selection, photos: new Map([['Camille_Libre.jpg', { refus: 'non libre' }]]) }),
+    );
+    expect(refused.personnalites[0]).toMatchObject({ photo: null });
+    const result = buildPersonalities(
+      input({ selection, photos: new Map([['Camille_Libre.jpg', freeLicense(COMMONS_PAGE)]]) }),
+    );
+    expect(result.personnalites[0]).toMatchObject({
+      photo: {
+        source: 'https://commons.wikimedia.org/wiki/File:Camille_Libre.jpg',
+        licence: 'CC BY-SA 4.0',
+        choix: 'Photo de la source non libre.',
+      },
+      photoAbsente: null,
+    });
+    // Sans choix : pas de motif.
+    expect(buildPersonalities(input()).personnalites[0]!.photo).not.toHaveProperty('choix');
   });
 
   it('reconnaît une commune avec l’article contracté', () => {

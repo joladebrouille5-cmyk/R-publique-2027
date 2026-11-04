@@ -54,7 +54,7 @@ export function PositionMap({
         viewBox="-125 -112 250 224"
         role="img"
         aria-label="Positionnement des candidats et des groupes d’électeurs sur les axes économique et sociétal"
-        className="mx-auto block w-full max-w-lg text-slate-500 dark:text-slate-400"
+        className="mx-auto block w-full max-w-lg text-encre-3"
       >
         <rect
           x={-100}
@@ -133,7 +133,7 @@ export function PositionMap({
           );
         })}
       </svg>
-      <figcaption className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-slate-600 dark:text-slate-400">
+      <figcaption className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-encre-2">
         <span className="inline-flex items-center gap-1">
           <span className="inline-block size-2.5 rounded-full bg-republique-600 dark:bg-republique-500" />{' '}
           Votre candidat
@@ -159,7 +159,7 @@ export function PositionMap({
           <table className="w-full min-w-[22rem] text-left text-xs">
             <caption className="sr-only">Positions des candidats (−100 à +100)</caption>
             <thead>
-              <tr className="text-slate-500 dark:text-slate-400">
+              <tr className="text-encre-3">
                 <th scope="col" className="py-1 font-medium">
                   Candidat
                 </th>
@@ -201,7 +201,7 @@ export function PositionMap({
             </tbody>
           </table>
         </div>
-        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+        <p className="mt-1 text-xs text-encre-3">
           Économie : −100 gauche … +100 droite ; société : −100 progressiste … +100 conservateur.
         </p>
       </details>

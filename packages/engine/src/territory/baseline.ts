@@ -177,11 +177,19 @@ function wobble(text: string): number {
 }
 
 /**
- * Base de démonstration, FICTIVE : sans résultats officiels importés. Les communes du jeu de
- * démonstration reçoivent des affinités et une participation tirées au hasard (déterministe),
- * les autres départements une unité chacun ; les inscrits sont répartis au prorata de la
- * population pour totaliser ceux du jeu de règles. Aucune donnée électorale réelle.
+ * Base de démonstration, FICTIVE : sans résultats officiels importés. Les affinités et la
+ * participation sont tirées au hasard (déterministe) : une composante par région, une par
+ * département et, pour les communes du jeu de démonstration, une par commune — la carte montre
+ * ainsi des territoires contrastés, sans aucune ressemblance voulue avec la géographie
+ * électorale réelle. Les départements sans communes forment une unité chacun ; les inscrits sont
+ * répartis au prorata de la population pour totaliser ceux du jeu de règles.
  */
+/** Amplitudes des composantes fictives des affinités (région, département, commune). */
+const DEMO_REGION = 0.45;
+const DEMO_DEPARTEMENT = 0.3;
+const DEMO_COMMUNE = 0.3;
+const DEMO_MIN_AFFINITY = 0.2;
+
 export function demoBaseline(
   ruleset: Ruleset,
   communes: readonly (CommuneRef & { population: number })[],
@@ -211,11 +219,65 @@ export function demoBaseline(
       departement: entry.departement,
       region: entry.region,
       inscrits: inscrits[i]!,
-      affinite:
-        entry.niveau === 'commune'
-          ? Array.from({ length: g }, (_, k) => round6(1 + 0.35 * wobble(`${entry.code}:${k}`)))
-          : new Array<number>(g).fill(1),
-      participation: entry.niveau === 'commune' ? round6(1 + 0.08 * wobble(`${entry.code}:p`)) : 1,
+      affinite: Array.from({ length: g }, (_, k) =>
+        round6(
+          Math.max(
+            DEMO_MIN_AFFINITY,
+            1 +
+              DEMO_REGION * wobble(`region:${entry.region}:${k}`) +
+              DEMO_DEPARTEMENT * wobble(`departement:${entry.departement}:${k}`) +
+              (entry.niveau === 'commune' ? DEMO_COMMUNE * wobble(`${entry.code}:${k}`) : 0),
+          ),
+        ),
+      ),
+      participation: round6(
+        1 +
+          0.05 * wobble(`departement:${entry.departement}:p`) +
+          (entry.niveau === 'commune' ? 0.06 * wobble(`${entry.code}:p`) : 0),
+      ),
     })),
   );
+}
+
+/** Géométries d'un fichier TopoJSON du référentiel (propriétés utiles à la base électorale). */
+type DemoTopology = {
+  objects: Record<
+    string,
+    {
+      geometries: {
+        properties: { code: string; dep: string; reg: string; population: number | null };
+      }[];
+    }
+  >;
+};
+
+/**
+ * Base de démonstration à partir du manifeste et des fichiers TopoJSON déjà lus (communes des
+ * départements cartographiés, une unité pour les autres) ; partagée par l'API et le serveur
+ * local de l'application mobile.
+ */
+export function demoBaselineFromTopologies(
+  ruleset: Ruleset,
+  departements: readonly {
+    code: string;
+    region: string;
+    population: number;
+    fichier: string | null;
+  }[],
+  topologyOf: (fichier: string) => unknown,
+): TerritorialBaseline {
+  const communes = departements.flatMap((d) => {
+    if (!d.fichier) return [];
+    const topology = topologyOf(d.fichier) as DemoTopology;
+    return Object.values(topology.objects)[0]!.geometries.map(({ properties: p }) => ({
+      code: p.code,
+      departement: p.dep,
+      region: p.reg,
+      population: p.population ?? 0,
+    }));
+  });
+  const others = departements
+    .filter((d) => !d.fichier)
+    .map((d) => ({ code: d.code, region: d.region, population: d.population }));
+  return demoBaseline(ruleset, communes, others);
 }

@@ -1,5 +1,6 @@
 import { hashState } from '@r2027/save-engine';
 import {
+  DIFFICULTIES,
   GameDetailSchema,
   GameSummarySchema,
   HealthResponseSchema,
@@ -41,6 +42,18 @@ const newGame = {
   seed: 'graine-test',
   candidate,
 };
+
+/** Photo valide (PNG d'un pixel) et photos refusées : contenu d'un autre type, format non
+ * accepté, image trop lourde, adresse distante. */
+const PHOTO =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+const INVALID_PHOTOS = [
+  'data:image/png;base64,/9j/4AAQSkZJRgABAQ==',
+  'data:image/gif;base64,R0lGODlhAQABAAAAACw=',
+  'data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=',
+  `data:image/png;base64,iVBORw0KGgo${'A'.repeat(140_000)}`,
+  'https://exemple.fr/photo.png',
+];
 
 async function createGame(client: Client, body: object = newGame): Promise<GameDetail> {
   const response = await client.post('/api/games', body);
@@ -121,6 +134,70 @@ describe('création de partie', () => {
     expect(events[0]!.payload).toMatchObject({ candidat: { nom: 'Test', parti: 'Parti du test' } });
   });
 
+  it('crée une partie avec la photo du candidat ; refuse une photo invalide (phase 13)', async () => {
+    const client = new Client(app);
+    const game = await createGame(client, {
+      ...newGame,
+      candidate: { ...candidate, photo: PHOTO },
+    });
+    expect(game.state.actors.joueur!.candidate.photo).toBe(PHOTO);
+    expect(game.stateHash).toBe(hashState(game.state));
+    // Le journal note la présence de la photo, sans en recopier le contenu.
+    const events = await db.gameEvent.findMany({ where: { gameId: game.id } });
+    expect(events[0]!.payload).toMatchObject({ candidat: { nom: 'Test', photo: true } });
+    expect(JSON.stringify(events[0]!.payload)).not.toContain('base64');
+    const without = await createGame(client);
+    expect(without.state.actors.joueur!.candidate.photo).toBeNull();
+    for (const photo of INVALID_PHOTOS) {
+      const response = await client.post('/api/games', {
+        ...newGame,
+        candidate: { ...candidate, photo },
+      });
+      expect(response.statusCode).toBe(400);
+      expect(response.json()).toMatchObject({ error: { code: 'requete_invalide' } });
+    }
+  });
+
+  it('crée une partie à chacun des cinq niveaux de difficulté ; refuse un niveau inconnu (phase 18)', async () => {
+    const client = new Client(app);
+    const games: GameDetail[] = [];
+    // Phase 20 : Légende se débloque par une victoire (tests de la progression) ; refusée ici.
+    const locked = await client.post('/api/games', { ...newGame, difficulty: 'legende' });
+    expect(locked.statusCode).toBe(403);
+    expect(locked.json()).toMatchObject({ error: { code: 'verrouille' } });
+    const open = DIFFICULTIES.filter((d) => d !== 'legende');
+    for (const difficulty of open) {
+      const game = await createGame(client, { ...newGame, difficulty });
+      expect(game.difficulty).toBe(difficulty);
+      expect(game.state.meta.difficulty).toBe(difficulty);
+      expect(game.stateHash).toBe(hashState(game.state));
+      games.push(game);
+    }
+    // Moyens du joueur décroissants, de Découverte à Expert.
+    const budgets = games.map((g) => g.state.actors.joueur!.resources.budgetCentimes);
+    expect([...budgets].sort((a, b) => b - a)).toEqual(budgets);
+    expect(new Set(budgets).size).toBe(open.length);
+    // Le niveau est enregistré en base et relu tel quel dans la liste des parties.
+    const stored = await db.game.findMany({ select: { difficulty: true } });
+    expect(stored.map((g) => g.difficulty).sort()).toEqual([...open].sort());
+    const list = GameSummarySchema.array().parse((await client.get('/api/games')).json());
+    expect(list.map((g) => g.difficulty).sort()).toEqual([...open].sort());
+    const refused = await client.post('/api/games', { ...newGame, difficulty: 'impossible' });
+    expect(refused.statusCode).toBe(400);
+    expect(refused.json()).toMatchObject({ error: { code: 'requete_invalide' } });
+  });
+
+  it('crée une partie au format court ; refuse un format inconnu (phase 20)', async () => {
+    const client = new Client(app);
+    const court = await createGame(client, { ...newGame, format: 'court' });
+    expect(court.state.player.format).toBe('court');
+    expect(court.stateHash).toBe(hashState(court.state));
+    expect((await createGame(client)).state.player.format).toBe('complet');
+    const refused = await client.post('/api/games', { ...newGame, format: 'eclair' });
+    expect(refused.statusCode).toBe(400);
+    expect(refused.json()).toMatchObject({ error: { code: 'requete_invalide' } });
+  });
+
   it('applique le profil de départ choisi', async () => {
     const client = new Client(app);
     const base = await createGame(client);
@@ -147,6 +224,20 @@ describe('création de partie', () => {
     expect(a.seed).not.toBe(b.seed);
   });
 
+  it('crée une partie dans un scénario de départ fictif (phase 7)', async () => {
+    const client = new Client(app);
+    const game = await createGame(client, { ...newGame, scenarioId: 'colere-sociale' });
+    expect(game.state.scenario).toBe('colere-sociale');
+    expect(game.state.consequences).toEqual([]);
+    const standard = await createGame(client, { ...newGame, seed: game.seed });
+    expect(standard.state.scenario).toBe('standard');
+    // Phase 20 : « Candidature d'outsider » se débloque par une victoire ; « Colère sociale »
+    // abaisse la popularité de départ.
+    expect(game.state.actors.joueur!.resources.popularite).toBeLessThan(
+      standard.state.actors.joueur!.resources.popularite,
+    );
+  });
+
   it('liste les parties du joueur', async () => {
     const client = new Client(app);
     await createGame(client);
@@ -169,6 +260,10 @@ describe('création de partie', () => {
     ],
     [{ ...newGame, personnaliteId: 'reel-attal' }, 400, 'requete_invalide'],
     [{ ...newGame, adversaires: 'imaginaires' }, 400, 'requete_invalide'],
+    [{ ...newGame, depart: 'sondages' }, 422, 'depart_sans_personnalites'],
+    [{ ...newGame, adversaires: 'reels', depart: 'pronostic' }, 400, 'requete_invalide'],
+    [{ ...newGame, scenarioId: 'scenario-inconnu' }, 422, 'scenario_inconnu'],
+    [{ ...newGame, scenarioId: 'Tempête !' }, 400, 'requete_invalide'],
     [{ ...newGame, candidate: undefined }, 400, 'requete_invalide'],
     [{ ...newGame, mode: 'observateur' }, 400, 'requete_invalide'],
     [{ ...newGame, candidate: { ...candidate, nom: '' } }, 400, 'requete_invalide'],
@@ -333,6 +428,43 @@ describe('historique immuable', () => {
     await expect(
       db.gameEvent.update({ where: { id: event.id }, data: { type: 'falsifie' } }),
     ).rejects.toThrow(/Historique immuable/);
+  });
+});
+
+describe('durcissement (phase 8)', () => {
+  it('une lecture sans session ne crée aucun utilisateur ni cookie', async () => {
+    const before = await db.user.count();
+    const list = await app.inject({ method: 'GET', url: '/api/games' });
+    expect(list.statusCode).toBe(200);
+    expect(list.json()).toEqual([]);
+    expect(list.cookies).toHaveLength(0);
+    const game = await app.inject({ method: 'GET', url: `/api/games/${crypto.randomUUID()}` });
+    expect(game.statusCode).toBe(404);
+    expect(await db.user.count()).toBe(before);
+  });
+
+  it('refuse un caractère nul plutôt qu’une erreur interne', async () => {
+    const client = new Client(app);
+    const response = await client.post('/api/games', {
+      name: 'Nul\u0000',
+      mode: 'observateur',
+    });
+    expect(response.statusCode).toBe(400);
+    expect(response.json().error.code).toBe('requete_invalide');
+  });
+
+  it('limite à part les écritures coûteuses', async () => {
+    const limited = await testApp(db, { RATE_LIMIT_WRITE_MAX: 2 });
+    const client = new Client(limited);
+    const codes: number[] = [];
+    for (let i = 0; i < 3; i++)
+      codes.push(
+        (await client.post('/api/games', { name: `P${i}`, mode: 'observateur' })).statusCode,
+      );
+    // Les lectures restent sous la limite générale.
+    codes.push((await client.get('/api/games')).statusCode);
+    await limited.close();
+    expect(codes).toEqual([201, 201, 429, 200]);
   });
 });
 

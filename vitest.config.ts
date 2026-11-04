@@ -33,6 +33,23 @@ export default defineConfig({
       },
       {
         test: {
+          name: 'local-api',
+          root: './packages/local-api',
+          include: ['src/**/*.test.ts'],
+          environment: 'node',
+        },
+      },
+      {
+        extends: './apps/mobile/vite.config.ts',
+        test: {
+          name: 'mobile',
+          root: './apps/mobile',
+          include: ['src/**/*.test.ts'],
+          environment: 'node',
+        },
+      },
+      {
+        test: {
           name: 'rulesets',
           root: './packages/rulesets',
           include: ['src/**/*.test.ts'],

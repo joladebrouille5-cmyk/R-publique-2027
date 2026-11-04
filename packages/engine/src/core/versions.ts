@@ -1,5 +1,5 @@
 /** Version du moteur, enregistrée dans chaque partie et chaque sauvegarde (§11). */
-export const ENGINE_VERSION = '0.6.0';
+export const ENGINE_VERSION = '0.24.0';
 
 /**
  * Version du format de `GameState` ; toute évolution s'accompagne d'une migration
@@ -7,6 +7,22 @@ export const ENGINE_VERSION = '0.6.0';
  * 3 : phase 3 (candidats, opinion, sondages, élections) ; 4 : phase 4 (résultats territoriaux) ;
  * 5 : phase 5 (programme, parrainages, compte de campagne, médias, relations et alliances) ;
  * 6 : phase 5 bis (personnalités réelles, jeu d'adversaires) ; 7 : phase 5 ter (médias réels,
- * interviews dans les émissions politiques).
+ * interviews dans les émissions politiques) ; 8 : phase 6 (cycle électoral, présidence et
+ * gouvernement, archives des cycles précédents) ; 9 : phase 6 (Assemblée nationale, textes,
+ * votes par groupe, réformes) ; 10 : phase 6 (économie, crises) ; 11 : phase 6 (législatives) ;
+ * 12 : phase 6 (bilan du quinquennat, présidentielle suivante, statut « inéligible ») ;
+ * 13 : phase 7 (scénario de départ, conséquences durables) ; 14 : phase 9 (jauges Jeunesse et
+ * Dynamique, publications simulées sur les réseaux et nouveaux médias) ; 15 : phase 10 (débats
+ * télévisés) ; 16 : phase 11 (jeu de règles 13 : réactions, événements, plateaux, gouvernement) ;
+ * 17 : phase 13 (jeu de règles 14 : tension parlementaire, frondeurs, motions spontanées,
+ * coalition, alliances législatives, actions du chef de l'État, photo du candidat) ; 18 : phase
+ * 14 (jeu de règles 15 : vivier de personnalités réelles, expertise ministérielle) ; 19 : phase
+ * 15 (jeu de règles 16 : orientation stratégique, négociations de soutien, ministres vivants,
+ * urgences ministérielles, questions au gouvernement, objectifs de mandat, succès) ; 20 : phase
+ * 18 (jeu de règles 17 : cinq niveaux de difficulté, Découverte et Légende en plus) ; 21 : phase
+ * 20 (format de partie complet ou court) ; 22 : phase 20 (jeu de règles 18 : événements en
+ * chaîne et coups des adversaires, suites programmées) ; 23 : phase 23 (jeu de règles 21 :
+ * candidatures à la présidentielle suivante, successeur du joueur, poids du bilan) ; 24 : phase 24
+ * (jeu de règles 22 : départ « Sondages actuels », socle électoral, rééquilibrage).
  */
-export const SAVE_SCHEMA_VERSION = 7;
+export const SAVE_SCHEMA_VERSION = 24;

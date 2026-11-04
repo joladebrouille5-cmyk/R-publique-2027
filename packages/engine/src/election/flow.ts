@@ -11,13 +11,8 @@ import { provisionalReimbursement } from '../campaign/finances';
 import { credibility } from '../campaign/programme';
 import { scrutinInWeek } from '../core/calendar';
 import { compareStrings } from '../core/ledger';
-import { stream } from '../core/random';
+import { openQuinquennat } from '../presidency/government';
 import { distance } from './model';
-
-const nameOf = (state: GameState, id: string) => {
-  const actor = state.actors[id];
-  return actor ? candidateName(actor.candidate) : id;
-};
 
 /** Scrutin (et numéro de tour) qui a lieu pendant la semaine en cours de résolution. */
 export function scrutinOfWeek(state: GameState, ruleset: Ruleset) {
@@ -28,21 +23,9 @@ export function scrutinOfWeek(state: GameState, ruleset: Ruleset) {
   return { scrutin, round: round as 1 | 2 };
 }
 
-function finalMessage(state: GameState, winnerId: string): string {
-  const player = state.player.actorId;
-  const winner = nameOf(state, winnerId);
-  if (player === winnerId) {
-    return `Vous êtes élu(e) à la présidence de la République. La formation du gouvernement, les législatives et le quinquennat arrivent en phase 6 : la partie ne peut pas encore continuer.`;
-  }
-  if (player) {
-    return `${winner} est élu(e). Votre bilan de campagne et la poursuite de la partie (élections suivantes) arrivent en phases 6 et 7.`;
-  }
-  return `${winner} est élu(e). La suite de la partie (gouvernement, quinquennat) arrive en phase 6.`;
-}
-
 /**
  * Conséquences d'un tour : statuts des candidats, phase de jeu, consignes de vote des
- * éliminés (§5.3 : un soutien ne transfère pas toutes les voix), fin de la phase 3.
+ * éliminés (§5.3 : un soutien ne transfère pas toutes les voix), ouverture du quinquennat.
  */
 export function concludeRound(
   state: GameState,
@@ -62,12 +45,18 @@ export function concludeRound(
         actor.status = actor.id === result.winner ? 'elu' : 'battu';
       }
     }
-    state.meta.phase = state.player.actorId === result.winner ? 'presidence' : 'bilan';
     state.pendingDecisions = state.pendingDecisions.filter((d) => d.kind !== 'consigne');
-    state.calendar = {
-      blockedBy: 'fin-de-la-presidentielle',
-      blockedMessage: finalMessage(state, result.winner),
-    };
+    // Format court (phase 20) : la partie s'arrête au soir de l'élection, sans quinquennat.
+    if (state.player.format === 'court') {
+      const winner = state.actors[result.winner]!;
+      state.calendar = {
+        blockedBy: 'fin-de-partie',
+        blockedMessage: `Partie terminée (format court) : ${candidateName(winner.candidate)} est élu(e) président(e) de la République au ${result.round === 1 ? 'premier' : 'second'} tour. Revivez la soirée électorale ou commencez une nouvelle partie.`,
+      };
+      return { phaseChange: { from, to: state.meta.phase }, events };
+    }
+    // Phase 6 : le vainqueur (joueur ou IA) entre en fonctions à l'investiture.
+    openQuinquennat(state, ruleset, result.winner);
     return { phaseChange: { from, to: state.meta.phase }, events };
   }
 
@@ -203,41 +192,4 @@ export function debatePerformance(detail: DebateDetail, ruleset: Ruleset): numbe
     w.coherence * detail.coherence +
     w.reponse * detail.reponse;
   return round2(Math.max(-1, Math.min(1, 2 * total - 1)));
-}
-
-/** Débat d'entre-deux-tours : prestation simulée de chaque finaliste, de −1 à +1 (§5.3, §8). */
-export function holdDebate(state: GameState, ruleset: Ruleset): ReportEvent | null {
-  if (state.meta.phase !== 'entre_deux_tours' || state.elections.debate) return null;
-  const finalists = Object.values(state.actors)
-    .filter((a) => a.status === 'qualifie')
-    .sort((a, b) => compareStrings(a.id, b.id));
-  if (finalists.length !== 2) return null;
-  const debate: Record<string, number> = {};
-  const detail: Record<string, DebateDetail> = {};
-  for (const finalist of finalists) {
-    const rng = stream(state.meta.seed, state.meta.week, 'debat', finalist.id);
-    detail[finalist.id] = debateComponents(state, ruleset, finalist.id, rng.nextFloat());
-    debate[finalist.id] = debatePerformance(detail[finalist.id]!, ruleset);
-  }
-  state.elections.debate = debate;
-  state.elections.debateDetail = detail;
-  const [a, b] = finalists as [(typeof finalists)[0], (typeof finalists)[0]];
-  const leader = debate[a.id]! >= debate[b.id]! ? a : b;
-  return {
-    id: `debat-${state.meta.week}`,
-    kind: 'evenement',
-    refId: 'debat-entre-deux-tours',
-    label: `Débat d’entre-deux-tours : ${candidateName(leader.candidate)} jugé(e) plus convaincant(e)`,
-    description: `Prestations simulées : ${finalists
-      .map(
-        (f) =>
-          `${candidateName(f.candidate)} ${debate[f.id]! >= 0 ? '+' : ''}${debate[f.id]!.toFixed(2).replace('.', ',')}`,
-      )
-      .join(
-        ' ; ',
-      )} (échelle de −1 à +1), d'après la préparation, la maîtrise, la cohérence du programme et la qualité des réponses.`,
-    nature: 'simule',
-    majeur: false,
-    decisionId: null,
-  };
 }

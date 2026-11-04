@@ -1,0 +1,472 @@
+{
+  "verifieLe": "2026-11-04",
+  "source": {
+    "titre": "Liste de sondages sur l'élection présidentielle française de 2027 (Wikipédia)",
+    "revision": 240992329,
+    "url": "https://fr.wikipedia.org/w/index.php?oldid=240992329",
+    "note": "Chiffres relus dans le tableau de la révision ; chaque enquête renvoie à sa notice déposée à la Commission des sondages (ou à l'article qui la publie)."
+  },
+  "methode": "Cinq dernières enquêtes du premier tour (date de fin de terrain) ; pour chacune, l'hypothèse qui teste le plus de personnalités du jeu (la première en cas d'égalité). Moyenne de chaque personnalité sur les enquêtes qui la testent ; personnalité jamais testée : « non testée », socle minimal ; « moins de 1 % » compté 0,5 %. Moyenne renormalisée à 100 % sur la liste des 17 personnalités du jeu.",
+  "enquetes": [
+    {
+      "id": "ifop-2026-10-29",
+      "institut": "Ifop",
+      "commanditaire": "LCI",
+      "terrain": {
+        "debut": "2026-10-27",
+        "fin": "2026-10-29"
+      },
+      "echantillon": 1501,
+      "hypothese": "hypothèse 1 sur 4 du tableau (la plus proche de la liste du jeu)",
+      "intentions": {
+        "reel-arthaud": 50,
+        "reel-attal": 500,
+        "reel-dupont-aignan": 150,
+        "reel-glucksmann": 1000,
+        "reel-le-pen": 3500,
+        "reel-lisnard": 700,
+        "reel-melenchon": 1800,
+        "reel-philippe": 950,
+        "reel-retailleau": 400,
+        "reel-roussel": 200,
+        "reel-tondelier": 300,
+        "reel-zemmour": 450
+      },
+      "inferieursA1": [],
+      "source": "https://www.tf1info.fr/politique/elections/presidentielle/sondage-lci-a-six-mois-de-la-presidentielle-2027-marine-le-pen-et-jean-luc-melenchon-sans-adversaires-au-premier-tour-philippe-attal-retailleau-lisnard-2473663.html"
+    },
+    {
+      "id": "ipsos-2026-10-22",
+      "institut": "Ipsos bva",
+      "commanditaire": "Le Parisien",
+      "terrain": {
+        "debut": "2026-10-21",
+        "fin": "2026-10-22"
+      },
+      "echantillon": 1500,
+      "hypothese": "hypothèse 1 sur 4 du tableau (la plus proche de la liste du jeu)",
+      "intentions": {
+        "reel-arthaud": 50,
+        "reel-attal": 400,
+        "reel-dupont-aignan": 150,
+        "reel-glucksmann": 1300,
+        "reel-le-pen": 3350,
+        "reel-melenchon": 1700,
+        "reel-philippe": 1300,
+        "reel-retailleau": 750,
+        "reel-roussel": 200,
+        "reel-tondelier": 350,
+        "reel-zemmour": 450
+      },
+      "inferieursA1": [],
+      "source": "https://www.commission-des-sondages.fr/notices/files/notices/2026/octobre/10338-pres-iv-ipsos-bva-le-parisien-24-octobre.pdf"
+    },
+    {
+      "id": "cluster17-2026-10-22",
+      "institut": "Cluster17",
+      "commanditaire": "Politico",
+      "terrain": {
+        "debut": "2026-10-19",
+        "fin": "2026-10-22"
+      },
+      "echantillon": 2817,
+      "hypothese": "hypothèse 3 sur 3 du tableau (la plus proche de la liste du jeu)",
+      "intentions": {
+        "reel-arthaud": 50,
+        "reel-dupont-aignan": 300,
+        "reel-glucksmann": 650,
+        "reel-le-pen": 3050,
+        "reel-lisnard": 800,
+        "reel-melenchon": 1950,
+        "reel-philippe": 1700,
+        "reel-retailleau": 700,
+        "reel-roussel": 200,
+        "reel-tondelier": 250,
+        "reel-zemmour": 350
+      },
+      "inferieursA1": [],
+      "source": "https://www.commission-des-sondages.fr/notices/files/notices/2026/octobre/10339-pres-iv-cluster17-politico-26-octobre.pdf"
+    },
+    {
+      "id": "opinionway-2026-10-22",
+      "institut": "OpinionWay",
+      "commanditaire": "CNews",
+      "terrain": {
+        "debut": "2026-10-21",
+        "fin": "2026-10-22"
+      },
+      "echantillon": 973,
+      "hypothese": "hypothèse 1 sur 1 du tableau (la plus proche de la liste du jeu)",
+      "intentions": {
+        "reel-arthaud": 50,
+        "reel-attal": 400,
+        "reel-bouamrane": 50,
+        "reel-dupont-aignan": 100,
+        "reel-glucksmann": 1300,
+        "reel-le-pen": 3600,
+        "reel-lisnard": 600,
+        "reel-melenchon": 1600,
+        "reel-philippe": 1200,
+        "reel-retailleau": 600,
+        "reel-roussel": 100,
+        "reel-tondelier": 100,
+        "reel-zemmour": 400
+      },
+      "inferieursA1": ["reel-arthaud", "reel-bouamrane"],
+      "source": "https://www.commission-des-sondages.fr/notices/files/notices/2026/octobre/10333-pres-iv-opinionway-cnews-22-octobre.pdf"
+    },
+    {
+      "id": "harris-2026-10-21",
+      "institut": "Toluna Harris Interactive",
+      "commanditaire": "RTL, M6",
+      "terrain": {
+        "debut": "2026-10-19",
+        "fin": "2026-10-21"
+      },
+      "echantillon": 2094,
+      "hypothese": "hypothèse 1 sur 5 du tableau (la plus proche de la liste du jeu)",
+      "intentions": {
+        "reel-arthaud": 100,
+        "reel-dupont-aignan": 100,
+        "reel-glucksmann": 1200,
+        "reel-le-pen": 3300,
+        "reel-lisnard": 700,
+        "reel-melenchon": 1700,
+        "reel-philippe": 1500,
+        "reel-retailleau": 400,
+        "reel-roussel": 200,
+        "reel-tondelier": 200,
+        "reel-zemmour": 500
+      },
+      "inferieursA1": [],
+      "source": "https://www.commission-des-sondages.fr/notices/files/notices/2026/octobre/10332-pres-iv-toluna-harris-interactive-23-octobre.pdf"
+    }
+  ],
+  "duels": [
+    {
+      "a": "reel-attal",
+      "b": "reel-le-pen",
+      "partA": 4200,
+      "partB": 5800,
+      "institut": "Ifop",
+      "terrain": {
+        "debut": "2026-10-17",
+        "fin": "2026-10-19"
+      },
+      "echantillon": 2081,
+      "source": "https://www.commission-des-sondages.fr/notices/files/notices/2026/octobre/10327-pres-barometre-election-v7-ifop-20-octobre.pdf"
+    },
+    {
+      "a": "reel-attal",
+      "b": "reel-le-pen",
+      "partA": 4500,
+      "partB": 5500,
+      "institut": "YouGov",
+      "terrain": {
+        "debut": "2026-10-12",
+        "fin": "2026-10-15"
+      },
+      "echantillon": 1094,
+      "source": "https://www.commission-des-sondages.fr/notices/files/notices/2026/octobre/10323-pres-iv-yougov-le-huffpost-18-octobre.pdf"
+    },
+    {
+      "a": "reel-attal",
+      "b": "reel-le-pen",
+      "partA": 4300,
+      "partB": 5700,
+      "institut": "YouGov",
+      "terrain": {
+        "debut": "2026-09-17",
+        "fin": "2026-09-21"
+      },
+      "echantillon": 1103,
+      "source": "https://www.commission-des-sondages.fr/notices/files/notices/2026/septembre/10270-pres-iv-yougov-huffpost-23-septembre.pdf"
+    },
+    {
+      "a": "reel-attal",
+      "b": "reel-le-pen",
+      "partA": 4400,
+      "partB": 5600,
+      "institut": "Toluna Harris Interactive",
+      "terrain": {
+        "debut": "2026-09-08",
+        "fin": "2026-09-10"
+      },
+      "echantillon": 2052,
+      "source": "https://www.commission-des-sondages.fr/notices/files/notices/2026/septembre/10263-pres-iv-toluna-harris-interactive-rtl-14-septembre.pdf"
+    },
+    {
+      "a": "reel-attal",
+      "b": "reel-le-pen",
+      "partA": 4500,
+      "partB": 5500,
+      "institut": "OpinionWay",
+      "terrain": {
+        "debut": "2026-09-02",
+        "fin": "2026-09-03"
+      },
+      "echantillon": 1003,
+      "source": "https://www.commission-des-sondages.fr/notices/files/notices/2026/septembre/10252-pres-iv-opinionway-jdd-7-septembre.pdf"
+    },
+    {
+      "a": "reel-glucksmann",
+      "b": "reel-le-pen",
+      "partA": 4400,
+      "partB": 5600,
+      "institut": "OpinionWay",
+      "terrain": {
+        "debut": "2026-10-21",
+        "fin": "2026-10-22"
+      },
+      "echantillon": 973,
+      "source": "https://www.commission-des-sondages.fr/notices/files/notices/2026/octobre/10333-pres-iv-opinionway-cnews-22-octobre.pdf"
+    },
+    {
+      "a": "reel-glucksmann",
+      "b": "reel-le-pen",
+      "partA": 4100,
+      "partB": 5900,
+      "institut": "Toluna Harris Interactive",
+      "terrain": {
+        "debut": "2026-10-19",
+        "fin": "2026-10-21"
+      },
+      "echantillon": 2094,
+      "source": "https://www.commission-des-sondages.fr/notices/files/notices/2026/octobre/10332-pres-iv-toluna-harris-interactive-23-octobre.pdf"
+    },
+    {
+      "a": "reel-glucksmann",
+      "b": "reel-le-pen",
+      "partA": 4300,
+      "partB": 5700,
+      "institut": "Ifop",
+      "terrain": {
+        "debut": "2026-10-17",
+        "fin": "2026-10-19"
+      },
+      "echantillon": 2081,
+      "source": "https://www.commission-des-sondages.fr/notices/files/notices/2026/octobre/10327-pres-barometre-election-v7-ifop-20-octobre.pdf"
+    },
+    {
+      "a": "reel-glucksmann",
+      "b": "reel-le-pen",
+      "partA": 4650,
+      "partB": 5350,
+      "institut": "Elabe",
+      "terrain": {
+        "debut": "2026-10-14",
+        "fin": "2026-10-16"
+      },
+      "echantillon": 1701,
+      "source": "https://www.commission-des-sondages.fr/notices/files/notices/2026/octobre/10324-pres-iv-elabe-17-octobre.pdf"
+    },
+    {
+      "a": "reel-glucksmann",
+      "b": "reel-le-pen",
+      "partA": 4500,
+      "partB": 5500,
+      "institut": "YouGov",
+      "terrain": {
+        "debut": "2026-10-12",
+        "fin": "2026-10-15"
+      },
+      "echantillon": 1094,
+      "source": "https://www.commission-des-sondages.fr/notices/files/notices/2026/octobre/10323-pres-iv-yougov-le-huffpost-18-octobre.pdf"
+    },
+    {
+      "a": "reel-melenchon",
+      "b": "reel-le-pen",
+      "partA": 3100,
+      "partB": 6900,
+      "institut": "OpinionWay",
+      "terrain": {
+        "debut": "2026-10-21",
+        "fin": "2026-10-22"
+      },
+      "echantillon": 973,
+      "source": "https://www.commission-des-sondages.fr/notices/files/notices/2026/octobre/10333-pres-iv-opinionway-cnews-22-octobre.pdf"
+    },
+    {
+      "a": "reel-melenchon",
+      "b": "reel-le-pen",
+      "partA": 3000,
+      "partB": 7000,
+      "institut": "Toluna Harris Interactive",
+      "terrain": {
+        "debut": "2026-10-19",
+        "fin": "2026-10-21"
+      },
+      "echantillon": 2094,
+      "source": "https://www.commission-des-sondages.fr/notices/files/notices/2026/octobre/10332-pres-iv-toluna-harris-interactive-23-octobre.pdf"
+    },
+    {
+      "a": "reel-melenchon",
+      "b": "reel-le-pen",
+      "partA": 3200,
+      "partB": 6800,
+      "institut": "Ifop",
+      "terrain": {
+        "debut": "2026-10-17",
+        "fin": "2026-10-19"
+      },
+      "echantillon": 2081,
+      "source": "https://www.commission-des-sondages.fr/notices/files/notices/2026/octobre/10327-pres-barometre-election-v7-ifop-20-octobre.pdf"
+    },
+    {
+      "a": "reel-melenchon",
+      "b": "reel-le-pen",
+      "partA": 3100,
+      "partB": 6900,
+      "institut": "Elabe",
+      "terrain": {
+        "debut": "2026-10-14",
+        "fin": "2026-10-16"
+      },
+      "echantillon": 1701,
+      "source": "https://www.commission-des-sondages.fr/notices/files/notices/2026/octobre/10324-pres-iv-elabe-17-octobre.pdf"
+    },
+    {
+      "a": "reel-melenchon",
+      "b": "reel-le-pen",
+      "partA": 3200,
+      "partB": 6800,
+      "institut": "YouGov",
+      "terrain": {
+        "debut": "2026-10-12",
+        "fin": "2026-10-15"
+      },
+      "echantillon": 1094,
+      "source": "https://www.commission-des-sondages.fr/notices/files/notices/2026/octobre/10323-pres-iv-yougov-le-huffpost-18-octobre.pdf"
+    },
+    {
+      "a": "reel-philippe",
+      "b": "reel-le-pen",
+      "partA": 4400,
+      "partB": 5600,
+      "institut": "OpinionWay",
+      "terrain": {
+        "debut": "2026-10-21",
+        "fin": "2026-10-22"
+      },
+      "echantillon": 973,
+      "source": "https://www.commission-des-sondages.fr/notices/files/notices/2026/octobre/10333-pres-iv-opinionway-cnews-22-octobre.pdf"
+    },
+    {
+      "a": "reel-philippe",
+      "b": "reel-le-pen",
+      "partA": 4300,
+      "partB": 5700,
+      "institut": "Toluna Harris Interactive",
+      "terrain": {
+        "debut": "2026-10-19",
+        "fin": "2026-10-21"
+      },
+      "echantillon": 2094,
+      "source": "https://www.commission-des-sondages.fr/notices/files/notices/2026/octobre/10332-pres-iv-toluna-harris-interactive-23-octobre.pdf"
+    },
+    {
+      "a": "reel-philippe",
+      "b": "reel-le-pen",
+      "partA": 4400,
+      "partB": 5600,
+      "institut": "Ifop",
+      "terrain": {
+        "debut": "2026-10-17",
+        "fin": "2026-10-19"
+      },
+      "echantillon": 2081,
+      "source": "https://www.commission-des-sondages.fr/notices/files/notices/2026/octobre/10327-pres-barometre-election-v7-ifop-20-octobre.pdf"
+    },
+    {
+      "a": "reel-philippe",
+      "b": "reel-le-pen",
+      "partA": 4750,
+      "partB": 5250,
+      "institut": "Elabe",
+      "terrain": {
+        "debut": "2026-10-14",
+        "fin": "2026-10-16"
+      },
+      "echantillon": 1701,
+      "source": "https://www.commission-des-sondages.fr/notices/files/notices/2026/octobre/10324-pres-iv-elabe-17-octobre.pdf"
+    },
+    {
+      "a": "reel-philippe",
+      "b": "reel-le-pen",
+      "partA": 4800,
+      "partB": 5200,
+      "institut": "YouGov",
+      "terrain": {
+        "debut": "2026-10-12",
+        "fin": "2026-10-15"
+      },
+      "echantillon": 1094,
+      "source": "https://www.commission-des-sondages.fr/notices/files/notices/2026/octobre/10323-pres-iv-yougov-le-huffpost-18-octobre.pdf"
+    },
+    {
+      "a": "reel-retailleau",
+      "b": "reel-le-pen",
+      "partA": 4200,
+      "partB": 5800,
+      "institut": "Ifop",
+      "terrain": {
+        "debut": "2026-08-24",
+        "fin": "2026-08-25"
+      },
+      "echantillon": 1598,
+      "source": "https://www.commission-des-sondages.fr/notices/files/notices/2026/aout/10242-pres-barometre-election-pres-iv-v5-ifop-26-aout.pdf"
+    },
+    {
+      "a": "reel-retailleau",
+      "b": "reel-le-pen",
+      "partA": 4300,
+      "partB": 5700,
+      "institut": "Cluster17",
+      "terrain": {
+        "debut": "2026-07-22",
+        "fin": "2026-07-24"
+      },
+      "echantillon": 1506,
+      "source": "https://www.commission-des-sondages.fr/notices/files/notices/2026/aout/10246-pres-cluster17-le-grand-continent-31-aout.pdf"
+    },
+    {
+      "a": "reel-retailleau",
+      "b": "reel-le-pen",
+      "partA": 4400,
+      "partB": 5600,
+      "institut": "Elabe",
+      "terrain": {
+        "debut": "2026-07-09",
+        "fin": "2026-07-10"
+      },
+      "echantillon": 1503,
+      "source": "https://www.commission-des-sondages.fr/notices/files/notices/2026/juillet/10226-pres-elabe-11-juillet.pdf"
+    },
+    {
+      "a": "reel-melenchon",
+      "b": "reel-philippe",
+      "partA": 3400,
+      "partB": 6600,
+      "institut": "YouGov",
+      "terrain": {
+        "debut": "2026-10-12",
+        "fin": "2026-10-15"
+      },
+      "echantillon": 1094,
+      "source": "https://www.commission-des-sondages.fr/notices/files/notices/2026/octobre/10323-pres-iv-yougov-le-huffpost-18-octobre.pdf"
+    },
+    {
+      "a": "reel-melenchon",
+      "b": "reel-philippe",
+      "partA": 3900,
+      "partB": 6100,
+      "institut": "YouGov",
+      "terrain": {
+        "debut": "2026-09-17",
+        "fin": "2026-09-21"
+      },
+      "echantillon": 1103,
+      "source": "https://www.commission-des-sondages.fr/notices/files/notices/2026/septembre/10270-pres-iv-yougov-huffpost-23-septembre.pdf"
+    }
+  ]
+}

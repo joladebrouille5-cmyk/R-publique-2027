@@ -1,4 +1,4 @@
-import type { PlannedAction } from '@r2027/shared';
+import type { PlannedAction, Posture } from '@r2027/shared';
 import { create } from 'zustand';
 
 // Plan de la semaine en cours (état d'interface, jamais l'état de partie) : actions et leurs
@@ -45,18 +45,34 @@ export function useWeeklyPlan(gameId: string, week: number) {
   return {
     ...plan,
     addAction: (actionId: string) => update((p) => ({ actions: [...p.actions, { actionId }] })),
+    /** Action ajoutée avec sa cible (déplacement programmé depuis la carte, phase 15). */
+    addTargeted: (actionId: string, cible: string) =>
+      update((p) => ({ actions: [...p.actions, { actionId, cible }] })),
     removeAction: (index: number) =>
       update((p) => ({ actions: p.actions.filter((_, i) => i !== index) })),
     setTarget: (index: number, cible: string) =>
       update((p) => ({
-        actions: p.actions.map((a, i) =>
-          i !== index ? a : cible ? { actionId: a.actionId, cible } : { actionId: a.actionId },
-        ),
+        actions: p.actions.map((a, i) => {
+          if (i !== index) return a;
+          const { cible: _old, ...rest } = a;
+          return cible ? { ...rest, cible } : rest;
+        }),
+      })),
+    /** Posture d'un passage dans les médias (phase 11). */
+    setPosture: (index: number, posture: Posture) =>
+      update((p) => ({
+        actions: p.actions.map((a, i) => (i !== index ? a : { ...a, posture })),
       })),
     toggleAnnounce: (id: string) =>
       update((p) => ({
         ajouter: toggle(p.ajouter, id),
         retirer: p.retirer.filter((x) => x !== id),
+      })),
+    /** Phase 24 : annonce de plusieurs propositions (programme de départ suggéré). */
+    announceMany: (ids: readonly string[]) =>
+      update((p) => ({
+        ajouter: [...p.ajouter, ...ids.filter((id) => !p.ajouter.includes(id))],
+        retirer: p.retirer.filter((x) => !ids.includes(x)),
       })),
     toggleWithdraw: (id: string) =>
       update((p) => ({

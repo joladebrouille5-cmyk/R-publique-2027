@@ -1,4 +1,8 @@
-import { demoBaseline, historicalBaseline, type TerritorialBaseline } from '@r2027/engine';
+import {
+  demoBaselineFromTopologies,
+  historicalBaseline,
+  type TerritorialBaseline,
+} from '@r2027/engine';
 import {
   HistoricalRoundSchema,
   rulesetKey,
@@ -18,17 +22,6 @@ export function resultsDirectory(configured: string | undefined): string {
     ? resolve(configured)
     : join(REPO, 'data/processed/resultats/presidentielle-2022');
 }
-
-type Topology = {
-  objects: Record<
-    string,
-    {
-      geometries: {
-        properties: { code: string; dep: string; reg: string; population: number | null };
-      }[];
-    }
-  >;
-};
 
 /**
  * Données électorales de référence : résultats historiques par commune (s'ils ont été importés
@@ -80,20 +73,8 @@ export class ElectoralRepository {
   }
 
   private demo(ruleset: Ruleset) {
-    const { manifest } = this.geo;
-    const communes = manifest.departements.flatMap((d) => {
-      if (!d.fichier) return [];
-      const topology = JSON.parse(this.geo.file(d.fichier)!.raw.toString('utf8')) as Topology;
-      return Object.values(topology.objects)[0]!.geometries.map(({ properties: p }) => ({
-        code: p.code,
-        departement: p.dep,
-        region: p.reg,
-        population: p.population ?? 0,
-      }));
-    });
-    const others = manifest.departements
-      .filter((d) => !d.fichier)
-      .map((d) => ({ code: d.code, region: d.region, population: d.population }));
-    return demoBaseline(ruleset, communes, others);
+    return demoBaselineFromTopologies(ruleset, this.geo.manifest.departements, (fichier) =>
+      JSON.parse(this.geo.file(fichier)!.raw.toString('utf8')),
+    );
   }
 }

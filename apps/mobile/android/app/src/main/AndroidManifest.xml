@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+      RÉPUBLIQUE 2027 fonctionne entièrement hors ligne : pas même la permission INTERNET.
+      L'interface est servie depuis l'APK (https://localhost, interceptée par Capacitor) ; les
+      liens vers les sources s'ouvrent dans le navigateur de l'appareil. Seule permission
+      (phase 20, choix de l'utilisateur) : POST_NOTIFICATIONS, pour le rappel quotidien du défi
+      du jour, désactivé par défaut et demandé seulement quand le joueur l'active. Les trois
+      autres permissions de l'extension de notifications locales sont retirées : l'alarme n'a
+      pas besoin d'être exacte (SCHEDULE_EXACT_ALARM), l'extension ne tient aucun verrou de
+      réveil (WAKE_LOCK) et le rappel est reprogrammé à chaque ouverture de l'application
+      (RECEIVE_BOOT_COMPLETED).
+      Les sauvegardes automatiques d'Android (allowBackup) conservent les parties lors d'un
+      changement d'appareil : elles ne contiennent aucune donnée personnelle ni secret.
+    -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" tools:node="remove" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" tools:node="remove" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" tools:node="remove" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:usesCleartextTraffic="false"
+        android:theme="@style/AppTheme">
+
+        <activity
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density"
+            android:name=".MainActivity"
+            android:label="@string/title_activity_main"
+            android:theme="@style/AppTheme.NoActionBarLaunch"
+            android:launchMode="singleTask"
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+        </activity>
+
+        <!--
+          Aucune police téléchargée par l'application : AppCompat démarre par défaut EmojiCompat
+          (androidx.emoji2), qui demande sa police d'émojis au fournisseur de polices des
+          services Google Play. L'interface est entièrement dans la WebView, qui affiche ses
+          émojis elle-même : cet initialiseur est inutile, on le retire.
+        -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+                tools:node="remove" />
+        </provider>
+
+        <!-- Partage d'un export de partie (cache/exports uniquement, voir xml/file_paths.xml). -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths"></meta-data>
+        </provider>
+    </application>
+</manifest>

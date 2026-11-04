@@ -2,7 +2,9 @@ import { z } from 'zod';
 import {
   AlliancePlanSchema,
   DecisionAnswerSchema,
+  DepartSchema,
   DifficultySchema,
+  GameFormatSchema,
   GameModeSchema,
   GamePhaseSchema,
   GameStateSchema,
@@ -13,6 +15,7 @@ import {
   SeedSchema,
 } from './game';
 import { PersonalityIdSchema, PositionSchema } from './politics';
+import { CandidatePhotoSchema } from './portrait';
 import { WeeklyReportSchema } from './report';
 
 // Contrats de l'API REST, partagés entre `apps/api` et `apps/web`.
@@ -28,6 +31,8 @@ export const CandidateInputSchema = z
     positionnement: PositionSchema,
     parcours: z.string().trim().max(500).default(''),
     profilId: z.string().min(1).max(60).nullable().default(null),
+    /** Photo choisie par le joueur (phase 13) : URL de données d'image contrôlée, ou null. */
+    photo: CandidatePhotoSchema.nullable().default(null),
   })
   .strict();
 export type CandidateInput = z.input<typeof CandidateInputSchema>;
@@ -44,9 +49,57 @@ export const CreateGameRequestSchema = z
     personnaliteId: PersonalityIdSchema.optional(),
     /** Adversaires fictifs (par défaut) ou personnalités réelles. */
     adversaires: OpponentSetSchema.default('fictifs'),
+    /** Scénario de départ du jeu de règles (phase 7). */
+    scenarioId: z
+      .string()
+      .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/)
+      .max(60)
+      .default('standard'),
+    /**
+     * Orientation stratégique du mouvement du joueur (phase 15, jeu de règles `orientations`) ;
+     * absente : aucune (moyens et base électorale de départ inchangés). Interdite en observateur.
+     */
+    orientationId: z
+      .string()
+      .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/)
+      .max(60)
+      .optional(),
+    /** Format de la partie (phase 20) : complet, ou court (fin au soir de la présidentielle). */
+    format: GameFormatSchema.default('complet'),
+    /**
+     * Point de départ avec des personnalités réelles (phase 24) : « Sondages actuels » (par
+     * défaut) ou « Départ équitable » ; refusé sans personnalité réelle dans la partie.
+     */
+    depart: DepartSchema.optional(),
+    /**
+     * Défi du jour (phase 20) : graine du jour, niveau, format et scénario imposés par le jeu de
+     * règles ; la graine, la date de départ et ces paramètres ne se choisissent pas.
+     */
+    defi: z.boolean().default(false),
   })
   .strict()
   .superRefine((body, ctx) => {
+    if (body.defi && body.mode === 'observateur') {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['defi'],
+        message: 'Le défi du jour se joue avec un candidat',
+      });
+    }
+    if (body.defi && (body.seed !== undefined || body.startDate !== undefined)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['defi'],
+        message: 'La graine et la date de départ du défi du jour sont imposées',
+      });
+    }
+    if (body.mode === 'observateur' && body.orientationId !== undefined) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['orientationId'],
+        message: 'Orientation stratégique réservée au joueur candidat',
+      });
+    }
     if (body.mode === 'candidat_personnalise' && !body.candidate) {
       ctx.addIssue({
         code: 'custom',
@@ -172,6 +225,9 @@ export const ExportDocumentSchema = z
   .strict();
 export type ExportDocument = z.infer<typeof ExportDocumentSchema>;
 
+/** Semaines résolues au plus par une avance rapide. */
+export const MAX_FAST_FORWARD_WEEKS = 52;
+
 /** En-tête obligatoire de `POST /advance` : un même envoi répété n'avance qu'une fois. */
 export const IDEMPOTENCY_HEADER = 'idempotency-key';
 export const IdempotencyKeySchema = z.string().regex(/^[A-Za-z0-9_-]{8,100}$/, {
@@ -186,13 +242,78 @@ export const AdvanceRequestSchema = z
     decisions: z.array(DecisionAnswerSchema).max(20).default([]),
     programme: ProgrammeChangeSchema.default({ ajouter: [], retirer: [] }),
     alliances: AlliancePlanSchema.default({ proposer: [] }),
+    /**
+     * Avance rapide (phase 6) : nombre maximal de semaines à résoudre d'affilée, sans action ;
+     * le serveur s'arrête avant toute décision obligatoire, scrutin, changement de phase ou
+     * événement majeur. Absent : une semaine.
+     */
+    semaines: z.number().int().min(1).max(MAX_FAST_FORWARD_WEEKS).optional(),
+  })
+  .strict()
+  .refine(
+    (body) =>
+      (body.semaines ?? 1) === 1 ||
+      (body.actions.length === 0 &&
+        body.programme.ajouter.length + body.programme.retirer.length === 0 &&
+        body.alliances.proposer.length === 0),
+    { message: 'L’avance rapide ne permet pas de programmer d’actions.', path: ['semaines'] },
+  );
+export type AdvanceRequest = z.input<typeof AdvanceRequestSchema>;
+
+/**
+ * Vivier des négociations de soutien du candidat du joueur (phase 15), calculé par le moteur :
+ * pour chaque personnalité nominable, proximité, candidat qu'elle soutient, motif factuel qui
+ * exclut un accord, ou probabilités d'accord (hypothèses du jeu) sans contrepartie et avec la
+ * promesse d'un ministère. L'interface l'affiche sans rien recalculer.
+ */
+export const SupportProspectsSchema = z
+  .object({
+    annee: z.number().int().min(2027),
+    obtenus: z.number().int().min(0),
+    maximum: z.number().int().min(1),
+    personnalites: z.array(
+      z
+        .object({
+          figureId: z.string().min(1),
+          proximite: z.number().int().min(0).max(100),
+          soutient: z.string().min(1).nullable(),
+          motif: z.string().min(1).nullable(),
+          probabilites: z
+            .object({ aucune: z.number().min(0).max(1), ministere: z.number().min(0).max(1) })
+            .strict()
+            .nullable(),
+        })
+        .strict(),
+    ),
   })
   .strict();
-export type AdvanceRequest = z.input<typeof AdvanceRequestSchema>;
+export type SupportProspects = z.infer<typeof SupportProspectsSchema>;
+
+/** Motifs d'arrêt de l'avance rapide. */
+export const FAST_FORWARD_STOPS = [
+  'decision',
+  /** Débat télévisé à jouer cette semaine (phase 17). */
+  'debat',
+  'scrutin',
+  'changement_de_phase',
+  'evenement_majeur',
+  'blocage',
+] as const;
 
 export const AdvanceResponseSchema = z.object({
   game: GameDetailSchema,
+  /** Bilan de la dernière semaine résolue. */
   report: WeeklyReportSchema,
+  /** Avance rapide : semaines demandées et résolues, motif d'arrêt anticipé (null sinon). */
+  avanceRapide: z
+    .object({
+      demandees: z.number().int().min(1),
+      resolues: z.number().int().min(1),
+      arret: z.enum(FAST_FORWARD_STOPS).nullable(),
+    })
+    .strict()
+    .nullable()
+    .default(null),
 });
 export type AdvanceResponse = z.infer<typeof AdvanceResponseSchema>;
 
@@ -214,3 +335,26 @@ export const JournalPageSchema = z.object({
   nextBefore: z.string().nullable(),
 });
 export type JournalPage = z.infer<typeof JournalPageSchema>;
+
+/**
+ * Curseur du journal : horodatage et identifiant de la dernière entrée lue (« date|id »), pour
+ * qu'une page ne saute aucune des entrées de même horodatage. Un horodatage seul (ancien
+ * format) reste accepté.
+ */
+export const JournalCursorSchema = z
+  .string()
+  .max(100)
+  .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z(\|[0-9a-f-]{36})?$/)
+  .transform((cursor) => {
+    const [createdAt, id] = cursor.split('|') as [string, string | undefined];
+    return { createdAt: new Date(createdAt).toISOString(), id: id ?? null };
+  });
+export type JournalCursor = z.infer<typeof JournalCursorSchema>;
+
+export const journalCursor = (entry: { createdAt: string; id: string }): string =>
+  `${entry.createdAt}|${entry.id}`;
+
+/** Entrée strictement antérieure au curseur dans l'ordre du journal (date puis id décroissants). */
+export const isBeforeCursor = (entry: { createdAt: string; id: string }, cursor: JournalCursor) =>
+  entry.createdAt < cursor.createdAt ||
+  (entry.createdAt === cursor.createdAt && cursor.id !== null && entry.id < cursor.id);

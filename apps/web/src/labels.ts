@@ -1,7 +1,10 @@
 import type {
+  GameFormat,
   AiObjective,
   CandidateStatus,
   DataStatus,
+  Depart,
+  EconomicIndicator,
   Difficulty,
   FactorSource,
   GameMode,
@@ -26,18 +29,55 @@ export const OPPONENT_SET_LABELS: Record<OpponentSet, string> = {
   reels: 'Personnalités réelles',
 };
 
+/** Point de départ d'une partie avec des personnalités réelles (phase 24). */
+export const DEPART_LABELS: Record<Depart, string> = {
+  sondages: 'Sondages actuels',
+  equitable: 'Départ équitable',
+};
+
+/** Étiquette fixe du départ « Sondages actuels » (phase 24). */
+export const DEPART_SONDAGES_NOTICE =
+  'Simulation : point de départ issu des sondages publiés, la suite est simulée';
+
 /** Méthode de placement d'une personnalité réelle sur les axes (enquête d'experts CHES). */
 export const POSITION_METHOD_LABELS: Record<PositionMethod, string> = {
-  parti: 'position de son parti selon l’enquête d’experts Chapel Hill',
-  parti_soutien: 'position du parti qui soutient sa candidature (enquête Chapel Hill)',
-  ancien_parti: 'hypothèse : position d’un ancien parti (Wikidata, enquête Chapel Hill)',
-  famille: 'hypothèse : moyenne de sa famille politique (enquête Chapel Hill)',
+  parti: 'position estimée de son parti',
+  parti_soutien: 'position estimée du parti qui soutient sa candidature',
+  ancien_parti: 'hypothèse : position d’un ancien parti',
+  famille: 'hypothèse : moyenne de sa famille politique',
+};
+
+/** Format de la partie (phase 20). */
+export const FORMAT_LABELS: Record<GameFormat, string> = {
+  complet: 'Complet',
+  court: 'Court',
 };
 
 export const DIFFICULTY_LABELS: Record<Difficulty, string> = {
+  decouverte: 'Découverte',
   accessible: 'Accessible',
   standard: 'Standard',
   expert: 'Expert',
+  legende: 'Légende',
+};
+
+/** Niveaux de difficulté (phase 18) : un mot sur la tuile, une phrase en tête de la fiche. */
+export const DIFFICULTY_TAGLINES: Record<Difficulty, string> = {
+  decouverte: 'Pour apprendre',
+  accessible: 'Indulgent',
+  standard: 'Recommandé',
+  expert: 'Exigeant',
+  legende: 'Sans filet',
+};
+
+export const DIFFICULTY_DESCRIPTIONS: Record<Difficulty, string> = {
+  decouverte:
+    'Pour découvrir le jeu : des moyens confortables face à des adversaires plus discrets.',
+  accessible: 'Une campagne indulgente : adversaires moins efficaces, gestion plus souple.',
+  standard: 'L’équilibre recommandé : la campagne telle que le jeu l’a pensée.',
+  expert: 'Adversaires redoutables, ressources plus contraintes.',
+  legende:
+    'Sans filet : des moyens maigres, des adversaires impitoyables et plus connus au départ.',
 };
 
 export const PHASE_LABELS: Record<GamePhase, string> = {
@@ -69,6 +109,8 @@ export const RESOURCE_LABELS: Record<ResourceKey, string> = {
   militants: 'Militants',
   notoriete: 'Notoriété',
   popularite: 'Popularité',
+  jeunesse: 'Jeunesse (18-34 ans)',
+  dynamique: 'Dynamique (buzz)',
 };
 
 const euros = new Intl.NumberFormat('fr-FR', {
@@ -93,6 +135,8 @@ export function formatResource(resource: ResourceKey, value: number): string {
       return integer.format(value);
     case 'notoriete':
     case 'popularite':
+    case 'jeunesse':
+    case 'dynamique':
       return `${twoDecimals.format(value / 100)} %`;
   }
 }
@@ -110,6 +154,8 @@ export function formatDelta(resource: ResourceKey, delta: number): string {
       return `${sign}${integer.format(magnitude)}`;
     case 'notoriete':
     case 'popularite':
+    case 'jeunesse':
+    case 'dynamique':
       return `${sign}${twoDecimals.format(magnitude / 100)} pt`;
   }
 }
@@ -131,6 +177,8 @@ export const FACTOR_SOURCE_LABELS: Record<FactorSource, string> = {
   opinion: 'Dynamique de l’opinion',
   calendrier: 'Calendrier',
   limite: 'Borne',
+  durable: 'Conséquence durable',
+  debat: 'Débat télévisé',
 };
 
 export const PORTEE_LABELS = { locale: 'locale', regionale: 'régionale', nationale: 'nationale' };
@@ -154,6 +202,7 @@ export const CANDIDATE_STATUS_LABELS: Record<CandidateStatus, string> = {
   battu: 'Battu(e) au second tour',
   ecarte: 'Écarté(e) : parrainages insuffisants',
   retire: 'Retiré(e) : ralliement',
+  ineligible: 'Inéligible : deux mandats consécutifs (Constitution, art. 6)',
 };
 
 // --- Campagne (phase 5) ---
@@ -216,6 +265,62 @@ export const POLL_KIND_LABELS: Record<Poll['kind'], string> = {
   popularite: 'Cote de popularité',
 };
 
+/**
+ * Facteurs du modèle d'opinion, tels qu'expliqués au joueur (phase 11) : chaque libellé du
+ * moteur renvoie aux faits qui le font bouger. Les libellés absents (ralliements, consignes,
+ * débats, reste de la décomposition) s'affichent tels quels.
+ */
+export const POLL_FACTOR_LABELS: Record<string, string> = {
+  Popularité: 'Popularité (actions, événements, crises)',
+  Notoriété: 'Notoriété (déplacements, médias, meetings)',
+  'Dynamique de campagne': 'Dynamique (pente de la popularité sur trois semaines)',
+  Médias: 'Couverture médiatique de la semaine',
+  Programme: 'Programme publié',
+  Crédibilité: 'Crédibilité du chiffrage',
+  'Proximité idéologique': 'Proximité idéologique',
+  Incertitude: 'Aléa de l’opinion (simulé, amorti sur 12 semaines)',
+};
+
+export function pollFactorLabel(label: string): string {
+  return POLL_FACTOR_LABELS[label] ?? label;
+}
+
+/** Familles d'événements de campagne (phase 11). */
+export const EVENT_FAMILY_LABELS = {
+  'fait-divers': 'Fait divers',
+  polemique: 'Polémique',
+  opportunite: 'Opportunité',
+  'vie-de-campagne': 'Vie de campagne',
+  'coup-adversaire': 'Coup adverse',
+} as const;
+
+/**
+ * Niveau d'un passage dans les médias (phase 11) : un passage décevant rapporte moins que
+ * l'effet attendu ; sous le seuil d'incident, l'aléa de l'action se produit en plus.
+ */
+export const PRESTATION_LABELS = {
+  reussie: 'Passage réussi',
+  correcte: 'Passage correct',
+  ratee: 'Passage décevant',
+} as const;
+
+export const POSTURE_LABELS = {
+  offensive: 'offensive',
+  pedagogique: 'pédagogique',
+  rassembleuse: 'rassembleuse',
+} as const;
+
+/** Score ou raison d'un passage : « +12 », « −8 », « 0 ». */
+export function formatPoints(value: number): string {
+  return value > 0 ? `+${value}` : value < 0 ? `−${-value}` : '0';
+}
+
+/** Variation d'un sondage à l'autre, en centièmes de point → « +1,20 pt », « stable », « — ». */
+export function formatPollDelta(variation: number | null): string {
+  if (variation === null) return '—';
+  return variation === 0 ? 'stable' : formatDelta('popularite', variation);
+}
+
 /** Part en centièmes de point (0 à 10 000) → « 23,45 % ». */
 export function formatShare(value: number): string {
   return `${twoDecimals.format(value / 100)} %`;
@@ -236,4 +341,32 @@ export function describePosition(position: { economie: number; societe: number }
   const axis = (value: number, left: string, right: string) =>
     value === 0 ? 'centre' : `${value < 0 ? left : right} ${Math.abs(value)}`;
   return `économie : ${axis(position.economie, 'gauche', 'droite')} · société : ${axis(position.societe, 'progressiste', 'conservateur')}`;
+}
+
+/** Indicateurs économiques (phase 6) : libellé et unité d'affichage. */
+export const INDICATOR_LABELS: Record<EconomicIndicator, { label: string; unit: string }> = {
+  croissance: { label: 'Croissance du PIB (sur un an)', unit: ' %' },
+  inflation: { label: 'Inflation (sur un an)', unit: ' %' },
+  chomage: { label: 'Taux de chômage', unit: ' %' },
+  deficit: { label: 'Solde public', unit: ' % du PIB' },
+  dette: { label: 'Dette publique', unit: ' % du PIB' },
+  pouvoirAchat: { label: 'Pouvoir d’achat (indice 100 au début du quinquennat)', unit: '' },
+  confiance: { label: 'Confiance des ménages (moyenne de long terme : 100)', unit: '' },
+  tensions: { label: 'Tensions sociales (indicateur de jeu, 0 à 100)', unit: '' },
+};
+
+const centiemes = new Intl.NumberFormat('fr-FR', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+/** Valeur d'un indicateur (centièmes) avec son unité : « 8,30 % », « −5,00 % du PIB ». */
+export function formatIndicator(indicator: EconomicIndicator, value: number): string {
+  return `${centiemes.format(value / 100).replace('-', '−')}${INDICATOR_LABELS[indicator].unit}`;
+}
+
+/** Variation signée d'un indicateur : « +0,12 », « −0,05 ». */
+export function formatIndicatorDelta(value: number): string {
+  const text = centiemes.format(Math.abs(value) / 100);
+  return value > 0 ? `+${text}` : value < 0 ? `−${text}` : text;
 }

@@ -1,13 +1,21 @@
-import type {
-  DecisionAnswer,
-  EventDefinition,
-  GameState,
-  PendingDecision,
-  ReportEvent,
-  Ruleset,
-  WeeklyReport,
+import {
+  ADVERSAIRE_MARQUE,
+  candidateName,
+  daysFromCivil,
+  DEPARTEMENT_MARQUE,
+  isOptionalDecision,
+  parseIsoDate,
+  type DecisionAnswer,
+  type EventDefinition,
+  type GameState,
+  type PendingDecision,
+  type ReportEvent,
+  type Ruleset,
+  type WeeklyReport,
 } from '@r2027/shared';
+import type { CampaignBooks } from '../campaign/actions';
 import { processDonations, type FinanceBook } from '../campaign/finances';
+import { answerRendezVous } from '../campaign/rendezvous';
 import { applyOrSchedule } from '../core/effects';
 import { EngineInputError } from '../core/errors';
 import { compareStrings, type Ledger } from '../core/ledger';
@@ -18,7 +26,8 @@ type ResolvedAnswer = { decision: PendingDecision; optionId: string; automatic: 
 
 /**
  * Étape 1 : chaque décision en attente doit recevoir une réponse valide avant de résoudre
- * la semaine. En mode observateur, l'option par défaut est retenue automatiquement.
+ * la semaine. En mode observateur, et pour une décision facultative (questions au
+ * gouvernement, phase 15), l'option par défaut est retenue automatiquement.
  */
 export function validateDecisionAnswers(
   state: GameState,
@@ -47,7 +56,8 @@ export function validateDecisionAnswers(
     .sort((a, b) => compareStrings(a.id, b.id))
     .map((decision) => {
       const answer = answers.find((a) => a.decisionId === decision.id);
-      if (!answer && !automatic) {
+      // Décision facultative (questions au gouvernement) : l'option par défaut s'applique.
+      if (!answer && !automatic && !isOptionalDecision(decision)) {
         throw new EngineInputError(
           'decision_requise',
           `Décision à prendre avant de continuer : « ${decision.label} ».`,
@@ -66,13 +76,25 @@ export function applyDecisions(
   state: GameState,
   ruleset: Ruleset,
   ledger: Ledger,
-  book: FinanceBook,
+  books: CampaignBooks,
   answers: readonly ResolvedAnswer[],
   step: number,
 ): AppliedDecision[] {
   const week = state.meta.week;
+  const book = books.finances;
   const applied: AppliedDecision[] = [];
   for (const { decision, optionId, automatic } of answers) {
+    if (decision.kind === 'parrainage') {
+      // Rendez-vous d'élus (phase 15) : promesses si la délégation est reçue (heures : étape 2).
+      applied.push({
+        decisionId: decision.id,
+        eventId: decision.eventId,
+        optionId,
+        label: answerRendezVous(state, ruleset, books.parrainages, decision, optionId),
+        automatic,
+      });
+      continue;
+    }
     if (decision.kind === 'consigne') {
       // Consigne de vote du joueur éliminé : pas d'effet sur les ressources, effet au second tour.
       const toActorId = optionId === 'aucune' ? null : optionId;
@@ -100,18 +122,20 @@ export function applyDecisions(
         week,
         step,
         ref: `${decision.id}-${option.id}`,
-        label: `${definition.libelle} — ${option.libelle}`,
+        label: `${decision.label} — ${option.libelle}`,
         source: 'decision' as const,
       };
       option.effets.forEach((effect, i) =>
         applyOrSchedule(context, effect, drawAlea(rng, effect), i),
       );
+      // Phase 20 : suites propres à l'option retenue (événements en chaîne).
+      scheduleFollowUps(state, definition, option.id, decision.label);
     }
     applied.push({
       decisionId: decision.id,
       eventId: definition.id,
       optionId: option.id,
-      label: `${definition.libelle} : ${option.libelle}`,
+      label: `${decision.label} : ${option.libelle}`,
       automatic,
     });
   }
@@ -119,24 +143,191 @@ export function applyDecisions(
   return applied;
 }
 
-function isEligible(state: GameState, event: EventDefinition, actorId: string): boolean {
+/** Rang du joueur dans les dernières intentions (1 = en tête), sinon null. */
+function rankOf(state: GameState, actorId: string): number | null {
+  const intentions = state.opinion?.intentions;
+  const mine = intentions?.[actorId];
+  if (!intentions || mine === undefined) return null;
+  return 1 + Object.values(intentions).filter((v) => v > mine).length;
+}
+
+/**
+ * Rival visé par un coup adverse (phase 20) : l'adversaire encore en lice le plus proche du
+ * joueur dans les dernières intentions (à défaut, le plus connu) ; égalités départagées par
+ * l'identifiant. Null s'il n'en reste aucun.
+ */
+export function rivalOf(state: GameState, actorId: string): string | null {
+  const intentions = state.opinion?.intentions;
+  const mine = intentions?.[actorId];
+  const rivals = Object.values(state.actors)
+    .filter((a) => a.id !== actorId && (a.status === 'candidat' || a.status === 'qualifie'))
+    .map((a) => ({
+      id: a.id,
+      gap:
+        mine !== undefined && intentions?.[a.id] !== undefined
+          ? Math.abs(intentions[a.id]! - mine)
+          : -a.resources.notoriete,
+    }))
+    .sort((a, b) => a.gap - b.gap || compareStrings(a.id, b.id));
+  return rivals[0]?.id ?? null;
+}
+
+/**
+ * Suites d'un événement (phase 20, événements en chaîne) : celles de l'option `choiceId` (ou,
+ * avec null, celles qui suivent l'événement quel que soit le choix) sont programmées, chacune
+ * avec sa probabilité, à une échéance tirée dans son délai. Tirages dérivés de la graine.
+ */
+export function scheduleFollowUps(
+  state: GameState,
+  event: EventDefinition,
+  choiceId: string | null,
+  origine: string,
+): void {
+  const week = state.meta.week;
+  for (const follow of event.suites.filter((f) => f.choix === choiceId)) {
+    const rng = stream(state.meta.seed, week, 'suite', event.id, choiceId ?? '-', follow.evenement);
+    if (rng.nextFloat() >= follow.probabilite) continue;
+    const { min, max } = follow.delaiSemaines;
+    const dueWeek = week + min + rng.nextInt(max - min + 1);
+    const id = `s-${week}-${event.id}-${follow.evenement}`;
+    if (state.suites.some((s) => s.id === id)) continue;
+    state.suites.push({ id, evenement: follow.evenement, dueWeek, origine });
+  }
+}
+
+const within = (value: number, bounds: { min: number | null; max: number | null }) =>
+  (bounds.min === null || value >= bounds.min) && (bounds.max === null || value <= bounds.max);
+
+/** Semaines pleines avant le prochain scrutin du calendrier (null s'il n'y en a plus). */
+function weeksBeforeNextRound(state: GameState, ruleset: Ruleset): number | null {
+  const today = daysFromCivil(parseIsoDate(state.meta.date)!);
+  const next = ruleset.calendrier.scrutins
+    .map((s) => daysFromCivil(parseIsoDate(s.date)!))
+    .find((day) => day >= today);
+  return next === undefined ? null : Math.floor((next - today) / 7);
+}
+
+/** Départements où le candidat a fait campagne (parrainages promis, envisagés ou validés). */
+function campaignedDepartements(state: GameState, actorId: string): string[] {
+  const p = state.actors[actorId]!.parrainages;
+  return [
+    ...new Set([
+      ...Object.keys(p.promesses),
+      ...Object.keys(p.intentions),
+      ...Object.keys(p.validees),
+    ]),
+  ].sort(compareStrings);
+}
+
+function isEligible(
+  state: GameState,
+  ruleset: Ruleset,
+  event: EventDefinition,
+  actorId: string,
+  departements: readonly string[],
+): boolean {
   const resources = state.actors[actorId]!.resources;
   const history = state.eventHistory[event.id];
+  // Phase 20 : une suite n'est jamais tirée au hasard ; un coup adverse exige un rival.
+  if (event.enSuiteSeulement) return false;
+  if (event.adversaire && rivalOf(state, actorId) === null) return false;
   const week = state.meta.week;
   if (history && event.occurrencesMax !== null && history.count >= event.occurrencesMax)
     return false;
   if (history && week - history.lastWeek < event.delaiMinEntreOccurrences) return false;
-  return event.conditions.every(
+  const ok = event.conditions.every(
     (c) =>
       (c.min === null || resources[c.ressource] >= c.min) &&
       (c.max === null || resources[c.ressource] <= c.max),
   );
+  if (!ok) return false;
+  // Contexte (phase 11) : phase, calendrier, rang, actions récentes, département de campagne.
+  const { phases, semainesAvantScrutin, rang, actionsRecentes, local } = event.contexte;
+  const phase = state.meta.phase;
+  if (phases && !(phase === 'campagne' || phase === 'entre_deux_tours')) return false;
+  if (phases && !phases.includes(phase as 'campagne' | 'entre_deux_tours')) return false;
+  if (semainesAvantScrutin) {
+    const weeks = weeksBeforeNextRound(state, ruleset);
+    if (weeks === null || !within(weeks, semainesAvantScrutin)) return false;
+  }
+  if (rang) {
+    const rank = rankOf(state, actorId);
+    if (rank === null || !within(rank, rang)) return false;
+  }
+  if (actionsRecentes) {
+    const passages = state.numerique.passages[actorId] ?? {};
+    const since = week - actionsRecentes.semaines;
+    const recent = actionsRecentes.actions.some((id) =>
+      (passages[id] ?? []).some((w) => w > since && w <= week),
+    );
+    if (!recent) return false;
+  }
+  return !local || departements.length > 0;
+}
+
+/** Libellés d'un événement, avec le département d'un événement local et le rival visé. */
+function placed(
+  text: string,
+  departement: string | null,
+  rival: string | null,
+  state: GameState,
+  ruleset: Ruleset,
+): string {
+  let out = text;
+  if (departement !== null) {
+    const dep = ruleset.parrainages.reservoir.departements[departement];
+    out = out.replaceAll(DEPARTEMENT_MARQUE, dep ? `${dep.nom} (${departement})` : departement);
+  }
+  if (rival !== null && state.actors[rival])
+    out = out.replaceAll(ADVERSAIRE_MARQUE, candidateName(state.actors[rival].candidate));
+  return out;
+}
+
+/**
+ * Événements éligibles cette semaine pour le joueur, dans leur contexte, avec leur poids :
+ * probabilité hebdomadaire × fréquence du scénario × fraîcheur (famille vue récemment).
+ */
+export function eventWeights(
+  state: GameState,
+  ruleset: Ruleset,
+  actorId: string,
+): { event: EventDefinition; weight: number }[] {
+  const week = state.meta.week;
+  // Scénario de départ (phase 7) : fréquence des événements de campagne.
+  const frequency =
+    ruleset.scenarios.find((s) => s.id === state.scenario)?.campagne.evenements ?? 1;
+  const { facteur, semaines } = ruleset.jeu.fraicheurEvenements;
+  const families = new Map(ruleset.evenements.map((e) => [e.id, e.famille]));
+  const lastByFamily = new Map<string, number>();
+  for (const [id, h] of Object.entries(state.eventHistory)) {
+    const family = families.get(id);
+    if (family)
+      lastByFamily.set(family, Math.max(lastByFamily.get(family) ?? -Infinity, h.lastWeek));
+  }
+  const departements = campaignedDepartements(state, actorId);
+  return [...ruleset.evenements]
+    .sort((a, b) => compareStrings(a.id, b.id))
+    .filter((event) => isEligible(state, ruleset, event, actorId, departements))
+    .map((event) => {
+      const recent = week - (lastByFamily.get(event.famille) ?? -Infinity) <= semaines;
+      return {
+        event,
+        weight: Math.min(1, event.probabiliteHebdomadaire * frequency * (recent ? facteur : 1)),
+      };
+    })
+    .filter((c) => c.weight > 0);
 }
 
 /**
  * Étape 5 : tirage des événements de la semaine (§8 : conditions, probabilité, fréquence,
- * effets immédiats et différés, choix). Au plus `evenementsMaxParSemaine` événements et une
- * seule nouvelle décision par semaine.
+ * effets immédiats et différés, choix). Phase 11 : parmi les événements éligibles dans leur
+ * contexte, un événement survient avec la probabilité qu'au moins un se produise
+ * (1 − Π(1 − p)), puis est choisi au prorata des probabilités, sans biais d'ordre ; une famille
+ * vue dans les semaines récentes pèse moins (fraîcheur). Au plus `evenementsMaxParSemaine`
+ * événements, de familles différentes, et une seule nouvelle décision par semaine. Phase 20 :
+ * les suites arrivées à échéance passent d'abord (une suite à décision attend la semaine
+ * suivante si une décision est déjà ouverte) ; un coup adverse nomme le rival le plus proche et
+ * lui applique ses propres effets, par le registre.
  */
 export function drawEvents(
   state: GameState,
@@ -147,28 +338,34 @@ export function drawEvents(
 ): ReportEvent[] {
   const actorId = state.player.actorId;
   const player = actorId ? state.actors[actorId] : undefined;
-  // Événements de campagne : seulement pour un joueur encore en lice.
-  if (!actorId || !player || (player.status !== 'candidat' && player.status !== 'qualifie'))
+  // Événements de campagne : seulement pour un joueur encore en lice (suites abandonnées).
+  if (!actorId || !player || (player.status !== 'candidat' && player.status !== 'qualifie')) {
+    state.suites = [];
     return [];
+  }
   const week = state.meta.week;
   const triggered: ReportEvent[] = [];
   let decisionCreated = false;
 
-  const candidates = [...ruleset.evenements].sort((a, b) => compareStrings(a.id, b.id));
-  for (const event of candidates) {
-    if (triggered.length >= ruleset.jeu.evenementsMaxParSemaine) break;
-    const hasChoices = event.choix.length > 0;
-    if (hasChoices && decisionCreated) continue;
-    if (!isEligible(state, event, actorId)) continue;
+  const departements = campaignedDepartements(state, actorId);
+  const draw = stream(state.meta.seed, week, 'evenements');
+
+  const fire = (event: EventDefinition, suiteDe: string | null) => {
+    const departement =
+      event.contexte.local && departements.length > 0
+        ? departements[draw.nextInt(departements.length)]!
+        : null;
+    const rival = event.adversaire ? rivalOf(state, actorId) : null;
+    const libelle = placed(event.libelle, departement, rival, state, ruleset);
+    const description = placed(event.description, departement, rival, state, ruleset);
     const rng = stream(state.meta.seed, week, 'evenement', event.id);
-    if (rng.nextFloat() >= event.probabiliteHebdomadaire) continue;
 
     const previous = state.eventHistory[event.id];
     state.eventHistory[event.id] = { count: (previous?.count ?? 0) + 1, lastWeek: week };
     const id = `e-${week}-${event.id}`;
     let decisionId: string | null = null;
 
-    if (hasChoices) {
+    if (event.choix.length > 0) {
       decisionId = `d-${week}-${event.id}`;
       decisionCreated = true;
       state.pendingDecisions.push({
@@ -177,12 +374,12 @@ export function drawEvents(
         eventId: event.id,
         actorId,
         createdWeek: week,
-        label: event.libelle,
-        description: event.description,
-        options: event.choix.map(({ id: optionId, libelle, description }) => ({
+        label: libelle,
+        description,
+        options: event.choix.map(({ id: optionId, libelle: optionLabel, description: text }) => ({
           id: optionId,
-          libelle,
-          description,
+          libelle: optionLabel,
+          description: text,
         })),
         defaultOptionId: event.choixParDefaut!,
       });
@@ -195,10 +392,18 @@ export function drawEvents(
       week,
       step,
       ref: id,
-      label: event.libelle,
+      label: libelle,
       source: 'evenement' as const,
     };
     event.effets.forEach((effect, i) => applyOrSchedule(context, effect, drawAlea(rng, effect), i));
+    if (rival !== null) {
+      // Coup adverse : ce que le rival y gagne (ou y perd), par le registre.
+      const rivalRng = stream(state.meta.seed, week, 'evenement', event.id, 'adversaire');
+      const rivalContext = { ...context, actorId: rival, ref: `${id}-adversaire` };
+      event.adversaire!.effets.forEach((effect, i) =>
+        applyOrSchedule(rivalContext, effect, drawAlea(rivalRng, effect), i),
+      );
+    }
     if (event.campagne?.dons) {
       processDonations(
         book,
@@ -206,23 +411,70 @@ export function drawEvents(
         actorId,
         event.campagne.dons,
         rng,
-        event.libelle,
+        libelle,
         'evenement',
         step,
         week,
       );
     }
+    // Suites qui ne dépendent d'aucun choix : programmées dès maintenant.
+    scheduleFollowUps(state, event, null, libelle);
 
     triggered.push({
       id,
       kind: 'evenement',
       refId: event.id,
-      label: event.libelle,
-      description: event.description,
+      label: libelle,
+      description,
       nature: event.nature,
       majeur: event.majeur,
       decisionId,
+      ...(suiteDe === null ? {} : { suiteDe }),
+      ...(rival === null ? {} : { adversaire: rival }),
     });
+  };
+
+  // Suites arrivées à échéance (phase 20), dans l'ordre de leur échéance.
+  const firedFamilies = new Set<string>();
+  const due = state.suites
+    .filter((s) => s.dueWeek <= week)
+    .sort((a, b) => a.dueWeek - b.dueWeek || compareStrings(a.id, b.id));
+  for (const suite of due) {
+    const event = ruleset.evenements.find((e) => e.id === suite.evenement);
+    const history = event ? state.eventHistory[event.id] : undefined;
+    const exhausted =
+      !event ||
+      (history !== undefined &&
+        event.occurrencesMax !== null &&
+        history.count >= event.occurrencesMax) ||
+      (event.adversaire !== null && rivalOf(state, actorId) === null) ||
+      triggered.some((t) => t.refId === event.id);
+    if (exhausted) {
+      state.suites = state.suites.filter((s) => s.id !== suite.id);
+      continue;
+    }
+    if (event.choix.length > 0 && decisionCreated) {
+      suite.dueWeek = week + 1;
+      continue;
+    }
+    state.suites = state.suites.filter((s) => s.id !== suite.id);
+    fire(event, suite.origine);
+    firedFamilies.add(event.famille);
+  }
+
+  let pool = eventWeights(state, ruleset, actorId).filter(
+    (c) => !firedFamilies.has(c.event.famille) && !triggered.some((t) => t.refId === c.event.id),
+  );
+  while (triggered.length < ruleset.jeu.evenementsMaxParSemaine) {
+    const candidates = pool.filter((c) => !(decisionCreated && c.event.choix.length > 0));
+    if (candidates.length === 0) break;
+    const none = candidates.reduce((p, c) => p * (1 - c.weight), 1);
+    if (draw.nextFloat() >= 1 - none) break;
+    const total = candidates.reduce((sum, c) => sum + c.weight, 0);
+    let target = draw.nextFloat() * total;
+    const picked = candidates.find((c) => (target -= c.weight) < 0) ?? candidates.at(-1)!;
+    pool = pool.filter((c) => c.event.famille !== picked.event.famille);
+    fire(picked.event, null);
   }
   return triggered;
 }

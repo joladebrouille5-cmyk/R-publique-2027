@@ -4,10 +4,12 @@ import {
   setWorkerUrl,
   type GeoJSONSource,
   type LngLatBoundsLike,
+  type LngLatLike,
   type MapLayerMouseEvent,
 } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
+import { Expand, Minus, Plus } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { BORDER, MAP_SURFACE, MOTIFS, motifImage, SELECTED, type Mode, type Motif } from './colors';
 import type { TerritoryCollection } from './data';
@@ -16,6 +18,8 @@ setWorkerUrl(workerUrl);
 
 export type BBox = [number, number, number, number];
 export type MapSelection = { level: TerritoryLevel; code: string };
+/** Marges de la carte recouvertes par des panneaux (barre de recherche, fiche), en pixels. */
+export type Insets = { top: number; right: number; bottom: number; left: number };
 
 type Props = {
   /** Nom accessible de la carte (« Carte de la métropole », « Encart Mayotte »…). */
@@ -33,8 +37,22 @@ type Props = {
   selected: MapSelection | null;
   onSelect: (selection: MapSelection) => void;
   describe: (level: TerritoryLevel, code: string) => string;
-  /** Vue demandée (recherche, tableau) : la carte s'y ajuste quand `key` change. */
-  focus?: { bbox: BBox; key: string } | null;
+  /**
+   * Territoires du niveau affiché à faire briller un instant (soirée électorale : ceux qui viennent
+   * d'être dépouillés) ; l'éclat se rejoue quand `key` change.
+   */
+  flash?: { codes: readonly string[]; key: string } | null;
+  /**
+   * Trace des déplacements du président pendant le mandat (phase 15) : départements soulignés
+   * d'un contour en pointillés, quel que soit le niveau affiché.
+   */
+  trail?: readonly string[];
+  /** Vue demandée (recherche, clic, tableau) : la carte y vole quand `key` change. */
+  focus?: { bbox: BBox; key: string; maxZoom?: number } | null;
+  /** Zones recouvertes par l'interface, mesurées au moment de cadrer la vue. */
+  insets?: () => Insets;
+  /** Boutons de zoom et de vue d'ensemble, placés par cette classe ; absent : pas de boutons. */
+  controlsClassName?: string;
   onViewChange?: (bounds: BBox, zoom: number) => void;
   mode: Mode;
   compact?: boolean;
@@ -55,6 +73,49 @@ const asBounds = (b: BBox): LngLatBoundsLike => [
   [b[0], b[1]],
   [b[2], b[3]],
 ];
+/** Durée des vols de caméra ; MapLibre la ramène à zéro si le mouvement réduit est demandé. */
+const FLIGHT_MS = 900;
+const MAX_PIXEL_RATIO = 2;
+/** Fondu de l'éclat des territoires qui viennent d'être dépouillés. */
+const FLASH_MS = 1_600;
+const FLASH = { light: '#2b46d9', dark: '#93aaff' };
+/** Trace des déplacements du président : ambre, lisible sur les couleurs de la carte. */
+const TRAIL = { light: '#b45309', dark: '#fbbf24' };
+const CAMERA_BUTTONS = [
+  { kind: 'avant', name: 'Zoom avant', Icon: Plus },
+  { kind: 'arriere', name: 'Zoom arrière', Icon: Minus },
+  { kind: 'ensemble', name: 'Vue d’ensemble', Icon: Expand },
+] as const;
+
+/** Réduit les marges pour qu'il reste au moins 64 px de carte dans chaque direction. */
+export function clampInsets(insets: Insets, width: number, height: number): Insets {
+  const fit = (a: number, b: number, size: number): [number, number] => {
+    const room = Math.max(0, size - 64);
+    const total = a + b;
+    if (total <= room) return [a, b];
+    const ratio = total === 0 ? 0 : room / total;
+    return [Math.floor(a * ratio), Math.floor(b * ratio)];
+  };
+  const [left, right] = fit(insets.left, insets.right, width);
+  const [top, bottom] = fit(insets.top, insets.bottom, height);
+  return { top, right, bottom, left };
+}
+
+/** Marges de cadrage : panneaux qui recouvrent la carte, plus un liseré. */
+function paddingFor(element: HTMLElement, props: Pick<Props, 'compact' | 'insets'>): Insets {
+  const base = props.compact ? 8 : 16;
+  const insets = props.insets?.() ?? { top: 0, right: 0, bottom: 0, left: 0 };
+  return clampInsets(
+    {
+      top: insets.top + base,
+      right: insets.right + base,
+      bottom: insets.bottom + base,
+      left: insets.left + base,
+    },
+    element.clientWidth,
+    element.clientHeight,
+  );
+}
 
 /**
  * Carte vectorielle d'une zone (métropole ou un DROM), sans fond de carte externe (D6) : les
@@ -75,6 +136,8 @@ export function ElectionMap(props: Props) {
     webglAvailable() ? null : 'WebGL 2 non pris en charge',
   );
   const [hover, setHover] = useState<{ x: number; y: number; text: string } | null>(null);
+  /** Point touché sur une commune : la caméra s'y déplace une fois la fiche affichée. */
+  const pendingEase = useRef<{ code: string; at: LngLatLike } | null>(null);
 
   // Création (une fois) : sources et couches vides, gestion des clics et du survol.
   useEffect(() => {
@@ -95,11 +158,14 @@ export function ElectionMap(props: Props) {
           ],
         },
         bounds: asBounds(latest.current.bounds),
-        fitBoundsOptions: { padding: 8 },
+        fitBoundsOptions: { padding: paddingFor(container.current, latest.current) },
         ...(latest.current.maxBounds ? { maxBounds: asBounds(latest.current.maxBounds) } : {}),
-        attributionControl: latest.current.compact
-          ? false
-          : { compact: true, customAttribution: 'IGN, INSEE' },
+        // Attributions (IGN, INSEE, MapLibre) : Paramètres → Crédits (phase 11), pas sur la carte.
+        attributionControl: false,
+        // Téléphones à haute densité (2,6 sur un Pixel 7) : rendu plafonné à 2, imperceptible
+        // pour des aplats et des contours, mais bien moins de pixels à remplir à chaque image.
+        pixelRatio: Math.min(window.devicePixelRatio || 1, MAX_PIXEL_RATIO),
+        fadeDuration: 0,
         dragRotate: false,
         pitchWithRotate: false,
         touchPitch: false,
@@ -159,14 +225,37 @@ export function ElectionMap(props: Props) {
             'line-width': ['case', ['boolean', ['feature-state', 'selected'], false], 2.5, 0],
           },
         });
+        map.addLayer({
+          id: `eclat-${level}`,
+          type: 'line',
+          source: level,
+          paint: {
+            'line-color': FLASH[latest.current.mode],
+            'line-width': ['case', ['boolean', ['feature-state', 'eclat'], false], 3, 0],
+            'line-blur': 1.5,
+            'line-opacity': 0,
+          },
+        });
       }
+      // Trace des déplacements du président (phase 15) : contour en pointillés.
+      map.addLayer({
+        id: 'trace-departement',
+        type: 'line',
+        source: 'departement',
+        paint: {
+          'line-color': TRAIL[latest.current.mode],
+          'line-width': ['case', ['boolean', ['feature-state', 'trace'], false], 2.2, 0],
+          'line-dasharray': [2, 1.2],
+        },
+      });
       setReady(true);
     });
     for (const level of LEVELS) {
       map.on('click', `remplissage-${level}`, (event: MapLayerMouseEvent) => {
         const code = event.features?.[0]?.properties?.code;
-        if (typeof code === 'string' && level === latest.current.level)
-          latest.current.onSelect({ level, code });
+        if (typeof code !== 'string' || level !== latest.current.level) return;
+        pendingEase.current = level === 'commune' ? { code, at: event.lngLat } : null;
+        latest.current.onSelect({ level, code });
       });
       map.on('mousemove', `remplissage-${level}`, (event: MapLayerMouseEvent) => {
         const code = event.features?.[0]?.properties?.code;
@@ -230,6 +319,7 @@ export function ElectionMap(props: Props) {
           visible && motifs ? 'visible' : 'none',
         );
       map.setLayoutProperty(`selection-${level}`, 'visibility', visible ? 'visible' : 'none');
+      map.setLayoutProperty(`eclat-${level}`, 'visibility', visible ? 'visible' : 'none');
       map.setLayoutProperty(
         `contour-${level}`,
         'visibility',
@@ -270,8 +360,48 @@ export function ElectionMap(props: Props) {
     for (const level of LEVELS) {
       map.setPaintProperty(`contour-${level}`, 'line-color', BORDER[props.mode]);
       map.setPaintProperty(`selection-${level}`, 'line-color', SELECTED[props.mode]);
+      map.setPaintProperty(`eclat-${level}`, 'line-color', FLASH[props.mode]);
     }
+    map.setPaintProperty('trace-departement', 'line-color', TRAIL[props.mode]);
   }, [ready, props.mode]);
+
+  // Trace des déplacements : un état d'entité par département visité.
+  const traced = useRef<readonly string[]>([]);
+  const trailKey = (props.trail ?? []).join(',');
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    for (const code of traced.current)
+      map.setFeatureState({ source: 'departement', id: code }, { trace: false });
+    const trail = latest.current.trail ?? [];
+    for (const code of trail)
+      map.setFeatureState({ source: 'departement', id: code }, { trace: true });
+    traced.current = trail;
+  }, [ready, layers, trailKey]);
+
+  // Éclat : contour lumineux qui s'estompe (immobile si le mouvement réduit est demandé).
+  const flashed = useRef<MapSelection[]>([]);
+  const flashKey = props.flash?.key;
+  useEffect(() => {
+    const map = mapRef.current;
+    const flash = latest.current.flash;
+    if (!map || !ready || !flash) return;
+    const level = latest.current.level;
+    for (const previous of flashed.current)
+      map.setFeatureState({ source: previous.level, id: previous.code }, { eclat: false });
+    for (const code of flash.codes)
+      map.setFeatureState({ source: level, id: code }, { eclat: true });
+    flashed.current = flash.codes.map((code) => ({ level, code }));
+    const layer = `eclat-${level}`;
+    map.setPaintProperty(layer, 'line-opacity-transition', { duration: 0, delay: 0 });
+    map.setPaintProperty(layer, 'line-opacity', 1);
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    const timer = window.setTimeout(() => {
+      map.setPaintProperty(layer, 'line-opacity-transition', { duration: FLASH_MS, delay: 0 });
+      map.setPaintProperty(layer, 'line-opacity', 0);
+    }, 80);
+    return () => window.clearTimeout(timer);
+  }, [ready, flashKey]);
 
   // Sélection.
   const previous = useRef<MapSelection | null>(null);
@@ -289,21 +419,50 @@ export function ElectionMap(props: Props) {
         { selected: true },
       );
     previous.current = props.selected;
+    // Commune touchée : la caméra glisse vers elle, dans la partie de la carte restée visible.
+    const ease = pendingEase.current;
+    pendingEase.current = null;
+    if (ease && props.selected?.code === ease.code && container.current) {
+      const p = paddingFor(container.current, latest.current);
+      map.easeTo({
+        center: ease.at,
+        zoom: latest.current.compact ? map.getZoom() : Math.min(Math.max(map.getZoom(), 8.5), 11),
+        offset: [(p.left - p.right) / 2, (p.top - p.bottom) / 2],
+        duration: FLIGHT_MS * 0.75,
+      });
+    }
   }, [ready, props.selected, layers]);
 
   // Vue demandée.
   const focusKey = props.focus?.key;
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !ready || !latest.current.focus) return;
-    map.fitBounds(asBounds(latest.current.focus.bbox), { padding: 24, maxZoom: 11, duration: 0 });
+    const focus = latest.current.focus;
+    if (!map || !ready || !focus || !container.current) return;
+    map.fitBounds(asBounds(focus.bbox), {
+      padding: paddingFor(container.current, latest.current),
+      maxZoom: focus.maxZoom ?? 11,
+      duration: FLIGHT_MS,
+    });
   }, [ready, focusKey]);
+
+  const moveCamera = (kind: (typeof CAMERA_BUTTONS)[number]['kind']) => {
+    const map = mapRef.current;
+    if (!map || !container.current) return;
+    if (kind === 'avant') map.zoomIn({ duration: FLIGHT_MS / 3 });
+    else if (kind === 'arriere') map.zoomOut({ duration: FLIGHT_MS / 3 });
+    else
+      map.fitBounds(asBounds(latest.current.bounds), {
+        padding: paddingFor(container.current, latest.current),
+        duration: FLIGHT_MS,
+      });
+  };
 
   if (failure) {
     return (
       <div
         role="note"
-        className={`${props.className ?? ''} flex items-center justify-center rounded-lg border border-dashed border-slate-300 p-4 text-center text-sm dark:border-slate-700`}
+        className={`${props.className ?? ''} flex items-center justify-center rounded-[inherit] border border-dashed border-slate-300 p-4 text-center text-sm dark:border-slate-700`}
       >
         La carte nécessite WebGL, indisponible sur cet appareil ({failure}). Le tableau des
         résultats reste consultable.
@@ -318,12 +477,33 @@ export function ElectionMap(props: Props) {
         aria-label={props.label}
         data-ready={ready && rendered > 0 ? 'oui' : 'non'}
         data-territoires={rendered}
-        className="h-full w-full overflow-hidden rounded-lg"
+        className="h-full w-full overflow-hidden rounded-[inherit]"
       />
+      {props.controlsClassName !== undefined && (
+        <div
+          role="group"
+          aria-label="Zoom de la carte"
+          className={`flex flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 shadow-raised dark:border-slate-700 dark:bg-slate-900/95 ${props.controlsClassName}`}
+        >
+          {CAMERA_BUTTONS.map(({ kind, name, Icon }) => (
+            <button
+              key={name}
+              type="button"
+              title={name}
+              disabled={!ready}
+              onClick={() => moveCamera(kind)}
+              className="flex size-11 items-center justify-center text-slate-700 transition-colors not-last:border-b not-last:border-slate-200/80 hover:bg-slate-100 active:bg-slate-200 disabled:opacity-50 dark:text-slate-200 dark:not-last:border-slate-700 dark:hover:bg-slate-800"
+            >
+              <Icon aria-hidden="true" className="size-5" />
+              <span className="sr-only">{name}</span>
+            </button>
+          ))}
+        </div>
+      )}
       {hover && (
         <div
           role="tooltip"
-          className="pointer-events-none absolute z-10 max-w-60 rounded-md bg-slate-900 px-2 py-1 text-xs text-white shadow dark:bg-slate-100 dark:text-slate-900"
+          className="pointer-events-none absolute z-10 max-w-60 animate-apparait rounded-xl bg-slate-950/90 px-2.5 py-1.5 text-xs font-medium text-white shadow-raised dark:bg-white/95 dark:text-slate-900"
           style={{ left: hover.x + 12, top: hover.y + 12 }}
         >
           {hover.text}

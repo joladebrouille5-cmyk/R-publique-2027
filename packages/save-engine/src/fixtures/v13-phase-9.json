@@ -1,0 +1,3907 @@
+{
+  "description": "État réel produit par le moteur de la phase 9 avant les réseaux (commit 0acdf4e, moteur 0.12.0, presidentielle-2027@10.0.0, format 13) : graine « phase-7-p9 », scénario « colère sociale », candidat personnalisé, quatre semaines de campagne jouées.",
+  "stateHash": "3f6f60063a61a29127833db5394bdac2619a7d15ac6b9749b475d791a45b4407",
+  "state": {
+    "meta": {
+      "seed": "phase-7-p9",
+      "week": 4,
+      "date": "2026-10-26",
+      "startDate": "2026-09-28",
+      "phase": "campagne",
+      "difficulty": "standard",
+      "engineVersion": "0.12.0",
+      "rulesetVersion": "presidentielle-2027@10.0.0",
+      "saveSchemaVersion": 13
+    },
+    "player": {
+      "mode": "candidat_personnalise",
+      "actorId": "joueur",
+      "adversaires": "fictifs"
+    },
+    "actors": {
+      "adv-etincelle": {
+        "id": "adv-etincelle",
+        "kind": "adversaire",
+        "label": "Campagne de Bastien Roudier",
+        "candidate": {
+          "prenom": "Bastien",
+          "nom": "Roudier",
+          "parti": "Étincelle",
+          "positionnement": {
+            "economie": -90,
+            "societe": -40
+          },
+          "parcours": "Personnage fictif. Ancien syndicaliste dans l'industrie automobile.",
+          "nature": "fictif",
+          "profilId": null,
+          "personnaliteId": null
+        },
+        "style": "offensif",
+        "toleranceRisque": 0.7,
+        "resources": {
+          "budgetCentimes": 68000000,
+          "militants": 576,
+          "notoriete": 1619,
+          "popularite": 2104,
+          "tempsHeures": 70
+        },
+        "status": "candidat",
+        "history": {
+          "popularite": [
+            1900,
+            1955,
+            2007,
+            2057,
+            2104
+          ]
+        },
+        "equipe": 0.35,
+        "implantation": [
+          "11",
+          "32"
+        ],
+        "objectif": "visibilite",
+        "programme": {
+          "propositions": [
+            "eco-investissement-public",
+            "emploi-garantie-emploi",
+            "pa-hausse-smic",
+            "ret-age-60",
+            "log-encadrement-loyers",
+            "sante-recrutement-hopital",
+            "inst-referendum-initiative-citoyenne",
+            "immi-regularisation-travail"
+          ],
+          "revirements": 0
+        },
+        "parrainages": {
+          "promesses": {
+            "10": 1,
+            "12": 1,
+            "14": 1,
+            "16": 1,
+            "19": 1,
+            "21": 2,
+            "24": 1,
+            "27": 1,
+            "28": 1,
+            "29": 1,
+            "30": 1,
+            "31": 1,
+            "32": 1,
+            "33": 1,
+            "34": 1,
+            "38": 1,
+            "39": 1,
+            "40": 1,
+            "41": 1,
+            "42": 1,
+            "45": 1,
+            "46": 1,
+            "47": 1,
+            "50": 1,
+            "51": 1,
+            "54": 1,
+            "55": 1,
+            "57": 1,
+            "58": 1,
+            "59": 52,
+            "60": 68,
+            "61": 1,
+            "62": 83,
+            "63": 1,
+            "64": 1,
+            "65": 1,
+            "67": 1,
+            "68": 1,
+            "69": 1,
+            "70": 1,
+            "71": 1,
+            "73": 1,
+            "76": 1,
+            "77": 53,
+            "78": 6,
+            "79": 1,
+            "80": 20,
+            "85": 1,
+            "86": 1,
+            "89": 1,
+            "91": 4,
+            "92": 1,
+            "93": 1,
+            "94": 1,
+            "95": 7,
+            "02": 65,
+            "01": 1,
+            "03": 1,
+            "07": 1,
+            "08": 1,
+            "09": 1
+          },
+          "intentions": {
+            "11": 1,
+            "18": 1,
+            "23": 1,
+            "25": 1,
+            "26": 1,
+            "35": 1,
+            "37": 1,
+            "43": 1,
+            "52": 1,
+            "59": 16,
+            "60": 19,
+            "62": 15,
+            "74": 1,
+            "77": 8,
+            "78": 4,
+            "80": 7,
+            "91": 2,
+            "02": 21
+          },
+          "recues": {},
+          "validees": {},
+          "invalides": {}
+        },
+        "finances": {
+          "recettes": {
+            "parti": 64000000,
+            "apportPersonnel": 16000000,
+            "dons": 0,
+            "emprunts": 0,
+            "avance": 0,
+            "autres": 0
+          },
+          "depenses": 12000000,
+          "donateurs": 0,
+          "refus": {
+            "nombre": 0,
+            "montantCentimes": 0,
+            "derniers": []
+          },
+          "emprunts": [],
+          "depassement": null,
+          "remboursementPrevisionnel": null
+        },
+        "preparationDebat": 0,
+        "strategie": {
+          "priorite": "parrainages",
+          "motif": "Environ 251 présentations en vue dans 73 départements : il en faut 500 de 30 départements avant le vendredi 12 mars 2027.",
+          "semaine": 3
+        }
+      },
+      "adv-aurore": {
+        "id": "adv-aurore",
+        "kind": "adversaire",
+        "label": "Campagne de Élise Marchetti",
+        "candidate": {
+          "prenom": "Élise",
+          "nom": "Marchetti",
+          "parti": "Aurore",
+          "positionnement": {
+            "economie": -65,
+            "societe": -45
+          },
+          "parcours": "Personnage fictif. Ancienne députée, tribune remarquée sur les services publics.",
+          "nature": "fictif",
+          "profilId": null,
+          "personnaliteId": null
+        },
+        "style": "offensif",
+        "toleranceRisque": 0.6,
+        "resources": {
+          "budgetCentimes": 388000000,
+          "militants": 1440,
+          "notoriete": 4520,
+          "popularite": 2756,
+          "tempsHeures": 70
+        },
+        "status": "candidat",
+        "history": {
+          "popularite": [
+            2700,
+            2715,
+            2729,
+            2743,
+            2756
+          ]
+        },
+        "equipe": 0.55,
+        "implantation": [
+          "11",
+          "93",
+          "76"
+        ],
+        "objectif": "qualification",
+        "programme": {
+          "propositions": [
+            "eco-investissement-public",
+            "pa-hausse-smic",
+            "ret-age-60",
+            "log-encadrement-loyers",
+            "sante-recrutement-hopital",
+            "inst-proportionnelle",
+            "env-renovation-thermique",
+            "edu-revalorisation-enseignants",
+            "immi-regularisation-travail"
+          ],
+          "revirements": 0
+        },
+        "parrainages": {
+          "promesses": {
+            "10": 1,
+            "11": 44,
+            "12": 41,
+            "13": 3,
+            "16": 2,
+            "17": 1,
+            "18": 1,
+            "19": 1,
+            "21": 2,
+            "22": 1,
+            "24": 1,
+            "25": 2,
+            "27": 1,
+            "28": 1,
+            "30": 33,
+            "31": 44,
+            "32": 42,
+            "33": 2,
+            "34": 11,
+            "38": 1,
+            "39": 2,
+            "41": 1,
+            "43": 1,
+            "44": 1,
+            "45": 1,
+            "46": 8,
+            "48": 4,
+            "51": 2,
+            "52": 1,
+            "53": 1,
+            "54": 2,
+            "57": 1,
+            "59": 2,
+            "60": 2,
+            "61": 1,
+            "62": 3,
+            "63": 2,
+            "64": 1,
+            "65": 14,
+            "66": 6,
+            "67": 1,
+            "68": 1,
+            "69": 1,
+            "70": 1,
+            "71": 2,
+            "72": 1,
+            "73": 1,
+            "76": 2,
+            "77": 14,
+            "78": 7,
+            "80": 2,
+            "81": 8,
+            "82": 6,
+            "83": 3,
+            "84": 5,
+            "88": 1,
+            "91": 6,
+            "93": 2,
+            "94": 2,
+            "95": 6,
+            "04": 20,
+            "05": 15,
+            "06": 13,
+            "09": 44,
+            "01": 1,
+            "02": 3,
+            "03": 1,
+            "07": 2,
+            "08": 1
+          },
+          "intentions": {
+            "10": 1,
+            "11": 27,
+            "12": 23,
+            "13": 3,
+            "14": 2,
+            "15": 1,
+            "17": 1,
+            "21": 1,
+            "22": 1,
+            "23": 1,
+            "24": 1,
+            "25": 1,
+            "26": 2,
+            "27": 2,
+            "28": 1,
+            "29": 1,
+            "30": 13,
+            "31": 20,
+            "32": 17,
+            "34": 9,
+            "35": 2,
+            "36": 1,
+            "37": 1,
+            "38": 1,
+            "40": 2,
+            "42": 1,
+            "46": 8,
+            "47": 1,
+            "48": 3,
+            "49": 1,
+            "50": 1,
+            "51": 1,
+            "52": 1,
+            "54": 1,
+            "55": 1,
+            "57": 1,
+            "58": 1,
+            "59": 1,
+            "60": 1,
+            "62": 1,
+            "64": 1,
+            "65": 12,
+            "66": 7,
+            "67": 1,
+            "68": 1,
+            "70": 1,
+            "71": 1,
+            "72": 1,
+            "74": 1,
+            "76": 1,
+            "77": 13,
+            "78": 7,
+            "79": 1,
+            "80": 1,
+            "81": 9,
+            "82": 5,
+            "83": 4,
+            "84": 4,
+            "85": 1,
+            "87": 1,
+            "88": 1,
+            "89": 1,
+            "91": 6,
+            "92": 1,
+            "95": 5,
+            "04": 17,
+            "05": 15,
+            "06": 12,
+            "09": 23,
+            "2B": 1,
+            "02": 1,
+            "08": 1
+          },
+          "recues": {},
+          "validees": {},
+          "invalides": {}
+        },
+        "finances": {
+          "recettes": {
+            "parti": 320000000,
+            "apportPersonnel": 80000000,
+            "dons": 0,
+            "emprunts": 0,
+            "avance": 0,
+            "autres": 0
+          },
+          "depenses": 12000000,
+          "donateurs": 0,
+          "refus": {
+            "nombre": 0,
+            "montantCentimes": 0,
+            "derniers": []
+          },
+          "emprunts": [],
+          "depassement": null,
+          "remboursementPrevisionnel": null
+        },
+        "preparationDebat": 0,
+        "strategie": {
+          "priorite": "parrainages",
+          "motif": "Environ 460 présentations en vue dans 92 départements : il en faut 500 de 30 départements avant le vendredi 12 mars 2027.",
+          "semaine": 3
+        }
+      },
+      "adv-canopee": {
+        "id": "adv-canopee",
+        "kind": "adversaire",
+        "label": "Campagne de Nadia Ferrand",
+        "candidate": {
+          "prenom": "Nadia",
+          "nom": "Ferrand",
+          "parti": "Canopée",
+          "positionnement": {
+            "economie": -40,
+            "societe": -65
+          },
+          "parcours": "Personnage fictif. Agronome, élue régionale.",
+          "nature": "fictif",
+          "profilId": null,
+          "personnaliteId": null
+        },
+        "style": "equilibre",
+        "toleranceRisque": 0.5,
+        "resources": {
+          "budgetCentimes": 288000000,
+          "militants": 864,
+          "notoriete": 3055,
+          "popularite": 3000,
+          "tempsHeures": 70
+        },
+        "status": "candidat",
+        "history": {
+          "popularite": [
+            3000,
+            3000,
+            3000,
+            3000,
+            3000
+          ]
+        },
+        "equipe": 0.5,
+        "implantation": [
+          "84",
+          "53",
+          "75"
+        ],
+        "objectif": "visibilite",
+        "programme": {
+          "propositions": [
+            "env-renovation-thermique",
+            "ener-sortie-nucleaire",
+            "env-transports-collectifs",
+            "agri-transition-agroecologique",
+            "just-peines-alternatives",
+            "dip-aide-developpement",
+            "inst-proportionnelle",
+            "log-construction-sociale",
+            "dip-integration-europeenne"
+          ],
+          "revirements": 0
+        },
+        "parrainages": {
+          "promesses": {
+            "10": 1,
+            "12": 1,
+            "13": 1,
+            "14": 1,
+            "15": 30,
+            "16": 60,
+            "17": 48,
+            "18": 1,
+            "19": 23,
+            "21": 2,
+            "22": 8,
+            "23": 6,
+            "24": 14,
+            "25": 1,
+            "26": 10,
+            "27": 2,
+            "29": 6,
+            "30": 1,
+            "31": 2,
+            "32": 1,
+            "33": 13,
+            "34": 1,
+            "35": 8,
+            "36": 1,
+            "37": 1,
+            "38": 12,
+            "39": 3,
+            "40": 8,
+            "42": 9,
+            "43": 6,
+            "44": 1,
+            "45": 2,
+            "46": 1,
+            "47": 9,
+            "50": 1,
+            "51": 3,
+            "52": 1,
+            "53": 1,
+            "54": 2,
+            "55": 3,
+            "56": 6,
+            "57": 1,
+            "59": 1,
+            "60": 2,
+            "61": 2,
+            "62": 3,
+            "63": 12,
+            "64": 13,
+            "65": 2,
+            "67": 2,
+            "68": 1,
+            "69": 6,
+            "70": 2,
+            "71": 1,
+            "72": 1,
+            "73": 6,
+            "74": 7,
+            "76": 2,
+            "77": 2,
+            "78": 1,
+            "79": 7,
+            "81": 1,
+            "82": 1,
+            "86": 6,
+            "87": 5,
+            "88": 1,
+            "89": 1,
+            "90": 1,
+            "95": 1,
+            "01": 36,
+            "03": 26,
+            "07": 24,
+            "02": 2,
+            "09": 1
+          },
+          "intentions": {
+            "10": 1,
+            "11": 2,
+            "14": 2,
+            "15": 18,
+            "16": 28,
+            "17": 18,
+            "19": 12,
+            "21": 1,
+            "22": 8,
+            "23": 6,
+            "24": 11,
+            "25": 2,
+            "26": 8,
+            "27": 1,
+            "28": 2,
+            "29": 5,
+            "30": 1,
+            "31": 1,
+            "32": 1,
+            "33": 12,
+            "34": 1,
+            "35": 8,
+            "38": 12,
+            "40": 9,
+            "41": 1,
+            "42": 7,
+            "43": 6,
+            "46": 1,
+            "47": 6,
+            "48": 1,
+            "49": 1,
+            "52": 1,
+            "54": 1,
+            "56": 6,
+            "57": 2,
+            "58": 2,
+            "59": 2,
+            "60": 1,
+            "62": 2,
+            "63": 9,
+            "64": 12,
+            "66": 1,
+            "67": 1,
+            "68": 1,
+            "69": 6,
+            "70": 1,
+            "71": 1,
+            "72": 1,
+            "73": 6,
+            "74": 6,
+            "76": 2,
+            "77": 1,
+            "79": 5,
+            "80": 3,
+            "81": 1,
+            "83": 1,
+            "84": 1,
+            "86": 5,
+            "87": 5,
+            "88": 2,
+            "89": 1,
+            "91": 1,
+            "01": 31,
+            "03": 22,
+            "04": 1,
+            "05": 1,
+            "07": 23,
+            "08": 1,
+            "06": 1,
+            "09": 1,
+            "2B": 1,
+            "02": 2
+          },
+          "recues": {},
+          "validees": {},
+          "invalides": {}
+        },
+        "finances": {
+          "recettes": {
+            "parti": 240000000,
+            "apportPersonnel": 60000000,
+            "dons": 0,
+            "emprunts": 0,
+            "avance": 0,
+            "autres": 0
+          },
+          "depenses": 12000000,
+          "donateurs": 0,
+          "refus": {
+            "nombre": 0,
+            "montantCentimes": 0,
+            "derniers": []
+          },
+          "emprunts": [],
+          "depassement": null,
+          "remboursementPrevisionnel": null
+        },
+        "preparationDebat": 0,
+        "strategie": {
+          "priorite": "parrainages",
+          "motif": "Environ 533 présentations en vue dans 91 départements : il en faut 500 de 30 départements avant le vendredi 12 mars 2027.",
+          "semaine": 3
+        }
+      },
+      "adv-agora": {
+        "id": "adv-agora",
+        "kind": "adversaire",
+        "label": "Campagne de Julien Castaing",
+        "candidate": {
+          "prenom": "Julien",
+          "nom": "Castaing",
+          "parti": "Agora",
+          "positionnement": {
+            "economie": -25,
+            "societe": -20
+          },
+          "parcours": "Personnage fictif. Maire d'une ville moyenne.",
+          "nature": "fictif",
+          "profilId": null,
+          "personnaliteId": null
+        },
+        "style": "prudent",
+        "toleranceRisque": 0.3,
+        "resources": {
+          "budgetCentimes": 76000000,
+          "militants": 1381,
+          "notoriete": 4181,
+          "popularite": 3154,
+          "tempsHeures": 70
+        },
+        "status": "candidat",
+        "history": {
+          "popularite": [
+            2900,
+            2905,
+            3037,
+            3137,
+            3154
+          ]
+        },
+        "equipe": 0.6,
+        "implantation": [
+          "75",
+          "76",
+          "53"
+        ],
+        "objectif": "qualification",
+        "programme": {
+          "propositions": [
+            "ret-age-62",
+            "edu-revalorisation-enseignants",
+            "sante-deserts-medicaux",
+            "log-construction-sociale",
+            "ener-mix-equilibre",
+            "secu-police-proximite",
+            "emploi-formation-continue",
+            "coll-dotations-communes",
+            "dip-integration-europeenne"
+          ],
+          "revirements": 0
+        },
+        "parrainages": {
+          "promesses": {
+            "10": 1,
+            "11": 31,
+            "12": 18,
+            "13": 1,
+            "14": 1,
+            "15": 1,
+            "16": 13,
+            "17": 18,
+            "18": 1,
+            "19": 9,
+            "21": 3,
+            "22": 12,
+            "23": 9,
+            "24": 18,
+            "25": 4,
+            "26": 1,
+            "27": 2,
+            "28": 1,
+            "29": 12,
+            "30": 12,
+            "31": 21,
+            "32": 16,
+            "33": 20,
+            "34": 11,
+            "35": 13,
+            "36": 1,
+            "37": 2,
+            "38": 3,
+            "39": 4,
+            "40": 12,
+            "41": 1,
+            "42": 1,
+            "43": 1,
+            "45": 2,
+            "46": 11,
+            "47": 13,
+            "48": 5,
+            "51": 3,
+            "52": 2,
+            "53": 1,
+            "54": 2,
+            "55": 1,
+            "56": 8,
+            "57": 3,
+            "58": 1,
+            "59": 3,
+            "60": 3,
+            "61": 1,
+            "62": 3,
+            "63": 2,
+            "64": 20,
+            "65": 18,
+            "66": 7,
+            "67": 2,
+            "68": 2,
+            "69": 1,
+            "70": 3,
+            "71": 2,
+            "72": 2,
+            "73": 2,
+            "76": 3,
+            "77": 2,
+            "78": 1,
+            "79": 10,
+            "80": 3,
+            "81": 11,
+            "82": 8,
+            "83": 2,
+            "84": 1,
+            "85": 1,
+            "86": 10,
+            "87": 7,
+            "88": 2,
+            "89": 2,
+            "90": 1,
+            "94": 1,
+            "09": 21,
+            "01": 1,
+            "02": 5,
+            "04": 1,
+            "05": 1,
+            "06": 1,
+            "07": 1,
+            "08": 1,
+            "2B": 1
+          },
+          "intentions": {
+            "10": 3,
+            "11": 34,
+            "12": 20,
+            "14": 3,
+            "15": 1,
+            "16": 15,
+            "17": 20,
+            "18": 2,
+            "19": 12,
+            "21": 4,
+            "22": 16,
+            "23": 12,
+            "24": 22,
+            "25": 1,
+            "26": 2,
+            "27": 3,
+            "28": 2,
+            "29": 10,
+            "30": 15,
+            "31": 26,
+            "32": 21,
+            "33": 23,
+            "34": 16,
+            "35": 14,
+            "37": 1,
+            "38": 2,
+            "39": 1,
+            "40": 14,
+            "41": 2,
+            "42": 2,
+            "43": 1,
+            "44": 2,
+            "45": 1,
+            "46": 15,
+            "47": 14,
+            "48": 7,
+            "49": 1,
+            "50": 2,
+            "51": 3,
+            "52": 2,
+            "53": 1,
+            "54": 4,
+            "55": 2,
+            "56": 10,
+            "57": 4,
+            "58": 2,
+            "59": 3,
+            "60": 3,
+            "61": 3,
+            "62": 4,
+            "63": 1,
+            "64": 25,
+            "65": 20,
+            "66": 10,
+            "67": 3,
+            "68": 2,
+            "69": 2,
+            "70": 2,
+            "71": 3,
+            "72": 1,
+            "73": 1,
+            "74": 3,
+            "76": 4,
+            "77": 2,
+            "78": 2,
+            "79": 11,
+            "80": 4,
+            "81": 13,
+            "82": 8,
+            "85": 1,
+            "86": 11,
+            "87": 8,
+            "88": 3,
+            "89": 2,
+            "91": 2,
+            "95": 2,
+            "01": 3,
+            "02": 3,
+            "03": 2,
+            "07": 1,
+            "08": 2,
+            "09": 25,
+            "2A": 1,
+            "04": 1,
+            "2B": 1,
+            "05": 1,
+            "06": 1
+          },
+          "recues": {},
+          "validees": {},
+          "invalides": {}
+        },
+        "finances": {
+          "recettes": {
+            "parti": 320000000,
+            "apportPersonnel": 80000000,
+            "dons": 0,
+            "emprunts": 0,
+            "avance": 0,
+            "autres": 0
+          },
+          "depenses": 324000000,
+          "donateurs": 0,
+          "refus": {
+            "nombre": 0,
+            "montantCentimes": 0,
+            "derniers": []
+          },
+          "emprunts": [],
+          "depassement": null,
+          "remboursementPrevisionnel": null
+        },
+        "preparationDebat": 0,
+        "strategie": {
+          "priorite": "popularite",
+          "motif": "16,8 % d'intentions de vote : convaincre de nouveaux électeurs.",
+          "semaine": 3
+        }
+      },
+      "adv-boussole": {
+        "id": "adv-boussole",
+        "kind": "adversaire",
+        "label": "Campagne de Claire Delorme",
+        "candidate": {
+          "prenom": "Claire",
+          "nom": "Delorme",
+          "parti": "Boussole",
+          "positionnement": {
+            "economie": 20,
+            "societe": -10
+          },
+          "parcours": "Personnage fictif. Ancienne cheffe d'entreprise, ministre dans un gouvernement imaginaire.",
+          "nature": "fictif",
+          "profilId": null,
+          "personnaliteId": null
+        },
+        "style": "equilibre",
+        "toleranceRisque": 0.4,
+        "resources": {
+          "budgetCentimes": 601624000,
+          "militants": 1407,
+          "notoriete": 6284,
+          "popularite": 3351,
+          "tempsHeures": 70
+        },
+        "status": "candidat",
+        "history": {
+          "popularite": [
+            3200,
+            3190,
+            3235,
+            3280,
+            3351
+          ]
+        },
+        "equipe": 0.75,
+        "implantation": [
+          "11",
+          "84",
+          "52"
+        ],
+        "objectif": "victoire",
+        "programme": {
+          "propositions": [
+            "eco-simplification-pme",
+            "emploi-formation-continue",
+            "pa-prime-partage-valeur",
+            "ret-systeme-points",
+            "ener-mix-equilibre",
+            "dip-integration-europeenne",
+            "def-defense-europeenne",
+            "env-ecologie-incitative",
+            "immi-integration-langue",
+            "coll-decentralisation"
+          ],
+          "revirements": 0
+        },
+        "parrainages": {
+          "promesses": {
+            "10": 1,
+            "11": 2,
+            "12": 1,
+            "13": 1,
+            "14": 2,
+            "15": 32,
+            "16": 1,
+            "17": 2,
+            "18": 2,
+            "22": 1,
+            "23": 1,
+            "24": 2,
+            "25": 3,
+            "26": 14,
+            "27": 2,
+            "28": 1,
+            "29": 2,
+            "30": 1,
+            "31": 1,
+            "32": 2,
+            "33": 3,
+            "34": 1,
+            "36": 2,
+            "37": 1,
+            "38": 19,
+            "39": 2,
+            "40": 1,
+            "41": 1,
+            "42": 12,
+            "43": 8,
+            "44": 9,
+            "46": 1,
+            "49": 6,
+            "50": 1,
+            "51": 1,
+            "52": 1,
+            "53": 9,
+            "54": 2,
+            "55": 2,
+            "57": 2,
+            "58": 1,
+            "59": 2,
+            "60": 2,
+            "61": 1,
+            "62": 3,
+            "63": 19,
+            "64": 2,
+            "65": 1,
+            "66": 1,
+            "67": 2,
+            "68": 1,
+            "69": 10,
+            "70": 2,
+            "71": 3,
+            "72": 13,
+            "73": 11,
+            "74": 10,
+            "76": 1,
+            "77": 19,
+            "78": 9,
+            "79": 2,
+            "80": 1,
+            "81": 1,
+            "85": 11,
+            "87": 1,
+            "88": 1,
+            "90": 1,
+            "91": 8,
+            "93": 1,
+            "94": 2,
+            "95": 8,
+            "01": 21,
+            "03": 22,
+            "07": 23,
+            "02": 2,
+            "06": 1,
+            "08": 2,
+            "09": 1,
+            "2A": 1
+          },
+          "intentions": {
+            "10": 2,
+            "11": 2,
+            "12": 1,
+            "14": 2,
+            "15": 22,
+            "16": 2,
+            "17": 2,
+            "19": 2,
+            "21": 5,
+            "22": 2,
+            "23": 1,
+            "24": 2,
+            "25": 2,
+            "26": 24,
+            "27": 3,
+            "28": 2,
+            "30": 2,
+            "31": 4,
+            "32": 1,
+            "33": 1,
+            "34": 2,
+            "35": 3,
+            "37": 1,
+            "38": 33,
+            "39": 2,
+            "40": 1,
+            "42": 20,
+            "43": 16,
+            "44": 13,
+            "45": 3,
+            "46": 2,
+            "47": 3,
+            "48": 1,
+            "49": 12,
+            "50": 3,
+            "51": 4,
+            "52": 2,
+            "53": 14,
+            "54": 3,
+            "55": 2,
+            "56": 2,
+            "57": 3,
+            "58": 2,
+            "59": 3,
+            "60": 3,
+            "61": 2,
+            "62": 4,
+            "63": 29,
+            "64": 2,
+            "65": 2,
+            "66": 1,
+            "67": 2,
+            "68": 1,
+            "69": 17,
+            "70": 2,
+            "71": 2,
+            "72": 23,
+            "73": 19,
+            "74": 18,
+            "76": 5,
+            "77": 34,
+            "78": 17,
+            "80": 3,
+            "81": 2,
+            "82": 2,
+            "83": 1,
+            "85": 15,
+            "86": 2,
+            "87": 1,
+            "88": 2,
+            "89": 2,
+            "91": 13,
+            "92": 4,
+            "93": 3,
+            "94": 3,
+            "95": 12,
+            "01": 35,
+            "02": 4,
+            "03": 36,
+            "05": 1,
+            "07": 41,
+            "09": 1,
+            "2B": 2,
+            "04": 2,
+            "08": 2
+          },
+          "recues": {},
+          "validees": {},
+          "invalides": {}
+        },
+        "finances": {
+          "recettes": {
+            "parti": 640000000,
+            "apportPersonnel": 160000000,
+            "dons": 5124000,
+            "emprunts": 0,
+            "avance": 0,
+            "autres": 0
+          },
+          "depenses": 203500000,
+          "donateurs": 427,
+          "refus": {
+            "nombre": 0,
+            "montantCentimes": 0,
+            "derniers": []
+          },
+          "emprunts": [],
+          "depassement": null,
+          "remboursementPrevisionnel": null
+        },
+        "preparationDebat": 0,
+        "strategie": {
+          "priorite": "popularite",
+          "motif": "23,3 % d'intentions de vote : convaincre de nouveaux électeurs.",
+          "semaine": 3
+        }
+      },
+      "adv-pilier": {
+        "id": "adv-pilier",
+        "kind": "adversaire",
+        "label": "Campagne de Antoine Rivière",
+        "candidate": {
+          "prenom": "Antoine",
+          "nom": "Rivière",
+          "parti": "Pilier",
+          "positionnement": {
+            "economie": 50,
+            "societe": 35
+          },
+          "parcours": "Personnage fictif. Président de département.",
+          "nature": "fictif",
+          "profilId": null,
+          "personnaliteId": null
+        },
+        "style": "prudent",
+        "toleranceRisque": 0.35,
+        "resources": {
+          "budgetCentimes": 518000000,
+          "militants": 1576,
+          "notoriete": 5617,
+          "popularite": 2999,
+          "tempsHeures": 70
+        },
+        "status": "candidat",
+        "history": {
+          "popularite": [
+            2800,
+            2839,
+            2966,
+            2979,
+            2999
+          ]
+        },
+        "equipe": 0.7,
+        "implantation": [
+          "44",
+          "28",
+          "24",
+          "27"
+        ],
+        "objectif": "victoire",
+        "programme": {
+          "propositions": [
+            "eco-baisse-impots-production",
+            "emploi-assurance-chomage",
+            "ret-systeme-points",
+            "secu-recrutement-forces",
+            "just-places-prison",
+            "ener-nouveaux-reacteurs",
+            "log-acces-propriete",
+            "agri-simplification-normes",
+            "def-hausse-budget-armees",
+            "edu-autonomie-etablissements"
+          ],
+          "revirements": 0
+        },
+        "parrainages": {
+          "promesses": {
+            "10": 13,
+            "12": 2,
+            "14": 17,
+            "15": 2,
+            "16": 2,
+            "17": 2,
+            "18": 9,
+            "19": 2,
+            "21": 24,
+            "22": 1,
+            "23": 2,
+            "24": 2,
+            "25": 17,
+            "26": 1,
+            "27": 17,
+            "28": 12,
+            "30": 2,
+            "31": 4,
+            "32": 1,
+            "33": 3,
+            "34": 1,
+            "35": 2,
+            "36": 8,
+            "37": 9,
+            "38": 2,
+            "39": 15,
+            "40": 2,
+            "41": 8,
+            "42": 1,
+            "43": 1,
+            "44": 1,
+            "45": 10,
+            "46": 1,
+            "47": 2,
+            "49": 2,
+            "50": 14,
+            "51": 19,
+            "52": 14,
+            "54": 20,
+            "55": 16,
+            "56": 2,
+            "57": 24,
+            "58": 9,
+            "59": 3,
+            "60": 3,
+            "61": 12,
+            "62": 3,
+            "63": 1,
+            "64": 2,
+            "65": 2,
+            "66": 1,
+            "67": 17,
+            "68": 11,
+            "69": 2,
+            "70": 18,
+            "71": 19,
+            "72": 2,
+            "74": 1,
+            "76": 22,
+            "77": 3,
+            "78": 1,
+            "80": 3,
+            "81": 2,
+            "85": 2,
+            "86": 2,
+            "87": 1,
+            "88": 17,
+            "89": 13,
+            "90": 3,
+            "95": 1,
+            "08": 15,
+            "01": 3,
+            "02": 4,
+            "03": 1,
+            "04": 2,
+            "06": 1,
+            "07": 1,
+            "09": 1
+          },
+          "intentions": {
+            "10": 18,
+            "11": 3,
+            "12": 1,
+            "13": 1,
+            "14": 23,
+            "15": 1,
+            "16": 1,
+            "17": 3,
+            "18": 12,
+            "19": 1,
+            "21": 30,
+            "22": 3,
+            "23": 1,
+            "24": 3,
+            "25": 24,
+            "26": 2,
+            "27": 26,
+            "28": 16,
+            "29": 2,
+            "30": 2,
+            "31": 3,
+            "32": 4,
+            "33": 3,
+            "34": 3,
+            "35": 2,
+            "36": 11,
+            "37": 12,
+            "38": 3,
+            "39": 22,
+            "40": 2,
+            "41": 12,
+            "42": 3,
+            "43": 2,
+            "44": 1,
+            "45": 14,
+            "46": 2,
+            "47": 2,
+            "48": 2,
+            "50": 20,
+            "51": 27,
+            "52": 18,
+            "53": 3,
+            "54": 25,
+            "55": 21,
+            "56": 1,
+            "57": 31,
+            "58": 14,
+            "59": 4,
+            "60": 4,
+            "61": 17,
+            "62": 6,
+            "63": 4,
+            "64": 4,
+            "65": 3,
+            "66": 1,
+            "67": 23,
+            "68": 16,
+            "69": 1,
+            "70": 23,
+            "71": 25,
+            "72": 2,
+            "73": 2,
+            "74": 2,
+            "76": 31,
+            "77": 2,
+            "78": 1,
+            "79": 2,
+            "80": 5,
+            "81": 1,
+            "82": 2,
+            "83": 2,
+            "84": 2,
+            "85": 1,
+            "86": 1,
+            "87": 1,
+            "88": 21,
+            "89": 19,
+            "90": 5,
+            "91": 2,
+            "95": 1,
+            "02": 5,
+            "03": 2,
+            "06": 1,
+            "07": 3,
+            "08": 19,
+            "09": 3,
+            "2A": 1,
+            "05": 1,
+            "01": 1,
+            "2B": 2
+          },
+          "recues": {},
+          "validees": {},
+          "invalides": {}
+        },
+        "finances": {
+          "recettes": {
+            "parti": 560000000,
+            "apportPersonnel": 140000000,
+            "dons": 0,
+            "emprunts": 100000000,
+            "avance": 0,
+            "autres": 0
+          },
+          "depenses": 282000000,
+          "donateurs": 0,
+          "refus": {
+            "nombre": 0,
+            "montantCentimes": 0,
+            "derniers": []
+          },
+          "emprunts": [
+            {
+              "semaine": 1,
+              "montantCentimes": 100000000,
+              "tauxAnnuel": 0.04
+            }
+          ],
+          "depassement": null,
+          "remboursementPrevisionnel": null
+        },
+        "preparationDebat": 0,
+        "strategie": {
+          "priorite": "popularite",
+          "motif": "19,4 % d'intentions de vote : convaincre de nouveaux électeurs.",
+          "semaine": 3
+        }
+      },
+      "adv-rempart": {
+        "id": "adv-rempart",
+        "kind": "adversaire",
+        "label": "Campagne de Mathieu Laborde",
+        "candidate": {
+          "prenom": "Mathieu",
+          "nom": "Laborde",
+          "parti": "Rempart",
+          "positionnement": {
+            "economie": 25,
+            "societe": 80
+          },
+          "parcours": "Personnage fictif. Avocat devenu tribun.",
+          "nature": "fictif",
+          "profilId": null,
+          "personnaliteId": null
+        },
+        "style": "offensif",
+        "toleranceRisque": 0.6,
+        "resources": {
+          "budgetCentimes": 488000000,
+          "militants": 1921,
+          "notoriete": 7019,
+          "popularite": 3081,
+          "tempsHeures": 70
+        },
+        "status": "candidat",
+        "history": {
+          "popularite": [
+            3100,
+            3095,
+            3090,
+            3085,
+            3081
+          ]
+        },
+        "equipe": 0.65,
+        "implantation": [
+          "32",
+          "93",
+          "44"
+        ],
+        "objectif": "victoire",
+        "programme": {
+          "propositions": [
+            "immi-referendum-quotas",
+            "dip-primaute-droit-national",
+            "ret-age-62",
+            "pa-baisse-tva-energie",
+            "secu-videoprotection",
+            "just-places-prison",
+            "edu-autorite-uniforme",
+            "def-service-national",
+            "agri-prix-planchers",
+            "coll-services-publics-ruraux",
+            "ener-nouveaux-reacteurs"
+          ],
+          "revirements": 0
+        },
+        "parrainages": {
+          "promesses": {
+            "10": 40,
+            "11": 1,
+            "13": 2,
+            "14": 1,
+            "16": 2,
+            "17": 2,
+            "18": 1,
+            "21": 3,
+            "24": 1,
+            "26": 2,
+            "27": 1,
+            "30": 1,
+            "31": 1,
+            "32": 1,
+            "38": 1,
+            "39": 1,
+            "40": 1,
+            "42": 1,
+            "45": 1,
+            "49": 1,
+            "50": 1,
+            "51": 48,
+            "52": 26,
+            "54": 9,
+            "55": 8,
+            "56": 1,
+            "57": 9,
+            "58": 1,
+            "59": 10,
+            "60": 10,
+            "62": 13,
+            "63": 1,
+            "64": 2,
+            "65": 1,
+            "67": 8,
+            "68": 7,
+            "69": 1,
+            "70": 1,
+            "71": 1,
+            "74": 1,
+            "76": 2,
+            "77": 1,
+            "78": 1,
+            "79": 1,
+            "80": 12,
+            "83": 2,
+            "84": 2,
+            "86": 1,
+            "87": 1,
+            "88": 7,
+            "89": 1,
+            "95": 1,
+            "02": 36,
+            "04": 9,
+            "05": 14,
+            "06": 2,
+            "08": 57,
+            "01": 1,
+            "03": 1,
+            "09": 1,
+            "2B": 1
+          },
+          "intentions": {
+            "10": 31,
+            "11": 1,
+            "12": 1,
+            "13": 3,
+            "14": 1,
+            "15": 1,
+            "19": 1,
+            "22": 1,
+            "23": 1,
+            "24": 1,
+            "25": 2,
+            "27": 1,
+            "28": 2,
+            "29": 1,
+            "30": 1,
+            "31": 1,
+            "32": 1,
+            "33": 2,
+            "34": 1,
+            "35": 1,
+            "36": 1,
+            "37": 1,
+            "38": 1,
+            "39": 1,
+            "41": 1,
+            "44": 1,
+            "46": 1,
+            "47": 1,
+            "50": 1,
+            "51": 25,
+            "52": 13,
+            "53": 1,
+            "54": 12,
+            "55": 10,
+            "57": 15,
+            "59": 13,
+            "60": 14,
+            "61": 2,
+            "62": 17,
+            "63": 1,
+            "65": 1,
+            "67": 10,
+            "68": 6,
+            "70": 1,
+            "71": 1,
+            "72": 1,
+            "73": 1,
+            "76": 1,
+            "77": 1,
+            "80": 15,
+            "81": 1,
+            "82": 1,
+            "83": 4,
+            "84": 3,
+            "85": 1,
+            "88": 11,
+            "89": 1,
+            "91": 1,
+            "01": 1,
+            "02": 42,
+            "04": 14,
+            "05": 18,
+            "06": 5,
+            "07": 1,
+            "08": 31,
+            "2A": 1
+          },
+          "recues": {},
+          "validees": {},
+          "invalides": {}
+        },
+        "finances": {
+          "recettes": {
+            "parti": 400000000,
+            "apportPersonnel": 100000000,
+            "dons": 0,
+            "emprunts": 0,
+            "avance": 0,
+            "autres": 0
+          },
+          "depenses": 12000000,
+          "donateurs": 0,
+          "refus": {
+            "nombre": 0,
+            "montantCentimes": 0,
+            "derniers": []
+          },
+          "emprunts": [],
+          "depassement": null,
+          "remboursementPrevisionnel": null
+        },
+        "preparationDebat": 0,
+        "strategie": {
+          "priorite": "parrainages",
+          "motif": "Environ 462 présentations en vue dans 88 départements : il en faut 500 de 30 départements avant le vendredi 12 mars 2027.",
+          "semaine": 3
+        }
+      },
+      "joueur": {
+        "id": "joueur",
+        "kind": "joueur",
+        "label": "Campagne de Lou Format",
+        "candidate": {
+          "prenom": "Lou",
+          "nom": "Format",
+          "parti": "Mouvement Treize",
+          "positionnement": {
+            "economie": -10,
+            "societe": -20
+          },
+          "parcours": "",
+          "nature": "personnalise",
+          "profilId": null,
+          "personnaliteId": null
+        },
+        "style": null,
+        "toleranceRisque": null,
+        "resources": {
+          "budgetCentimes": 265532000,
+          "militants": 424,
+          "notoriete": 771,
+          "popularite": 2807,
+          "tempsHeures": 70
+        },
+        "status": "candidat",
+        "history": {
+          "popularite": [
+            2700,
+            2715,
+            2760,
+            2804,
+            2814
+          ]
+        },
+        "equipe": 0.5,
+        "implantation": [],
+        "objectif": null,
+        "programme": {
+          "propositions": [],
+          "revirements": 0
+        },
+        "parrainages": {
+          "promesses": {
+            "10": 2,
+            "11": 1,
+            "14": 1,
+            "15": 1,
+            "16": 1,
+            "21": 2,
+            "23": 1,
+            "25": 1,
+            "26": 2,
+            "27": 2,
+            "28": 1,
+            "30": 1,
+            "31": 2,
+            "33": 1,
+            "34": 1,
+            "35": 1,
+            "36": 1,
+            "37": 1,
+            "38": 2,
+            "39": 2,
+            "40": 1,
+            "42": 2,
+            "44": 1,
+            "45": 2,
+            "48": 1,
+            "49": 1,
+            "50": 1,
+            "51": 1,
+            "52": 1,
+            "54": 2,
+            "55": 2,
+            "57": 1,
+            "59": 2,
+            "60": 1,
+            "61": 1,
+            "62": 3,
+            "63": 2,
+            "65": 1,
+            "66": 1,
+            "67": 1,
+            "68": 1,
+            "70": 2,
+            "71": 1,
+            "72": 1,
+            "74": 1,
+            "76": 2,
+            "77": 1,
+            "78": 1,
+            "79": 1,
+            "80": 1,
+            "84": 1,
+            "86": 1,
+            "88": 1,
+            "89": 2,
+            "91": 1,
+            "95": 1,
+            "01": 1,
+            "02": 2,
+            "04": 1,
+            "05": 1,
+            "07": 1,
+            "09": 2
+          },
+          "intentions": {
+            "11": 1,
+            "12": 1,
+            "13": 1,
+            "14": 1,
+            "16": 1,
+            "17": 2,
+            "19": 1,
+            "21": 1,
+            "22": 2,
+            "24": 1,
+            "25": 1,
+            "27": 1,
+            "28": 1,
+            "30": 1,
+            "31": 1,
+            "32": 2,
+            "33": 1,
+            "34": 1,
+            "35": 1,
+            "40": 1,
+            "43": 1,
+            "46": 1,
+            "47": 1,
+            "50": 1,
+            "51": 1,
+            "52": 1,
+            "53": 1,
+            "54": 1,
+            "56": 1,
+            "57": 2,
+            "58": 1,
+            "59": 1,
+            "60": 1,
+            "61": 1,
+            "62": 1,
+            "64": 2,
+            "65": 1,
+            "67": 1,
+            "68": 1,
+            "69": 1,
+            "71": 2,
+            "76": 1,
+            "80": 2,
+            "81": 1,
+            "82": 1,
+            "83": 1,
+            "85": 1,
+            "87": 1,
+            "88": 1,
+            "01": 1,
+            "2A": 1,
+            "02": 1,
+            "08": 2,
+            "07": 1
+          },
+          "recues": {},
+          "validees": {},
+          "invalides": {}
+        },
+        "finances": {
+          "recettes": {
+            "parti": 240000000,
+            "apportPersonnel": 60000000,
+            "dons": 7032000,
+            "emprunts": 0,
+            "avance": 0,
+            "autres": 0
+          },
+          "depenses": 41500000,
+          "donateurs": 586,
+          "refus": {
+            "nombre": 0,
+            "montantCentimes": 0,
+            "derniers": []
+          },
+          "emprunts": [],
+          "depassement": null,
+          "remboursementPrevisionnel": null
+        },
+        "preparationDebat": 0,
+        "strategie": null
+      }
+    },
+    "scheduled": [],
+    "pendingDecisions": [],
+    "eventHistory": {
+      "greve-transports": {
+        "count": 1,
+        "lastWeek": 0
+      },
+      "depart-militants": {
+        "count": 1,
+        "lastWeek": 2
+      },
+      "fuite-note": {
+        "count": 1,
+        "lastWeek": 2
+      }
+    },
+    "opinion": {
+      "week": 3,
+      "round": 1,
+      "participation": 7481,
+      "intentions": {
+        "adv-agora": 1741,
+        "adv-aurore": 984,
+        "adv-boussole": 2330,
+        "adv-canopee": 922,
+        "adv-etincelle": 263,
+        "adv-pilier": 1984,
+        "adv-rempart": 1703,
+        "joueur": 73
+      },
+      "breakdown": {
+        "adv-agora": [
+          {
+            "label": "Proximité idéologique",
+            "value": -1.89
+          },
+          {
+            "label": "Notoriété",
+            "value": 0.514
+          },
+          {
+            "label": "Popularité",
+            "value": 0.046
+          },
+          {
+            "label": "Dynamique de campagne",
+            "value": 0.199
+          },
+          {
+            "label": "Incertitude",
+            "value": 0.021
+          },
+          {
+            "label": "Programme",
+            "value": 0.445
+          },
+          {
+            "label": "Crédibilité",
+            "value": 0.253
+          },
+          {
+            "label": "Médias",
+            "value": 0.018
+          }
+        ],
+        "adv-aurore": [
+          {
+            "label": "Proximité idéologique",
+            "value": -2.673
+          },
+          {
+            "label": "Notoriété",
+            "value": 0.592
+          },
+          {
+            "label": "Popularité",
+            "value": -0.073
+          },
+          {
+            "label": "Dynamique de campagne",
+            "value": 0.033
+          },
+          {
+            "label": "Incertitude",
+            "value": -0.037
+          },
+          {
+            "label": "Programme",
+            "value": 0.29
+          },
+          {
+            "label": "Crédibilité",
+            "value": -0.118
+          },
+          {
+            "label": "Médias",
+            "value": -0.008
+          }
+        ],
+        "adv-boussole": [
+          {
+            "label": "Proximité idéologique",
+            "value": -1.772
+          },
+          {
+            "label": "Notoriété",
+            "value": 0.922
+          },
+          {
+            "label": "Popularité",
+            "value": 0.105
+          },
+          {
+            "label": "Dynamique de campagne",
+            "value": 0.129
+          },
+          {
+            "label": "Incertitude",
+            "value": 0.018
+          },
+          {
+            "label": "Programme",
+            "value": 0.456
+          },
+          {
+            "label": "Crédibilité",
+            "value": 0.258
+          },
+          {
+            "label": "Médias",
+            "value": 0.023
+          }
+        ],
+        "adv-canopee": [
+          {
+            "label": "Proximité idéologique",
+            "value": -2.663
+          },
+          {
+            "label": "Notoriété",
+            "value": 0.2
+          },
+          {
+            "label": "Popularité",
+            "value": 0
+          },
+          {
+            "label": "Dynamique de campagne",
+            "value": 0
+          },
+          {
+            "label": "Incertitude",
+            "value": -0.012
+          },
+          {
+            "label": "Programme",
+            "value": 0.295
+          },
+          {
+            "label": "Crédibilité",
+            "value": 0.217
+          },
+          {
+            "label": "Médias",
+            "value": 0.003
+          }
+        ],
+        "adv-etincelle": [
+          {
+            "label": "Proximité idéologique",
+            "value": -3.171
+          },
+          {
+            "label": "Notoriété",
+            "value": -0.434
+          },
+          {
+            "label": "Popularité",
+            "value": -0.269
+          },
+          {
+            "label": "Dynamique de campagne",
+            "value": 0.119
+          },
+          {
+            "label": "Incertitude",
+            "value": -0.007
+          },
+          {
+            "label": "Programme",
+            "value": 0.256
+          },
+          {
+            "label": "Crédibilité",
+            "value": -0.084
+          },
+          {
+            "label": "Médias",
+            "value": -0.005
+          }
+        ],
+        "adv-pilier": [
+          {
+            "label": "Proximité idéologique",
+            "value": -2.175
+          },
+          {
+            "label": "Notoriété",
+            "value": 0.81
+          },
+          {
+            "label": "Popularité",
+            "value": 0
+          },
+          {
+            "label": "Dynamique de campagne",
+            "value": 0.128
+          },
+          {
+            "label": "Incertitude",
+            "value": -0.038
+          },
+          {
+            "label": "Programme",
+            "value": 0.391
+          },
+          {
+            "label": "Crédibilité",
+            "value": 0.261
+          },
+          {
+            "label": "Médias",
+            "value": 0.009
+          }
+        ],
+        "adv-rempart": [
+          {
+            "label": "Proximité idéologique",
+            "value": -2.615
+          },
+          {
+            "label": "Notoriété",
+            "value": 1.032
+          },
+          {
+            "label": "Popularité",
+            "value": 0.024
+          },
+          {
+            "label": "Dynamique de campagne",
+            "value": -0.011
+          },
+          {
+            "label": "Incertitude",
+            "value": -0.003
+          },
+          {
+            "label": "Programme",
+            "value": 0.344
+          },
+          {
+            "label": "Crédibilité",
+            "value": 0.188
+          },
+          {
+            "label": "Médias",
+            "value": 0.016
+          }
+        ],
+        "joueur": [
+          {
+            "label": "Proximité idéologique",
+            "value": -1.803
+          },
+          {
+            "label": "Notoriété",
+            "value": -1.217
+          },
+          {
+            "label": "Popularité",
+            "value": -0.056
+          },
+          {
+            "label": "Dynamique de campagne",
+            "value": 0.079
+          },
+          {
+            "label": "Incertitude",
+            "value": -0.044
+          },
+          {
+            "label": "Programme",
+            "value": 0
+          },
+          {
+            "label": "Crédibilité",
+            "value": -0.12
+          },
+          {
+            "label": "Médias",
+            "value": 0
+          }
+        ]
+      }
+    },
+    "polls": [
+      {
+        "instituteId": "opinio",
+        "institute": "Institut Opinio (fictif)",
+        "week": 0,
+        "fieldStart": "2026-09-28",
+        "fieldEnd": "2026-09-30",
+        "publishedAt": "2026-10-02",
+        "sampleSize": 1000,
+        "method": "Échantillon par quotas (sexe, âge, profession, région), questionnaire en ligne",
+        "limits": "Sondage simulé par le jeu. Intentions mesurées parmi les personnes certaines d'aller voter et exprimant un choix. Marge d'erreur indicative, calculée comme pour un échantillon aléatoire de même taille (méthode des quotas). Un sondage décrit l'opinion à la date du terrain : ce n'est pas une prédiction du résultat.",
+        "nature": "sondage",
+        "id": "p-0-opinio-intentions_t1",
+        "kind": "intentions_t1",
+        "results": [
+          {
+            "actorId": "adv-agora",
+            "value": 1350,
+            "margin": 212
+          },
+          {
+            "actorId": "adv-aurore",
+            "value": 1170,
+            "margin": 199
+          },
+          {
+            "actorId": "adv-boussole",
+            "value": 2300,
+            "margin": 261
+          },
+          {
+            "actorId": "adv-canopee",
+            "value": 1170,
+            "margin": 199
+          },
+          {
+            "actorId": "adv-etincelle",
+            "value": 230,
+            "margin": 93
+          },
+          {
+            "actorId": "adv-pilier",
+            "value": 1600,
+            "margin": 227
+          },
+          {
+            "actorId": "adv-rempart",
+            "value": 2060,
+            "margin": 251
+          },
+          {
+            "actorId": "joueur",
+            "value": 120,
+            "margin": 67
+          }
+        ]
+      },
+      {
+        "instituteId": "opinio",
+        "institute": "Institut Opinio (fictif)",
+        "week": 0,
+        "fieldStart": "2026-09-28",
+        "fieldEnd": "2026-09-30",
+        "publishedAt": "2026-10-02",
+        "sampleSize": 1000,
+        "method": "Échantillon par quotas (sexe, âge, profession, région), questionnaire en ligne",
+        "limits": "Sondage simulé par le jeu. Intentions mesurées parmi les personnes certaines d'aller voter et exprimant un choix. Marge d'erreur indicative, calculée comme pour un échantillon aléatoire de même taille (méthode des quotas). Un sondage décrit l'opinion à la date du terrain : ce n'est pas une prédiction du résultat.",
+        "nature": "sondage",
+        "id": "p-0-opinio-hypothese-t2",
+        "kind": "intentions_t2",
+        "results": [
+          {
+            "actorId": "adv-boussole",
+            "value": 6710,
+            "margin": 291
+          },
+          {
+            "actorId": "adv-rempart",
+            "value": 3290,
+            "margin": 291
+          }
+        ]
+      },
+      {
+        "instituteId": "opinio",
+        "institute": "Institut Opinio (fictif)",
+        "week": 0,
+        "fieldStart": "2026-09-28",
+        "fieldEnd": "2026-09-30",
+        "publishedAt": "2026-10-02",
+        "sampleSize": 1000,
+        "method": "Échantillon par quotas (sexe, âge, profession, région), questionnaire en ligne",
+        "limits": "Sondage simulé par le jeu. Intentions mesurées parmi les personnes certaines d'aller voter et exprimant un choix. Marge d'erreur indicative, calculée comme pour un échantillon aléatoire de même taille (méthode des quotas). Un sondage décrit l'opinion à la date du terrain : ce n'est pas une prédiction du résultat.",
+        "nature": "sondage",
+        "id": "p-0-opinio-popularite",
+        "kind": "popularite",
+        "results": [
+          {
+            "actorId": "adv-agora",
+            "value": 3060,
+            "margin": 286
+          },
+          {
+            "actorId": "adv-aurore",
+            "value": 2700,
+            "margin": 275
+          },
+          {
+            "actorId": "adv-boussole",
+            "value": 3380,
+            "margin": 293
+          },
+          {
+            "actorId": "adv-canopee",
+            "value": 2900,
+            "margin": 281
+          },
+          {
+            "actorId": "adv-etincelle",
+            "value": 1870,
+            "margin": 242
+          },
+          {
+            "actorId": "adv-pilier",
+            "value": 2830,
+            "margin": 279
+          },
+          {
+            "actorId": "adv-rempart",
+            "value": 3000,
+            "margin": 284
+          },
+          {
+            "actorId": "joueur",
+            "value": 2610,
+            "margin": 272
+          }
+        ]
+      },
+      {
+        "instituteId": "civis",
+        "institute": "Baromètre Civis (fictif)",
+        "week": 1,
+        "fieldStart": "2026-10-05",
+        "fieldEnd": "2026-10-07",
+        "publishedAt": "2026-10-09",
+        "sampleSize": 1500,
+        "method": "Échantillon par quotas, questionnaire en ligne et par téléphone",
+        "limits": "Sondage simulé par le jeu. Intentions mesurées parmi les personnes certaines d'aller voter et exprimant un choix. Marge d'erreur indicative, calculée comme pour un échantillon aléatoire de même taille (méthode des quotas). Un sondage décrit l'opinion à la date du terrain : ce n'est pas une prédiction du résultat.",
+        "nature": "sondage",
+        "id": "p-1-civis-intentions_t1",
+        "kind": "intentions_t1",
+        "results": [
+          {
+            "actorId": "adv-agora",
+            "value": 1500,
+            "margin": 181
+          },
+          {
+            "actorId": "adv-aurore",
+            "value": 1073,
+            "margin": 157
+          },
+          {
+            "actorId": "adv-boussole",
+            "value": 2220,
+            "margin": 210
+          },
+          {
+            "actorId": "adv-canopee",
+            "value": 847,
+            "margin": 141
+          },
+          {
+            "actorId": "adv-etincelle",
+            "value": 373,
+            "margin": 96
+          },
+          {
+            "actorId": "adv-pilier",
+            "value": 2094,
+            "margin": 206
+          },
+          {
+            "actorId": "adv-rempart",
+            "value": 1740,
+            "margin": 192
+          },
+          {
+            "actorId": "joueur",
+            "value": 153,
+            "margin": 62
+          }
+        ]
+      },
+      {
+        "instituteId": "civis",
+        "institute": "Baromètre Civis (fictif)",
+        "week": 1,
+        "fieldStart": "2026-10-05",
+        "fieldEnd": "2026-10-07",
+        "publishedAt": "2026-10-09",
+        "sampleSize": 1500,
+        "method": "Échantillon par quotas, questionnaire en ligne et par téléphone",
+        "limits": "Sondage simulé par le jeu. Intentions mesurées parmi les personnes certaines d'aller voter et exprimant un choix. Marge d'erreur indicative, calculée comme pour un échantillon aléatoire de même taille (méthode des quotas). Un sondage décrit l'opinion à la date du terrain : ce n'est pas une prédiction du résultat.",
+        "nature": "sondage",
+        "id": "p-1-civis-hypothese-t2",
+        "kind": "intentions_t2",
+        "results": [
+          {
+            "actorId": "adv-boussole",
+            "value": 6173,
+            "margin": 246
+          },
+          {
+            "actorId": "adv-pilier",
+            "value": 3827,
+            "margin": 246
+          }
+        ]
+      },
+      {
+        "instituteId": "civis",
+        "institute": "Baromètre Civis (fictif)",
+        "week": 1,
+        "fieldStart": "2026-10-05",
+        "fieldEnd": "2026-10-07",
+        "publishedAt": "2026-10-09",
+        "sampleSize": 1500,
+        "method": "Échantillon par quotas, questionnaire en ligne et par téléphone",
+        "limits": "Sondage simulé par le jeu. Intentions mesurées parmi les personnes certaines d'aller voter et exprimant un choix. Marge d'erreur indicative, calculée comme pour un échantillon aléatoire de même taille (méthode des quotas). Un sondage décrit l'opinion à la date du terrain : ce n'est pas une prédiction du résultat.",
+        "nature": "sondage",
+        "id": "p-1-civis-popularite",
+        "kind": "popularite",
+        "results": [
+          {
+            "actorId": "adv-agora",
+            "value": 2947,
+            "margin": 231
+          },
+          {
+            "actorId": "adv-aurore",
+            "value": 2860,
+            "margin": 229
+          },
+          {
+            "actorId": "adv-boussole",
+            "value": 3113,
+            "margin": 234
+          },
+          {
+            "actorId": "adv-canopee",
+            "value": 2920,
+            "margin": 230
+          },
+          {
+            "actorId": "adv-etincelle",
+            "value": 1947,
+            "margin": 200
+          },
+          {
+            "actorId": "adv-pilier",
+            "value": 2940,
+            "margin": 231
+          },
+          {
+            "actorId": "adv-rempart",
+            "value": 3027,
+            "margin": 233
+          },
+          {
+            "actorId": "joueur",
+            "value": 2720,
+            "margin": 225
+          }
+        ]
+      },
+      {
+        "instituteId": "opinio",
+        "institute": "Institut Opinio (fictif)",
+        "week": 2,
+        "fieldStart": "2026-10-12",
+        "fieldEnd": "2026-10-14",
+        "publishedAt": "2026-10-16",
+        "sampleSize": 1000,
+        "method": "Échantillon par quotas (sexe, âge, profession, région), questionnaire en ligne",
+        "limits": "Sondage simulé par le jeu. Intentions mesurées parmi les personnes certaines d'aller voter et exprimant un choix. Marge d'erreur indicative, calculée comme pour un échantillon aléatoire de même taille (méthode des quotas). Un sondage décrit l'opinion à la date du terrain : ce n'est pas une prédiction du résultat.",
+        "nature": "sondage",
+        "id": "p-2-opinio-intentions_t1",
+        "kind": "intentions_t1",
+        "results": [
+          {
+            "actorId": "adv-agora",
+            "value": 1730,
+            "margin": 234
+          },
+          {
+            "actorId": "adv-aurore",
+            "value": 1000,
+            "margin": 186
+          },
+          {
+            "actorId": "adv-boussole",
+            "value": 2430,
+            "margin": 266
+          },
+          {
+            "actorId": "adv-canopee",
+            "value": 850,
+            "margin": 173
+          },
+          {
+            "actorId": "adv-etincelle",
+            "value": 190,
+            "margin": 85
+          },
+          {
+            "actorId": "adv-pilier",
+            "value": 1910,
+            "margin": 244
+          },
+          {
+            "actorId": "adv-rempart",
+            "value": 1810,
+            "margin": 239
+          },
+          {
+            "actorId": "joueur",
+            "value": 80,
+            "margin": 55
+          }
+        ]
+      },
+      {
+        "instituteId": "opinio",
+        "institute": "Institut Opinio (fictif)",
+        "week": 2,
+        "fieldStart": "2026-10-12",
+        "fieldEnd": "2026-10-14",
+        "publishedAt": "2026-10-16",
+        "sampleSize": 1000,
+        "method": "Échantillon par quotas (sexe, âge, profession, région), questionnaire en ligne",
+        "limits": "Sondage simulé par le jeu. Intentions mesurées parmi les personnes certaines d'aller voter et exprimant un choix. Marge d'erreur indicative, calculée comme pour un échantillon aléatoire de même taille (méthode des quotas). Un sondage décrit l'opinion à la date du terrain : ce n'est pas une prédiction du résultat.",
+        "nature": "sondage",
+        "id": "p-2-opinio-hypothese-t2",
+        "kind": "intentions_t2",
+        "results": [
+          {
+            "actorId": "adv-boussole",
+            "value": 6090,
+            "margin": 302
+          },
+          {
+            "actorId": "adv-pilier",
+            "value": 3910,
+            "margin": 302
+          }
+        ]
+      },
+      {
+        "instituteId": "opinio",
+        "institute": "Institut Opinio (fictif)",
+        "week": 2,
+        "fieldStart": "2026-10-12",
+        "fieldEnd": "2026-10-14",
+        "publishedAt": "2026-10-16",
+        "sampleSize": 1000,
+        "method": "Échantillon par quotas (sexe, âge, profession, région), questionnaire en ligne",
+        "limits": "Sondage simulé par le jeu. Intentions mesurées parmi les personnes certaines d'aller voter et exprimant un choix. Marge d'erreur indicative, calculée comme pour un échantillon aléatoire de même taille (méthode des quotas). Un sondage décrit l'opinion à la date du terrain : ce n'est pas une prédiction du résultat.",
+        "nature": "sondage",
+        "id": "p-2-opinio-popularite",
+        "kind": "popularite",
+        "results": [
+          {
+            "actorId": "adv-agora",
+            "value": 3060,
+            "margin": 286
+          },
+          {
+            "actorId": "adv-aurore",
+            "value": 2670,
+            "margin": 274
+          },
+          {
+            "actorId": "adv-boussole",
+            "value": 3300,
+            "margin": 291
+          },
+          {
+            "actorId": "adv-canopee",
+            "value": 2980,
+            "margin": 283
+          },
+          {
+            "actorId": "adv-etincelle",
+            "value": 2080,
+            "margin": 252
+          },
+          {
+            "actorId": "adv-pilier",
+            "value": 3220,
+            "margin": 290
+          },
+          {
+            "actorId": "adv-rempart",
+            "value": 3020,
+            "margin": 285
+          },
+          {
+            "actorId": "joueur",
+            "value": 2870,
+            "margin": 280
+          }
+        ]
+      },
+      {
+        "instituteId": "civis",
+        "institute": "Baromètre Civis (fictif)",
+        "week": 3,
+        "fieldStart": "2026-10-19",
+        "fieldEnd": "2026-10-21",
+        "publishedAt": "2026-10-23",
+        "sampleSize": 1500,
+        "method": "Échantillon par quotas, questionnaire en ligne et par téléphone",
+        "limits": "Sondage simulé par le jeu. Intentions mesurées parmi les personnes certaines d'aller voter et exprimant un choix. Marge d'erreur indicative, calculée comme pour un échantillon aléatoire de même taille (méthode des quotas). Un sondage décrit l'opinion à la date du terrain : ce n'est pas une prédiction du résultat.",
+        "nature": "sondage",
+        "id": "p-3-civis-intentions_t1",
+        "kind": "intentions_t1",
+        "results": [
+          {
+            "actorId": "adv-agora",
+            "value": 1700,
+            "margin": 190
+          },
+          {
+            "actorId": "adv-aurore",
+            "value": 793,
+            "margin": 137
+          },
+          {
+            "actorId": "adv-boussole",
+            "value": 2387,
+            "margin": 216
+          },
+          {
+            "actorId": "adv-canopee",
+            "value": 887,
+            "margin": 144
+          },
+          {
+            "actorId": "adv-etincelle",
+            "value": 367,
+            "margin": 95
+          },
+          {
+            "actorId": "adv-pilier",
+            "value": 2126,
+            "margin": 207
+          },
+          {
+            "actorId": "adv-rempart",
+            "value": 1653,
+            "margin": 188
+          },
+          {
+            "actorId": "joueur",
+            "value": 87,
+            "margin": 47
+          }
+        ]
+      },
+      {
+        "instituteId": "civis",
+        "institute": "Baromètre Civis (fictif)",
+        "week": 3,
+        "fieldStart": "2026-10-19",
+        "fieldEnd": "2026-10-21",
+        "publishedAt": "2026-10-23",
+        "sampleSize": 1500,
+        "method": "Échantillon par quotas, questionnaire en ligne et par téléphone",
+        "limits": "Sondage simulé par le jeu. Intentions mesurées parmi les personnes certaines d'aller voter et exprimant un choix. Marge d'erreur indicative, calculée comme pour un échantillon aléatoire de même taille (méthode des quotas). Un sondage décrit l'opinion à la date du terrain : ce n'est pas une prédiction du résultat.",
+        "nature": "sondage",
+        "id": "p-3-civis-hypothese-t2",
+        "kind": "intentions_t2",
+        "results": [
+          {
+            "actorId": "adv-boussole",
+            "value": 5993,
+            "margin": 248
+          },
+          {
+            "actorId": "adv-pilier",
+            "value": 4007,
+            "margin": 248
+          }
+        ]
+      },
+      {
+        "instituteId": "civis",
+        "institute": "Baromètre Civis (fictif)",
+        "week": 3,
+        "fieldStart": "2026-10-19",
+        "fieldEnd": "2026-10-21",
+        "publishedAt": "2026-10-23",
+        "sampleSize": 1500,
+        "method": "Échantillon par quotas, questionnaire en ligne et par téléphone",
+        "limits": "Sondage simulé par le jeu. Intentions mesurées parmi les personnes certaines d'aller voter et exprimant un choix. Marge d'erreur indicative, calculée comme pour un échantillon aléatoire de même taille (méthode des quotas). Un sondage décrit l'opinion à la date du terrain : ce n'est pas une prédiction du résultat.",
+        "nature": "sondage",
+        "id": "p-3-civis-popularite",
+        "kind": "popularite",
+        "results": [
+          {
+            "actorId": "adv-agora",
+            "value": 3113,
+            "margin": 234
+          },
+          {
+            "actorId": "adv-aurore",
+            "value": 2787,
+            "margin": 227
+          },
+          {
+            "actorId": "adv-boussole",
+            "value": 3193,
+            "margin": 236
+          },
+          {
+            "actorId": "adv-canopee",
+            "value": 2833,
+            "margin": 228
+          },
+          {
+            "actorId": "adv-etincelle",
+            "value": 2140,
+            "margin": 208
+          },
+          {
+            "actorId": "adv-pilier",
+            "value": 3013,
+            "margin": 232
+          },
+          {
+            "actorId": "adv-rempart",
+            "value": 3087,
+            "margin": 234
+          },
+          {
+            "actorId": "joueur",
+            "value": 2633,
+            "margin": 223
+          }
+        ]
+      }
+    ],
+    "elections": {
+      "t1": null,
+      "t2": null,
+      "consignes": [],
+      "debate": null,
+      "debateDetail": null
+    },
+    "calendar": {
+      "blockedBy": null,
+      "blockedMessage": null
+    },
+    "campagne": {
+      "parrainages": "modelise",
+      "finances": "complet"
+    },
+    "medias": {
+      "semaine": 3,
+      "couverture": {
+        "tf1": {
+          "adv-agora": {
+            "exposition": 1491,
+            "tonalite": 32
+          },
+          "adv-aurore": {
+            "exposition": 784,
+            "tonalite": -23
+          },
+          "adv-boussole": {
+            "exposition": 1678,
+            "tonalite": 39
+          },
+          "adv-canopee": {
+            "exposition": 437,
+            "tonalite": 16
+          },
+          "adv-etincelle": {
+            "exposition": 169,
+            "tonalite": -43
+          },
+          "adv-pilier": {
+            "exposition": 1877,
+            "tonalite": -11
+          },
+          "adv-rempart": {
+            "exposition": 1513,
+            "tonalite": -3
+          },
+          "joueur": {
+            "exposition": 52,
+            "tonalite": 9
+          }
+        },
+        "france-2": {
+          "adv-agora": {
+            "exposition": 1491,
+            "tonalite": 36
+          },
+          "adv-aurore": {
+            "exposition": 784,
+            "tonalite": -21
+          },
+          "adv-boussole": {
+            "exposition": 1678,
+            "tonalite": 36
+          },
+          "adv-canopee": {
+            "exposition": 437,
+            "tonalite": 11
+          },
+          "adv-etincelle": {
+            "exposition": 169,
+            "tonalite": -48
+          },
+          "adv-pilier": {
+            "exposition": 1877,
+            "tonalite": 31
+          },
+          "adv-rempart": {
+            "exposition": 1513,
+            "tonalite": 6
+          },
+          "joueur": {
+            "exposition": 52,
+            "tonalite": -15
+          }
+        },
+        "france-3": {
+          "adv-agora": {
+            "exposition": 1491,
+            "tonalite": -6
+          },
+          "adv-aurore": {
+            "exposition": 784,
+            "tonalite": -20
+          },
+          "adv-boussole": {
+            "exposition": 1678,
+            "tonalite": -6
+          },
+          "adv-canopee": {
+            "exposition": 437,
+            "tonalite": 27
+          },
+          "adv-etincelle": {
+            "exposition": 169,
+            "tonalite": -37
+          },
+          "adv-pilier": {
+            "exposition": 1877,
+            "tonalite": 24
+          },
+          "adv-rempart": {
+            "exposition": 1513,
+            "tonalite": 13
+          },
+          "joueur": {
+            "exposition": 52,
+            "tonalite": -31
+          }
+        },
+        "france-5": {
+          "adv-agora": {
+            "exposition": 1491,
+            "tonalite": 29
+          },
+          "adv-aurore": {
+            "exposition": 784,
+            "tonalite": -22
+          },
+          "adv-boussole": {
+            "exposition": 1678,
+            "tonalite": -2
+          },
+          "adv-canopee": {
+            "exposition": 437,
+            "tonalite": 21
+          },
+          "adv-etincelle": {
+            "exposition": 169,
+            "tonalite": -17
+          },
+          "adv-pilier": {
+            "exposition": 1877,
+            "tonalite": -15
+          },
+          "adv-rempart": {
+            "exposition": 1513,
+            "tonalite": 28
+          },
+          "joueur": {
+            "exposition": 52,
+            "tonalite": -7
+          }
+        },
+        "m6": {
+          "adv-agora": {
+            "exposition": 1491,
+            "tonalite": 34
+          },
+          "adv-aurore": {
+            "exposition": 784,
+            "tonalite": -35
+          },
+          "adv-boussole": {
+            "exposition": 1678,
+            "tonalite": 8
+          },
+          "adv-canopee": {
+            "exposition": 437,
+            "tonalite": -11
+          },
+          "adv-etincelle": {
+            "exposition": 169,
+            "tonalite": -5
+          },
+          "adv-pilier": {
+            "exposition": 1877,
+            "tonalite": -15
+          },
+          "adv-rempart": {
+            "exposition": 1513,
+            "tonalite": -2
+          },
+          "joueur": {
+            "exposition": 52,
+            "tonalite": 5
+          }
+        },
+        "tmc": {
+          "adv-agora": {
+            "exposition": 1491,
+            "tonalite": 10
+          },
+          "adv-aurore": {
+            "exposition": 784,
+            "tonalite": -2
+          },
+          "adv-boussole": {
+            "exposition": 1678,
+            "tonalite": 21
+          },
+          "adv-canopee": {
+            "exposition": 437,
+            "tonalite": 25
+          },
+          "adv-etincelle": {
+            "exposition": 169,
+            "tonalite": -51
+          },
+          "adv-pilier": {
+            "exposition": 1877,
+            "tonalite": 15
+          },
+          "adv-rempart": {
+            "exposition": 1513,
+            "tonalite": 30
+          },
+          "joueur": {
+            "exposition": 52,
+            "tonalite": 10
+          }
+        },
+        "bfmtv": {
+          "adv-agora": {
+            "exposition": 1491,
+            "tonalite": 14
+          },
+          "adv-aurore": {
+            "exposition": 784,
+            "tonalite": -7
+          },
+          "adv-boussole": {
+            "exposition": 1678,
+            "tonalite": 19
+          },
+          "adv-canopee": {
+            "exposition": 437,
+            "tonalite": 5
+          },
+          "adv-etincelle": {
+            "exposition": 169,
+            "tonalite": -43
+          },
+          "adv-pilier": {
+            "exposition": 1877,
+            "tonalite": 29
+          },
+          "adv-rempart": {
+            "exposition": 1513,
+            "tonalite": 22
+          },
+          "joueur": {
+            "exposition": 52,
+            "tonalite": 4
+          }
+        },
+        "cnews": {
+          "adv-agora": {
+            "exposition": 1491,
+            "tonalite": 4
+          },
+          "adv-aurore": {
+            "exposition": 784,
+            "tonalite": 4
+          },
+          "adv-boussole": {
+            "exposition": 1678,
+            "tonalite": -3
+          },
+          "adv-canopee": {
+            "exposition": 437,
+            "tonalite": 9
+          },
+          "adv-etincelle": {
+            "exposition": 169,
+            "tonalite": -27
+          },
+          "adv-pilier": {
+            "exposition": 1877,
+            "tonalite": 3
+          },
+          "adv-rempart": {
+            "exposition": 1513,
+            "tonalite": 23
+          },
+          "joueur": {
+            "exposition": 52,
+            "tonalite": -27
+          }
+        },
+        "lci": {
+          "adv-agora": {
+            "exposition": 1491,
+            "tonalite": 15
+          },
+          "adv-aurore": {
+            "exposition": 784,
+            "tonalite": -18
+          },
+          "adv-boussole": {
+            "exposition": 1678,
+            "tonalite": 23
+          },
+          "adv-canopee": {
+            "exposition": 437,
+            "tonalite": 5
+          },
+          "adv-etincelle": {
+            "exposition": 169,
+            "tonalite": -48
+          },
+          "adv-pilier": {
+            "exposition": 1877,
+            "tonalite": 25
+          },
+          "adv-rempart": {
+            "exposition": 1513,
+            "tonalite": -2
+          },
+          "joueur": {
+            "exposition": 52,
+            "tonalite": 14
+          }
+        },
+        "franceinfo-tv": {
+          "adv-agora": {
+            "exposition": 1491,
+            "tonalite": 15
+          },
+          "adv-aurore": {
+            "exposition": 784,
+            "tonalite": 6
+          },
+          "adv-boussole": {
+            "exposition": 1678,
+            "tonalite": -1
+          },
+          "adv-canopee": {
+            "exposition": 437,
+            "tonalite": 5
+          },
+          "adv-etincelle": {
+            "exposition": 169,
+            "tonalite": -14
+          },
+          "adv-pilier": {
+            "exposition": 1877,
+            "tonalite": -3
+          },
+          "adv-rempart": {
+            "exposition": 1513,
+            "tonalite": 30
+          },
+          "joueur": {
+            "exposition": 52,
+            "tonalite": 13
+          }
+        },
+        "rmc-story": {
+          "adv-agora": {
+            "exposition": 1491,
+            "tonalite": 8
+          },
+          "adv-aurore": {
+            "exposition": 784,
+            "tonalite": -1
+          },
+          "adv-boussole": {
+            "exposition": 1678,
+            "tonalite": 16
+          },
+          "adv-canopee": {
+            "exposition": 437,
+            "tonalite": -9
+          },
+          "adv-etincelle": {
+            "exposition": 169,
+            "tonalite": -51
+          },
+          "adv-pilier": {
+            "exposition": 1877,
+            "tonalite": -8
+          },
+          "adv-rempart": {
+            "exposition": 1513,
+            "tonalite": 26
+          },
+          "joueur": {
+            "exposition": 52,
+            "tonalite": -23
+          }
+        },
+        "t18": {
+          "adv-agora": {
+            "exposition": 1491,
+            "tonalite": 33
+          },
+          "adv-aurore": {
+            "exposition": 784,
+            "tonalite": -34
+          },
+          "adv-boussole": {
+            "exposition": 1678,
+            "tonalite": 18
+          },
+          "adv-canopee": {
+            "exposition": 437,
+            "tonalite": -7
+          },
+          "adv-etincelle": {
+            "exposition": 169,
+            "tonalite": -49
+          },
+          "adv-pilier": {
+            "exposition": 1877,
+            "tonalite": -1
+          },
+          "adv-rempart": {
+            "exposition": 1513,
+            "tonalite": 23
+          },
+          "joueur": {
+            "exposition": 52,
+            "tonalite": -16
+          }
+        },
+        "france-inter": {
+          "adv-agora": {
+            "exposition": 1491,
+            "tonalite": -8
+          },
+          "adv-aurore": {
+            "exposition": 784,
+            "tonalite": -28
+          },
+          "adv-boussole": {
+            "exposition": 1678,
+            "tonalite": 23
+          },
+          "adv-canopee": {
+            "exposition": 437,
+            "tonalite": -5
+          },
+          "adv-etincelle": {
+            "exposition": 169,
+            "tonalite": -27
+          },
+          "adv-pilier": {
+            "exposition": 1877,
+            "tonalite": -2
+          },
+          "adv-rempart": {
+            "exposition": 1513,
+            "tonalite": 16
+          },
+          "joueur": {
+            "exposition": 52,
+            "tonalite": -2
+          }
+        },
+        "franceinfo-radio": {
+          "adv-agora": {
+            "exposition": 1491,
+            "tonalite": 33
+          },
+          "adv-aurore": {
+            "exposition": 784,
+            "tonalite": -15
+          },
+          "adv-boussole": {
+            "exposition": 1678,
+            "tonalite": 39
+          },
+          "adv-canopee": {
+            "exposition": 437,
+            "tonalite": 21
+          },
+          "adv-etincelle": {
+            "exposition": 169,
+            "tonalite": -50
+          },
+          "adv-pilier": {
+            "exposition": 1877,
+            "tonalite": 26
+          },
+          "adv-rempart": {
+            "exposition": 1513,
+            "tonalite": 26
+          },
+          "joueur": {
+            "exposition": 52,
+            "tonalite": -25
+          }
+        },
+        "rtl": {
+          "adv-agora": {
+            "exposition": 1491,
+            "tonalite": 12
+          },
+          "adv-aurore": {
+            "exposition": 784,
+            "tonalite": 11
+          },
+          "adv-boussole": {
+            "exposition": 1678,
+            "tonalite": 17
+          },
+          "adv-canopee": {
+            "exposition": 437,
+            "tonalite": -1
+          },
+          "adv-etincelle": {
+            "exposition": 169,
+            "tonalite": -27
+          },
+          "adv-pilier": {
+            "exposition": 1877,
+            "tonalite": -11
+          },
+          "adv-rempart": {
+            "exposition": 1513,
+            "tonalite": 25
+          },
+          "joueur": {
+            "exposition": 52,
+            "tonalite": -17
+          }
+        },
+        "rmc": {
+          "adv-agora": {
+            "exposition": 1491,
+            "tonalite": -9
+          },
+          "adv-aurore": {
+            "exposition": 784,
+            "tonalite": -22
+          },
+          "adv-boussole": {
+            "exposition": 1678,
+            "tonalite": 21
+          },
+          "adv-canopee": {
+            "exposition": 437,
+            "tonalite": 0
+          },
+          "adv-etincelle": {
+            "exposition": 169,
+            "tonalite": -46
+          },
+          "adv-pilier": {
+            "exposition": 1877,
+            "tonalite": -9
+          },
+          "adv-rempart": {
+            "exposition": 1513,
+            "tonalite": 19
+          },
+          "joueur": {
+            "exposition": 52,
+            "tonalite": -11
+          }
+        },
+        "europe-1": {
+          "adv-agora": {
+            "exposition": 1491,
+            "tonalite": 16
+          },
+          "adv-aurore": {
+            "exposition": 784,
+            "tonalite": 12
+          },
+          "adv-boussole": {
+            "exposition": 1678,
+            "tonalite": -1
+          },
+          "adv-canopee": {
+            "exposition": 437,
+            "tonalite": -11
+          },
+          "adv-etincelle": {
+            "exposition": 169,
+            "tonalite": -3
+          },
+          "adv-pilier": {
+            "exposition": 1877,
+            "tonalite": 30
+          },
+          "adv-rempart": {
+            "exposition": 1513,
+            "tonalite": -1
+          },
+          "joueur": {
+            "exposition": 52,
+            "tonalite": -30
+          }
+        },
+        "france-culture": {
+          "adv-agora": {
+            "exposition": 1491,
+            "tonalite": 24
+          },
+          "adv-aurore": {
+            "exposition": 784,
+            "tonalite": -16
+          },
+          "adv-boussole": {
+            "exposition": 1678,
+            "tonalite": -4
+          },
+          "adv-canopee": {
+            "exposition": 437,
+            "tonalite": 21
+          },
+          "adv-etincelle": {
+            "exposition": 169,
+            "tonalite": -38
+          },
+          "adv-pilier": {
+            "exposition": 1877,
+            "tonalite": 2
+          },
+          "adv-rempart": {
+            "exposition": 1513,
+            "tonalite": 11
+          },
+          "joueur": {
+            "exposition": 52,
+            "tonalite": -30
+          }
+        },
+        "le-parisien": {
+          "adv-agora": {
+            "exposition": 1491,
+            "tonalite": 14
+          },
+          "adv-aurore": {
+            "exposition": 784,
+            "tonalite": -25
+          },
+          "adv-boussole": {
+            "exposition": 1678,
+            "tonalite": -2
+          },
+          "adv-canopee": {
+            "exposition": 437,
+            "tonalite": 12
+          },
+          "adv-etincelle": {
+            "exposition": 169,
+            "tonalite": -14
+          },
+          "adv-pilier": {
+            "exposition": 1877,
+            "tonalite": 10
+          },
+          "adv-rempart": {
+            "exposition": 1513,
+            "tonalite": 31
+          },
+          "joueur": {
+            "exposition": 52,
+            "tonalite": -26
+          }
+        },
+        "le-monde": {
+          "adv-agora": {
+            "exposition": 1491,
+            "tonalite": 13
+          },
+          "adv-aurore": {
+            "exposition": 784,
+            "tonalite": 12
+          },
+          "adv-boussole": {
+            "exposition": 1678,
+            "tonalite": 15
+          },
+          "adv-canopee": {
+            "exposition": 437,
+            "tonalite": -2
+          },
+          "adv-etincelle": {
+            "exposition": 169,
+            "tonalite": -28
+          },
+          "adv-pilier": {
+            "exposition": 1877,
+            "tonalite": 2
+          },
+          "adv-rempart": {
+            "exposition": 1513,
+            "tonalite": 15
+          },
+          "joueur": {
+            "exposition": 52,
+            "tonalite": -18
+          }
+        },
+        "le-figaro": {
+          "adv-agora": {
+            "exposition": 1491,
+            "tonalite": 18
+          },
+          "adv-aurore": {
+            "exposition": 784,
+            "tonalite": 7
+          },
+          "adv-boussole": {
+            "exposition": 1678,
+            "tonalite": 30
+          },
+          "adv-canopee": {
+            "exposition": 437,
+            "tonalite": 26
+          },
+          "adv-etincelle": {
+            "exposition": 169,
+            "tonalite": -8
+          },
+          "adv-pilier": {
+            "exposition": 1877,
+            "tonalite": 18
+          },
+          "adv-rempart": {
+            "exposition": 1513,
+            "tonalite": 14
+          },
+          "joueur": {
+            "exposition": 52,
+            "tonalite": 8
+          }
+        },
+        "liberation": {
+          "adv-agora": {
+            "exposition": 1491,
+            "tonalite": 9
+          },
+          "adv-aurore": {
+            "exposition": 784,
+            "tonalite": -24
+          },
+          "adv-boussole": {
+            "exposition": 1678,
+            "tonalite": 22
+          },
+          "adv-canopee": {
+            "exposition": 437,
+            "tonalite": 16
+          },
+          "adv-etincelle": {
+            "exposition": 169,
+            "tonalite": -8
+          },
+          "adv-pilier": {
+            "exposition": 1877,
+            "tonalite": 7
+          },
+          "adv-rempart": {
+            "exposition": 1513,
+            "tonalite": -4
+          },
+          "joueur": {
+            "exposition": 52,
+            "tonalite": -3
+          }
+        },
+        "les-echos": {
+          "adv-agora": {
+            "exposition": 1491,
+            "tonalite": 27
+          },
+          "adv-aurore": {
+            "exposition": 784,
+            "tonalite": 3
+          },
+          "adv-boussole": {
+            "exposition": 1678,
+            "tonalite": 36
+          },
+          "adv-canopee": {
+            "exposition": 437,
+            "tonalite": -1
+          },
+          "adv-etincelle": {
+            "exposition": 169,
+            "tonalite": -23
+          },
+          "adv-pilier": {
+            "exposition": 1877,
+            "tonalite": -16
+          },
+          "adv-rempart": {
+            "exposition": 1513,
+            "tonalite": -8
+          },
+          "joueur": {
+            "exposition": 52,
+            "tonalite": 3
+          }
+        },
+        "la-croix": {
+          "adv-agora": {
+            "exposition": 1491,
+            "tonalite": -12
+          },
+          "adv-aurore": {
+            "exposition": 784,
+            "tonalite": 1
+          },
+          "adv-boussole": {
+            "exposition": 1678,
+            "tonalite": 0
+          },
+          "adv-canopee": {
+            "exposition": 437,
+            "tonalite": 17
+          },
+          "adv-etincelle": {
+            "exposition": 169,
+            "tonalite": -29
+          },
+          "adv-pilier": {
+            "exposition": 1877,
+            "tonalite": 6
+          },
+          "adv-rempart": {
+            "exposition": 1513,
+            "tonalite": 11
+          },
+          "joueur": {
+            "exposition": 52,
+            "tonalite": -6
+          }
+        },
+        "l-humanite": {
+          "adv-agora": {
+            "exposition": 1491,
+            "tonalite": 9
+          },
+          "adv-aurore": {
+            "exposition": 784,
+            "tonalite": -34
+          },
+          "adv-boussole": {
+            "exposition": 1678,
+            "tonalite": 14
+          },
+          "adv-canopee": {
+            "exposition": 437,
+            "tonalite": 7
+          },
+          "adv-etincelle": {
+            "exposition": 169,
+            "tonalite": -5
+          },
+          "adv-pilier": {
+            "exposition": 1877,
+            "tonalite": 3
+          },
+          "adv-rempart": {
+            "exposition": 1513,
+            "tonalite": 13
+          },
+          "joueur": {
+            "exposition": 52,
+            "tonalite": -4
+          }
+        },
+        "pqr": {
+          "adv-agora": {
+            "exposition": 691,
+            "tonalite": -6
+          },
+          "adv-aurore": {
+            "exposition": 784,
+            "tonalite": 4
+          },
+          "adv-boussole": {
+            "exposition": 1278,
+            "tonalite": 2
+          },
+          "adv-canopee": {
+            "exposition": 437,
+            "tonalite": 11
+          },
+          "adv-etincelle": {
+            "exposition": 169,
+            "tonalite": -38
+          },
+          "adv-pilier": {
+            "exposition": 1077,
+            "tonalite": 21
+          },
+          "adv-rempart": {
+            "exposition": 1513,
+            "tonalite": 27
+          },
+          "joueur": {
+            "exposition": 52,
+            "tonalite": -15
+          }
+        }
+      },
+      "indice": {
+        "adv-agora": 0.022,
+        "adv-aurore": -0.01,
+        "adv-boussole": 0.029,
+        "adv-canopee": 0.004,
+        "adv-etincelle": -0.006,
+        "adv-pilier": 0.011,
+        "adv-rempart": 0.02,
+        "joueur": 0
+      },
+      "interviews": []
+    },
+    "relations": {
+      "adv-agora|adv-aurore": {
+        "a": "adv-agora",
+        "b": "adv-aurore",
+        "confiance": 19,
+        "proximite": 76,
+        "rivalite": 29,
+        "historique": [
+          {
+            "semaine": 1,
+            "libelle": "Rivalité accrue : intentions de vote proches et électorat commun"
+          }
+        ]
+      },
+      "adv-agora|adv-boussole": {
+        "a": "adv-agora",
+        "b": "adv-boussole",
+        "confiance": 22,
+        "proximite": 77,
+        "rivalite": 30,
+        "historique": []
+      },
+      "adv-agora|adv-canopee": {
+        "a": "adv-agora",
+        "b": "adv-canopee",
+        "confiance": 19,
+        "proximite": 76,
+        "rivalite": 18,
+        "historique": [
+          {
+            "semaine": 1,
+            "libelle": "Rivalité accrue : intentions de vote proches et électorat commun"
+          }
+        ]
+      },
+      "adv-agora|adv-etincelle": {
+        "a": "adv-agora",
+        "b": "adv-etincelle",
+        "confiance": 13,
+        "proximite": 66,
+        "rivalite": 0,
+        "historique": []
+      },
+      "adv-agora|adv-pilier": {
+        "a": "adv-agora",
+        "b": "adv-pilier",
+        "confiance": 2,
+        "proximite": 53,
+        "rivalite": 50,
+        "historique": []
+      },
+      "adv-agora|adv-rempart": {
+        "a": "adv-agora",
+        "b": "adv-rempart",
+        "confiance": -5,
+        "proximite": 44,
+        "rivalite": 55,
+        "historique": []
+      },
+      "adv-agora|joueur": {
+        "a": "adv-agora",
+        "b": "joueur",
+        "confiance": 34,
+        "proximite": 93,
+        "rivalite": 0,
+        "historique": []
+      },
+      "adv-aurore|adv-boussole": {
+        "a": "adv-aurore",
+        "b": "adv-boussole",
+        "confiance": 3,
+        "proximite": 54,
+        "rivalite": 0,
+        "historique": []
+      },
+      "adv-aurore|adv-canopee": {
+        "a": "adv-aurore",
+        "b": "adv-canopee",
+        "confiance": 21,
+        "proximite": 84,
+        "rivalite": 78,
+        "historique": [
+          {
+            "semaine": 1,
+            "libelle": "Rivalité accrue : intentions de vote proches et électorat commun"
+          }
+        ]
+      },
+      "adv-aurore|adv-etincelle": {
+        "a": "adv-aurore",
+        "b": "adv-etincelle",
+        "confiance": 30,
+        "proximite": 87,
+        "rivalite": 22,
+        "historique": []
+      },
+      "adv-aurore|adv-pilier": {
+        "a": "adv-aurore",
+        "b": "adv-pilier",
+        "confiance": -16,
+        "proximite": 30,
+        "rivalite": 5,
+        "historique": []
+      },
+      "adv-aurore|adv-rempart": {
+        "a": "adv-aurore",
+        "b": "adv-rempart",
+        "confiance": -22,
+        "proximite": 23,
+        "rivalite": 11,
+        "historique": []
+      },
+      "adv-aurore|joueur": {
+        "a": "adv-aurore",
+        "b": "joueur",
+        "confiance": 16,
+        "proximite": 70,
+        "rivalite": 4,
+        "historique": []
+      },
+      "adv-boussole|adv-canopee": {
+        "a": "adv-boussole",
+        "b": "adv-canopee",
+        "confiance": 7,
+        "proximite": 59,
+        "rivalite": 0,
+        "historique": []
+      },
+      "adv-boussole|adv-etincelle": {
+        "a": "adv-boussole",
+        "b": "adv-etincelle",
+        "confiance": -6,
+        "proximite": 43,
+        "rivalite": 0,
+        "historique": []
+      },
+      "adv-boussole|adv-pilier": {
+        "a": "adv-boussole",
+        "b": "adv-pilier",
+        "confiance": 18,
+        "proximite": 73,
+        "rivalite": 49,
+        "historique": []
+      },
+      "adv-boussole|adv-rempart": {
+        "a": "adv-boussole",
+        "b": "adv-rempart",
+        "confiance": 4,
+        "proximite": 55,
+        "rivalite": 31,
+        "historique": []
+      },
+      "adv-boussole|joueur": {
+        "a": "adv-boussole",
+        "b": "joueur",
+        "confiance": 27,
+        "proximite": 84,
+        "rivalite": 0,
+        "historique": []
+      },
+      "adv-canopee|adv-etincelle": {
+        "a": "adv-canopee",
+        "b": "adv-etincelle",
+        "confiance": 18,
+        "proximite": 72,
+        "rivalite": 29,
+        "historique": []
+      },
+      "adv-canopee|adv-pilier": {
+        "a": "adv-canopee",
+        "b": "adv-pilier",
+        "confiance": -14,
+        "proximite": 33,
+        "rivalite": 0,
+        "historique": []
+      },
+      "adv-canopee|adv-rempart": {
+        "a": "adv-canopee",
+        "b": "adv-rempart",
+        "confiance": -23,
+        "proximite": 21,
+        "rivalite": 5,
+        "historique": []
+      },
+      "adv-canopee|joueur": {
+        "a": "adv-canopee",
+        "b": "joueur",
+        "confiance": 18,
+        "proximite": 73,
+        "rivalite": 14,
+        "historique": []
+      },
+      "adv-etincelle|adv-pilier": {
+        "a": "adv-etincelle",
+        "b": "adv-pilier",
+        "confiance": -23,
+        "proximite": 21,
+        "rivalite": 0,
+        "historique": []
+      },
+      "adv-etincelle|adv-rempart": {
+        "a": "adv-etincelle",
+        "b": "adv-rempart",
+        "confiance": -26,
+        "proximite": 17,
+        "rivalite": 0,
+        "historique": []
+      },
+      "adv-etincelle|joueur": {
+        "a": "adv-etincelle",
+        "b": "joueur",
+        "confiance": 7,
+        "proximite": 59,
+        "rivalite": 58,
+        "historique": []
+      },
+      "adv-pilier|adv-rempart": {
+        "a": "adv-pilier",
+        "b": "adv-rempart",
+        "confiance": 13,
+        "proximite": 74,
+        "rivalite": 69,
+        "historique": [
+          {
+            "semaine": 1,
+            "libelle": "Rivalité accrue : intentions de vote proches et électorat commun"
+          }
+        ]
+      },
+      "adv-pilier|joueur": {
+        "a": "adv-pilier",
+        "b": "joueur",
+        "confiance": 7,
+        "proximite": 59,
+        "rivalite": 0,
+        "historique": []
+      },
+      "adv-rempart|joueur": {
+        "a": "adv-rempart",
+        "b": "joueur",
+        "confiance": -2,
+        "proximite": 47,
+        "rivalite": 0,
+        "historique": []
+      }
+    },
+    "alliances": [],
+    "cycle": {
+      "annee": 2027,
+      "decalageSemaines": 0
+    },
+    "quinquennat": null,
+    "historique": {
+      "presidentielles": [],
+      "quinquennats": []
+    },
+    "parlement": null,
+    "economie": null,
+    "legislatives": null,
+    "scenario": "colere-sociale",
+    "consequences": []
+  }
+}

@@ -1,30 +1,357 @@
-@import 'tailwindcss';
+@import 'tailwindcss' source('..');
+/* Polices embarquées (licence SIL OFL 1.1) : l'application fonctionne hors ligne. */
+@import '@fontsource-variable/archivo/wdth.css';
+@import '@fontsource-variable/anybody/standard.css';
+@import '@fontsource-variable/atkinson-hyperlegible-next/wght.css';
 
-/* Thème sombre piloté par la classe `dark` sur <html> (choix clair / sombre / système). */
+/* Thème sombre piloté par la classe `dark` sur <html> (soirée électorale / clair / système). */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * Design system « Tract » (phase 21) : la campagne telle qu'on l'imprime au local, en
+ * sérigraphie. Deux encres républicaines posées en aplat, le bleu et le rouge ; là où elles se
+ * chevauchent, leur surimpression donne l'encre du texte (indigo profond). Le surligneur jaune
+ * des sondages imprimés du QG marque ce qui change et ce qui décide. Papier froid recyclé le
+ * jour, encre de nuit le soir.
+ * - Titres, noms et grands chiffres : Anybody, grotesque à largeur variable (condensée pour les
+ *   titres comme sur une affiche, plus large pour les chiffres) ; texte et données : Atkinson
+ *   Hyperlegible Next, dessinée pour la lisibilité ; habillage télévisé (soirée électorale,
+ *   débats) : Archivo condensé, élément du monde du jeu.
+ * - Pas d'ombres floues : des filets d'encre, et un seul effet d'impression, le léger décalage
+ *   de calage (repérage) sous ce qui décide.
+ */
 @theme {
   --font-sans:
-    'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --color-republique-50: #eff4ff;
-  --color-republique-100: #dbe6fe;
-  --color-republique-500: #3b5bdb;
-  --color-republique-600: #2f4ac0;
-  --color-republique-700: #253b9b;
-  --color-republique-900: #172554;
+    'Atkinson Hyperlegible Next Variable', system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  --font-display: 'Anybody Variable', 'Arial Narrow', system-ui, sans-serif;
+  --font-broadcast: 'Archivo Variable', 'Anybody Variable', system-ui, sans-serif;
+  --font-broadcast--font-variation-settings: 'wdth' 78;
+
+  /* Feuille imprimée ; surligneur sur fond de nuit (accent du thème sombre). */
+  --color-papier: #fbfbfc;
+  --color-dorure: #ffe53d;
+  /* Surimpression du bleu et du rouge : l'encre du texte et de l'affiche-titre. */
+  --color-surimpression: #24164f;
+  /* Encres sémantiques (phase 22) : principale, secondaire, tertiaire ; filet et feuille. La
+     nuit les redéfinit (html.dark) : une classe suffit là où il fallait une paire clair/nuit. */
+  --color-encre: #1b1a3a;
+  --color-encre-2: #4a4e70;
+  --color-encre-3: #62678a;
+  --color-filet: #d3d6e0;
+  --color-feuille: #fbfbfc;
+
+  /* Neutres : du papier froid à l'encre de surimpression (remplacent la gamme slate). */
+  --color-slate-50: #f1f2f5;
+  --color-slate-100: #e6e8ee;
+  --color-slate-200: #d3d6e0;
+  --color-slate-300: #b2b6c6;
+  --color-slate-400: #9297ae;
+  --color-slate-500: #62678a;
+  --color-slate-600: #4a4e70;
+  --color-slate-700: #353859;
+  --color-slate-800: #252647;
+  --color-slate-900: #1b1a3a;
+  --color-slate-950: #100f25;
+
+  /* Encre bleue. */
+  --color-republique-50: #eef1fe;
+  --color-republique-100: #dce3fd;
+  --color-republique-200: #b8c6fb;
+  --color-republique-300: #8ca2f7;
+  --color-republique-400: #5d7bf0;
+  --color-republique-500: #3657e3;
+  --color-republique-600: #2340c8;
+  --color-republique-700: #1c33a0;
+  --color-republique-800: #1a2d80;
+  --color-republique-900: #18286a;
+  --color-republique-950: #0f1a45;
+
+  /* Encre rouge (écarlate de sérigraphie). */
+  --color-red-50: #fff1f1;
+  --color-red-100: #ffdfe0;
+  --color-red-200: #ffc2c4;
+  --color-red-300: #ff959a;
+  --color-red-400: #ff5c66;
+  --color-red-500: #f2343f;
+  --color-red-600: #d81f2c;
+  --color-red-700: #b01724;
+  --color-red-800: #911824;
+  --color-red-900: #781a24;
+  --color-red-950: #42080e;
+
+  /* Surligneur (ancienne dorure) : fonds jaunes, texte olive lisible sur papier. */
+  --color-or-50: #fffce0;
+  --color-or-100: #fff7b3;
+  --color-or-200: #ffef75;
+  --color-or-300: #ffe53d;
+  --color-or-400: #fada0a;
+  --color-or-500: #e3c400;
+  --color-or-600: #6f6000;
+  --color-or-700: #5a4e00;
+  --color-or-800: #463d00;
+  --color-or-900: #2e2800;
+
+  /* Feuilles d'imprimé : coins à peine adoucis, hiérarchie par l'épaisseur des filets. */
+  --radius-card: 0.5rem;
+  --radius-dossier: 0.625rem;
+
+  --radius-affiche: 0.125rem;
+
+  /* Pas d'ombre floue : un filet d'encre sous la feuille, le calage décalé sous ce qui décide. */
+  --shadow-card: 0 1px 0 rgb(27 26 58 / 0.1);
+  --shadow-raised: 0 2px 0 rgb(27 26 58 / 0.14);
+  --shadow-hud: 0 1px 0 rgb(27 26 58 / 0.12);
+  --shadow-neon: 0 0 0 1px rgb(93 123 240 / 0.55), 0 0 28px -6px rgb(93 123 240 / 0.6);
+  --shadow-neon-rouge: 0 0 0 1px rgb(255 92 102 / 0.55), 0 0 28px -6px rgb(255 92 102 / 0.6);
+  --shadow-lueur: 0 0 12px rgb(93 123 240 / 0.7);
+  /* Repérage : l'encre bleue décalée sous l'aplat jaune (bouton décisif). */
+  --shadow-dore: 3px 3px 0 0 var(--color-republique-600);
+  --shadow-affiche: 0 1px 0 rgb(16 15 37 / 0.3), 0 14px 26px -18px rgb(16 15 37 / 0.6);
+
+  --ease-sortie: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --animate-monte: monte 280ms var(--ease-sortie) both;
+  --animate-apparait: apparait 200ms ease-out both;
+  --animate-revele: revele 520ms var(--ease-sortie) both;
+  --animate-feuille: feuille 420ms var(--ease-sortie) both;
+  --animate-volet: volet 420ms var(--ease-sortie) both;
+  --animate-defile: defile 45s linear infinite;
+  --animate-direct: direct 1.6s ease-in-out infinite;
+  --animate-colle: colle 700ms var(--ease-sortie) both;
+  --animate-bascule: bascule 620ms var(--ease-sortie) both;
+  --animate-titre: titre 900ms var(--ease-sortie) both;
+  --animate-calage: calage 900ms var(--ease-sortie) 120ms both;
+  --animate-imprime: imprime 420ms var(--ease-sortie) both;
+  --animate-rebond: rebond 220ms var(--ease-sortie);
+  --animate-tampon: tampon 520ms cubic-bezier(0.2, 0.9, 0.25, 1.15) 160ms both;
+
+  @keyframes monte {
+    from {
+      transform: translateY(16px);
+      opacity: 0;
+    }
+  }
+  @keyframes apparait {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes revele {
+    from {
+      transform: translateY(24px) scale(0.98);
+      opacity: 0;
+    }
+  }
+  /* Feuille qui monte du bas (téléphone) et volet qui glisse de la droite (bureau). */
+  @keyframes feuille {
+    from {
+      transform: translateY(60%);
+      opacity: 0;
+    }
+  }
+  @keyframes volet {
+    from {
+      transform: translateX(48px);
+      opacity: 0;
+    }
+  }
+  /* Bandeau défilant des estimations (contenu doublé : un demi-défilement boucle). */
+  @keyframes defile {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  /* Voyant « En direct ». */
+  @keyframes direct {
+    50% {
+      opacity: 0.3;
+    }
+  }
+  /* Affiche collée sur son panneau : elle se pose, légèrement de biais, puis se plaque. */
+  @keyframes colle {
+    from {
+      transform: translateY(-14px) rotate(-2.5deg) scale(1.04);
+      opacity: 0;
+    }
+    60% {
+      opacity: 1;
+    }
+  }
+  /* Page du calendrier qui bascule (nouvelle semaine) : rotation seule, sans fondu, pour que le
+     contraste du texte reste entier pendant l'animation. */
+  @keyframes bascule {
+    from {
+      transform: perspective(600px) rotateX(-80deg);
+      transform-origin: top;
+    }
+  }
+  /* Coup de tampon : il tombe de haut, s'écrase un instant, puis reste de biais. */
+  /* Phase 22 : retours d'action — la tuile ajoutée s'imprime, le compteur rebondit. */
+  @keyframes imprime {
+    from {
+      opacity: 0.85;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+  @keyframes rebond {
+    45% {
+      transform: scale(1.12);
+    }
+  }
+  @keyframes tampon {
+    from {
+      transform: scale(1.9) rotate(-16deg);
+      opacity: 0;
+    }
+    55% {
+      transform: scale(0.94) rotate(-5deg);
+      opacity: 1;
+    }
+    to {
+      transform: rotate(-6deg);
+    }
+  }
+  /* Second passage d'encre qui se cale sur le premier (affiche-titre). */
+  @keyframes calage {
+    from {
+      transform: translate(0.08em, -0.06em);
+      opacity: 0;
+    }
+    35% {
+      opacity: 1;
+    }
+  }
+  /* Titre qui s'éclaire (écran-titre). */
+  @keyframes titre {
+    from {
+      opacity: 0;
+      letter-spacing: 0.06em;
+      filter: blur(6px);
+    }
+  }
 }
 
 @layer base {
+  /*
+   * Marges de sécurité de l'appareil (phase 11) : barre d'état en haut, barre de gestes en bas.
+   * Le navigateur les donne par env() ; sur Android, Capacitor 8 les injecte aussi dans
+   * --safe-area-inset-* quand la WebView ne les fournit pas : on retient la plus grande.
+   */
+  :root {
+    --sat: max(env(safe-area-inset-top, 0px), var(--safe-area-inset-top, 0px));
+    --sab: max(env(safe-area-inset-bottom, 0px), var(--safe-area-inset-bottom, 0px));
+    --sal: max(env(safe-area-inset-left, 0px), var(--safe-area-inset-left, 0px));
+    --sar: max(env(safe-area-inset-right, 0px), var(--safe-area-inset-right, 0px));
+  }
   html {
     color-scheme: light;
+    -webkit-tap-highlight-color: transparent;
+    background-color: var(--color-slate-50);
+    /* Un élément qui prend le focus défile au-dessus de la navigation et de la barre de
+       résolution, en bas, et sous la barre d'état, en haut. */
+    /* Phase 22 (WCAG 2.4.11) : sous le bandeau de campagne collant (--hud) et le sommaire des
+       espaces ; 5rem hors partie, comme avant. */
+    scroll-padding-top: calc(var(--sat) + var(--hud, 1rem) + 4rem);
+    scroll-padding-bottom: calc(var(--sab) + 8.5rem);
   }
   html.dark {
     color-scheme: dark;
+    background-color: var(--color-slate-950);
+    --color-encre: #f1f2f5;
+    --color-encre-2: #9297ae;
+    --color-encre-3: #9297ae;
+    --color-filet: #353859;
+    --color-feuille: #1b1a3a;
   }
   body {
-    @apply bg-slate-50 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100;
+    @apply bg-slate-50 text-slate-900 antialiased dark:bg-transparent dark:text-slate-100;
   }
+  /* Nuit : une lueur d'encre bleue au coin, comme une lampe d'atelier sur le papier sombre. */
+  html.dark body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(48rem 30rem at -8% -10%, rgb(54 87 227 / 0.16), transparent 65%),
+      radial-gradient(40rem 26rem at 108% 108%, rgb(242 52 63 / 0.08), transparent 62%);
+  }
+  /* Grain du papier recyclé, sur les deux thèmes. */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.07;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.35  0 0 0 0 0.35  0 0 0 0 0.45  0 0 0 1 0'/></filter><rect width='100%' height='100%' filter='url(%23g)'/></svg>");
+  }
+  /* Titres : la grotesque condensée des affiches, serrée, très grasse. */
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 780;
+    font-stretch: 76%;
+    letter-spacing: -0.01em;
+    line-height: 1.05;
+    text-wrap: balance;
+  }
+
   :focus-visible {
-    @apply outline-2 outline-offset-2 outline-republique-500;
+    @apply outline-2 outline-offset-2 outline-republique-500 dark:outline-dorure;
+  }
+  /* Grands chiffres : largeur moyenne, chiffres alignés et tabulaires (sondages, scores). */
+  .font-display {
+    font-stretch: 86%;
+    font-variant-numeric: lining-nums tabular-nums;
+  }
+  ::selection {
+    @apply bg-or-300 text-slate-950;
+  }
+  /* Chiffres alignés dans les tableaux et indicateurs. */
+  table,
+  dd,
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Habillage télévisé (soirée électorale, débats) : bandeaux condensés de plateau. Hors couche,
+   pour primer sur l'utilitaire `font-display`. */
+.habillage-tele :is(h1, h2, h3, .font-display) {
+  font-family: var(--font-broadcast);
+  font-variation-settings: 'wdth' 80;
+  letter-spacing: -0.005em;
+}
+
+/* Transitions de vue entre les espaces de la partie (navigateurs qui les prennent en charge) :
+   fondu bref, le bandeau de la partie restant en place. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 180ms;
+}
+
+/* Mouvement réduit : aucune animation ni transition décorative (le bandeau ne défile plus). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    /* Phase 22 : sans délai non plus, sinon un élément qui entre « en différé » reste invisible
+       le temps du délai (affiches de l'écran-titre). */
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    transition-delay: 0s !important;
+    scroll-behavior: auto !important;
+  }
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
   }
 }

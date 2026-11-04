@@ -14,7 +14,7 @@ import { parseCog } from '../cog/cog';
 import { download, sha256File } from '../download';
 import { GEO_SOURCES } from '../geo/sources';
 import { buildPersonalities, photoFiles, type Sources } from '../personnalites/build';
-import { parseChes } from '../personnalites/ches';
+import { CHES_2024, CHES_LICENCE, CHES_TREND, parseChes } from '../personnalites/ches';
 import {
   commonsPageUrl,
   freeLicense,
@@ -35,17 +35,6 @@ const HEADERS = {
   'user-agent':
     'republique-2027-import/1.0 (https://github.com/joladebrouille5-cmyk/R-publique-2027)',
 };
-
-const CHES_2024 = {
-  url: 'https://github.com/chesdata/chesdata.github.io/releases/download/ches-europe/CHES_2024_final_v2.csv',
-  fichier: 'CHES_2024_final_v2.csv',
-};
-const CHES_TREND = {
-  url: 'https://github.com/chesdata/chesdata.github.io/releases/download/ches-trend/1999-2024_CHES_dataset_meansV2.csv',
-  fichier: '1999-2024_CHES_dataset_meansV2.csv',
-};
-const CHES_LICENCE =
-  'non précisée ; usage avec citation demandé (Rovny et al., « The 2024 Chapel Hill Expert Survey on political party positioning in Europe », 2025)';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const sha256 = (text: string) => createHash('sha256').update(text).digest('hex');
@@ -70,10 +59,17 @@ async function main() {
   mkdirSync(RAW, { recursive: true });
   const consulteLe = today();
 
-  // 1. Article Wikipédia, à une révision figée.
+  // 1. Article Wikipédia, à une révision figée : la révision courante, ou celle donnée par
+  // `--revision <oldid>` (réimport sans changer de source, par exemple pour une photo).
   const title = ARTICLE.replace(/ /g, '_');
-  const html = await fetchText(`https://fr.wikipedia.org/wiki/${encodeURIComponent(title)}`);
-  const revid = /"wgRevisionId":(\d+)/.exec(html)?.[1];
+  const flag = process.argv.indexOf('--revision');
+  let revid = flag >= 0 ? process.argv[flag + 1] : undefined;
+  if (flag >= 0 && !/^\d+$/.test(revid ?? ''))
+    throw new Error('--revision attend un numéro de révision.');
+  if (!revid) {
+    const html = await fetchText(`https://fr.wikipedia.org/wiki/${encodeURIComponent(title)}`);
+    revid = /"wgRevisionId":(\d+)/.exec(html)?.[1];
+  }
   if (!revid) throw new Error('Révision de l’article introuvable.');
   const rawUrl = `https://fr.wikipedia.org/w/index.php?title=${encodeURIComponent(title)}&action=raw&oldid=${revid}`;
   console.log(`Source : ${rawUrl}`);

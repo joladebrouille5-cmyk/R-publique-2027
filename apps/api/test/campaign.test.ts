@@ -67,6 +67,37 @@ async function advanceOk(client: Client, game: GameDetail, body: Record<string, 
 }
 
 describe('plan hebdomadaire de la phase 5', () => {
+  it('note les passages dans les médias selon la posture choisie, sans tirage (phase 11)', async () => {
+    const client = new Client(app);
+    const game = await newGame(client);
+    const body = {
+      actions: [
+        { actionId: 'emission-politique', cible: 'emi-le-grand-jury', posture: 'offensive' },
+        { actionId: 'decryptage' },
+        { actionId: 'meeting', posture: 'rassembleuse' },
+      ],
+    };
+    const { report } = await advanceOk(client, game, body);
+    const [show, decryptage, meeting] = report.actions.filter((a) => a.actorId === PLAYER_ACTOR_ID);
+    expect(show!.prestation).toMatchObject({
+      posture: 'offensive',
+      choisie: true,
+      formatId: 'emission-politique',
+    });
+    expect(show!.prestation!.raisons.length).toBeGreaterThan(1);
+    expect(decryptage!.prestation).toMatchObject({ posture: 'pedagogique', choisie: false });
+    expect(meeting).toMatchObject({
+      status: 'rejetee',
+      reason: 'Cette action n’est pas un passage dans les médias : aucune posture à choisir.',
+      prestation: null,
+    });
+    // Posture inconnue : requête refusée par le schéma partagé.
+    const bad = await advance(client, game, {
+      actions: [{ actionId: 'interview', cible: 'france-inter', posture: 'agressive' }],
+    });
+    expect(bad.statusCode).toBe(400);
+  });
+
   it('annonce des propositions et refuse, avec motif, celle dont la dépendance manque', async () => {
     const client = new Client(app);
     const game = await newGame(client);
