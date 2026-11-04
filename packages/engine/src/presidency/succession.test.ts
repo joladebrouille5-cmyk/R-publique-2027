@@ -494,6 +494,29 @@ describe('le choix du joueur et la passation (phase 23, §1 et §3)', () => {
     expect(government.premierMinistre).toBeDefined();
   });
 
+  it('garde le choix du joueur si le gouvernement change avant l’ouverture', () => {
+    const figure = successorOptions(presidingDecision, RULES).find(
+      (o) => o.source.nature === 'figure',
+    )!;
+    const chosen = playChoosing(
+      presidingDecision,
+      (s) => s.meta.date === '2031-09-22',
+      () => figure.id,
+    );
+    // Remaniement simulé : la figure choisie quitte le gouvernement.
+    const government = chosen.quinquennat!.gouvernement!;
+    const profile = RULES.quinquennat.profils.find(
+      (p) => ![government.premierMinistre, ...government.ministres].some((m) => m.ref === p.id),
+    )!;
+    if (government.premierMinistre.ref === figure.source.ref)
+      government.premierMinistre = { nature: 'profil', ref: profile.id };
+    government.ministres = government.ministres.map((m) =>
+      m.ref === figure.source.ref ? { ...m, nature: 'profil', ref: profile.id } : m,
+    );
+    const { state } = open(chosen);
+    expect(state.player.actorId).toBe(`entrant-2032-${figure.source.ref}`);
+  });
+
   it('passe la main à un acteur déjà dans la partie, sans le dédoubler', () => {
     // Un rival de 2027 devenu Premier ministre, avant l'ouverture de la décision.
     const start = clone(play(presiding, (s) => s.meta.date === '2031-08-25'));

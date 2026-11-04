@@ -339,10 +339,14 @@ export function applySuccession(
     const eligible = !(context.termLimited && player.id === context.presidentId);
     const options = successorOptionsFor(state, ruleset, context);
     const chosen = state.succession?.annee === year ? state.succession.choixJoueur : null;
-    const valid = (id: string | null) =>
-      id !== null &&
-      ((id === REPRESENT_OPTION_ID && eligible) ||
-        (parseSuccessorOptionId(id) !== null && options.some((o) => o.id === id)));
+    // Le choix tient même si le gouvernement a changé depuis la décision (remaniement) : le
+    // successeur doit seulement exister encore et ne pas être le président sortant de l'IA.
+    const valid = (id: string | null) => {
+      if (id === null) return false;
+      if (id === REPRESENT_OPTION_ID) return eligible;
+      const source = parseSuccessorOptionId(id);
+      return source !== null && successorExists(state, ruleset, source, context.presidentId);
+    };
     const choice = valid(chosen)
       ? chosen!
       : eligible
@@ -739,6 +743,22 @@ export function requestCandidacy(state: GameState, ruleset: Ruleset): void {
     options,
     defaultOptionId: options[0]!.id,
   });
+}
+
+/** Successeur encore possible : la personne existe, ce n'est ni le joueur ni le président (IA). */
+function successorExists(
+  state: GameState,
+  ruleset: Ruleset,
+  source: SuccessorSource,
+  presidentId: string,
+): boolean {
+  if (source.nature === 'figure') return figureById(ruleset, source.ref) !== undefined;
+  if (source.nature === 'profil') return profileById(ruleset, source.ref) !== undefined;
+  return (
+    state.actors[source.ref] !== undefined &&
+    source.ref !== state.player.actorId &&
+    (source.ref !== presidentId || presidentId === state.player.actorId)
+  );
 }
 
 /**

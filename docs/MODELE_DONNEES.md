@@ -144,6 +144,10 @@ Stocker des valeurs par commune dans chaque instantané hebdomadaire serait proh
 >
 > Migration 21 → 22 : aucune suite programmée ; métadonnées passées au moteur 0.22.0 et au jeu de règles courant. Fixture de non-régression : un état réel du format 21 (`packages/save-engine/src/fixtures/v21-phase-20.json`, moteur 0.21.0, niveau Expert, format court).
 >
+> **Phase 23 — format 23** (implémenté, jeu de règles 21.0.0, moteur 0.23.0) : `succession` (`{ annee, choixJoueur, annonces[], bilan{} } | null` : année du cycle, option choisie par le joueur dans sa décision `candidature`, annonces de candidature faites à l'ouverture de la campagne `{ actorId, choix: 'candidat' | 'retrait' | 'entree' | 'successeur', motif }`, facteur et rôle `sortant` / `heritier` / `ministre` de chaque candidat concerné par le bilan) ; genre de décision `candidature` (options `se-representer` et `successeur-<acteur|figure|profil>-<réf>`, règle partagée par `@r2027/shared`) ; identité d'un candidat : `figureId` facultatif (figure du vivier entrée dans la course) — une personnalité réelle renvoie à exactement une fiche, `personnaliteId` ou `figureId`. Un candidat entrant a l'identifiant `entrant-<année>-<fiche>` ; le candidat du joueur peut changer d'acteur (`player.actorId`) lors d'une passation, l'ancien devenant un acteur de l'IA retiré. Le format 22 est figé (`GameStateV22Schema`, `ActorV22Schema`, `PendingDecisionV22Schema`).
+>
+> Migration 22 → 23 : `succession: null`, aucun `figureId` ; métadonnées passées au moteur 0.23.0 et au jeu de règles courant. Fixture de non-régression : un état réel du format 22 en fin de quinquennat (`packages/save-engine/src/fixtures/v22-phase-22.json`, moteur 0.22.0, Édouard Philippe incarné, semaine du 4 août 2031) : migré, il reçoit la décision de candidature le 1er septembre 2031.
+>
 > L'esquisse ci-dessous décrit la cible des phases suivantes.
 
 ```ts
