@@ -11012,6 +11012,12 @@
     "decroissance": 0.99,
     "cycle": 2027
   },
+  "rattrapageNotoriete": {
+    "statut": "hypothese",
+    "note": "Rattrapage de notoriété (phase 24) : un candidat peu connu gagne davantage à chaque action qui le fait connaître (la nouveauté attire la couverture), tant que sa notoriété reste sous le seuil ; même règle pour tous les candidats, joueur comme adversaires. Paramètre de jeu, sans prétention de mesure.",
+    "seuil": 3000,
+    "coefficient": 2
+  },
   "succession": {
     "statut": "hypothese",
     "note": "Paramètres de jeu (hypothèses, phase 23) pour la présidentielle qui suit un quinquennat : le joueur décide quatre semaines avant l'ouverture de la campagne de se représenter ou de passer la main à un successeur de son camp ; les autres candidats se représentent ou se retirent par un tirage dont la probabilité dépend de leur situation à la présidentielle précédente ; un héritier du camp sortant, un ministre ambitieux et des profils fictifs des familles sans candidat entrent ; le bilan du quinquennat (popularité finale, note sur 20, variation du chômage) s'ajoute à l'utilité du président sortant et, atténué, de son camp. Aucune de ces valeurs n'est une donnée ni une prévision : les candidatures sont simulées et aucun propos n'est prêté à une personne réelle.",

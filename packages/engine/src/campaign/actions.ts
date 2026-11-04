@@ -280,7 +280,12 @@ export function resolveActionEffects(
     };
     definition.effets.forEach((effect, i) =>
       applyOrSchedule(
-        { ...base, label: definition.libelle, source: 'action' },
+        {
+          ...base,
+          label: definition.libelle,
+          source: 'action',
+          rattrapage: ruleset.rattrapageNotoriete,
+        },
         effect,
         variable(effect),
         i,

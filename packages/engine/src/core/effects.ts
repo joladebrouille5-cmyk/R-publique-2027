@@ -29,6 +29,7 @@ export function effectFactors(
   source: FactorSource,
   step: number,
   variable = 'aléa',
+  rattrapage?: CatchUp,
 ): Factor[] {
   const factors: Factor[] = [
     { label: `${label} : effet attendu`, value: effect.base, source, step },
@@ -47,8 +48,25 @@ export function effectFactors(
       });
     }
   }
+  // Phase 24 : rattrapage de notoriété d'un candidat peu connu (gain d'une action).
+  if (rattrapage && effect.ressource === 'notoriete' && total > 0 && current < rattrapage.seuil) {
+    const bonus = Math.round(
+      (total * rattrapage.coefficient * (rattrapage.seuil - current)) / rattrapage.seuil,
+    );
+    if (bonus > 0) {
+      factors.push({
+        label: `${label} : rattrapage de notoriété (sous ${formatPercent(rattrapage.seuil)})`,
+        value: bonus,
+        source,
+        step,
+      });
+    }
+  }
   return factors;
 }
+
+/** Paramètres du rattrapage de notoriété (jeu de règles, phase 24). */
+export type CatchUp = { seuil: number; coefficient: number };
 
 /**
  * Applique des facteurs à une ressource. La trésorerie passe par le compte de campagne, qui
@@ -78,6 +96,8 @@ export type EffectContext = {
   ref: string;
   /** Libellé de la part variable (phase 11, passage noté) ; par défaut « aléa ». */
   variable?: string;
+  /** Rattrapage de notoriété (phase 24), pour les seuls effets immédiats des actions. */
+  rattrapage?: CatchUp;
 };
 
 /** Applique un effet tout de suite (délai 0) ou le programme pour une semaine ultérieure. */
@@ -100,7 +120,15 @@ export function applyOrSchedule(
       context.book,
       context.actorId,
       effect.ressource,
-      effectFactors(drawn, current, context.label, context.source, context.step, context.variable),
+      effectFactors(
+        drawn,
+        current,
+        context.label,
+        context.source,
+        context.step,
+        context.variable,
+        context.rattrapage,
+      ),
     );
     return;
   }

@@ -1922,6 +1922,19 @@ export const RulesetSchema = z
         cycle: z.number().int().min(2027),
       })
       .strict(),
+    /**
+     * Rattrapage de notoriété (phase 24, hypothèse) : un gain de notoriété issu d'une action est
+     * augmenté de `gain × coefficient × (seuil − notoriété) / seuil` tant que la notoriété du
+     * candidat est sous le seuil ; même règle pour tous les candidats.
+     */
+    rattrapageNotoriete: z
+      .object({
+        statut: z.literal('hypothese'),
+        note: z.string().min(1),
+        seuil: Points,
+        coefficient: z.number().min(0).max(10),
+      })
+      .strict(),
     /** Figures réelles nominables au gouvernement (`pnpm data:gouvernement`, phase 11). */
     figures: GovernmentFiguresSchema,
   })
