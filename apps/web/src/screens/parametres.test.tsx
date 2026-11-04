@@ -1,5 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
+import { useThemeStore } from '../stores/theme';
 import { healthHandler, mockApi, renderRoute, RULESET, rulesetHandler } from '../test/utils';
 
 // Paramètres (phase 11) : toutes les attributions (données, licences, photos, logos) sont
@@ -100,11 +102,51 @@ describe('paramètres', () => {
   it('propose le thème et indique les versions', async () => {
     show();
     const appearance = await screen.findByRole('region', { name: 'Apparence' });
-    expect(within(appearance).getByRole('combobox', { name: 'Thème' })).toBeInTheDocument();
+    // Phase 22 : trois tuiles (Clair, Soirée, Système) au lieu d'une liste déroulante.
+    const choice = within(appearance).getByRole('radiogroup', { name: 'Thème' });
+    expect(
+      within(choice)
+        .getAllByRole('radio')
+        .map((r) => r.getAttribute('value')),
+    ).toEqual(['clair', 'sombre', 'systeme']);
+    await userEvent.click(within(choice).getByRole('radio', { name: /Soirée/ }));
+    expect(useThemeStore.getState().theme).toBe('sombre');
+    await userEvent.click(within(choice).getByRole('radio', { name: /Système/ }));
+    expect(useThemeStore.getState().theme).toBe('systeme');
     const about = screen.getByRole('region', { name: 'À propos' });
     expect(
       await within(about).findByText(`${RULESET.libelle} (${RULESET.version})`),
     ).toBeInTheDocument();
+  });
+
+  it('range les crédits par catégorie et les filtre', { timeout: 30_000 }, async () => {
+    show();
+    const credits = await screen.findByRole('region', { name: 'Crédits et mentions légales' });
+    // Catégories dépliables, avec leur nombre d'entrées ; les mentions légales ouvertes.
+    const legal = within(credits).getByText('Mentions légales').closest('details')!;
+    expect(legal).toHaveAttribute('open');
+    const photos = within(credits)
+      .getByText(/^Photos des personnalités/)
+      .closest('details')!;
+    expect(photos).not.toHaveAttribute('open');
+    expect(within(credits).getByText(/^Photos des personnalités/).textContent).toMatch(/\(\d+\)$/);
+    // Polices embarquées (phase 22).
+    expect(credits.textContent).toMatch(/Anybody.+SIL Open Font License 1\.1/);
+
+    // Filtrer : les catégories qui répondent s'ouvrent, les entrées qui ne répondent pas se cachent.
+    const filter = within(credits).getByRole('searchbox', { name: 'Filtrer les crédits' });
+    await userEvent.type(filter, 'Atkinson');
+    const fonts = within(credits)
+      .getByText(/^Polices/)
+      .closest('details')!;
+    expect(fonts).toHaveAttribute('open');
+    expect(within(fonts).getByRole('link', { name: 'Atkinson Hyperlegible Next' })).toBeVisible();
+    expect(photos).not.toBeVisible();
+    await userEvent.clear(filter);
+    await userEvent.type(filter, 'zzzz');
+    expect(within(credits).getByText('Aucun crédit ne correspond à « zzzz ».')).toBeInTheDocument();
+    await userEvent.clear(filter);
+    expect(photos).toBeVisible();
   });
 
   it('s’ouvre depuis l’en-tête de l’application', async () => {

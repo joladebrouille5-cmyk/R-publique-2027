@@ -109,18 +109,23 @@ export function SoundSettings() {
           disabled={coupe}
           onChange={(value) => set({ volumeJingles: value })}
         />
-        <ul className="mt-2 divide-y divide-slate-200 border-y border-slate-200 dark:divide-white/[0.07] dark:border-white/[0.07]">
+        {/* Phase 22 : une carte par jingle (bouton court, moment où il retentit), en grille. */}
+        <ul className="mt-2 grid gap-2 sm:grid-cols-2">
           {CUES.map((cue) => (
-            <li key={cue} className="flex flex-wrap items-center gap-x-4 gap-y-1 py-2">
+            <li
+              key={cue}
+              className="flex flex-col gap-1.5 rounded-lg border border-filet p-3 dark:border-white/10"
+            >
               <button
                 type="button"
                 onClick={() => sound().preview(cue)}
-                className={`${buttonSecondary} w-full justify-start sm:w-72`}
+                aria-label={`Écouter « ${JINGLES[cue].libelle} »`}
+                className={`${buttonSecondary} justify-start self-start px-3.5`}
               >
-                <Play aria-hidden="true" className="size-4" />
-                Écouter « {JINGLES[cue].libelle} »
+                <Play aria-hidden="true" className="size-4 shrink-0" />
+                {JINGLES[cue].libelle}
               </button>
-              <span className="text-sm text-encre-2">{JINGLES[cue].quand}</span>
+              <span className="text-xs text-encre-2">{JINGLES[cue].quand}</span>
             </li>
           ))}
         </ul>
