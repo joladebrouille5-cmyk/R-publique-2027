@@ -118,10 +118,10 @@ function Sub({
         >
           ›
         </span>
-        <span data-titre>
+        <h3 data-titre className="font-display text-base font-bold">
           {title}
           {count > 0 ? ` (${count})` : ''}
-        </span>
+        </h3>
       </summary>
       <div className="space-y-2 pt-1 pb-3">{children}</div>
     </details>
@@ -208,11 +208,14 @@ function Credits({ ruleset }: { ruleset: Ruleset }) {
           className={input}
         />
       </label>
-      {found === 0 && (
-        <p role="status" className="text-sm text-encre-2">
-          Aucun crédit ne correspond à « {query.trim()} ».
-        </p>
-      )}
+      {/* Région d'état permanente : son texte change, les lecteurs d'écran l'annoncent. */}
+      <p role="status" className="text-sm text-encre-2 empty:hidden">
+        {found === null
+          ? ''
+          : found === 0
+            ? `Aucun crédit ne correspond à « ${query.trim()} ».`
+            : `${found} ${found > 1 ? 'crédits trouvés' : 'crédit trouvé'}.`}
+      </p>
       <div ref={root} className="space-y-2">
         <Sub title="Mentions légales" open>
           <div className="space-y-2 text-sm">

@@ -252,7 +252,9 @@
     background-color: var(--color-slate-50);
     /* Un élément qui prend le focus défile au-dessus de la navigation et de la barre de
        résolution, en bas, et sous la barre d'état, en haut. */
-    scroll-padding-top: calc(var(--sat) + 5rem);
+    /* Phase 22 (WCAG 2.4.11) : sous le bandeau de campagne collant (--hud) et le sommaire des
+       espaces ; 5rem hors partie, comme avant. */
+    scroll-padding-top: calc(var(--sat) + var(--hud, 1rem) + 4rem);
     scroll-padding-bottom: calc(var(--sab) + 8.5rem);
   }
   html.dark {

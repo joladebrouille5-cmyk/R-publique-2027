@@ -130,12 +130,22 @@ describe('paramètres', () => {
       .closest('details')!;
     expect(photos).not.toHaveAttribute('open');
     expect(within(credits).getByText(/^Photos des personnalités/).textContent).toMatch(/\(\d+\)$/);
+    // Les catégories restent des titres de niveau 3 (navigation par titres).
+    expect(
+      within(credits).getByRole('heading', {
+        level: 3,
+        name: /^Photos des personnalités \(\d+\)$/,
+      }),
+    ).toBeInTheDocument();
     // Polices embarquées (phase 22).
     expect(credits.textContent).toMatch(/Anybody.+SIL Open Font License 1\.1/);
 
     // Filtrer : les catégories qui répondent s'ouvrent, les entrées qui ne répondent pas se cachent.
     const filter = within(credits).getByRole('searchbox', { name: 'Filtrer les crédits' });
+    const status = within(credits).getByRole('status');
+    expect(status).toBeEmptyDOMElement();
     await userEvent.type(filter, 'Atkinson');
+    expect(status).toHaveTextContent(/^\d+ crédits? trouvés?\.$/);
     const fonts = within(credits)
       .getByText(/^Polices/)
       .closest('details')!;

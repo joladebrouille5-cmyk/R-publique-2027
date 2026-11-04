@@ -114,7 +114,7 @@ export function ScreenSection({
             <div
               key={part}
               id={part}
-              className={`scroll-mt-40 space-y-3 ${
+              className={`scroll-mt-3 space-y-3 ${
                 index > 0 ? 'border-t border-slate-200 pt-6 dark:border-slate-800' : ''
               }`}
             >

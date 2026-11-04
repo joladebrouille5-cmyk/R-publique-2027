@@ -75,7 +75,7 @@ export function Disclosure({
   return (
     <section
       id={id}
-      className={`relative scroll-mt-40 transition-colors duration-200 ${
+      className={`relative scroll-mt-3 transition-colors duration-200 ${
         open ? 'bg-slate-50/80 dark:bg-white/[0.025]' : ''
       }`}
     >
