@@ -41,10 +41,10 @@ export type Hub = {
 
 export const HUBS: readonly Hub[] = [
   {
-    path: 'tableau-de-bord',
-    label: 'QG',
-    titre: 'Tableau de bord',
-    intro: 'Votre QG : la situation en un coup d’œil, les décisions, le plan de la semaine.',
+    path: 'plateau',
+    label: 'Plateau',
+    titre: 'Plateau',
+    intro: 'La table de jeu : la France des départements, votre main, les décisions de la semaine.',
     icon: Flag,
     sections: ['archives'],
   },

@@ -40,7 +40,7 @@ describe('navigation de partie', () => {
       within(nav)
         .getAllByRole('link')
         .map((link) => link.textContent),
-    ).toEqual(['QG', 'Carte', 'Campagne', 'Opinion', 'Pouvoir']);
+    ).toEqual(['Plateau', 'Carte', 'Campagne', 'Opinion', 'Pouvoir']);
     expect(within(nav).queryByRole('button')).not.toBeInTheDocument();
     // Chaque écran est un espace, ou une section d'un espace : deux gestes au plus.
     for (const s of GAME_SCREENS) {
@@ -90,12 +90,18 @@ describe('navigation de partie', () => {
     expect(await screen.findByRole('region', { name: 'Sondages' })).toBeInTheDocument();
   });
 
-  it('affiche le tableau de bord avec la date en jeu', async () => {
+  it('ouvre la partie sur le plateau, avec la date en jeu', async () => {
     mockApi(gameHandlers);
     renderRoute(`/parties/${GAME_ID}`);
-    expect(await screen.findByRole('heading', { name: 'Tableau de bord' })).toBeInTheDocument();
-    expect(screen.getByText('28 sept. 2026')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Plateau' })).toBeInTheDocument();
+    expect(screen.getAllByText(/28 sept\. 2026/).length).toBeGreaterThan(0);
     expect(await screen.findByRole('button', { name: 'Résoudre la semaine 0' })).toBeEnabled();
+  });
+
+  it('garde le QG détaillé à son adresse', async () => {
+    mockApi(gameHandlers);
+    renderRoute(`/parties/${GAME_ID}/tableau-de-bord`);
+    expect(await screen.findByRole('heading', { name: 'Tableau de bord' })).toBeInTheDocument();
     expect(screen.getByText('Aucune semaine résolue pour l’instant.')).toBeInTheDocument();
   });
 
@@ -182,7 +188,7 @@ describe('création de partie', () => {
     });
   });
 
-  it('envoie la requête puis ouvre le tableau de bord', async () => {
+  it('envoie la requête puis ouvre le plateau', async () => {
     const calls = mockApi({
       ...gameHandlers,
       'POST /api/games': () => ({ status: 201, body: gameFixture() }),
@@ -208,9 +214,7 @@ describe('création de partie', () => {
     await user.click(screen.getByRole('radio', { name: /Court/ }));
     await user.click(screen.getByRole('button', { name: 'Créer la partie' }));
 
-    await waitFor(() =>
-      expect(router.state.location.pathname).toBe(`/parties/${GAME_ID}/tableau-de-bord`),
-    );
+    await waitFor(() => expect(router.state.location.pathname).toBe(`/parties/${GAME_ID}/plateau`));
     expect(calls.find((call) => call.method === 'POST')?.body).toEqual({
       name: 'Ma campagne',
       mode: 'candidat_personnalise',

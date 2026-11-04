@@ -357,7 +357,7 @@ export function NewGame() {
           ? { orientationId: orientation }
           : {}),
       },
-      { onSuccess: (game) => void navigate(`/parties/${game.id}/tableau-de-bord`) },
+      { onSuccess: (game) => void navigate(`/parties/${game.id}/plateau`) },
     );
   };
 

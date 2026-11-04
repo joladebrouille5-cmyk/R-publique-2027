@@ -1,18 +1,11 @@
 import {
   addDays,
   candidateName,
-  debateAwaitingPlayer,
-  delegationHours,
-  isOptionalDecision,
   MAX_FAST_FORWARD_WEEKS,
   membersMajority,
-  presidentialActionBlocked,
   programmeEffect,
   suggestedProgramme,
   supportSeats,
-  type GameState,
-  type Ruleset,
-  type WeeklyReport,
 } from '@r2027/shared';
 import {
   Activity,
@@ -38,11 +31,10 @@ import {
   Vote,
   Wallet,
 } from 'lucide-react';
-import { useRef, useState, type ReactNode } from 'react';
-import { Link, useNavigate } from 'react-router';
-import { ApiRequestError, newIdempotencyKey } from '../api/client';
+import { useState, type ReactNode } from 'react';
+import { Link } from 'react-router';
 import { nominationsClosed, presentationSummary, spendingCapOf } from '../campaign';
-import { useAdvance, useJournal, useRuleset, useSupports } from '../api/hooks';
+import { useJournal, useRuleset, useSupports } from '../api/hooks';
 import { Achievements } from '../components/Achievements';
 import { DifficultySheet } from '../components/DifficultySheet';
 import { Disclosure, DisclosureGroup, Embedded } from '../components/Disclosure';
@@ -72,10 +64,11 @@ import {
   MODE_LABELS,
   PHASE_LABELS,
 } from '../labels';
-import { useWeeklyPlan } from '../stores/plan';
+import { useWeek } from '../plateau/useWeek';
 import { useOpenSections, ScreenSection } from './Espace';
 import { memberInfo } from './Government';
 import { ActionPlanner, remainingAfter } from './dashboard/ActionPlanner';
+import { presidencyRestriction } from './dashboard/restrictions';
 import { CampaignPanel } from './dashboard/CampaignPanel';
 import { CalendarPanel } from './dashboard/CalendarPanel';
 import { DecisionSpotlight } from './dashboard/DecisionSpotlight';
@@ -88,23 +81,6 @@ import { ResourcesPanel } from './dashboard/ResourcesPanel';
 import { useCurrentGame } from './GameLayout';
 import { GAME_SCREENS } from './registry';
 import { SECTION_SCREENS } from './sections';
-
-/** Même règle que le moteur (qui reste seul juge) : affichée avant de programmer la dissolution. */
-function dissolutionRestriction(state: GameState, ruleset: Ruleset): string | null {
-  const legislatives = state.legislatives;
-  if (!legislatives) return 'Aucune Assemblée à dissoudre.';
-  if (legislatives.prochaine?.motif === 'dissolution' || legislatives.premierTour)
-    return 'Des élections législatives sont déjà en cours.';
-  const { moratoireJours, delaiMaxJours } = ruleset.legislatives.regles;
-  const allowed = addDays(legislatives.derniere.t2, moratoireJours);
-  if (state.meta.date < allowed)
-    return `Pas de nouvelle dissolution dans l’année qui suit les dernières élections (possible à partir du ${formatGameDate(allowed)}).`;
-  const next = ruleset.quinquennat.cycles.find((c) => c.annee > state.cycle.annee);
-  const campaign = next ? addDays(state.meta.startDate, 7 * next.decalageSemaines) : null;
-  return campaign && addDays(state.meta.date, delaiMaxJours) >= campaign
-    ? `Plus de dissolution à l’approche de la campagne présidentielle du ${formatGameDate(campaign)} (simplification du jeu).`
-    : null;
-}
 
 const FAST_FORWARD_STOP_LABELS = {
   decision: 'une décision vous attend',
@@ -162,18 +138,27 @@ export function Dashboard() {
   const game = useCurrentGame();
   const ruleset = useRuleset(game.rulesetVersion, game.state.cycle);
   const journal = useJournal(game.id);
-  const advance = useAdvance(game.id);
-  const navigate = useNavigate();
-  const plan = useWeeklyPlan(game.id, game.week);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
+  // Phase 25 : semaine en cours (plan, décisions, avance idempotente), commune au plateau.
+  const week = useWeek(game, ruleset.data);
+  const {
+    advance,
+    plan,
+    answers,
+    answer,
+    changePlan,
+    invalidate,
+    submit,
+    debrief,
+    setDebrief,
+    debateDue,
+    unanswered,
+    reservedHours,
+    missingTargets,
+  } = week;
   const [fastWeeks, setFastWeeks] = useState(13);
-  // Débriefing de la semaine résolue (phase 11), en plein écran jusqu'à « Continuer ».
-  const [debrief, setDebrief] = useState<WeeklyReport | null>(null);
   // Détail ouvert dans un tiroir (phase 12) : la page reste en place.
   const [panel, setPanel] = useState<Panel | null>(null);
   const { open, toggle, show } = useOpenSections(QG_SECTIONS);
-  // Une clé par tentative ; conservée si le réseau coupe, pour qu'un renvoi ne rejoue rien.
-  const attemptKey = useRef<string | null>(null);
   // Pop-up d'intervention (phase 15) : décision ouverte, et celles que le joueur a refermées.
   const [spotlightId, setSpotlightId] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState<ReadonlySet<string>>(new Set());
@@ -202,14 +187,6 @@ export function Dashboard() {
           .sort((a, b) => b.value - a.value)
           .findIndex((r) => r.actorId === actor?.id) + 1
       : null;
-  // Une décision facultative (questions au gouvernement) ne bloque pas la semaine.
-  // Débat obligatoire (phase 17, règle partagée avec le moteur) : la semaine attend le débat.
-  const debateDue = observer ? undefined : debateAwaitingPlayer(state);
-  const unanswered = observer
-    ? []
-    : state.pendingDecisions.filter(
-        (decision) => !answers[decision.id] && !isOptionalDecision(decision),
-      );
   // Vivier des négociations de soutien (phase 15), calculé par le serveur pour la semaine.
   const supports = useSupports(
     game.id,
@@ -240,35 +217,6 @@ export function Dashboard() {
     journal.data?.pages[0]?.entries.find((entry) => entry.report)?.report ??
     null;
 
-  // Toute modification du plan invalide la clé d'idempotence de la tentative précédente.
-  const changePlan = <T extends unknown[]>(change: (...args: T) => void) => {
-    return (...args: T) => {
-      attemptKey.current = null;
-      change(...args);
-    };
-  };
-  // Heures réservées avant les actions : propositions annoncées et délégations d'élus reçues
-  // (phase 15, même règle que le moteur).
-  const reservedHours = ruleset.data
-    ? plan.ajouter.length * ruleset.data.programme.heuresParProposition +
-      delegationHours(
-        ruleset.data,
-        state.pendingDecisions.map((d) => ({ kind: d.kind, optionId: answers[d.id] })),
-      )
-    : 0;
-  const missingTargets = ruleset.data
-    ? plan.actions.filter(
-        (a) =>
-          a.cible === undefined &&
-          (() => {
-            const definition = [...ruleset.data.actions, ...ruleset.data.quinquennat.actions].find(
-              (d) => d.id === a.actionId,
-            );
-            // Phase 25 : une carte Terrain se joue aussi sans lieu (effets nationaux seuls).
-            return Boolean(definition?.cible) && !definition?.cibleFacultative;
-          })(),
-      ).length
-    : 0;
   const nameOf = (id: string) =>
     state.actors[id] ? candidateName(state.actors[id].candidate) : id;
   const programmeLabel = (id: string) =>
@@ -285,13 +233,9 @@ export function Dashboard() {
       ? suggestedProgramme(actor.candidate.positionnement, plannedProgramme, ruleset.data)
       : [];
   const programmeWeight = actor ? programmeEffect(state.opinion, actor.id) : null;
-  const answer = (decisionId: string, optionId: string) => {
-    attemptKey.current = null;
-    setAnswers((current) => ({ ...current, [decisionId]: optionId }));
-  };
   // Un tiroir peut modifier le plan (programme, alliances) : nouvelle tentative à sa fermeture.
   const closePanel = () => {
-    attemptKey.current = null;
+    invalidate();
     setPanel(null);
   };
   /** Amène une partie de la page à l'écran et y place le focus (titre rendu focalisable). */
@@ -300,42 +244,6 @@ export function Dashboard() {
     if (!target) return;
     target.scrollIntoView({ block: 'start', behavior: 'smooth' });
     target.focus({ preventScroll: true });
-  };
-
-  const submit = (semaines?: number) => {
-    attemptKey.current ??= newIdempotencyKey();
-    advance.mutate(
-      {
-        idempotencyKey: attemptKey.current,
-        body: {
-          expectedWeek: game.week,
-          actions: plan.actions,
-          programme: { ajouter: plan.ajouter, retirer: plan.retirer },
-          alliances: { proposer: plan.proposer },
-          decisions: Object.entries(answers)
-            .filter(([decisionId]) => state.pendingDecisions.some((d) => d.id === decisionId))
-            .map(([decisionId, optionId]) => ({ decisionId, optionId })),
-          ...(semaines === undefined ? {} : { semaines }),
-        },
-      },
-      {
-        onSuccess: (response) => {
-          attemptKey.current = null;
-          plan.clear();
-          setAnswers({});
-          // Soir de scrutin : la partie passe en direct de la soirée électorale ; sinon, une
-          // semaine résolue (hors avance rapide) ouvre son débriefing.
-          if (response.report.election)
-            void navigate(`../soiree/${response.report.election.round}`);
-          else if (semaines === undefined) setDebrief(response.report);
-        },
-        onError: (error) => {
-          if (!(error instanceof ApiRequestError && error.code === 'serveur_injoignable')) {
-            attemptKey.current = null;
-          }
-        },
-      },
-    );
   };
 
   // Vue d'ensemble : uniquement des valeurs servies par l'API (état, jeu de règles).
@@ -1005,21 +913,7 @@ export function Dashboard() {
               actor={actor}
               plan={plan.actions}
               mode="presidence"
-              restriction={(action) =>
-                !mandateStarted
-                  ? `Le mandat commence le ${formatGameDate(quinquennat.mandat.debut)}.`
-                  : (action.institution === 'remaniement' ||
-                        action.institution === 'remaniement-cible') &&
-                      !quinquennat.gouvernement
-                    ? 'Aucun gouvernement en place à remanier.'
-                    : action.institution === 'dissolution'
-                      ? dissolutionRestriction(state, data)
-                      : action.delaiSemaines !== undefined &&
-                          plan.actions.some((p) => p.actionId === action.id)
-                        ? 'Une seule fois par semaine.'
-                        : // Délai et condition : la règle du moteur (`@r2027/shared`), à l'identique.
-                          presidentialActionBlocked(state, action)
-              }
+              restriction={presidencyRestriction(state, data, plan.actions, mandateStarted)}
               reservedHours={0}
               cap={0}
               onAdd={changePlan(plan.addAction)}

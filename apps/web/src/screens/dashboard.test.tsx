@@ -451,7 +451,7 @@ describe('export et import', () => {
     });
     await user.upload(screen.getByLabelText('Importer un fichier de partie'), file);
     await waitFor(() =>
-      expect(router.state.location.pathname).toBe(`/parties/${imported.id}/tableau-de-bord`),
+      expect(router.state.location.pathname).toBe(`/parties/${imported.id}/plateau`),
     );
     expect(calls.find((c) => c.url === '/api/games/import')?.body).toEqual({
       format: 'republique-2027/partie',

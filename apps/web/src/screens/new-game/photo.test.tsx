@@ -64,9 +64,7 @@ describe('photo du candidat (phase 13)', () => {
     await screen.findByRole('img', { name: 'Photo choisie pour le candidat' });
     await wizardTo(user, 'Le format');
     await user.click(screen.getByRole('button', { name: 'Créer la partie' }));
-    await waitFor(() =>
-      expect(router.state.location.pathname).toBe(`/parties/${GAME_ID}/tableau-de-bord`),
-    );
+    await waitFor(() => expect(router.state.location.pathname).toBe(`/parties/${GAME_ID}/plateau`));
     const body = calls.find((call) => call.method === 'POST')?.body as {
       candidate: { photo: string | null };
     };

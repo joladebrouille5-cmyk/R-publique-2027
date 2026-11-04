@@ -114,7 +114,7 @@ function Reprendre({ summary }: { summary: GameSummary }) {
         </div>
       </div>
       <Link
-        to={`/parties/${summary.id}/tableau-de-bord`}
+        to={`/parties/${summary.id}/plateau`}
         viewTransition
         className={`${buttonPrestige} mt-5 w-full`}
       >
@@ -130,7 +130,7 @@ function GameList({ games }: { games: GameSummary[] }) {
       {games.map((game) => (
         <li key={game.id}>
           <Link
-            to={`/parties/${game.id}/tableau-de-bord`}
+            to={`/parties/${game.id}/plateau`}
             viewTransition
             className="group flex min-h-16 items-center gap-4 px-4 py-3.5 transition-colors hover:bg-slate-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-republique-500 sm:px-6 dark:hover:bg-white/[0.04] dark:focus-visible:outline-dorure"
           >

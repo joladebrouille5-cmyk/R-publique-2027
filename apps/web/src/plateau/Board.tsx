@@ -30,6 +30,7 @@ export function Board({
   selected,
   placed,
   onSelect,
+  onDropCard,
 }: {
   shapes: readonly BoardShape[];
   state: GameState;
@@ -38,6 +39,8 @@ export function Board({
   selected: string | null;
   placed: Readonly<Record<string, number>>;
   onSelect: (code: string) => void;
+  /** Carte de la main glissée sur un département (le toucher puis la cible reste possible). */
+  onDropCard?: ((actionId: string, code: string) => void) | undefined;
 }) {
   const [x, y, width, height] = BOARD_VIEWBOX;
   const onKey = (code: string) => (event: KeyboardEvent<SVGPathElement>) => {
@@ -88,6 +91,16 @@ export function Board({
               aria-label={`${departmentName(ruleset, shape.code)} : ${paint.text}${count ? `, ${plural(count)}` : ''}`}
               onClick={() => onSelect(shape.code)}
               onKeyDown={onKey(shape.code)}
+              onDragOver={onDropCard ? (event) => event.preventDefault() : undefined}
+              onDrop={
+                onDropCard
+                  ? (event) => {
+                      event.preventDefault();
+                      const actionId = event.dataTransfer.getData('text/x-r2027-carte');
+                      if (actionId) onDropCard(actionId, shape.code);
+                    }
+                  : undefined
+              }
               className={`cursor-pointer stroke-trait outline-none transition-[stroke-width] duration-150 hover:brightness-95 focus-visible:stroke-or ${isSelected ? 'stroke-[4]' : 'stroke-[1.2]'}`}
               strokeLinejoin="round"
             />

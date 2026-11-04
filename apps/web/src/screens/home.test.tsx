@@ -72,7 +72,7 @@ describe('écran-titre', () => {
     expect(await within(latest).findByText(/^J−\d+$/)).toBeInTheDocument();
     expect(within(latest).getByRole('link', { name: 'Reprendre la partie' })).toHaveAttribute(
       'href',
-      `/parties/${GAME_ID}/tableau-de-bord`,
+      `/parties/${GAME_ID}/plateau`,
     );
     // La liste suit l'ordre des modifications, la plus récente d'abord.
     const list = screen
@@ -82,7 +82,7 @@ describe('écran-titre', () => {
       within(list)
         .getAllByRole('link')
         .map((link) => link.getAttribute('href')),
-    ).toEqual([`/parties/${GAME_ID}/tableau-de-bord`, `/parties/${OLDER_ID}/tableau-de-bord`]);
+    ).toEqual([`/parties/${GAME_ID}/plateau`, `/parties/${OLDER_ID}/plateau`]);
     expect(screen.getAllByRole('link', { name: /Nouvelle partie/ })).toHaveLength(1);
   });
 });

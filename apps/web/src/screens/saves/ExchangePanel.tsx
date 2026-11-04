@@ -48,7 +48,7 @@ export function ExchangePanel({ gameId }: { gameId: string }) {
       return;
     }
     importGame.mutate(document, {
-      onSuccess: (game) => void navigate(`/parties/${game.id}/tableau-de-bord`),
+      onSuccess: (game) => void navigate(`/parties/${game.id}/plateau`),
     });
   };
 

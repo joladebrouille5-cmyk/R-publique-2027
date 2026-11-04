@@ -147,7 +147,7 @@ export function remainingAfter(
   return { budget, time, spent };
 }
 
-function unavailableReason(
+export function unavailableReason(
   action: ActionDefinition,
   remaining: { budget: number; time: number; spent: number },
   actor: Actor,
@@ -277,7 +277,7 @@ function SupportHint({
 }
 
 /** Choix de la cible d'une action programmée (département, média, personnalité, ministère). */
-function TargetSelect({
+export function TargetSelect({
   ruleset,
   actor,
   action,
@@ -382,7 +382,7 @@ const TARGET_BADGES = {
 } as const;
 
 /** Effets décrits en clair (fiche de détails). */
-function effectLines(action: ActionDefinition): string[] {
+export function effectLines(action: ActionDefinition): string[] {
   return [
     ...(action.institution === 'remaniement'
       ? ['Fin du gouvernement en place ; vous nommez un nouveau Premier ministre']

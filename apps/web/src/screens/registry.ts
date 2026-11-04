@@ -11,8 +11,9 @@ export type GameScreen = {
 
 export const GAME_SCREENS: readonly GameScreen[] = [
   {
-    path: 'tableau-de-bord',
-    label: 'Tableau de bord',
+    // Phase 25 : le tableau de bord du cahier des charges devient le plateau de jeu.
+    path: 'plateau',
+    label: 'Plateau',
     phase: 1,
     available: true,
     description: 'Ressources, décisions, plan d’actions, progression et bilan de la semaine.',

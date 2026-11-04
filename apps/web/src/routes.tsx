@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Navigate, type RouteObject } from 'react-router';
 import { AppLayout } from './components/AppLayout';
 import { Dashboard } from './screens/Dashboard';
+import { Plateau } from './screens/Plateau';
 import { Espace } from './screens/Espace';
 import { GameLayout } from './screens/GameLayout';
 import { Home } from './screens/Home';
@@ -54,13 +55,15 @@ export const routes: RouteObject[] = [
         path: 'parties/:gameId',
         element: <GameLayout />,
         children: [
-          { index: true, element: <Navigate to="tableau-de-bord" replace /> },
+          { index: true, element: <Navigate to="plateau" replace /> },
+          { path: 'plateau', element: <Plateau /> },
           // Phase 12 : cinq espaces ; chaque écran du registre est une section de l'un d'eux.
           { path: 'tableau-de-bord', element: <Dashboard /> },
           { path: 'carte', element: <MapScreen /> },
-          ...HUBS.filter((hub) => hub.sections.length > 0 && hub.path !== 'tableau-de-bord').map(
-            (hub) => ({ path: hub.path, element: <Espace key={hub.path} hub={hub} /> }),
-          ),
+          ...HUBS.filter((hub) => hub.sections.length > 0 && hub.path !== 'plateau').map((hub) => ({
+            path: hub.path,
+            element: <Espace key={hub.path} hub={hub} />,
+          })),
           // Anciennes adresses d'écran : l'espace, avec la section dépliée.
           ...GAME_SCREENS.filter((screen) => !HUBS.some((hub) => hub.path === screen.path)).map(
             (screen) => ({
