@@ -30,7 +30,7 @@ test('boucle complète : actions, progression, bilan, sauvegarde, restauration, 
   // Le détail des ressources est replié en bas du QG.
   await openSection(page, 'ressources');
   const budget = page.getByTestId('ressource-budgetCentimes');
-  await expect(budget).toHaveText(/3\s000\s000\s€/);
+  await expect(budget).toHaveText(/8\s000\s000\s€/);
 
   await page.getByRole('button', { name: 'Ajouter Meeting public' }).click();
   await page.getByRole('button', { name: 'Ajouter Rencontre avec des élus locaux' }).click();
@@ -43,7 +43,7 @@ test('boucle complète : actions, progression, bilan, sauvegarde, restauration, 
   await resolveWeek(page, 0);
 
   // Effet visible : coût débité exactement, détaillé par facteurs dans le bilan.
-  await expect(budget).toHaveText(/2\s870\s000\s€/);
+  await expect(budget).toHaveText(/7\s870\s000\s€/);
   await openSection(page, 'bilan-semaine');
   const report = page.getByRole('region', { name: /Bilan de la semaine 0/ });
   const budgetChange = report.locator('details', {
