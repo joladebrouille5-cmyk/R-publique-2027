@@ -32,7 +32,10 @@ export function utilityFactors(
   return [
     {
       label: 'Proximité idéologique',
-      value: -model.proximite * distance(group.position, contender.position),
+      // Phase 24 : la pénalité sature au-delà de `saturationProximite` (3 : aucune saturation).
+      value:
+        -model.proximite *
+        Math.min(distance(group.position, contender.position), model.saturationProximite),
     },
     {
       label: 'Notoriété',

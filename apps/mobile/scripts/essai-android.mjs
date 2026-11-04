@@ -138,10 +138,22 @@ try {
 
   step('Création d’une partie et première semaine');
   await activate(page, page.getByRole('link', { name: 'Nouvelle partie' }));
-  await page.getByLabel('Nom de la partie').fill('Partie Android');
+  // Assistant de création (phase 20) : « Suivant » jusqu'à l'étape voulue ; le nom de la partie
+  // et la graine sont dans les options avancées de la dernière étape (« Le format »).
+  const wizardTo = async (titre) => {
+    for (let i = 0; i < 6; i++) {
+      if (await page.getByRole('heading', { level: 2, name: titre }).isVisible()) return;
+      await activate(page, page.getByRole('button', { name: 'Suivant' }));
+    }
+    throw new Error(`Étape de l'assistant introuvable : ${titre}`);
+  };
+  await wizardTo('Votre candidat');
   await page.getByLabel('Prénom').fill('Camille');
   await page.getByLabel(/^Nom \*/).fill('Émulateur');
   await page.getByLabel(/^Parti ou mouvement/).fill('Mouvement Android');
+  await wizardTo('Le format');
+  await activate(page, page.getByText('Options avancées'));
+  await page.getByLabel('Nom de la partie').fill('Partie Android');
   await page.getByLabel('Graine (facultative)').fill('android');
   await activate(page, page.getByRole('button', { name: 'Créer la partie' }));
   await expect(page.getByRole('heading', { name: 'Tableau de bord' })).toBeVisible();

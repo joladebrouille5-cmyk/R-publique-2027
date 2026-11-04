@@ -1472,6 +1472,11 @@ export const RulesetSchema = z
         statut: z.literal('hypothese'),
         note: z.string().min(1),
         proximite: Coefficient,
+        /**
+         * Phase 24 : distance idéologique (en centaines de points) au-delà de laquelle la
+         * proximité ne pénalise plus davantage (hypothèse) ; 3 ou plus : aucune saturation.
+         */
+        saturationProximite: z.number().min(0).max(3),
         notoriete: Coefficient,
         popularite: Coefficient,
         dynamique: Coefficient,
