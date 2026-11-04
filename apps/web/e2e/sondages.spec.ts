@@ -40,3 +40,39 @@ test('chaque sondage explique l’écart depuis la vague précédente de l’ins
     .analyze();
   expect(audit.violations.map((v) => `${v.id} : ${v.help} (${v.nodes.length})`)).toEqual([]);
 });
+
+test('l’évolution se lit en courbes, au clavier, de jour comme de nuit', async ({ page }) => {
+  await createGame(page, 'Courbes', 'e2e-courbes');
+  const game = await advanceViaApi(page, (g) => g.week >= 5);
+  await page.reload();
+  await openScreen(page, 'Sondages');
+
+  const trend = page.getByRole('region', { name: 'Évolution des intentions au premier tour' });
+  const chart = trend.getByRole('img', {
+    name: /^Intentions de vote au premier tour sur \d+ sondages/,
+  });
+  await expect(chart).toBeVisible();
+  await expect(chart).toHaveAttribute('aria-label', /vous : /);
+
+  // Au clavier : la première vague, puis la dernière.
+  const polls = game.state.polls.filter((p) => p.kind === 'intentions_t1');
+  const explorer = trend.getByRole('group', { name: /Parcourir les sondages/ });
+  await explorer.focus();
+  await page.keyboard.press('Home');
+  await expect(trend.getByRole('status')).toContainText(`Semaine ${polls[0]!.week}`);
+  await page.keyboard.press('End');
+  await expect(trend.getByRole('status')).toContainText(`Semaine ${polls.at(-1)!.week}`);
+
+  // Le tableau reste à portée.
+  await trend.getByText('Voir le tableau des derniers sondages').click();
+  await expect(trend.getByRole('table')).toBeVisible();
+
+  for (const colorScheme of ['light', 'dark'] as const) {
+    await page.emulateMedia({ colorScheme });
+    const audit = await new AxeBuilder({ page })
+      .include('section[aria-labelledby="titre-evolution"]')
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .analyze();
+    expect(audit.violations.map((v) => `${colorScheme} — ${v.id} : ${v.help}`)).toEqual([]);
+  }
+});

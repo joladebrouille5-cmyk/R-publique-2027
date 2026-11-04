@@ -1,8 +1,10 @@
 import { candidateName, type GameState, type Poll, type Ruleset } from '@r2027/shared';
 import { useState } from 'react';
+import { ChevronRight } from 'lucide-react';
 import { useRuleset } from '../api/hooks';
 import { Avatar } from '../components/Avatar';
 import { Badge } from '../components/Badge';
+import { PollTrend } from '../components/PollTrend';
 import { ShareBar } from '../components/ShareBar';
 import { buttonSecondary, card } from '../components/ui';
 import {
@@ -236,6 +238,8 @@ export function Polls() {
     .filter((p) => p.kind === 'intentions_t1')
     .slice(0, 6)
     .reverse();
+  // Toute la campagne pour le graphique, dans l'ordre chronologique.
+  const trend = state.polls.filter((p) => p.kind === 'intentions_t1');
   const evolutionIds = [...(evolution.at(-1)?.results ?? [])]
     .sort((a, b) => b.value - a.value)
     .map((r) => r.actorId);
@@ -272,67 +276,79 @@ export function Polls() {
       )}
 
       {evolution.length > 1 && (
-        // Défilement horizontal possible sur téléphone : la zone se prend au clavier.
-        <section
-          aria-labelledby="titre-evolution"
-          tabIndex={0}
-          className={`${card} space-y-3 overflow-x-auto outline-none focus-visible:ring-2 focus-visible:ring-republique-500 dark:focus-visible:ring-dorure`}
-        >
+        <section aria-labelledby="titre-evolution" className={`${card} space-y-4`}>
           <h2 id="titre-evolution" className="text-2xl">
             Évolution des intentions au premier tour
           </h2>
-          <table className="w-full text-left text-sm">
-            <caption className="sr-only">
-              Intentions de vote au premier tour, derniers sondages
-            </caption>
-            <thead>
-              <tr className="text-xs text-encre-3">
-                <th scope="col" className="py-1 pr-2 font-medium">
-                  Candidat
-                </th>
-                {evolution.map((poll) => (
-                  <th
-                    key={poll.id}
-                    scope="col"
-                    className="py-1 pr-2 text-right align-bottom font-medium"
-                  >
-                    Sem. {poll.week}
-                    <span className="block font-normal">{poll.institute}</span>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {evolutionIds.map((actorId) => (
-                <tr key={actorId} className="border-t border-slate-100 dark:border-slate-800">
-                  <th
-                    scope="row"
-                    className={`py-1 pr-2 text-left ${actorId === state.player.actorId ? 'font-semibold' : 'font-normal'}`}
-                  >
-                    <span className="flex items-center gap-2">
-                      <span
-                        aria-hidden="true"
-                        className="size-2.5 shrink-0 rounded-full ring-1 ring-white/30"
-                        style={{ backgroundColor: colorOf(state.actors[actorId], ruleset) }}
-                      />
-                      {nameOf(state, actorId)}
-                    </span>
-                  </th>
-                  {evolution.map((poll) => {
-                    const result = poll.results.find((r) => r.actorId === actorId);
-                    return (
-                      <td
+          {/* Phase 22 : toute la campagne en courbes ; le tableau des derniers sondages à côté. */}
+          <PollTrend polls={trend} state={state} ruleset={ruleset} />
+          <details className="group">
+            <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-2 rounded-md font-display text-[0.95rem] font-bold [font-stretch:94%] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-republique-600 dark:focus-visible:outline-dorure [&::-webkit-details-marker]:hidden">
+              <ChevronRight
+                aria-hidden="true"
+                className="size-4 transition-transform duration-200 group-open:rotate-90"
+              />
+              Voir le tableau des derniers sondages
+            </summary>
+            {/* Défilement horizontal possible sur téléphone : la zone se prend au clavier. */}
+            <div
+              tabIndex={0}
+              className="mt-2 overflow-x-auto rounded-md outline-none focus-visible:ring-2 focus-visible:ring-republique-500 dark:focus-visible:ring-dorure"
+            >
+              <table className="w-full text-left text-sm">
+                <caption className="sr-only">
+                  Intentions de vote au premier tour, derniers sondages
+                </caption>
+                <thead>
+                  <tr className="text-xs text-encre-3">
+                    <th scope="col" className="py-1 pr-2 font-medium">
+                      Candidat
+                    </th>
+                    {evolution.map((poll) => (
+                      <th
                         key={poll.id}
-                        className="py-1 pr-2 text-right tabular-nums whitespace-nowrap"
+                        scope="col"
+                        className="py-1 pr-2 text-right align-bottom font-medium"
                       >
-                        {result ? formatShare(result.value) : '—'}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                        Sem. {poll.week}
+                        <span className="block font-normal">{poll.institute}</span>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {evolutionIds.map((actorId) => (
+                    <tr key={actorId} className="border-t border-slate-100 dark:border-slate-800">
+                      <th
+                        scope="row"
+                        className={`py-1 pr-2 text-left ${actorId === state.player.actorId ? 'font-semibold' : 'font-normal'}`}
+                      >
+                        <span className="flex items-center gap-2">
+                          <span
+                            aria-hidden="true"
+                            className="size-2.5 shrink-0 rounded-full ring-1 ring-white/30"
+                            style={{ backgroundColor: colorOf(state.actors[actorId], ruleset) }}
+                          />
+                          {nameOf(state, actorId)}
+                        </span>
+                      </th>
+                      {evolution.map((poll) => {
+                        const result = poll.results.find((r) => r.actorId === actorId);
+                        return (
+                          <td
+                            key={poll.id}
+                            className="py-1 pr-2 text-right tabular-nums whitespace-nowrap"
+                          >
+                            {result ? formatShare(result.value) : '—'}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </details>
         </section>
       )}
 
