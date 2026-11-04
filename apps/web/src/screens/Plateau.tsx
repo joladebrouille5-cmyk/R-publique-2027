@@ -207,7 +207,7 @@ export function Plateau() {
       // Un panneau de la boîte de jeu ouvert : le plateau, dessous, est inerte (fenêtre modale).
       inert={panneau ? true : undefined}
       aria-hidden={panneau ? true : undefined}
-      className="feutrine -mx-4 -mt-4 min-h-[calc(100dvh-8rem)] space-y-4 px-3 pt-3 pb-40 sm:-mx-6 sm:px-5"
+      className="feutrine -mx-4 min-h-[calc(100dvh-8rem)] space-y-4 px-3 pt-3 pb-40 sm:-mx-6 sm:px-5"
     >
       <h1 id="titre-plateau" className="sr-only">
         Plateau

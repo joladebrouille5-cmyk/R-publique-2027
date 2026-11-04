@@ -5,7 +5,7 @@ import { useCurrentRuleset, useGame, useGames, useRuleset } from '../api/hooks';
 import { Affiche } from '../components/Affiche';
 import { ErrorMessage } from '../components/ErrorMessage';
 import { Palmares } from '../components/Palmares';
-import { buttonPrestige, buttonSecondary, cardRaised, listPanel } from '../components/ui';
+import { boutonCraie, buttonPrestige, cardRaised, listPanel } from '../components/ui';
 import { formatGameDate, formatTimestamp, MODE_LABELS, PHASE_LABELS } from '../labels';
 import { portraitOf, portraitOfFictional } from '../portraits';
 import { nextBallot } from './shell/GameHud';
@@ -166,7 +166,11 @@ export function Home() {
   const latest = sorted[0];
   return (
     <div className="pb-14">
-      <section aria-labelledby="titre-jeu" className="mx-auto max-w-6xl px-4 pt-8 sm:pt-14">
+      {/* Phase 25 : l'affiche-titre posée sur la feutrine du tapis de jeu. */}
+      <section
+        aria-labelledby="titre-jeu"
+        className="feutrine mx-auto max-w-6xl rounded-b-plateau px-4 pt-8 pb-8 sm:rounded-plateau sm:pt-14"
+      >
         <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-end lg:gap-12">
           <div>
             {/* Affiche-titre (phase 21) : deux passages d'encre, le rouge imprimé sur le bleu. */}
@@ -174,14 +178,14 @@ export function Home() {
               id="titre-jeu"
               className="isolate font-display leading-[0.78] font-black tracking-normal"
             >
-              <span className="block animate-apparait text-[clamp(4rem,24vw,12.5rem)] tracking-[-0.01em] text-republique-600 [font-stretch:58%] dark:text-republique-400">
+              <span className="block animate-apparait text-[clamp(4rem,24vw,12.5rem)] tracking-[-0.01em] text-craie [font-stretch:58%]">
                 RÉPUBLIQUE
               </span>{' '}
-              <span className="-mt-[0.14em] -ml-[0.03em] sm:-mt-[0.2em] block animate-calage text-[clamp(6rem,28vw,15.5rem)] tracking-[-0.03em] text-red-500 mix-blend-multiply [font-stretch:122%] dark:text-red-400 dark:mix-blend-screen">
+              <span className="-mt-[0.14em] -ml-[0.03em] sm:-mt-[0.2em] block animate-calage text-[clamp(6rem,28vw,15.5rem)] tracking-[-0.03em] text-or [font-stretch:122%]">
                 2027
               </span>
             </h1>
-            <p className="mt-6 max-w-xl text-lg leading-relaxed text-slate-700 sm:text-xl dark:text-slate-300">
+            <p className="mt-6 max-w-xl text-lg leading-relaxed text-craie-2 sm:text-xl">
               Menez une campagne présidentielle semaine après semaine, affrontez des adversaires
               autonomes, vivez les soirées électorales des deux tours, puis gouvernez.
             </p>
@@ -190,7 +194,7 @@ export function Home() {
             {latest && <Reprendre summary={latest} />}
             <Link
               to="/nouvelle-partie"
-              className={`${latest ? buttonSecondary : buttonPrestige} w-full`}
+              className={`${latest ? boutonCraie : buttonPrestige} w-full`}
             >
               <Plus aria-hidden="true" className="size-5" />
               Nouvelle partie

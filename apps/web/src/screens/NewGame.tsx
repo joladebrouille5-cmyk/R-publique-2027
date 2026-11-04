@@ -389,9 +389,10 @@ export function NewGame() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:py-10">
-      <header className="mb-10 max-w-2xl">
+      {/* Phase 25 : l'en-tête sur la feutrine du tapis de jeu. */}
+      <header className="feutrine mb-10 rounded-plateau px-5 py-6 sm:px-8">
         <h1 className={screenTitle}>{defi ? 'Défi du jour' : 'Nouvelle partie'}</h1>
-        <p className="mt-3 text-base text-slate-700 sm:text-lg dark:text-slate-300">
+        <p className="mt-3 max-w-2xl text-base text-craie-2 sm:text-lg">
           {defi
             ? `La même campagne pour tous ce ${formatGameDate(defi.date)} : niveau ${DIFFICULTY_LABELS[defi.difficulte]}, format ${FORMAT_LABELS[defi.format].toLocaleLowerCase('fr-FR')}, situation de départ imposée. Votre score : votre part des voix au premier tour.`
             : 'Composez votre candidature, choisissez le terrain, puis entrez en campagne.'}

@@ -63,10 +63,10 @@ describe('plateau', () => {
     const finistere = screen.getByRole('button', {
       name: 'Finistère (29) : Bastion, implantation 60 sur 100',
     });
-    expect(finistere).toHaveAttribute('fill', 'var(--color-implantation-3)');
+    expect(finistere).toHaveAttribute('data-fill', 'var(--color-implantation-3)');
     expect(
       screen.getByRole('button', { name: /^Corse-du-Sud \(2A\) : Présence, implantation 8/ }),
-    ).toHaveAttribute('fill', 'var(--color-implantation-1)');
+    ).toHaveAttribute('data-fill', 'var(--color-implantation-1)');
     for (const code of ['2B', '971', '972', '973', '974', '976'])
       expect(screen.getByRole('button', { name: new RegExp(`\\(${code}\\) :`) })).toBeVisible();
   });
@@ -92,7 +92,7 @@ describe('plateau', () => {
     expect(screen.getByText(/projection simulée/i)).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /^Finistère \(29\) : vous menez, 31,0 %/ }),
-    ).toHaveAttribute('fill', 'var(--color-or)');
+    ).toHaveAttribute('data-fill', 'var(--color-or)');
     expect(
       screen.getByRole('button', {
         name: /^Bouches-du-Rhône \(13\) : Élise Marchetti mène, 26,0 %/,
@@ -109,7 +109,7 @@ describe('plateau', () => {
       screen.getByRole('button', {
         name: /^Finistère \(29\) : vous 31,0 % \(projection simulée\)/,
       }),
-    ).toHaveAttribute('fill', 'var(--color-implantation-4)');
+    ).toHaveAttribute('data-fill', 'var(--color-implantation-4)');
     expect(screen.getByRole('list', { name: 'Légende' })).toHaveTextContent('30 % et plus');
   });
 

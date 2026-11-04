@@ -84,7 +84,8 @@ export function Board({
             <path
               key={shape.code}
               d={shape.d}
-              fill={paint.fill}
+              // Couleur par une classe générée (une variable CSS ne vaut rien dans l'attribut `fill`).
+              data-fill={paint.fill}
               role="button"
               tabIndex={0}
               aria-pressed={isSelected}
@@ -101,7 +102,7 @@ export function Board({
                     }
                   : undefined
               }
-              className={`cursor-pointer stroke-trait outline-none transition-[stroke-width] duration-150 hover:brightness-95 focus-visible:stroke-or ${isSelected ? 'stroke-[4]' : 'stroke-[1.2]'}`}
+              className={`${paint.fillClass} cursor-pointer stroke-trait outline-none transition-[stroke-width] duration-150 hover:brightness-95 focus-visible:stroke-or ${isSelected ? 'stroke-[4]' : 'stroke-[1.2]'}`}
               strokeLinejoin="round"
             />
           );
@@ -136,8 +137,7 @@ export function Board({
           <li key={item.label} className="inline-flex items-center gap-1.5">
             <span
               aria-hidden="true"
-              className="inline-block size-3.5 rounded-sm border border-trait/60"
-              style={{ background: item.fill }}
+              className={`inline-block size-3.5 rounded-sm border border-trait/60 ${item.swatch}`}
             />
             {item.label}
           </li>

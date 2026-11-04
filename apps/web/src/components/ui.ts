@@ -14,10 +14,13 @@ const buttonType = 'font-display font-bold [font-stretch:94%] tracking-[0.005em]
 export const buttonPrimary = `inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-republique-600 px-5 py-2.5 text-[0.95rem] text-white ${buttonType} hover:bg-republique-700 dark:bg-republique-500 dark:hover:bg-republique-400 ${pressable}`;
 
 /**
- * Bouton décisif (créer la partie, reprendre, résoudre la semaine) : aplat de surligneur, encre
- * bleue décalée dessous (repérage) qui se referme à l'appui. Un seul par écran.
+ * Bouton décisif (créer la partie, reprendre, résoudre la semaine) : phase 25, l'or des pions de
+ * la Feutrine, qui s'enfonce d'un cran à l'appui (tranche dorée dessous). Un seul par écran.
  */
-export const buttonPrestige = `inline-flex min-h-12 items-center justify-center gap-2.5 rounded-md bg-or-400 px-6 py-3 text-[1.05rem] text-slate-950 shadow-dore ${buttonType} hover:bg-or-300 active:translate-x-[2px] active:translate-y-[2px] active:scale-100 active:shadow-[1px_1px_0_0_var(--color-republique-600)] dark:bg-dorure dark:text-[#191300] dark:shadow-[3px_3px_0_0_var(--color-republique-400)] dark:hover:bg-or-200 ${pressable}`;
+export const buttonPrestige = `inline-flex min-h-12 items-center justify-center gap-2.5 rounded-2xl bg-or px-6 py-3 text-[1.05rem] font-extrabold text-sur-or shadow-[0_4px_0_0_var(--color-or-ombre)] ${buttonType} hover:brightness-105 active:translate-y-[3px] active:scale-100 active:shadow-[0_1px_0_0_var(--color-or-ombre)] ${pressable}`;
+
+/** Bouton secondaire posé sur la feutrine (phase 25) : filet de craie. */
+export const boutonCraie = `inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border-2 border-craie px-5 py-2.5 text-[0.95rem] text-craie ${buttonType} hover:bg-craie hover:text-feutrine ${pressable}`;
 
 export const buttonSecondary = `inline-flex min-h-11 items-center justify-center gap-2 rounded-md border-[1.5px] border-slate-800 bg-transparent px-5 py-2.5 text-[0.95rem] text-slate-900 ${buttonType} hover:bg-slate-900 hover:text-papier dark:border-slate-200 dark:text-slate-100 dark:hover:bg-slate-100 dark:hover:text-slate-950 ${pressable}`;
 
