@@ -214,8 +214,9 @@ export function Dashboard() {
     game.week,
     campaigning && state.meta.phase !== 'presidence' && !blocked,
   );
-  // Pop-up : la décision ouverte par le joueur, sinon la première urgence ou séance de questions
-  // au gouvernement sans réponse ni refermée (après le débriefing de la semaine).
+  // Pop-up : la décision ouverte par le joueur, sinon la première urgence, séance de questions
+  // au gouvernement ou décision de candidature (phase 23) sans réponse ni refermée (après le
+  // débriefing de la semaine).
   const spotlight = observer
     ? undefined
     : spotlightId
@@ -224,7 +225,9 @@ export function Dashboard() {
         ? undefined
         : state.pendingDecisions.find(
             (d) =>
-              (d.kind === 'urgence' || d.kind === 'qag') && !answers[d.id] && !dismissed.has(d.id),
+              (d.kind === 'urgence' || d.kind === 'qag' || d.kind === 'candidature') &&
+              !answers[d.id] &&
+              !dismissed.has(d.id),
           );
   const closeSpotlight = () => {
     if (spotlight) setDismissed((current) => new Set([...current, spotlight.id]));

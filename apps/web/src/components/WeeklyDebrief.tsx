@@ -28,6 +28,7 @@ import { CampaignTeam } from './CampaignTeam';
 import { buttonPrestige, buttonSecondary } from './ui';
 import { useCountUp } from './useCountUp';
 import { useModal } from './useModal';
+import { candidacies, CandidaciesSection, withoutCandidacies } from './Candidacies';
 import { PrestationDetail } from './WeeklyReportView';
 
 // Débriefing de la semaine (phase 11) : écran plein, ouvert après « Résoudre la semaine ». Il ne
@@ -175,7 +176,9 @@ export function WeeklyDebrief({
         return { ressource, delta: change ? change.after - change.before : 0 };
       }).filter((i) => i.delta !== 0)
     : [];
-  const unexpected = report.events;
+  // Phase 23 : les annonces de candidature ont leur propre section.
+  const candidacy = candidacies(report.events);
+  const unexpected = withoutCandidacies(report.events, candidacy);
   // Son (phase 19) : un événement majeur dans la semaine s'annonce par le jingle d'une nouvelle.
   // Phase 21 : sinon, le coup de tampon de la semaine bouclée.
   useCue(unexpected.some((e) => e.majeur) ? 'flash' : 'tampon');
@@ -314,6 +317,14 @@ export function WeeklyDebrief({
               </ul>
             </section>
           )}
+
+          <CandidaciesSection
+            candidacy={candidacy}
+            nameOf={nameOf}
+            playerId={playerId}
+            className={section}
+            headingClass={`${title} flex flex-wrap items-center gap-2`}
+          />
 
           <section aria-labelledby={`${titleId}-imprevus`} className={section}>
             <h3 id={`${titleId}-imprevus`} className={title}>

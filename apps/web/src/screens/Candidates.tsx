@@ -140,6 +140,12 @@ export function Candidates() {
       <ul className="grid gap-4 lg:grid-cols-2">
         {actors.map((actor) => {
           const player = actor.id === state.player.actorId;
+          // Phase 23 : annonce de candidature (simulée) à la présidentielle du cycle en cours.
+          const notice =
+            state.succession?.annee === state.cycle.annee
+              ? state.succession.annonces.find((a) => a.actorId === actor.id)
+              : undefined;
+          const withdrew = notice?.choix === 'retrait';
           const breakdown = state.opinion?.breakdown[actor.id];
           const fiche = actor.candidate.personnaliteId
             ? fiches.get(actor.candidate.personnaliteId)
@@ -163,9 +169,16 @@ export function Candidates() {
                     <Badge tone="reel">Personnalité réelle — simulée</Badge>
                   )}
                   {actor.candidate.nature === 'fictif' && <Badge tone="fictif">Fictif</Badge>}
-                  <Badge tone={STATUS_TONES[actor.status]}>
-                    {CANDIDATE_STATUS_LABELS[actor.status]}
-                  </Badge>
+                  {(notice?.choix === 'entree' || notice?.choix === 'successeur') && (
+                    <Badge tone="alerte">Nouveau en {state.cycle.annee}</Badge>
+                  )}
+                  {withdrew ? (
+                    <Badge tone="neutre">Ne se présente pas</Badge>
+                  ) : (
+                    <Badge tone={STATUS_TONES[actor.status]}>
+                      {CANDIDATE_STATUS_LABELS[actor.status]}
+                    </Badge>
+                  )}
                 </div>
               </div>
               <p className="text-sm">
@@ -186,7 +199,13 @@ export function Candidates() {
                   départements
                 </p>
               )}
-              {actor.status === 'retire' && (
+              {notice && (
+                <p className="text-sm text-encre-2">
+                  Candidature simulée à la présidentielle {state.cycle.annee} — motif du jeu :{' '}
+                  {notice.motif}.
+                </p>
+              )}
+              {actor.status === 'retire' && !withdrew && (
                 <p className="text-sm">
                   {(() => {
                     const alliance = state.alliances.find((a) => a.de === actor.id);

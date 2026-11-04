@@ -241,14 +241,14 @@ function runMotive(
   const of = year ? ` en ${year}` : '';
   if (actor.id === context.presidentId)
     return context.termLimited
-      ? 'président sortant au terme de deux mandats consécutifs (Constitution, art. 6)'
-      : `président sortant, popularité finale de ${pctCentiemes(actor.resources.popularite)}`;
-  if (actor.status === 'battu') return `finaliste battu au second tour${of}`;
+      ? 'président(e) sortant(e) au terme de deux mandats consécutifs (Constitution, art. 6)'
+      : `président(e) sortant(e), popularité finale de ${pctCentiemes(actor.resources.popularite)}`;
+  if (actor.status === 'battu') return `finaliste battu(e) au second tour${of}`;
   if (actor.status === 'elimine')
     return `score au premier tour${of} : ${pct(firstRoundShare(context.previous, actor.id))}`;
-  if (actor.status === 'ecarte') return `écarté faute de parrainages${of}`;
+  if (actor.status === 'ecarte') return `écarté(e) faute de parrainages${of}`;
   if (actor.status === 'retire' && context.rallied.includes(actor.id))
-    return `retiré de la course par un ralliement${of}`;
+    return `retiré(e) de la course par un ralliement${of}`;
   return `absent de la présidentielle${of}`;
 }
 
@@ -445,12 +445,15 @@ export function applySuccession(
   if (government && !presidentIsPlayer && !presidentRuns && room()) {
     const pm = government.premierMinistre;
     const heir = available(pm)
-      ? { member: pm, motif: 'Premier ministre du gouvernement sortant, camp du président sortant' }
+      ? {
+          member: pm,
+          motif: 'Premier ministre du gouvernement sortant, camp du président(e) sortant(e)',
+        }
       : ministersByPopularity
           .filter(({ member }) => available(member))
           .map(({ member, popularite }) => ({
             member,
-            motif: `ministre du gouvernement sortant, popularité prêtée de ${pctCentiemes(popularite)}, camp du président sortant`,
+            motif: `ministre du gouvernement sortant, popularité prêtée de ${pctCentiemes(popularite)}, camp du président(e) sortant(e)`,
           }))[0];
     if (heir) {
       const actor = enter(

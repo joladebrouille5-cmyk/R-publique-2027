@@ -14,6 +14,7 @@ import { BlocFaces, blocPeople } from '../../components/BlocFigures';
 import { FigureFilterBar, matchesFigure, NO_FILTER } from '../../components/FigureFilter';
 import { cardRaisedBase } from '../../components/ui';
 import { memberInfo } from '../Government';
+import { CandidacyOptionBody } from './CandidacyOptions';
 import {
   portraitOf,
   portraitOfPersonality,
@@ -37,6 +38,7 @@ export const SPOTLIGHT_KINDS: ReadonlySet<PendingDecision['kind']> = new Set([
   'urgence',
   'qag',
   'parrainage',
+  'candidature',
 ]);
 
 /** Portrait de la personne d'une option de nomination (figure, profil ou acteur), ou null. */
@@ -108,7 +110,7 @@ export const DECISION_KINDS: Record<
     accent: 'bg-sky-500',
     bandeau: 'border-t-sky-500',
   },
-  // Phase 23 : se représenter ou passer la main à la présidentielle suivante.
+  // Phase 23 : se représenter ou passer la main à la présidentielle suivante (simulée).
   candidature: {
     badge: 'Présidentielle suivante',
     tone: 'simule',
@@ -380,8 +382,19 @@ export function DecisionsPanel({
                         onChange={() => onAnswer(decision.id, option.id)}
                         className="sr-only"
                       />
-                      <span className="font-bold">{option.libelle}</span>
-                      <span className="text-sm text-encre-2">{option.description}</span>
+                      {decision.kind === 'candidature' ? (
+                        <CandidacyOptionBody
+                          option={option}
+                          decision={decision}
+                          state={state}
+                          ruleset={ruleset}
+                        />
+                      ) : (
+                        <>
+                          <span className="font-bold">{option.libelle}</span>
+                          <span className="text-sm text-encre-2">{option.description}</span>
+                        </>
+                      )}
                       {decision.kind === 'alliance' && ruleset && (
                         // Accord ou coalition avec un bloc : visages des personnalités de ses partis.
                         <BlocFaces people={blocPeople(ruleset, option.id.split(':')[1] ?? '')} />

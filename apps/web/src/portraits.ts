@@ -90,7 +90,7 @@ export type Portrait = {
 
 /**
  * Portrait d'un acteur de la partie : la photo importée par le joueur, la photo libre de sa
- * fiche réelle, sinon un portrait illustré s'il est fictif (silhouette et initiales s'il est
+ * fiche réelle (candidate ou figure du vivier, phase 23), sinon un portrait illustré s'il est fictif (silhouette et initiales s'il est
  * réel).
  */
 export function portraitOf(
@@ -98,9 +98,12 @@ export function portraitOf(
   ruleset: Ruleset | undefined,
 ): Portrait {
   const { candidate } = actor;
+  // Phase 23 : une figure du vivier entrée dans la course garde la photo libre de sa fiche.
   const fiche = candidate.personnaliteId
     ? ruleset?.personnalites.personnalites.find((p) => p.id === candidate.personnaliteId)
-    : undefined;
+    : candidate.figureId
+      ? ruleset?.figures.figures.find((f) => f.id === candidate.figureId)
+      : undefined;
   return {
     prenom: candidate.prenom,
     nom: candidate.nom,

@@ -14,9 +14,11 @@ import { TensionGauge } from '../../components/ParliamentGauges';
 import { useModal } from '../../components/useModal';
 import { buttonGhost } from '../../components/ui';
 import { formatGameDate } from '../../labels';
+import { CandidacyOptionBody } from './CandidacyOptions';
 import { DECISION_KINDS, ResponsibleMinister } from './DecisionsPanel';
 
-// Pop-ups d'intervention (phase 15) : une urgence ministérielle (situation fictive, ministre en
+// Pop-ups d'intervention (phase 15 ; phase 23 : candidature à la présidentielle suivante, cartes
+// des successeurs avec leur portrait) : une urgence ministérielle (situation fictive, ministre en
 // charge avec sa photo), une séance de questions au gouvernement « en direct » (hémicycle, groupe
 // qui interpelle, jauge de tension) ou un rendez-vous d'élus, présentés en plein écran avec leurs
 // choix. Choisir renseigne la réponse de la semaine ; rien n'est calculé ici : textes, options et
@@ -183,12 +185,23 @@ export function DecisionSpotlight({
                         : 'border-slate-200 bg-white hover:border-slate-500 dark:border-white/10 dark:bg-white/[0.03] dark:hover:border-dorure/40'
                     }`}
                   >
-                    <span className="font-bold">{option.libelle}</span>
-                    <span className="text-sm text-encre-2">{option.description}</span>
-                    {option.id === decision.defaultOptionId && (
-                      <span className="text-xs font-semibold text-encre-3">
-                        {isOptionalDecision(decision) ? 'Réponse par défaut' : 'Choix proposé'}
-                      </span>
+                    {decision.kind === 'candidature' ? (
+                      <CandidacyOptionBody
+                        option={option}
+                        decision={decision}
+                        state={state}
+                        ruleset={ruleset}
+                      />
+                    ) : (
+                      <>
+                        <span className="font-bold">{option.libelle}</span>
+                        <span className="text-sm text-encre-2">{option.description}</span>
+                        {option.id === decision.defaultOptionId && (
+                          <span className="text-xs font-semibold text-encre-3">
+                            {isOptionalDecision(decision) ? 'Réponse par défaut' : 'Choix proposé'}
+                          </span>
+                        )}
+                      </>
                     )}
                     <span
                       aria-hidden="true"
@@ -210,7 +223,9 @@ export function DecisionSpotlight({
             <p className="text-xs text-encre-3">
               {decision.kind === 'qag'
                 ? 'Séance simulée : aucun député n’est nommé, aucun propos n’est rapporté.'
-                : 'Situation fictive ; effets : hypothèses du jeu.'}
+                : decision.kind === 'candidature'
+                  ? 'Candidatures simulées : aucun propos n’est prêté à une personne réelle.'
+                  : 'Situation fictive ; effets : hypothèses du jeu.'}
             </p>
             <button type="button" className={buttonGhost} onClick={onClose}>
               {isOptionalDecision(decision)

@@ -26,6 +26,7 @@ import {
 } from '../labels';
 import { Badge } from './Badge';
 import { CampaignReport } from './CampaignReport';
+import { candidacies, CandidaciesSection, withoutCandidacies } from './Candidacies';
 
 const sum = (values: number[]) => values.reduce((total, value) => total + value, 0);
 
@@ -211,6 +212,8 @@ export function WeeklyReportView({
   const ownChanges = report.changes.filter((c) => c.actorId === playerId);
   const otherChanges = report.changes.filter((c) => c.actorId !== playerId);
   const election = report.election;
+  const candidacy = candidacies(report.events);
+  const events = withoutCandidacies(report.events, candidacy);
 
   return (
     <div className="space-y-5 text-sm">
@@ -320,7 +323,9 @@ export function WeeklyReportView({
         </p>
       )}
 
-      {(report.events.length > 0 || report.decisions.length > 0) && (
+      <CandidaciesSection candidacy={candidacy} nameOf={nameOf} playerId={playerId} />
+
+      {(events.length > 0 || report.decisions.length > 0) && (
         <section aria-label="Événements de la semaine">
           <h3 className="mb-2 font-semibold">Événements</h3>
           <ul className="space-y-2">
@@ -330,7 +335,7 @@ export function WeeklyReportView({
                 {decision.automatic && ' (option par défaut)'}
               </li>
             ))}
-            {report.events.map((event) => (
+            {events.map((event) => (
               <li key={event.id}>
                 <span className="flex flex-wrap items-center gap-2">
                   <Badge tone={event.nature === 'fictif' ? 'fictif' : 'simule'}>

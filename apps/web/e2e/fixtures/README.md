@@ -11,3 +11,9 @@ Produit par le vrai moteur, sans retouche de l'état sinon une :
 4. mandat joué par le moteur (décisions par défaut) jusqu'à la semaine 34 (24 mai 2027), où une urgence ministérielle et une séance de questions au gouvernement attendent le président, sans autre décision en attente.
 
 Les résultats électoraux archivés de la partie restent ceux de la simulation (un adversaire en tête) : l'état n'est pas une partie jouable de bout en bout, seulement un point de départ de test. Le format évoluera avec les migrations de `packages/save-engine` : un état d'un ancien format est migré à l'import.
+
+## `president-fin-de-mandat.json`
+
+Export de partie (format de sauvegarde 23, jeu de règles `presidentielle-2027@21.0.0`, moteur 0.23.0) importé par `succession.spec.ts` (phase 23) : le **président joueur** en fin de mandat, huit semaines avant l'ouverture de la campagne de 2032.
+
+Produit par le vrai moteur, sans retouche : `president-joueur.json` relu et migré par `readExport` (`packages/save-engine`), puis mandat joué avec les décisions par défaut jusqu'à la semaine du 25 août 2031 (semaine 256), sans décision en attente. Mêmes réserves que la fixture précédente, dont il descend (joueur déclaré élu en 2027).
