@@ -82,6 +82,10 @@ Dans cet ordre, sans dépasser `succession.maxCandidats` = 12 candidats déclar�
 puis ses ministres les plus proches de sa position (popularité prêtée en départage) ; sinon, les
 personnalités réelles du vivier de même parti et les profils fictifs les plus proches de sa position.
 
+**Successeur déjà acteur** : un membre du gouvernement peut être un candidat de la présidentielle
+précédente (nature `acteur`) ; s'il est choisi, le joueur reprend cet acteur (il devient `joueur`,
+déclaré candidat), sans en créer un nouveau.
+
 **Création d'un acteur entrant** : depuis une figure du vivier (réelle) ou un profil fictif.
 Position : celle de la fiche (estimation CHES pour une figure). Moyens de départ (hypothèses du jeu
 de règles, `succession.entrants`) : budget et militants fixes, notoriété selon le niveau de la fiche
