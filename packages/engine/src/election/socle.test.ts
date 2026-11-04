@@ -19,7 +19,7 @@ const t1 = (state: GameState) =>
   summarize(distribute(state, ruleset, 1, 'opinion'), state.meta.week, 1)!;
 
 function duel(state: GameState, a: string, b: string) {
-  const copy = structuredClone(state);
+  const copy = JSON.parse(JSON.stringify(state)) as GameState;
   for (const actor of Object.values(copy.actors)) {
     if (actor.status === 'candidat')
       actor.status = actor.id === a || actor.id === b ? 'qualifie' : 'elimine';
