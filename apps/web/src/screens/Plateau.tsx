@@ -14,10 +14,11 @@ import {
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { useRuleset, useSupports } from '../api/hooks';
+import { sound } from '../audio/systeme';
 import { spendingCapOf } from '../campaign';
 import { ErrorMessage } from '../components/ErrorMessage';
 import { boutonOr, buttonSecondary, carton, inputCompact } from '../components/ui';
-import { WeeklyDebrief } from '../components/WeeklyDebrief';
+import { Verdict } from '../plateau/Verdict';
 import { useGeoManifest, useTopology } from '../map/data';
 import { Board } from '../plateau/Board';
 import { DepartmentSheet } from '../plateau/DepartmentSheet';
@@ -142,6 +143,8 @@ export function Plateau() {
       actionId,
     );
     setArmed(null);
+    // Bruitage (phase 25) : la carte glisse sur la table.
+    sound().play('glisser');
   };
   const pick = (actionId: string) => {
     const definition = catalog.find((a) => a.id === actionId);
@@ -195,13 +198,14 @@ export function Plateau() {
         Plateau
       </h1>
       {week.debrief && (
-        <WeeklyDebrief
+        <Verdict
           report={week.debrief}
           state={state}
           gameId={game.id}
           eventFamily={(id) => data?.evenements.find((e) => e.id === id)?.famille ?? null}
           achievement={(id) => data?.succes.liste.find((a) => a.id === id) ?? null}
-          onClose={() => week.setDebrief(null)}
+          ruleset={data}
+          onDone={() => week.setDebrief(null)}
         />
       )}
       {spotlight && data && (

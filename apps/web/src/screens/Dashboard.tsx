@@ -51,7 +51,7 @@ import {
   inputCompact,
   screenTitle,
 } from '../components/ui';
-import { WeeklyDebrief } from '../components/WeeklyDebrief';
+import { Verdict } from '../plateau/Verdict';
 import { WeeklyReportView } from '../components/WeeklyReportView';
 import {
   CANDIDATE_STATUS_LABELS,
@@ -517,13 +517,14 @@ export function Dashboard() {
   return (
     <section aria-labelledby="titre-tableau" className="space-y-6">
       {debrief && (
-        <WeeklyDebrief
+        <Verdict
           report={debrief}
           state={state}
           gameId={game.id}
           eventFamily={(id) => data?.evenements.find((e) => e.id === id)?.famille ?? null}
           achievement={(id) => data?.succes.liste.find((a) => a.id === id) ?? null}
-          onClose={() => setDebrief(null)}
+          ruleset={data}
+          onDone={() => setDebrief(null)}
         />
       )}
       {panel && (

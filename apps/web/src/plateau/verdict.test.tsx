@@ -1,15 +1,16 @@
 import { advanceWeek } from '@r2027/engine';
 import type { Ruleset } from '@r2027/shared';
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { act, cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
-import { initialState, jingles, recordSound, RULESET } from '../test/utils';
+import { initialState, jingles, recordSound, reduceMotion, RULESET } from '../test/utils';
 import { formatEuros } from '../labels';
-import { teamBriefing } from './CampaignTeam';
-import { WeeklyDebrief } from './WeeklyDebrief';
+import { teamBriefing } from '../components/CampaignTeam';
+import { Verdict, VERDICT_STEP_MS } from './Verdict';
 
-// Débriefing de la semaine (phase 11) : un vrai bilan du moteur, rien de recalculé à l'écran.
+// Verdict de la semaine (phase 25, ancien débriefing de la phase 11) : un vrai bilan du moteur,
+// rien de recalculé à l'écran. Ces tests lisent le verdict entier (mouvement réduit).
 
 /**
  * Seul l'événement « Salle comble » peut survenir, et il survient après un meeting (aucun
@@ -42,22 +43,23 @@ function resolved(rules: Ruleset = RULES) {
 
 function show(onClose = vi.fn(), rules: Ruleset = RULES) {
   const { state, report } = resolved(rules);
+  reduceMotion();
   render(
     <MemoryRouter>
       <button type="button">Résoudre la semaine 0</button>
-      <WeeklyDebrief
+      <Verdict
         report={report}
         state={state}
         gameId="partie"
         eventFamily={(id) => RULES.evenements.find((e) => e.id === id)?.famille ?? null}
-        onClose={onClose}
+        onDone={onClose}
       />
     </MemoryRouter>,
   );
   return { state, report, onClose };
 }
 
-describe('débriefing de la semaine', () => {
+describe('verdict de la semaine : le bilan', () => {
   it('boucle la semaine d’un coup de tampon, ou annonce un événement majeur par une nouvelle (phases 19 et 21)', () => {
     const calls = recordSound();
     show();
@@ -73,7 +75,7 @@ describe('débriefing de la semaine', () => {
 
   it('résume l’impact des actions, les passages, les imprévus, les adversaires et les sondages', () => {
     const { report, state } = show();
-    const dialog = screen.getByRole('dialog', { name: 'Débriefing de la semaine 0' });
+    const dialog = screen.getByRole('dialog', { name: 'Verdict de la semaine 0' });
     expect(dialog).toHaveAttribute('aria-modal', 'true');
     const player = state.player.actorId!;
 
@@ -85,7 +87,7 @@ describe('débriefing de la semaine', () => {
     expect(brief).toHaveTextContent(/Popularité [+−]\d/);
     expect(popularity.after).not.toBe(popularity.before);
 
-    const actions = within(dialog).getByRole('region', { name: 'Vos actions et leur impact' });
+    const actions = within(dialog).getByRole('region', { name: 'Vos cartes de la semaine' });
     expect(within(actions).getByText('Meeting public')).toBeInTheDocument();
     // Impact du meeting : les facteurs de l'action au registre, rien d'autre.
     const meeting = report.changes
@@ -113,13 +115,13 @@ describe('débriefing de la semaine', () => {
     expect(within(polls).getByText(/première vague/)).toBeInTheDocument();
   });
 
-  it('prend le focus, le garde, se ferme avec Échap ou « Continuer »', async () => {
+  it('prend le focus, le garde, se ferme avec Échap ou « Semaine suivante »', async () => {
     const { onClose } = show();
     const user = userEvent.setup();
     const dialog = screen.getByRole('dialog');
     expect(dialog).toHaveFocus();
     // Tab depuis le dernier contrôle : retour au premier, sans quitter la fenêtre.
-    const proceed = within(dialog).getByRole('button', { name: 'Continuer' });
+    const proceed = within(dialog).getByRole('button', { name: 'Semaine suivante' });
     proceed.focus();
     await user.tab();
     expect(dialog.contains(document.activeElement)).toBe(true);
@@ -176,14 +178,15 @@ describe('événements en chaîne et coups adverses (phase 20)', () => {
     );
     const coup = report.events.find((e) => e.refId === 'diner-levee-fonds')!;
     expect(coup.adversaire).toBeDefined();
+    reduceMotion();
     render(
       <MemoryRouter>
-        <WeeklyDebrief
+        <Verdict
           report={report}
           state={state}
           gameId="partie"
           eventFamily={(id) => rules.evenements.find((e) => e.id === id)?.famille ?? null}
-          onClose={vi.fn()}
+          onDone={vi.fn()}
         />
       </MemoryRouter>,
     );
@@ -195,5 +198,86 @@ describe('événements en chaîne et coups adverses (phase 20)', () => {
     expect(within(team).getAllByRole('listitem')[0]).toHaveTextContent(
       `Le camp d’en face a frappé : « ${coup.label} »`,
     );
+  });
+});
+
+describe('verdict de la semaine : la séquence (phase 25)', () => {
+  /** Deux portes-à-porte au Finistère : série Terrain, bastion, et un palier gagné. */
+  function terrainWeek() {
+    const start = initialState();
+    return advanceWeek(
+      start,
+      {
+        actions: [
+          { actionId: 'porte-a-porte', cible: '29' },
+          { actionId: 'porte-a-porte', cible: '29' },
+        ],
+        decisions: [],
+      },
+      { ruleset: RULES },
+    );
+  }
+
+  const open = (motion: 'normal' | 'reduit' = 'normal') => {
+    const { state, report } = terrainWeek();
+    if (motion === 'reduit') reduceMotion();
+    render(
+      <MemoryRouter>
+        <Verdict report={report} state={state} gameId="partie" ruleset={RULES} onDone={vi.fn()} />
+      </MemoryRouter>,
+    );
+    return { state, report };
+  };
+
+  it('retourne les cartes une à une, puis combos, paliers et le reste du bilan', () => {
+    vi.useFakeTimers();
+    try {
+      const calls = recordSound();
+      open();
+      const dialog = screen.getByRole('dialog', { name: 'Verdict de la semaine 0' });
+      const cards = within(dialog).getByRole('region', { name: 'Vos cartes de la semaine' });
+      expect(within(cards).queryAllByText(/^Porte-à-porte/)).toHaveLength(0);
+      expect(within(dialog).queryByRole('region', { name: 'Imprévus et décisions' })).toBeNull();
+      // Une carte à chaque pas de la séquence.
+      const next = (n: number) => {
+        for (let i = 0; i < n; i++) act(() => vi.advanceTimersByTime(VERDICT_STEP_MS));
+      };
+      next(1);
+      expect(within(cards).getAllByText(/^Porte-à-porte/)).toHaveLength(1);
+      expect(jingles(calls)).toContain('jingle:retourner');
+      next(2);
+      const combos = within(dialog).getByRole('region', { name: 'Combos' });
+      expect(within(combos).getByText('Bastion ×1,5 : Finistère (29)')).toBeInTheDocument();
+      expect(jingles(calls)).toContain('jingle:combo');
+      next(3);
+      expect(
+        within(dialog).getByRole('region', { name: 'Départements qui changent de palier' }),
+      ).toHaveTextContent('Finistère (29) : Terre inconnue → Présence (+24)');
+      expect(within(dialog).getByRole('region', { name: 'Imprévus et décisions' })).toBeVisible();
+      expect(within(dialog).queryByRole('button', { name: 'Tout afficher' })).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('un toucher affiche tout d’un coup', async () => {
+    open();
+    const dialog = screen.getByRole('dialog');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Tout afficher' }));
+    expect(within(dialog).getAllByText(/^Porte-à-porte/)).toHaveLength(2);
+    expect(within(dialog).getByRole('region', { name: 'Imprévus et décisions' })).toBeVisible();
+  });
+
+  it('mouvement réduit : même contenu d’un coup, « Semaine suivante » au clavier', async () => {
+    const calls = recordSound();
+    open('reduit');
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getAllByText(/^Porte-à-porte/)).toHaveLength(2);
+    expect(within(dialog).getByRole('region', { name: 'Combos' })).toBeVisible();
+    expect(within(dialog).queryByRole('button', { name: 'Tout afficher' })).toBeNull();
+    expect(jingles(calls)).toEqual(['jingle:tampon', 'jingle:combo']);
+    const next = within(dialog).getByRole('button', { name: 'Semaine suivante' });
+    for (let i = 0; i < 12 && document.activeElement !== next; i++) await userEvent.tab();
+    expect(next).toHaveFocus();
   });
 });

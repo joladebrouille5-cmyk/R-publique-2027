@@ -7,8 +7,10 @@ import {
   gameFixture,
   healthHandler,
   initialState,
+  jingles,
   mockApi,
   playedState,
+  recordSound,
   renderRoute,
   reportFixture,
   RULESET_URL,
@@ -47,11 +49,13 @@ const handCard = (name: string) =>
 describe('plateau de jeu', () => {
   it('pose une carte Terrain au toucher, puis résout la semaine avec la même requête que le QG', async () => {
     const calls = mockApi(base());
+    const sounds = recordSound();
     renderRoute(`/parties/${GAME_ID}/plateau`);
     const user = userEvent.setup();
     await user.click(await handCard('Porte-à-porte'));
     expect(screen.getByText(/Touchez un département du plateau/)).toBeVisible();
     await user.click(await department(/^Finistère \(29\)/));
+    expect(jingles(sounds)).toContain('jingle:glisser');
     const placed = screen.getByRole('list', { name: /Cartes posées/ });
     expect(within(placed).getByText(/Porte-à-porte/)).toBeVisible();
     expect(within(placed).getByText(/Finistère \(29\)/)).toBeVisible();

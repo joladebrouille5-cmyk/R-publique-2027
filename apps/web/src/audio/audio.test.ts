@@ -55,6 +55,15 @@ function player() {
   return { music, elements, playing };
 }
 
+describe('bruitages du plateau (phase 25)', () => {
+  it('glisser, retourner une carte, combo : courts, synthétisés', () => {
+    for (const cue of ['glisser', 'retourner', 'combo'] as const) {
+      expect(CUES).toContain(cue);
+      expect(JINGLES[cue].duree).toBeLessThanOrEqual(1.6);
+    }
+  });
+});
+
 describe('jingles des moments forts', () => {
   it('a une partition par moment, jouable par le synthétiseur', () => {
     expect(Object.keys(JINGLES).sort()).toEqual([...CUES].sort());

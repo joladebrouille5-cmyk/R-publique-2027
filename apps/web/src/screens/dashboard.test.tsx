@@ -84,8 +84,8 @@ describe('tableau de bord', () => {
     });
     expect(post.headers['idempotency-key']).toMatch(/^[0-9a-f]{32}$/);
 
-    const debrief = await screen.findByRole('dialog', { name: 'Débriefing de la semaine 0' });
-    await user.click(within(debrief).getByRole('button', { name: 'Continuer' }));
+    const debrief = await screen.findByRole('dialog', { name: 'Verdict de la semaine 0' });
+    await user.click(within(debrief).getByRole('button', { name: 'Semaine suivante' }));
     // Le bilan détaillé reste au QG, replié sous son titre.
     await user.click(screen.getByRole('button', { name: /^Bilan de la semaine 0/ }));
     expect(screen.getByText('Meeting public : coût')).toBeInTheDocument();
@@ -181,14 +181,14 @@ describe('tableau de bord', () => {
     expect(calls.find((c) => c.method === 'POST')!.body).toMatchObject({
       actions: [{ actionId: 'decryptage', posture: 'offensive' }],
     });
-    // Débriefing plein écran : le passage, sa posture et ses raisons ; « Continuer » le ferme.
-    const debrief = await screen.findByRole('dialog', { name: 'Débriefing de la semaine 0' });
+    // Verdict plein écran : le passage, sa posture et ses raisons ; « Semaine suivante » le ferme.
+    const debrief = await screen.findByRole('dialog', { name: 'Verdict de la semaine 0' });
+    await user.click(within(debrief).getByRole('button', { name: 'Tout afficher' }));
     expect(within(debrief).getByText('Passage décevant')).toBeInTheDocument();
     expect(within(debrief).getByRole('list', { name: 'Raisons du score' })).toHaveTextContent(
       'Posture offensive, format « Décryptage »',
     );
-    expect(debrief).toHaveFocus();
-    await user.click(within(debrief).getByRole('button', { name: 'Continuer' }));
+    await user.click(within(debrief).getByRole('button', { name: 'Semaine suivante' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /^Bilan de la semaine 0/ }));
     const reasons = screen.getByRole('list', { name: 'Raisons du score' });

@@ -302,3 +302,20 @@ export async function advancedOptions(
   if (options.name) await user.type(screen.getByLabelText('Nom de la partie'), options.name);
   if (options.seed) await user.type(screen.getByLabelText('Graine (facultative)'), options.seed);
 }
+
+/**
+ * Mouvement réduit demandé par le système (phase 25) : le verdict affiche tout d'un coup, sans
+ * séquence. Annulé après chaque test (setup.ts, `vi.unstubAllGlobals`).
+ */
+export function reduceMotion(): void {
+  vi.stubGlobal('matchMedia', (query: string) => ({
+    matches: query.includes('prefers-reduced-motion'),
+    media: query,
+    onchange: null,
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+    addListener: () => undefined,
+    removeListener: () => undefined,
+    dispatchEvent: () => false,
+  }));
+}

@@ -12,7 +12,7 @@ import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { WeeklyDebrief } from '../components/WeeklyDebrief';
+import { Verdict } from '../plateau/Verdict';
 import { usePlanStore } from '../stores/plan';
 import {
   GAME_ID,
@@ -22,6 +22,7 @@ import {
   mockApi,
   playedState,
   recordSound,
+  reduceMotion,
   renderRoute,
   RULESET,
   RULESET_URL,
@@ -369,18 +370,19 @@ describe('succès (phase 15)', () => {
     );
   });
 
-  it('le débriefing annonce les succès de la semaine, puis le Conseil des ministres', () => {
+  it('le verdict annonce les succès de la semaine, puis le Conseil des ministres', () => {
     const { report, state } = inaugural;
+    reduceMotion();
     expect(report.succes.length).toBeGreaterThan(0);
     const achievement = (id: string) => RULESET.succes.liste.find((a) => a.id === id) ?? null;
     render(
       <MemoryRouter>
-        <WeeklyDebrief
+        <Verdict
           report={report}
           state={state}
           gameId={GAME_ID}
           achievement={achievement}
-          onClose={vi.fn()}
+          onDone={vi.fn()}
         />
       </MemoryRouter>,
     );
@@ -394,12 +396,7 @@ describe('succès (phase 15)', () => {
     const council = step(governed);
     render(
       <MemoryRouter>
-        <WeeklyDebrief
-          report={council.report}
-          state={council.state}
-          gameId={GAME_ID}
-          onClose={vi.fn()}
-        />
+        <Verdict report={council.report} state={council.state} gameId={GAME_ID} onDone={vi.fn()} />
       </MemoryRouter>,
     );
     const section = screen.getByRole('region', { name: 'Conseil des ministres' });

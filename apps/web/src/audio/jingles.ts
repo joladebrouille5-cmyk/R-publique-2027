@@ -5,7 +5,18 @@
 // du jingle), son instrument, ses hauteurs (notes MIDI, un accord en contient plusieurs), sa durée
 // tenue et sa vélocité (0 à 1). Données pures : testées sans navigateur.
 
-export const CUES = ['vingt-heures', 'victoire', 'defaite', 'debat', 'flash', 'tampon'] as const;
+export const CUES = [
+  'vingt-heures',
+  'victoire',
+  'defaite',
+  'debat',
+  'flash',
+  'tampon',
+  // Phase 25 : bruitages du plateau (carte posée, carte retournée, combo).
+  'glisser',
+  'retourner',
+  'combo',
+] as const;
 export type Cue = (typeof CUES)[number];
 
 export const INSTRUMENTS = [
@@ -237,6 +248,41 @@ const TAMPON: Jingle = {
   notes: [note(0.16, 'tampon', [], 0.3, 1), note(0.16, 'marimba', [N.G4, N.D5], 0.6, 0.35)],
 };
 
+/** Carte glissée sur le plateau : un souffle bref et une pichenette (phase 25). */
+const GLISSER: Jingle = {
+  id: 'glisser',
+  libelle: 'Carte posée',
+  quand: 'Quand une carte est posée sur le plateau.',
+  duree: 1.05,
+  reverb: 0.08,
+  notes: [note(0, 'souffle', [], 0.18, 0.35), note(0.12, 'pizz', [N.E4], 0.2, 0.3)],
+};
+
+/** Carte retournée au verdict : le claquement du carton (phase 25). */
+const RETOURNER: Jingle = {
+  id: 'retourner',
+  libelle: 'Carte retournée',
+  quand: 'Au verdict de la semaine, à chaque carte retournée.',
+  duree: 1.05,
+  reverb: 0.1,
+  notes: [note(0, 'claque', [], 0.12, 0.5), note(0.05, 'marimba', [N.C5], 0.3, 0.32)],
+};
+
+/** Combo : arpège montant de marimba et cloche (phase 25). */
+const COMBO: Jingle = {
+  id: 'combo',
+  libelle: 'Combo',
+  quand: 'Au verdict, quand une série, un bastion ou un tour de région se déclenche.',
+  duree: 1.5,
+  reverb: 0.22,
+  notes: [
+    note(0, 'marimba', [N.C5], 0.25, 0.45),
+    note(0.1, 'marimba', [N.E5], 0.25, 0.45),
+    note(0.2, 'marimba', [N.G5], 0.3, 0.5),
+    note(0.3, 'cloche', [N.C6], 0.8, 0.4),
+  ],
+};
+
 export const JINGLES: Record<Cue, Jingle> = {
   'vingt-heures': VINGT_HEURES,
   victoire: VICTOIRE,
@@ -244,6 +290,9 @@ export const JINGLES: Record<Cue, Jingle> = {
   debat: DEBAT,
   flash: FLASH,
   tampon: TAMPON,
+  glisser: GLISSER,
+  retourner: RETOURNER,
+  combo: COMBO,
 };
 
 /** Fréquence (Hz) d'une note MIDI (la 4 = 69 = 440 Hz). */

@@ -2,7 +2,7 @@ import { advanceWeek, openQuinquennat } from '@r2027/engine';
 import { candidateName, type GameState, type WeeklyReport } from '@r2027/shared';
 import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { WeeklyDebrief } from '../components/WeeklyDebrief';
+import { Verdict } from '../plateau/Verdict';
 import { WeeklyReportView } from '../components/WeeklyReportView';
 import {
   GAME_ID,
@@ -10,6 +10,7 @@ import {
   healthHandler,
   mockApi,
   playedState,
+  reduceMotion,
   renderRoute,
   RULESET,
   RULESET_URL,
@@ -128,7 +129,8 @@ describe('présidentielle suivante (phase 23)', () => {
 
   it('le débriefing plein écran présente les candidatures à part des imprévus', () => {
     const { state, report } = opening;
-    render(<WeeklyDebrief report={report} state={state} gameId={GAME_ID} onClose={() => {}} />);
+    reduceMotion();
+    render(<Verdict report={report} state={state} gameId={GAME_ID} onDone={() => {}} />);
     const dialog = screen.getByRole('dialog');
     const section = within(dialog).getByRole('region', { name: 'Candidatures 2032' });
     expect(within(section).getByText('Votre camp')).toBeInTheDocument();
