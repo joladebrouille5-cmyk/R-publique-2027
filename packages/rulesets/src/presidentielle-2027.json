@@ -3965,7 +3965,7 @@
     },
     "secondTour": {
       "effetConsigne": 0.8,
-      "effetDebat": 0.1,
+      "effetDebat": 0.075,
       "abstentionDifferentielle": 0.12,
       "seuilConsigne": 0.9
     },
