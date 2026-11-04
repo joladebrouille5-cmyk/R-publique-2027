@@ -1085,3 +1085,68 @@ describe('contenu approfondi (phase 7)', () => {
     });
   });
 });
+
+describe('présidentielle suivante : candidatures et bilan (phase 23)', () => {
+  const { succession } = ruleset;
+
+  it('passe au jeu de règles 21.0.0', () => {
+    expect(ruleset.version).toBe('21.0.0');
+    expect(CURRENT_RULESET_KEY).toBe('presidentielle-2027@21.0.0');
+  });
+
+  it('a des paramètres de succession étiquetés comme hypothèses, aux valeurs de la spécification', () => {
+    expect(succession.statut).toBe('hypothese');
+    expect(succession.note.length).toBeGreaterThan(20);
+    expect(succession.delaiDecisionSemaines).toBe(4);
+    expect(succession.maxCandidats).toBe(12);
+    expect(succession.maxSuccesseurs).toBeLessThanOrEqual(succession.maxCandidats);
+    expect(succession.representation.sortant).toEqual({
+      base: 0.5,
+      pente: 1.5,
+      pivot: 3000,
+      min: 0.1,
+      max: 0.95,
+    });
+    expect(succession.representation.finaliste).toBe(0.85);
+    expect(succession.representation.elimine).toEqual({
+      base: 0.25,
+      pente: 2,
+      min: 0.15,
+      max: 0.8,
+    });
+    expect(succession.representation.autre).toBe(0.3);
+    expect(succession.transmissionMilitants).toBe(0.6);
+    expect(succession.bilan).toEqual({
+      pivotPopularite: 3500,
+      poidsPopularite: 1.2,
+      poidsNote: 0.3,
+      poidsChomage: 0.15,
+      max: 0.6,
+      heritier: 0.5,
+      ministre: 0.25,
+    });
+  });
+
+  it('borne les probabilités dans [0, 1] et refuse des bornes inversées', () => {
+    const { sortant, elimine } = succession.representation;
+    for (const p of [
+      sortant.min,
+      sortant.max,
+      elimine.min,
+      elimine.max,
+      succession.representation.finaliste,
+      succession.representation.autre,
+      succession.ministreProbabilite,
+      succession.transmissionMilitants,
+    ]) {
+      expect(p).toBeGreaterThanOrEqual(0);
+      expect(p).toBeLessThanOrEqual(1);
+    }
+    const inverted = full();
+    inverted.succession.representation.sortant.min = 0.99;
+    expect(RulesetSchema.safeParse(inverted).success).toBe(false);
+    const tooMany = full();
+    tooMany.succession.maxSuccesseurs = 13;
+    expect(RulesetSchema.safeParse(tooMany).success).toBe(false);
+  });
+});

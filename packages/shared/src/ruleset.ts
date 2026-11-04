@@ -1790,6 +1790,84 @@ export const RulesetSchema = z
       })
       .strict(),
     /**
+     * Présidentielle suivante (phase 23) : décision de candidature du joueur, candidatures
+     * simulées des autres (probabilités de se représenter), entrants, moyens de départ d'un
+     * entrant et poids du bilan du quinquennat sur les intentions. Paramètres de jeu
+     * (hypothèses), jamais des données : aucune candidature réelle n'est annoncée ni prêtée.
+     */
+    succession: z
+      .object({
+        statut: z.literal('hypothese'),
+        note: z.string().min(1),
+        /** Semaines entre la décision du joueur et l'ouverture de la campagne suivante. */
+        delaiDecisionSemaines: z.number().int().min(1).max(26),
+        /** Plafond de candidats déclarés à l'ouverture de la campagne suivante. */
+        maxCandidats: z.number().int().min(2).max(20),
+        /** Successeurs proposés au joueur, au plus. */
+        maxSuccesseurs: z.number().int().min(1).max(8),
+        /** Probabilité de se représenter selon la situation à la présidentielle précédente. */
+        representation: z
+          .object({
+            /** Président sortant éligible : base + pente × (popularité − pivot) / 10 000. */
+            sortant: z
+              .object({
+                base: Fraction,
+                pente: z.number().min(0).max(10),
+                pivot: Points,
+                min: Fraction,
+                max: Fraction,
+              })
+              .strict(),
+            /** Finaliste battu au second tour. */
+            finaliste: Fraction,
+            /** Éliminé au premier tour : base + pente × part des exprimés. */
+            elimine: z
+              .object({
+                base: Fraction,
+                pente: z.number().min(0).max(10),
+                min: Fraction,
+                max: Fraction,
+              })
+              .strict(),
+            /** Écarté faute de parrainages ou retiré par ralliement. */
+            autre: Fraction,
+          })
+          .strict(),
+        /** Ministre ambitieux : popularité prêtée minimale (centièmes de point) et probabilité. */
+        ministreSeuilPopularite: Points,
+        ministreProbabilite: Fraction,
+        /** Distance de position sous laquelle un candidat déclaré occupe déjà l'espace. */
+        distanceMinistre: z.number().min(0).max(2),
+        /** Distance au-delà de laquelle une famille d'électeurs n'a pas de candidat proche. */
+        distanceFamille: z.number().min(0).max(2),
+        /** Part des militants transmise au successeur du joueur (passation de la campagne). */
+        transmissionMilitants: Fraction,
+        /** Moyens de départ d'un candidat entrant. */
+        entrants: z
+          .object({
+            budgetCentimes: z.number().int().min(0),
+            militants: z.number().int().min(0),
+            /** Notoriété d'une figure du vivier par niveau 1, 2, 3 (centièmes de point). */
+            notoriete: z.tuple([Points, Points, Points]),
+            notorieteProfil: Points,
+            popularite: Points,
+          })
+          .strict(),
+        /** Poids du bilan : utilité ajoutée au président sortant et à son camp. */
+        bilan: z
+          .object({
+            pivotPopularite: Points,
+            poidsPopularite: z.number().min(0).max(5),
+            poidsNote: z.number().min(0).max(5),
+            poidsChomage: z.number().min(0).max(5),
+            max: z.number().min(0).max(1),
+            heritier: Fraction,
+            ministre: Fraction,
+          })
+          .strict(),
+      })
+      .strict(),
+    /**
      * Personnalités réelles (phase 5 bis) : paramètres de jeu (hypothèses) qui convertissent
      * les niveaux de notoriété et d'organisation des fiches en moyens de départ. Les fiches
      * elles-mêmes (`personnalites`) viennent de `pnpm data:personnalites` ; leur empreinte
@@ -1846,6 +1924,17 @@ export const RulesetSchema = z
       ruleset.legislatives.finLegislature.sourceId,
     ];
     for (const id of referenced) if (!sourceIds.has(id)) issue(`Source inconnue : ${id}`);
+
+    // Présidentielle suivante (phase 23) : bornes ordonnées, successeurs sous le plafond.
+    const { succession } = ruleset;
+    for (const [label, bound] of [
+      ['sortant', succession.representation.sortant],
+      ['éliminé', succession.representation.elimine],
+    ] as const)
+      if (bound.min > bound.max)
+        issue(`Succession (${label}) : borne minimale au-dessus de la maximale`);
+    if (succession.maxSuccesseurs > succession.maxCandidats)
+      issue('Succession : plus de successeurs proposés que de candidats admis');
 
     const unique = (label: string, ids: string[]) => {
       const seen = new Set<string>();

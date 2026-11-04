@@ -1,6 +1,6 @@
 {
   "id": "presidentielle-2027",
-  "version": "20.0.0",
+  "version": "21.0.0",
   "libelle": "Présidentielle 2027 et quinquennat — campagne, parrainages, financement, médias réels, présidence, gouvernement et figures réelles nominables, Parlement, économie, crises et législatives",
   "verifieLe": "2026-11-03",
   "sources": {
@@ -11001,6 +11001,40 @@
       "multiplicateurNotoriete": 1.15,
       "actionsParSemaine": 5,
       "temperature": 0.2
+    }
+  },
+  "succession": {
+    "statut": "hypothese",
+    "note": "Paramètres de jeu (hypothèses, phase 23) pour la présidentielle qui suit un quinquennat : le joueur décide quatre semaines avant l'ouverture de la campagne de se représenter ou de passer la main à un successeur de son camp ; les autres candidats se représentent ou se retirent par un tirage dont la probabilité dépend de leur situation à la présidentielle précédente ; un héritier du camp sortant, un ministre ambitieux et des profils fictifs des familles sans candidat entrent ; le bilan du quinquennat (popularité finale, note sur 20, variation du chômage) s'ajoute à l'utilité du président sortant et, atténué, de son camp. Aucune de ces valeurs n'est une donnée ni une prévision : les candidatures sont simulées et aucun propos n'est prêté à une personne réelle.",
+    "delaiDecisionSemaines": 4,
+    "maxCandidats": 12,
+    "maxSuccesseurs": 4,
+    "representation": {
+      "sortant": { "base": 0.5, "pente": 1.5, "pivot": 3000, "min": 0.1, "max": 0.95 },
+      "finaliste": 0.85,
+      "elimine": { "base": 0.25, "pente": 2, "min": 0.15, "max": 0.8 },
+      "autre": 0.3
+    },
+    "ministreSeuilPopularite": 4500,
+    "ministreProbabilite": 0.35,
+    "distanceMinistre": 0.25,
+    "distanceFamille": 0.35,
+    "transmissionMilitants": 0.6,
+    "entrants": {
+      "budgetCentimes": 200000000,
+      "militants": 300,
+      "notoriete": [1500, 3000, 4500],
+      "notorieteProfil": 1200,
+      "popularite": 3000
+    },
+    "bilan": {
+      "pivotPopularite": 3500,
+      "poidsPopularite": 1.2,
+      "poidsNote": 0.3,
+      "poidsChomage": 0.15,
+      "max": 0.6,
+      "heritier": 0.5,
+      "ministre": 0.25
     }
   },
   "personnalitesReelles": {

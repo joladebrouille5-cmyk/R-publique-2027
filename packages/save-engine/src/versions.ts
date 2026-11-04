@@ -37,6 +37,7 @@ import {
   GameStateV19Schema,
   GameStateV20Schema,
   GameStateV21Schema,
+  GameStateV22Schema,
   addDays,
   DIGITAL_HISTORY_WEEKS,
   daysFromCivil,
@@ -66,6 +67,7 @@ import {
   type GameStateV19,
   type GameStateV20,
   type GameStateV21,
+  type GameStateV22,
   type GameStateV17,
 } from '@r2027/shared';
 import { z } from 'zod';
@@ -116,7 +118,8 @@ const SCHEMAS: Record<number, z.ZodType> = {
   19: GameStateV19Schema,
   20: GameStateV20Schema,
   21: GameStateV21Schema,
-  22: GameStateSchema,
+  22: GameStateV22Schema,
+  23: GameStateSchema,
 };
 
 /** Jeux de règles des parties aux formats 2 (phase 2) et 3 (phase 3). */
@@ -796,7 +799,7 @@ function migrateV20ToV21(v20: GameStateV20): GameStateV21 {
  * 21 → 22 (phase 20) : événements en chaîne. Une partie existante n'a aucune suite programmée ;
  * les suites et les coups adverses du jeu de règles 18 s'appliquent dès la semaine suivante.
  */
-function migrateV21ToV22(v21: GameStateV21): GameState {
+function migrateV21ToV22(v21: GameStateV21): GameStateV22 {
   return {
     ...v21,
     meta: {
@@ -806,6 +809,25 @@ function migrateV21ToV22(v21: GameStateV21): GameState {
       saveSchemaVersion: 22,
     },
     suites: [],
+  };
+}
+
+/**
+ * 22 → 23 (phase 23) : présidentielle suivante. Une partie existante n'a pas encore de
+ * succession : la décision de candidature du joueur, les candidatures simulées des autres et le
+ * poids du bilan s'appliquent à l'approche de la prochaine campagne. Aucun candidat ne renvoie
+ * à une fiche de figure (`figureId` absent).
+ */
+function migrateV22ToV23(v22: GameStateV22): GameState {
+  return {
+    ...v22,
+    meta: {
+      ...v22.meta,
+      engineVersion: ENGINE_VERSION,
+      rulesetVersion: CURRENT_RULESET_KEY,
+      saveSchemaVersion: 23,
+    },
+    succession: null,
   };
 }
 
@@ -831,6 +853,7 @@ const MIGRATIONS: Record<number, (state: never) => unknown> = {
   19: migrateV19ToV20,
   20: migrateV20ToV21,
   21: migrateV21ToV22,
+  22: migrateV22ToV23,
 };
 
 export type LoadedState = { state: GameState; stateHash: string; migratedFrom: number | null };

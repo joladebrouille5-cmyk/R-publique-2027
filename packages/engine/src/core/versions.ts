@@ -1,5 +1,5 @@
 /** Version du moteur, enregistrée dans chaque partie et chaque sauvegarde (§11). */
-export const ENGINE_VERSION = '0.22.0';
+export const ENGINE_VERSION = '0.23.0';
 
 /**
  * Version du format de `GameState` ; toute évolution s'accompagne d'une migration
@@ -21,6 +21,7 @@ export const ENGINE_VERSION = '0.22.0';
  * urgences ministérielles, questions au gouvernement, objectifs de mandat, succès) ; 20 : phase
  * 18 (jeu de règles 17 : cinq niveaux de difficulté, Découverte et Légende en plus) ; 21 : phase
  * 20 (format de partie complet ou court) ; 22 : phase 20 (jeu de règles 18 : événements en
- * chaîne et coups des adversaires, suites programmées).
+ * chaîne et coups des adversaires, suites programmées) ; 23 : phase 23 (jeu de règles 21 :
+ * candidatures à la présidentielle suivante, successeur du joueur, poids du bilan).
  */
-export const SAVE_SCHEMA_VERSION = 22;
+export const SAVE_SCHEMA_VERSION = 23;

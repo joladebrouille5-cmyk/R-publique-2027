@@ -17,6 +17,7 @@ import {
   CampaignStyleSchema,
   CandidateIdentitySchema,
   CandidateIdentityV16Schema,
+  CandidateIdentityV22Schema,
   CandidateIdentityV5Schema,
 } from './politics';
 import { ConsequenceSchema } from './consequences';
@@ -299,7 +300,19 @@ export type ActorV13 = z.infer<typeof ActorV13Schema>;
 export const ActorV16Schema = ActorV13Schema.extend({ resources: ResourcesSchema }).strict();
 export type ActorV16 = z.infer<typeof ActorV16Schema>;
 
-/** Candidat et sa campagne (format 17) : identité avec la photo d'un candidat personnalisé. */
+/**
+ * Candidat et sa campagne aux formats 17 à 22 (figé) : identité avec la photo d'un candidat
+ * personnalisé.
+ */
+export const ActorV22Schema = ActorV16Schema.extend({
+  candidate: CandidateIdentityV22Schema,
+}).strict();
+export type ActorV22 = z.infer<typeof ActorV22Schema>;
+
+/**
+ * Candidat et sa campagne (format 23, phase 23) : identité qui peut renvoyer à une fiche de
+ * figure du vivier (personnalité réelle entrée dans la course à la présidentielle suivante).
+ */
 export const ActorSchema = ActorV16Schema.extend({ candidate: CandidateIdentitySchema }).strict();
 export type Actor = z.infer<typeof ActorSchema>;
 
@@ -342,7 +355,7 @@ export const PendingDecisionV18Schema = PendingDecisionV2Schema.extend({
  * thème ; `posteId` : ministère du thème, s'il y en a un). Aucun nom de député, d'élu ni de
  * propos : ces décisions décrivent des faits de jeu simulés.
  */
-export const DECISION_KINDS = [
+const DECISION_KINDS_V22 = [
   'evenement',
   'consigne',
   'gouvernement',
@@ -353,6 +366,24 @@ export const DECISION_KINDS = [
   'urgence',
   'qag',
 ] as const;
+/** Décision obligatoire aux formats 19 à 22 (figée pour les migrations). */
+export const PendingDecisionV22Schema = PendingDecisionV2Schema.extend({
+  kind: z.enum(DECISION_KINDS_V22),
+  departement: z
+    .string()
+    .regex(/^(\d{2}|2A|2B|97\d)$/)
+    .optional(),
+  posteId: Id.optional(),
+  groupeId: Id.optional(),
+  themeId: Id.optional(),
+}).strict();
+
+/**
+ * Genres de décision (format 23, phase 23) : en plus, la candidature du joueur à la
+ * présidentielle suivante (`candidature`), quatre semaines avant l'ouverture de la campagne :
+ * se représenter ou passer la main à un successeur de son camp.
+ */
+export const DECISION_KINDS = [...DECISION_KINDS_V22, 'candidature'] as const;
 export type DecisionKind = (typeof DECISION_KINDS)[number];
 /**
  * Décisions facultatives (phase 15) : sans réponse du joueur, l'option par défaut s'applique —
@@ -756,7 +787,7 @@ export type GameStateV16 = z.infer<typeof GameStateV16Schema>;
  */
 export const GameStateV17Schema = GameStateV16Schema.extend({
   meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(17) }).strict(),
-  actors: z.record(Id, ActorSchema),
+  actors: z.record(Id, ActorV22Schema),
   pendingDecisions: z.array(PendingDecisionV18Schema),
   parlement: ParliamentV18Schema.nullable(),
   legislatives: LegislativesStateSchema.nullable(),
@@ -795,7 +826,7 @@ export type GameStateV18 = z.infer<typeof GameStateV18Schema>;
 export const GameStateV19Schema = GameStateV18Schema.extend({
   meta: MetaV1Schema.extend({ saveSchemaVersion: z.literal(19) }).strict(),
   player: PlayerSchema,
-  pendingDecisions: z.array(PendingDecisionSchema),
+  pendingDecisions: z.array(PendingDecisionV22Schema),
   parlement: ParliamentSchema.nullable(),
   quinquennat: QuinquennatSchema.nullable(),
   historique: z
@@ -864,16 +895,75 @@ export const FollowUpSchema = z
 export type FollowUp = z.infer<typeof FollowUpSchema>;
 
 /**
- * État complet d'une partie, format de sauvegarde n° 22 (phase 20) : en plus du format 21, les
- * suites programmées des événements en chaîne (`suites`). Toute évolution s'accompagne d'un
- * nouveau numéro de format et d'une migration (packages/save-engine).
+ * État au format 22 (phase 20) : en plus du format 21, les suites programmées des événements en
+ * chaîne (`suites`). Figé pour les migrations.
  */
-export const GameStateSchema = GameStateV21Schema.extend({
+export const GameStateV22Schema = GameStateV21Schema.extend({
   meta: MetaV1Schema.extend({
     difficulty: DifficultySchema,
     saveSchemaVersion: z.literal(22),
   }).strict(),
   suites: z.array(FollowUpSchema),
+}).strict();
+export type GameStateV22 = z.infer<typeof GameStateV22Schema>;
+
+/**
+ * Annonce de candidature à la présidentielle suivante (phase 23), simulée par le jeu : un
+ * candidat se représente, se retire, entre dans la course, ou succède au candidat du joueur.
+ * `motif` est un fait de jeu chiffré (« score de 2027 : 3,2 % »), jamais un propos prêté.
+ */
+export const SUCCESSION_CHOICES = ['candidat', 'retrait', 'entree', 'successeur'] as const;
+export type SuccessionChoice = (typeof SUCCESSION_CHOICES)[number];
+export const SuccessionAnnouncementSchema = z
+  .object({
+    actorId: Id,
+    choix: z.enum(SUCCESSION_CHOICES),
+    motif: z.string().min(1).max(200),
+  })
+  .strict();
+export type SuccessionAnnouncement = z.infer<typeof SuccessionAnnouncementSchema>;
+
+/**
+ * Rôle d'un candidat vis-à-vis du bilan du quinquennat écoulé (phase 23) : président sortant,
+ * héritier du camp sortant (ou successeur d'un président joueur), autre membre du dernier
+ * gouvernement.
+ */
+export const RECORD_ROLES = ['sortant', 'heritier', 'ministre'] as const;
+export type RecordRole = (typeof RECORD_ROLES)[number];
+
+/**
+ * Présidentielle suivante (phase 23) : année du cycle, choix du joueur (option de sa décision
+ * `candidature`, null s'il n'a pas eu à choisir), annonces de candidature faites à l'ouverture
+ * de la campagne et facteur de bilan de chaque candidat concerné (utilité, arrêté une fois).
+ */
+export const SuccessionSchema = z
+  .object({
+    annee: z.number().int().min(2032),
+    choixJoueur: Id.nullable(),
+    annonces: z.array(SuccessionAnnouncementSchema),
+    bilan: z.record(
+      Id,
+      z.object({ facteur: z.number().min(-1).max(1), role: z.enum(RECORD_ROLES) }).strict(),
+    ),
+  })
+  .strict();
+export type Succession = z.infer<typeof SuccessionSchema>;
+
+/**
+ * État complet d'une partie, format de sauvegarde n° 23 (phase 23) : en plus du format 22, la
+ * présidentielle suivante (`succession` : choix du joueur, annonces de candidature, facteurs de
+ * bilan), la fiche de figure d'un candidat réel entré dans la course (`figureId`) et la décision
+ * `candidature`. Toute évolution s'accompagne d'un nouveau numéro de format et d'une migration
+ * (packages/save-engine).
+ */
+export const GameStateSchema = GameStateV22Schema.extend({
+  meta: MetaV1Schema.extend({
+    difficulty: DifficultySchema,
+    saveSchemaVersion: z.literal(23),
+  }).strict(),
+  actors: z.record(Id, ActorSchema),
+  pendingDecisions: z.array(PendingDecisionSchema),
+  succession: SuccessionSchema.nullable(),
 }).strict();
 export type GameState = z.infer<typeof GameStateSchema>;
 

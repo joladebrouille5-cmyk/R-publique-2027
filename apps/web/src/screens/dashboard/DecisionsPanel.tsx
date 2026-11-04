@@ -108,6 +108,13 @@ export const DECISION_KINDS: Record<
     accent: 'bg-sky-500',
     bandeau: 'border-t-sky-500',
   },
+  // Phase 23 : se représenter ou passer la main à la présidentielle suivante.
+  candidature: {
+    badge: 'Présidentielle suivante',
+    tone: 'simule',
+    accent: 'bg-republique-500',
+    bandeau: 'border-t-republique-500',
+  },
 };
 
 /**
