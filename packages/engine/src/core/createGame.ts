@@ -24,6 +24,7 @@ import { openingAccount } from '../campaign/finances';
 import { orientationById } from '../campaign/orientation';
 import { emptyParrainages, initialPromises } from '../campaign/parrainages';
 import { FIRST_CYCLE } from '../presidency/dates';
+import { entrantResources, entrantSourceOf } from '../presidency/succession';
 import { compareStrings } from './ledger';
 import { ENGINE_VERSION, SAVE_SCHEMA_VERSION } from './versions';
 
@@ -340,6 +341,9 @@ export function initialMeans(state: GameState, ruleset: Ruleset, actor: Actor): 
       profilId,
     }).resources;
   }
+  // Candidat entré lors d'une présidentielle suivante (phase 23) : moyens d'un entrant.
+  const entrant = entrantSourceOf(actor);
+  if (entrant) return entrantResources(ruleset, entrant);
   return createOpponents(difficulty, ruleset)[actor.id]?.resources ?? actor.resources;
 }
 

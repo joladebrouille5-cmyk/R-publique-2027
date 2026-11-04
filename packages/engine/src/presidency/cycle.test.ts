@@ -103,8 +103,13 @@ describe('fin du quinquennat', () => {
   });
 
   it('remet parrainages et comptes de campagne à zéro, par le registre', () => {
-    for (const actor of Object.values(campaign.actors)) {
-      expect(actor.status).toBe('candidat');
+    // Phase 23 : seuls les candidats déclarés reçoivent leurs moyens de départ ; chacun repart
+    // sans parrainages.
+    for (const actor of Object.values(campaign.actors))
+      expect(actor.parrainages.recues).toEqual({});
+    const declared = Object.values(campaign.actors).filter((a) => a.status === 'candidat');
+    expect(declared.length).toBeGreaterThanOrEqual(2);
+    for (const actor of declared) {
       expect(actor.parrainages.recues).toEqual({});
       expect(actor.parrainages.validees).toEqual({});
       const { recettes, depenses } = actor.finances;

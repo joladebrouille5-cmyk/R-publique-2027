@@ -13,14 +13,17 @@ import { compareStrings, type Ledger } from '../core/ledger';
 import { nextCycle, shiftToCycle } from './dates';
 import { endGovernment, snapshot } from './government';
 import { gradeMandate } from './objectifs';
+import { applySuccession } from './succession';
 
 // Fin du quinquennat et poursuite de la partie (phase 6, P6-08). Le lundi où commence la
 // campagne du cycle suivant (date de départ de la partie décalée du cycle), le quinquennat est
 // clos : bilan arrêté, archives (présidentielle et quinquennat), textes en cours caducs, puis
 // nouvelle campagne présidentielle avec le même moteur : parrainages et comptes de campagne
 // remis à zéro, militants et notoriété relevés au moins à leur niveau de départ (hypothèse),
-// président sortant candidat s'il n'a pas accompli deux mandats consécutifs
-// (Constitution, art. 6). Pendant la campagne, l'action du gouvernement sortant, le Parlement
+// président sortant inéligible au terme de deux mandats consécutifs (Constitution, art. 6). Phase
+// 23 : le joueur se représente ou passe la main, les autres candidats se représentent ou se
+// retirent (candidatures simulées), de nouveaux candidats entrent et le bilan du quinquennat pèse
+// sur les intentions du président sortant et de son camp (`succession.ts`). Pendant la campagne, l'action du gouvernement sortant, le Parlement
 // et l'économie ne sont pas simulés (simplification du jeu, signalée au joueur).
 
 const IN_PROGRESS = new Set(['commission', 'seance', 'navette', 'lecture_definitive']);
@@ -90,8 +93,11 @@ export function openNextCampaign(
   const presidentName = candidateName(president.candidate);
   const week = state.meta.week;
 
-  // 1. Bilan, puis archives de la présidentielle et du quinquennat.
+  // 1. Bilan, puis archives de la présidentielle et du quinquennat ; dernier gouvernement et
+  // popularité prêtée de ses membres, pour les candidatures (phase 23).
   const bilan = reviewQuinquennat(state, ruleset);
+  const government = quinquennat.gouvernement;
+  const suivi = quinquennat.suivi;
   endGovernment(quinquennat, state.meta.date, 'fin du quinquennat');
   state.historique.quinquennats.push({
     mandat,
@@ -106,6 +112,7 @@ export function openNextCampaign(
       eluId: mandat.presidentId,
     });
   }
+  const previous = state.elections.t1 ? state.historique.presidentielles.at(-1)! : null;
   // Textes en cours : caducs (simplification : le nouveau président aura sa feuille de route).
   for (const bill of state.parlement?.textes ?? []) {
     if (!IN_PROGRESS.has(bill.etape)) continue;
@@ -130,11 +137,26 @@ export function openNextCampaign(
   state.calendar = { blockedBy: null, blockedMessage: null };
   // Conséquences achevées : archivées dans le bilan, retirées de l'état courant.
   state.consequences = state.consequences.filter((c) => c.fin >= week);
+  // 3. Candidatures (phase 23) : qui se représente, qui se retire, qui entre ; facteurs de bilan.
+  const candidacies = applySuccession(state, ruleset, bilan, {
+    presidentId: president.id,
+    termLimited,
+    previous,
+    government,
+    suivi,
+  });
   for (const id of Object.keys(state.actors).sort(compareStrings)) {
     const actor = state.actors[id]!;
-    actor.status = termLimited && id === president.id ? 'ineligible' : 'candidat';
-    // Moyens de départ : nouveau budget ; militants et notoriété relevés au moins à leur niveau
-    // de création de la partie (remobilisation, hypothèse de jeu).
+    actor.parrainages = emptyParrainages();
+    actor.preparationDebat = 0;
+    actor.strategie = null;
+    actor.programme = { ...actor.programme, revirements: 0 };
+    if (actor.status !== 'candidat') {
+      actor.finances = openingAccount(ledger.current(id, 'budgetCentimes'), ruleset);
+      continue;
+    }
+    // Moyens de départ des candidats déclarés : nouveau budget ; militants et notoriété relevés
+    // au moins à leur niveau de création de la partie (remobilisation, hypothèse de jeu).
     const means = initialMeans(state, ruleset, actor);
     const label = `Présidentielle ${next.annee}`;
     ledger.apply(id, 'budgetCentimes', [
@@ -162,10 +184,6 @@ export function openNextCampaign(
       },
     ]);
     actor.finances = openingAccount(ledger.current(id, 'budgetCentimes'), ruleset);
-    actor.parrainages = emptyParrainages();
-    actor.preparationDebat = 0;
-    actor.strategie = null;
-    actor.programme = { ...actor.programme, revirements: 0 };
   }
   // Les relations entre candidats (confiance, rivalités) se poursuivent d'une campagne à l'autre.
   distributeInitialPromises(state, ruleset);
@@ -209,11 +227,13 @@ export function openNextCampaign(
         'Parrainages et comptes de campagne remis à zéro ; militants et notoriété relevés au moins à leur niveau de départ (hypothèse de jeu). ' +
         (termLimited
           ? `${presidentName}, au terme de deux mandats consécutifs, ne peut pas se représenter (Constitution, art. 6). `
-          : `${presidentName}, président(e) sortant(e), peut se représenter. `) +
+          : '') +
+        `Candidatures simulées : ${Object.values(state.actors).filter((a) => a.status === 'candidat').length} candidats déclarés ; le bilan du quinquennat pèse sur les intentions du président sortant et de son camp (hypothèse de jeu). ` +
         `Le mandat en cours s'achève le ${formatFrenchDate(mandat.fin)} ; pendant la campagne, l'action du gouvernement sortant, le Parlement et l'économie ne sont pas simulés (simplification du jeu).`,
       nature: 'simule',
       majeur: true,
       decisionId: null,
     },
+    ...candidacies,
   ];
 }
