@@ -30,5 +30,20 @@ un candidat de droite, la proximité linéaire lui donne une majorité structure
 | (a) | | 0,2 | 77 % | 4 | 3 | insuffisant |
 | (a) + (d) moyens de Boussole réduits (notoriété 45 %, budget 5 M€) | `saturationProximite`, `candidatsFictifs[adv-boussole].ressources` | 0,3 | 44 % | 4 | 3 | critères atteints, de justesse |
 | (a) + (d) moyens de Boussole réduits (notoriété 35 %, budget 4 M€, popularité 30 %) | idem | 0,3 | 35 % (Rivière 41 %) | 4 | 3 | critères atteints |
+| **(a) + (d) retenue** : moyens de Boussole réduits (notoriété 35 %, budget 4 M€, popularité 30 %) | idem | **0,4** | 37 % (Rivière 43 %) | 4 | 3 | **retenue** |
+| (d) seule, sans saturation | `candidatsFictifs[adv-boussole].ressources` | — | 78 % | 3 | 2 | insuffisante |
 | (b) fidélité de camp (1er tour) | `modele.fideliteCamp` | 0,5 | 100 % | 1 | 2 | écartée (aggrave) |
 | (c) abstention différentielle (2nd tour) | `modele.secondTour.abstentionDifferentielle` | 0,4 (au lieu de 0,12) | 98 % | 3 | 2 | écartée (sans effet) |
+
+## Valeurs retenues
+
+Saturation à **0,4** et moyens de départ de Boussole ramenés au niveau des autres candidats fictifs
+(notoriété 35 %, budget 4 M€, popularité 30 %, militants inchangés). La saturation à 0,3 satisfait
+aussi les cibles des candidats fictifs, mais renforce Marine Le Pen au second tour en départ
+« Sondages actuels » (88 % de victoires, au-dessus des 85 % visés) ; à 0,4, elle gagne 84 %
+(100 parties, décroissance du socle 0,985 / 0,95). Effet sur les personnalités réelles en départ
+équitable (saturation 0,3) : la personnalité la plus victorieuse passe de 74 % (Gabriel Attal,
+référence) à 38 %.
+
+Aucune piste n'est ciblée sur une personne réelle : la saturation vaut pour tous les candidats, et
+seule une fiche fictive (Boussole) voit ses moyens changer.

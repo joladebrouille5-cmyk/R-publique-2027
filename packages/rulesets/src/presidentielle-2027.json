@@ -3942,9 +3942,9 @@
   },
   "modele": {
     "statut": "hypothese",
-    "note": "Coefficients du score latent fixés par conception du jeu. Participation des groupes, blancs et nuls calés pour retrouver l'ordre de grandeur des résultats proclamés en 2022 (décisions n° 2022-195 et 2022-197 PDR : participation 73,69 % puis 71,99 % des inscrits ; blancs 1,51 % puis 6,37 % des votants ; nuls 0,69 % puis 2,29 %). Le jeu simule environ 74,8 % puis 72,1 %, 1,5 % puis 6,1 % de blancs, 0,7 % puis 2,3 % de nuls. À recalibrer sur les données communales en phase 4. Phase 5 : facteurs programme, crédibilité, médias et alliances ajoutés (hypothèses, non calibrées). Phase 11 : la part d'incertitude persiste d'une semaine à l'autre (moyenne pondérée des chocs des semaines passées, persistance 0,85), pour des intentions stables sans fait nouveau ; la dynamique de campagne est la pente de la popularité (moyenne des trois dernières semaines contre celle des trois précédentes).",
+    "note": "Coefficients du score latent fixés par conception du jeu. Participation des groupes, blancs et nuls calés pour retrouver l'ordre de grandeur des résultats proclamés en 2022 (décisions n° 2022-195 et 2022-197 PDR : participation 73,69 % puis 71,99 % des inscrits ; blancs 1,51 % puis 6,37 % des votants ; nuls 0,69 % puis 2,29 %). Le jeu simule environ 74,8 % puis 72,1 %, 1,5 % puis 6,1 % de blancs, 0,7 % puis 2,3 % de nuls. À recalibrer sur les données communales en phase 4. Phase 5 : facteurs programme, crédibilité, médias et alliances ajoutés (hypothèses, non calibrées). Phase 11 : la part d'incertitude persiste d'une semaine à l'autre (moyenne pondérée des chocs des semaines passées, persistance 0,85), pour des intentions stables sans fait nouveau ; la dynamique de campagne est la pente de la popularité (moyenne des trois dernières semaines contre celle des trois précédentes). Phase 24 (banc d'équilibrage, docs/equilibrage) : la pénalité de proximité sature à 0,4 (en centaines de points), au-delà de quoi un électeur juge également lointains les candidats éloignés ; avec les moyens de départ de Boussole ramenés au niveau des autres candidats fictifs, Claire Delorme passe de 98,7 % (300 parties) à 35 % des victoires en observateur, aucun candidat ne dépassant 41 % (100 parties), sans malus ciblé. La fidélité de camp (0) et une abstention différentielle plus forte ont été écartées au banc.",
     "proximite": 3,
-    "saturationProximite": 3,
+    "saturationProximite": 0.4,
     "fideliteCamp": 0,
     "notoriete": 1,
     "popularite": 3,
@@ -4152,10 +4152,10 @@
       "style": "equilibre",
       "toleranceRisque": 0.4,
       "ressources": {
-        "budgetCentimes": 800000000,
+        "budgetCentimes": 400000000,
         "militants": 1300,
-        "notoriete": 6000,
-        "popularite": 3500
+        "notoriete": 3500,
+        "popularite": 3000
       },
       "objectif": "victoire",
       "equipe": 0.75,

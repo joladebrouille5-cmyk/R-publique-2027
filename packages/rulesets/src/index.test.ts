@@ -1177,4 +1177,18 @@ describe('rééquilibrage : sondages réels et départ « Sondages actuels » (p
     expect(ruleset.departSondages.socleMinimal).toBe(50);
     expect(ruleset.departSondages.cycle).toBe(2027);
   });
+
+  it('retient les réglages du banc d’équilibrage (hypothèses documentées)', () => {
+    expect(ruleset.modele.saturationProximite).toBe(0.4);
+    expect(ruleset.modele.fideliteCamp).toBe(0);
+    expect(ruleset.modele.note).toContain('Phase 24');
+    expect(ruleset.departSondages).toMatchObject({
+      decroissance: 0.98,
+      decroissanceSecondTour: 0.95,
+    });
+    expect(ruleset.rattrapageNotoriete.statut).toBe('hypothese');
+    expect(ruleset.programme.minimumRecommande).toBe(8);
+    const boussole = ruleset.candidatsFictifs.find((c) => c.id === 'adv-boussole')!;
+    expect(boussole.ressources).toMatchObject({ notoriete: 3500, budgetCentimes: 400_000_000 });
+  });
 });
