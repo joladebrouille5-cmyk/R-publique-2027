@@ -3,13 +3,15 @@ import {
   MINISTER_DECISION_EVENT,
   type DecisionAnswer,
   type GameState,
+  type PlannedAction,
   type ReportEvent,
   type Ruleset,
   type StepSummary,
   type WeeklyReport,
 } from '@r2027/shared';
-import { consumeActions, resolveActionEffects } from '../campaign/actions';
+import { acceptedIndices, consumeActions, resolveActionEffects } from '../campaign/actions';
 import { FinanceBook } from '../campaign/finances';
+import { applyWeekImplantation } from '../campaign/implantation';
 import { ParrainageBook } from '../campaign/parrainages';
 import { enterNextWeek, formatFrenchDate } from '../core/calendar';
 import { EngineInputError } from '../core/errors';
@@ -162,6 +164,7 @@ export function advancePresidencyWeek(
 
   // 3. Président IA : nomination du gouvernement à l'investiture, puis actions de la semaine.
   let ai: ReturnType<typeof validatePresidencyActions> = { outcomes: [], validated: [] };
+  let presidentPlan: readonly PlannedAction[] = playerPresides ? plan.actions : [];
   if (!playerPresides) {
     if (governmentDue(state))
       events.push(
@@ -173,6 +176,7 @@ export function advancePresidencyWeek(
       ruleset,
       (codes) => codes[rng.nextInt(codes.length)]!,
     );
+    presidentPlan = planned;
     ai = validatePresidencyActions(state, ruleset, president.id, planned);
     consumeActions(ledger, finances, ai.validated, 3);
   }
@@ -262,6 +266,13 @@ export function advancePresidencyWeek(
     5,
   );
   applyPresidentialEffects({ state, ruleset, ledger, economy, step: 5 }, validated);
+  // Implantation (phase 25) : déplacements du président, érosion de tous les candidats.
+  const implantation = applyWeekImplantation(
+    state,
+    ruleset,
+    { [president.id]: presidentPlan },
+    acceptedIndices(validated),
+  );
   for (const action of validated)
     if (action.definition.institution === 'dissolution') events.push(dissolve(state, ruleset));
   // Remaniement ciblé (phase 15) : le ministre quitte le gouvernement, le Premier ministre
@@ -517,8 +528,8 @@ export function advancePresidencyWeek(
       numerique: [],
       conseil,
       succes,
-      implantation: [],
-      combos: [],
+      implantation: implantation.changes,
+      combos: implantation.combos,
     },
   };
 }

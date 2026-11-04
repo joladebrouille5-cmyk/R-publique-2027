@@ -9,6 +9,7 @@ import {
   type Prestation,
   type ReportEvent,
   type Ruleset,
+  weekCombos,
 } from '@r2027/shared';
 import { applyOrSchedule } from '../core/effects';
 import type { Ledger } from '../core/ledger';
@@ -20,6 +21,7 @@ import {
   spendingCap,
   type FinanceBook,
 } from './finances';
+import { seriesLabel } from './implantation';
 import { gainPromises, type ParrainageBook } from './parrainages';
 import { isPlateau, scoredAlea, scorePrestation } from './prestations';
 import { negotiate, negotiationError } from './soutiens';
@@ -88,6 +90,38 @@ function targetError(ruleset: Ruleset, definition: ActionDefinition, cible: stri
             ? ruleset.quinquennat.postes.some((p) => p.id === cible)
             : ruleset.mediasReels.organes.some((o) => o.id === cible);
   return known ? null : `Cible inconnue : ${cible}.`;
+}
+
+/**
+ * Séries de la semaine (phase 25), par carte acceptée : la règle partagée `weekCombos` sur les
+ * cartes retenues de chaque acteur, dans l'ordre du plan ; une carte hors catalogue de campagne
+ * (action présidentielle) n'entre dans aucune série.
+ */
+function weekSeries(
+  ruleset: Ruleset,
+  validated: readonly ValidatedAction[],
+): Map<string, { label: string; taux: number }> {
+  const byActor = new Map<string, ValidatedAction[]>();
+  for (const v of validated) {
+    if (!byActor.has(v.actorId)) byActor.set(v.actorId, []);
+    byActor.get(v.actorId)!.push(v);
+  }
+  const series = new Map<string, { label: string; taux: number }>();
+  for (const [actorId, cards] of byActor) {
+    const ordered = [...cards].sort((a, b) => a.index - b.index);
+    const plan = ordered.map((v) => ({
+      actionId: v.definition.id,
+      ...(v.cible === null ? {} : { cible: v.cible }),
+    }));
+    for (const s of weekCombos(plan, ruleset).series) {
+      const card = ordered[s.index]!;
+      series.set(actionKey(actorId, card.index), {
+        label: seriesLabel(card.definition.libelle, s.famille, s.rang, s.taux),
+        taux: s.taux,
+      });
+    }
+  }
+  return series;
 }
 
 /**
@@ -201,6 +235,13 @@ export type CampaignBooks = { finances: FinanceBook; parrainages: ParrainageBook
 /** Clé d'une action de la semaine (acteur et rang dans son plan). */
 export const actionKey = (actorId: string, index: number) => `${actorId}#${index}`;
 
+/** Positions des cartes acceptées de chaque acteur dans son plan (implantation, phase 25). */
+export function acceptedIndices(validated: readonly ValidatedAction[]): Record<string, number[]> {
+  const accepted: Record<string, number[]> = {};
+  for (const { actorId, index } of validated) (accepted[actorId] ??= []).push(index);
+  return accepted;
+}
+
 /**
  * Passages dans les médias de la semaine (phase 11), notés avant tout effet : préparation
  * acquise plus celle de la semaine (quel que soit l'ordre du plan), passages antérieurs dans
@@ -264,6 +305,7 @@ export function resolveActionEffects(
   const supports: ReportEvent[] = [];
   const incidents = new Set<string>();
   const prestations = scorePlateaux(state, ruleset, validated);
+  const series = weekSeries(ruleset, validated);
   for (const { actorId, index, definition, cible } of validated) {
     const rng = stream(state.meta.seed, week, 'action', actorId, index, definition.id);
     const prestation = prestations.get(actionKey(actorId, index));
@@ -287,6 +329,9 @@ export function resolveActionEffects(
           label: definition.libelle,
           source: 'action',
           rattrapage: ruleset.rattrapageNotoriete,
+          ...(series.has(actionKey(actorId, index))
+            ? { serie: series.get(actionKey(actorId, index))! }
+            : {}),
         },
         effect,
         variable(effect),

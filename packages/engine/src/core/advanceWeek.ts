@@ -19,10 +19,12 @@ import { resolveAlliances, updateRelations } from '../ai/relations';
 import {
   actionKey,
   consumeActions,
+  acceptedIndices,
   resolveActionEffects,
   validateActions,
 } from '../campaign/actions';
 import { FinanceBook } from '../campaign/finances';
+import { applyWeekImplantation } from '../campaign/implantation';
 import { updateMedia } from '../campaign/medias';
 import { publishDigital } from '../campaign/numerique';
 import {
@@ -273,6 +275,16 @@ export function advanceWeek(
     allValidated,
     5,
   );
+  // Implantation par département (phase 25) : cartes acceptées, combos de lieu, érosion.
+  const implantation = applyWeekImplantation(
+    state,
+    ruleset,
+    {
+      ...(playerActive ? { [playerId!]: plan.actions } : {}),
+      ...Object.fromEntries(plans.map((p) => [p.actorId, p.planned])),
+    },
+    acceptedIndices(allValidated),
+  );
   const posts = publishDigital(state, ruleset, allValidated, risks, prestations);
   const events = drawEvents(state, ruleset, ledger, finances, 5);
   // Rendez-vous d'élus (phase 15) : au plus un en attente, décision la semaine suivante.
@@ -429,8 +441,8 @@ export function advanceWeek(
       numerique: posts,
       conseil: null,
       succes,
-      implantation: [],
-      combos: [],
+      implantation: implantation.changes,
+      combos: implantation.combos,
     },
   };
 }

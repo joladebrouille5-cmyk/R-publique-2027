@@ -494,6 +494,22 @@ describe('succès et déplacements', () => {
     expect(result.state.quinquennat!.deplacements['2A']).toBe(
       (governed.quinquennat!.deplacements['2A'] ?? 0) + 1,
     );
+    // Phase 25 : le déplacement fait gagner 8 d'implantation au président dans le département.
+    const before = governed.implantation[PLAYER_ACTOR_ID]!['2A']!;
+    expect(
+      result.report.implantation.find(
+        (c) => c.actorId === PLAYER_ACTOR_ID && c.departement === '2A',
+      ),
+    ).toEqual({
+      actorId: PLAYER_ACTOR_ID,
+      departement: '2A',
+      before,
+      after: Math.min(100, before + 8),
+      factors: [
+        { label: 'Déplacement de terrain en région', value: 8 },
+        ...(before + 8 > 100 ? [{ label: 'Plafond', value: 100 - before - 8 }] : []),
+      ],
+    });
     const state = clone(governed);
     for (const dep of ['01', '02', '03', '04', '05', '06', '07', '08', '09', '2B'])
       state.quinquennat!.deplacements[dep] = 1;

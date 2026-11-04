@@ -98,6 +98,11 @@ export type EffectContext = {
   variable?: string;
   /** Rattrapage de notoriété (phase 24), pour les seuls effets immédiats des actions. */
   rattrapage?: CatchUp;
+  /**
+   * Série de la semaine (phase 25) : bonus de `taux × base` sur chaque effet de base positif de
+   * la carte, sous son propre libellé ; programmé à part pour un effet différé.
+   */
+  serie?: { label: string; taux: number };
 };
 
 /** Applique un effet tout de suite (délai 0) ou le programme pour une semaine ultérieure. */
@@ -113,25 +118,44 @@ export function applyOrSchedule(
     alea,
     saturation: effect.saturation,
   };
+  const bonus = context.serie && effect.base > 0 ? Math.round(effect.base * context.serie.taux) : 0;
   if (effect.delaiSemaines === 0) {
     const current = context.ledger.current(context.actorId, effect.ressource);
-    applyFactors(
-      context.ledger,
-      context.book,
-      context.actorId,
-      effect.ressource,
-      effectFactors(
-        drawn,
-        current,
-        context.label,
-        context.source,
-        context.step,
-        context.variable,
-        context.rattrapage,
-      ),
+    const factors = effectFactors(
+      drawn,
+      current,
+      context.label,
+      context.source,
+      context.step,
+      context.variable,
+      context.rattrapage,
     );
+    if (bonus !== 0)
+      factors.push({
+        label: context.serie!.label,
+        value: bonus,
+        source: context.source,
+        step: context.step,
+      });
+    applyFactors(context.ledger, context.book, context.actorId, effect.ressource, factors);
     return;
   }
+  if (bonus !== 0)
+    context.state.scheduled.push({
+      id: `${context.ref}-${index}-serie`,
+      dueWeek: context.week + effect.delaiSemaines,
+      actorId: context.actorId,
+      ressource: effect.ressource,
+      base: bonus,
+      alea: 0,
+      saturation: false,
+      origin: {
+        kind: context.source,
+        ref: context.ref,
+        label: context.serie!.label,
+        week: context.week,
+      },
+    });
   context.state.scheduled.push({
     id: `${context.ref}-${index}`,
     dueWeek: context.week + effect.delaiSemaines,
