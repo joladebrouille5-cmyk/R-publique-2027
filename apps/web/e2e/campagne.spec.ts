@@ -12,9 +12,11 @@ import {
 // Campagne approfondie (phase 5) : programme, actions ciblées, parrainages, finances,
 // relations, mode observateur — bureau et téléphone.
 
-/** Ouvre un domaine du programme (élément <summary> repliable). */
+/** Ouvre un domaine du programme (tuile, phase 22). */
 async function openDomain(page: Page, name: string) {
-  await page.locator('summary', { hasText: new RegExp(`^${name} `) }).click();
+  const tile = page.getByRole('button', { name: new RegExp(`^${name},`) });
+  await tile.click();
+  await expect(tile).toHaveAttribute('aria-expanded', 'true');
 }
 
 test('programme, rencontre d’élus ciblée et interview : bilan, parrainages et compte', async ({

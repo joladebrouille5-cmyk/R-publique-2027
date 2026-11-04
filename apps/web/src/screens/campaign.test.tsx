@@ -30,9 +30,8 @@ const base = (game = gameFixture()) => ({
   }),
 });
 
-/** Résumé (balise <summary>) du domaine du programme, pour l'ouvrir. */
-const domain = (name: string) =>
-  [...document.querySelectorAll('summary')].find((el) => el.textContent?.startsWith(`${name} `))!;
+/** Tuile d'un domaine du programme (phase 22), qui ouvre son panneau. */
+const domain = (name: string) => screen.getByRole('button', { name: new RegExp(`^${name},`) });
 
 describe('programme', () => {
   it('annonce une proposition, signale une dépendance manquante, puis l’envoie avec la semaine', async () => {
@@ -49,10 +48,22 @@ describe('programme', () => {
       within(guarantee).getByText(/Suppose d’abord : Plan d’investissement public/),
     ).toBeInTheDocument();
 
+    // Une tuile par domaine, son compte écrit ; un seul panneau ouvert à la fois.
+    expect(domain('Économie')).toHaveAccessibleName('Économie, 0 retenue sur 3');
     await user.click(domain('Économie'));
+    expect(domain('Emploi')).toHaveAttribute('aria-expanded', 'false');
     await user.click(screen.getByRole('button', { name: 'Annoncer Plan d’investissement public' }));
     expect(screen.getAllByText('Annonce prévue')).toHaveLength(1);
-    expect(within(guarantee).getByRole('button', { name: /^Annoncer/ })).toBeEnabled();
+    expect(domain('Économie')).toHaveAccessibleName('Économie, 1 retenue sur 3');
+    await user.click(domain('Emploi'));
+    expect(
+      within(
+        screen.getByRole('listitem', {
+          name: 'Garantie d’emploi pour les chômeurs de longue durée',
+        }),
+      ).getByRole('button', { name: /^Annoncer/ }),
+    ).toBeEnabled();
+    expect(guarantee).not.toBeInTheDocument();
     expect(
       screen.getByText(/Prévu cette semaine : 1 annonce\(s\) \(3 h de préparation\)/),
     ).toBeInTheDocument();
@@ -66,6 +77,19 @@ describe('programme', () => {
     expect(calls.find((c) => c.method === 'POST')!.body).toMatchObject({
       programme: { ajouter: ['eco-investissement-public'], retirer: [] },
     });
+  });
+
+  it('se consulte en observateur : tuiles ouvrables, aucune annonce possible', async () => {
+    mockApi(base(gameFixture({ state: initialState('observateur') })));
+    renderRoute(`/parties/${GAME_ID}/programme`);
+    const user = userEvent.setup();
+    await screen.findByRole('region', { name: 'Programme' });
+    await user.click(domain('Économie'));
+    expect(domain('Économie')).toHaveAttribute('aria-expanded', 'true');
+    expect(
+      screen.getByRole('listitem', { name: 'Plan d’investissement public' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Annoncer/ })).not.toBeInTheDocument();
   });
 
   it('montre les programmes des adversaires', async () => {

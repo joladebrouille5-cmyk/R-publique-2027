@@ -1,4 +1,5 @@
 import { candidateName, type Proposal, type Ruleset } from '@r2027/shared';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { useRuleset } from '../api/hooks';
 import { Badge } from '../components/Badge';
@@ -37,6 +38,13 @@ export function Programme() {
   const game = useCurrentGame();
   const ruleset = useRuleset(game.rulesetVersion, game.state.cycle);
   const plan = useWeeklyPlan(game.id, game.week);
+  // undefined : le domaine par défaut ; null : tout replié (phase 22).
+  const [openDomain, setOpenDomain] = useState<string | null | undefined>(undefined);
+  const panel = useRef<HTMLElement>(null);
+  // Le panneau qu'on ouvre vient à la vue (il est sous la grille des dix-sept tuiles).
+  useEffect(() => {
+    if (openDomain) panel.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, [openDomain]);
   const { state } = game;
   const actor = state.player.actorId ? state.actors[state.player.actorId] : undefined;
   const editable =
@@ -60,6 +68,103 @@ export function Programme() {
   const opponents = Object.values(state.actors).filter((a) => a.kind === 'adversaire');
   const holders = (id: string) =>
     opponents.filter((o) => o.programme.propositions.includes(id)).map((o) => o.candidate.parti);
+
+  /** Carte d'une proposition : description, chiffrage, annonce ou retrait (inchangés). */
+  const proposalItem = (p: Proposal) => {
+    const inProgramme = current.includes(p.id);
+    const toAdd = plan.ajouter.includes(p.id);
+    const toRemove = plan.retirer.includes(p.id);
+    const blocker =
+      inProgramme || toAdd
+        ? null
+        : announceBlocker(
+            p,
+            planned.filter((id) => id !== p.id),
+            rules,
+            label,
+          );
+    const parties = holders(p.id);
+    return (
+      <li
+        key={p.id}
+        aria-label={p.libelle}
+        className="flex flex-col gap-2 rounded-lg border border-slate-200 p-3 text-sm dark:border-slate-800"
+      >
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="font-semibold">{p.libelle}</p>
+          {inProgramme && !toRemove && <Badge tone="succes">Dans votre programme</Badge>}
+          {toAdd && <Badge tone="alerte">Annonce prévue</Badge>}
+          {toRemove && <Badge tone="danger">Retrait prévu</Badge>}
+        </div>
+        <p className="text-encre-2">{p.description}</p>
+        <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+          <dt className="text-encre-3">Coût</dt>
+          <dd>{formatAnnualCost(p.coutMillionsEuros)}</dd>
+          <dt className="text-encre-3">Délai</dt>
+          <dd>{p.delaiMois} mois</dd>
+          <dt className="text-encre-3">Faisabilité</dt>
+          <dd>{Math.round(p.faisabilite * 100)} %</dd>
+          <dt className="text-encre-3">Confiance</dt>
+          <dd>{CONFIDENCE_LABELS[p.confiance]}</dd>
+          <dt className="text-encre-3">Électeurs sensibles</dt>
+          <dd>{p.publics.map((g) => groups.get(g) ?? g).join(', ') || '—'}</dd>
+          {p.dependances.length > 0 && (
+            <>
+              <dt className="text-encre-3">Suppose</dt>
+              <dd>{p.dependances.map(label).join(', ')}</dd>
+            </>
+          )}
+          {p.incompatibilites.length > 0 && (
+            <>
+              <dt className="text-encre-3">Incompatible avec</dt>
+              <dd>{p.incompatibilites.map(label).join(', ')}</dd>
+            </>
+          )}
+          {parties.length > 0 && (
+            <>
+              <dt className="text-encre-3">Portée par</dt>
+              <dd>{parties.join(', ')}</dd>
+            </>
+          )}
+        </dl>
+        {editable && (
+          <div className="mt-auto flex flex-wrap items-center gap-2">
+            {inProgramme ? (
+              <button
+                type="button"
+                className={`${buttonSecondary} px-3 py-1.5`}
+                onClick={() => plan.toggleWithdraw(p.id)}
+                aria-label={toRemove ? `Garder ${p.libelle}` : `Retirer ${p.libelle} du programme`}
+              >
+                {toRemove ? 'Garder' : 'Retirer'}
+              </button>
+            ) : (
+              <button
+                type="button"
+                className={`${toAdd ? buttonSecondary : buttonPrimary} px-3 py-1.5`}
+                disabled={!toAdd && blocker !== null}
+                onClick={() => plan.toggleAnnounce(p.id)}
+                aria-label={toAdd ? `Ne pas annoncer ${p.libelle}` : `Annoncer ${p.libelle}`}
+              >
+                {toAdd ? 'Ne pas annoncer' : 'Annoncer'}
+              </button>
+            )}
+            {!toAdd && !inProgramme && blocker && (
+              <span className="text-xs text-encre-3">{blocker}</span>
+            )}
+          </div>
+        )}
+      </li>
+    );
+  };
+
+  // Domaine ouvert : celui qu'on a touché, sinon le premier où une proposition est retenue.
+  const defaultDomain =
+    rules.programme.domaines.find((d) =>
+      rules.programme.propositions.some((p) => p.domaine === d.id && planned.includes(p.id)),
+    )?.id ?? null;
+  const shownDomain = openDomain === undefined ? defaultDomain : openDomain;
+  const openedDomain = rules.programme.domaines.find((d) => d.id === shownDomain);
 
   return (
     <section aria-labelledby="titre-programme" className="space-y-6">
@@ -112,118 +217,68 @@ export function Programme() {
         </p>
       )}
 
-      <div className="space-y-3">
-        {rules.programme.domaines.map((domaine) => {
-          const items = rules.programme.propositions.filter((p) => p.domaine === domaine.id);
-          const mine = items.filter((p) => planned.includes(p.id)).length;
-          return (
-            <details key={domaine.id} className={card} open={mine > 0}>
-              <summary className="cursor-pointer font-semibold">
-                {domaine.libelle}{' '}
-                <span className="font-normal text-encre-2">
-                  — {mine} retenue(s) sur {items.length}
-                </span>
-              </summary>
-              <ul className="mt-3 grid gap-3 md:grid-cols-2">
-                {items.map((p) => {
-                  const inProgramme = current.includes(p.id);
-                  const toAdd = plan.ajouter.includes(p.id);
-                  const toRemove = plan.retirer.includes(p.id);
-                  const blocker =
-                    inProgramme || toAdd
-                      ? null
-                      : announceBlocker(
-                          p,
-                          planned.filter((id) => id !== p.id),
-                          rules,
-                          label,
-                        );
-                  const parties = holders(p.id);
-                  return (
-                    <li
-                      key={p.id}
-                      aria-label={p.libelle}
-                      className="flex flex-col gap-2 rounded-lg border border-slate-200 p-3 text-sm dark:border-slate-800"
-                    >
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-semibold">{p.libelle}</p>
-                        {inProgramme && !toRemove && (
-                          <Badge tone="succes">Dans votre programme</Badge>
-                        )}
-                        {toAdd && <Badge tone="alerte">Annonce prévue</Badge>}
-                        {toRemove && <Badge tone="danger">Retrait prévu</Badge>}
-                      </div>
-                      <p className="text-encre-2">{p.description}</p>
-                      <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
-                        <dt className="text-encre-3">Coût</dt>
-                        <dd>{formatAnnualCost(p.coutMillionsEuros)}</dd>
-                        <dt className="text-encre-3">Délai</dt>
-                        <dd>{p.delaiMois} mois</dd>
-                        <dt className="text-encre-3">Faisabilité</dt>
-                        <dd>{Math.round(p.faisabilite * 100)} %</dd>
-                        <dt className="text-encre-3">Confiance</dt>
-                        <dd>{CONFIDENCE_LABELS[p.confiance]}</dd>
-                        <dt className="text-encre-3">Électeurs sensibles</dt>
-                        <dd>{p.publics.map((g) => groups.get(g) ?? g).join(', ') || '—'}</dd>
-                        {p.dependances.length > 0 && (
-                          <>
-                            <dt className="text-encre-3">Suppose</dt>
-                            <dd>{p.dependances.map(label).join(', ')}</dd>
-                          </>
-                        )}
-                        {p.incompatibilites.length > 0 && (
-                          <>
-                            <dt className="text-encre-3">Incompatible avec</dt>
-                            <dd>{p.incompatibilites.map(label).join(', ')}</dd>
-                          </>
-                        )}
-                        {parties.length > 0 && (
-                          <>
-                            <dt className="text-encre-3">Portée par</dt>
-                            <dd>{parties.join(', ')}</dd>
-                          </>
-                        )}
-                      </dl>
-                      {editable && (
-                        <div className="mt-auto flex flex-wrap items-center gap-2">
-                          {inProgramme ? (
-                            <button
-                              type="button"
-                              className={`${buttonSecondary} px-3 py-1.5`}
-                              onClick={() => plan.toggleWithdraw(p.id)}
-                              aria-label={
-                                toRemove
-                                  ? `Garder ${p.libelle}`
-                                  : `Retirer ${p.libelle} du programme`
-                              }
-                            >
-                              {toRemove ? 'Garder' : 'Retirer'}
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              className={`${toAdd ? buttonSecondary : buttonPrimary} px-3 py-1.5`}
-                              disabled={!toAdd && blocker !== null}
-                              onClick={() => plan.toggleAnnounce(p.id)}
-                              aria-label={
-                                toAdd ? `Ne pas annoncer ${p.libelle}` : `Annoncer ${p.libelle}`
-                              }
-                            >
-                              {toAdd ? 'Ne pas annoncer' : 'Annoncer'}
-                            </button>
-                          )}
-                          {!toAdd && !inProgramme && blocker && (
-                            <span className="text-xs text-encre-3">{blocker}</span>
-                          )}
-                        </div>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            </details>
-          );
-        })}
+      {/* Phase 22 : une tuile par domaine (jauge de trois propositions) ; un seul panneau ouvert. */}
+      <div className="@container space-y-3">
+        <ul
+          aria-label="Domaines du programme"
+          className="grid grid-cols-2 gap-2 @xl:grid-cols-3 @3xl:grid-cols-4"
+        >
+          {rules.programme.domaines.map((domaine) => {
+            const items = rules.programme.propositions.filter((p) => p.domaine === domaine.id);
+            const mine = items.filter((p) => planned.includes(p.id)).length;
+            const isOpen = domaine.id === shownDomain;
+            return (
+              <li key={domaine.id}>
+                <button
+                  type="button"
+                  aria-expanded={isOpen}
+                  aria-controls={isOpen ? `domaine-${domaine.id}` : undefined}
+                  aria-label={`${domaine.libelle}, ${mine} ${mine > 1 ? 'retenues' : 'retenue'} sur ${items.length}`}
+                  onClick={() => setOpenDomain(isOpen ? null : domaine.id)}
+                  className={`flex h-full min-h-11 w-full flex-col gap-2 rounded-lg border-[1.5px] p-3 text-left transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-republique-600 dark:focus-visible:outline-dorure ${
+                    isOpen
+                      ? 'border-slate-900 bg-or-100 dark:border-dorure dark:bg-dorure/10'
+                      : 'border-slate-200 bg-papier hover:border-slate-900 dark:border-white/10 dark:bg-white/[0.03] dark:hover:border-white/40'
+                  }`}
+                >
+                  <span className="font-display text-[1.02rem] leading-tight font-bold [font-stretch:90%]">
+                    {domaine.libelle}
+                  </span>
+                  <span aria-hidden="true" className="mt-auto flex gap-1">
+                    {items.map((item, index) => (
+                      <span
+                        key={item.id}
+                        className={`h-1.5 flex-1 rounded-full ${
+                          index < mine ? 'bg-encre' : 'bg-slate-200 dark:bg-white/15'
+                        }`}
+                      />
+                    ))}
+                  </span>
+                  <span aria-hidden="true" className="text-xs text-encre-2">
+                    {mine} {mine > 1 ? 'retenues' : 'retenue'} sur {items.length}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+        {openedDomain && (
+          <section
+            ref={panel}
+            id={`domaine-${openedDomain.id}`}
+            aria-labelledby={`domaine-${openedDomain.id}-titre`}
+            className={`${card} animate-revele scroll-mt-48 space-y-3`}
+          >
+            <h3 id={`domaine-${openedDomain.id}-titre`} className="text-xl">
+              {openedDomain.libelle}
+            </h3>
+            <ul className="grid gap-3 md:grid-cols-2">
+              {rules.programme.propositions
+                .filter((p) => p.domaine === openedDomain.id)
+                .map(proposalItem)}
+            </ul>
+          </section>
+        )}
       </div>
 
       <section aria-labelledby="titre-programmes-adverses" className={`${card} space-y-3`}>
