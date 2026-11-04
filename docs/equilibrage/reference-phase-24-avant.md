@@ -380,3 +380,99 @@ Rang médian du joueur au 1er tour : 7.
 
 Rang médian du joueur au 1er tour : 7.
 
+### Incarner Raphaël Glucksmann, joueur IA, Standard (`incarne-reel-glucksmann`, 300 parties)
+
+| Candidat | Victoires | 2nd tour | Sans parrainages | Score moyen T1 |
+|---|---|---|---|---|
+| Gabriel Attal | 72,0 % | 93,0 % | 0,0 % | 10,8 % |
+| Édouard Philippe | 27,0 % | 41,3 % | 0,0 % | 8,8 % |
+| Olivier Becht | 1,0 % | 3,3 % | 0,0 % | 6,9 % |
+| Marine Le Pen | 0,0 % | 61,0 % | 0,0 % | 9,2 % |
+| Joueur | 0,0 % | 0,7 % | 0,0 % | 6,9 % |
+| Xavier Bertrand | 0,0 % | 0,7 % | 0,0 % | 6,3 % |
+| Bruno Retailleau | 0,0 % | 0,0 % | 0,0 % | 6,0 % |
+| David Lisnard | 0,0 % | 0,0 % | 0,0 % | 5,9 % |
+| Jean-Luc Mélenchon | 0,0 % | 0,0 % | 0,0 % | 5,9 % |
+| Karim Bouamrane | 0,0 % | 0,0 % | 0,0 % | 5,3 % |
+| Nathalie Arthaud | 0,0 % | 0,0 % | 0,0 % | 5,2 % |
+| Marine Tondelier | 0,0 % | 0,0 % | 0,0 % | 5,0 % |
+| François Asselineau | 0,0 % | 0,0 % | 0,0 % | 4,9 % |
+| Nicolas Dupont-Aignan | 0,0 % | 0,0 % | 0,0 % | 4,8 % |
+| François Ruffin | 0,0 % | 0,0 % | 0,0 % | 3,9 % |
+| Fabien Roussel | 0,0 % | 0,0 % | 0,0 % | 3,8 % |
+| Éric Zemmour | 0,0 % | 0,0 % | 79,7 % | 0,5 % |
+
+Rang médian du joueur au 1er tour : 5.
+
+### Incarner Marine Le Pen, joueur IA, Standard (`incarne-reel-le-pen`, 300 parties)
+
+| Candidat | Victoires | 2nd tour | Sans parrainages | Score moyen T1 |
+|---|---|---|---|---|
+| Gabriel Attal | 71,7 % | 93,3 % | 0,0 % | 10,7 % |
+| Édouard Philippe | 27,7 % | 58,0 % | 0,0 % | 8,9 % |
+| Raphaël Glucksmann | 0,3 % | 10,7 % | 0,0 % | 7,7 % |
+| Olivier Becht | 0,3 % | 3,3 % | 0,0 % | 6,8 % |
+| Joueur | 0,0 % | 33,3 % | 0,0 % | 8,3 % |
+| Xavier Bertrand | 0,0 % | 0,7 % | 0,0 % | 6,3 % |
+| David Lisnard | 0,0 % | 0,3 % | 0,0 % | 6,1 % |
+| Bruno Retailleau | 0,0 % | 0,3 % | 0,0 % | 6,0 % |
+| Jean-Luc Mélenchon | 0,0 % | 0,0 % | 0,0 % | 5,8 % |
+| Karim Bouamrane | 0,0 % | 0,0 % | 0,0 % | 5,1 % |
+| Nathalie Arthaud | 0,0 % | 0,0 % | 0,0 % | 5,0 % |
+| Marine Tondelier | 0,0 % | 0,0 % | 0,0 % | 5,0 % |
+| François Asselineau | 0,0 % | 0,0 % | 0,0 % | 4,9 % |
+| Nicolas Dupont-Aignan | 0,0 % | 0,0 % | 0,0 % | 4,8 % |
+| François Ruffin | 0,0 % | 0,0 % | 0,0 % | 3,9 % |
+| Fabien Roussel | 0,0 % | 0,0 % | 0,0 % | 3,8 % |
+| Éric Zemmour | 0,0 % | 0,0 % | 65,3 % | 0,9 % |
+
+Rang médian du joueur au 1er tour : 3.
+
+### Incarner Jean-Luc Mélenchon, joueur IA, Standard (`incarne-reel-melenchon`, 300 parties)
+
+| Candidat | Victoires | 2nd tour | Sans parrainages | Score moyen T1 |
+|---|---|---|---|---|
+| Gabriel Attal | 77,3 % | 92,0 % | 0,0 % | 10,8 % |
+| Édouard Philippe | 21,0 % | 32,7 % | 0,0 % | 8,6 % |
+| Raphaël Glucksmann | 1,0 % | 9,3 % | 0,0 % | 7,9 % |
+| Olivier Becht | 0,7 % | 2,7 % | 0,0 % | 6,9 % |
+| Marine Le Pen | 0,0 % | 62,7 % | 0,0 % | 9,3 % |
+| Xavier Bertrand | 0,0 % | 0,7 % | 0,0 % | 6,4 % |
+| Bruno Retailleau | 0,0 % | 0,0 % | 0,0 % | 6,0 % |
+| David Lisnard | 0,0 % | 0,0 % | 0,0 % | 5,9 % |
+| Nathalie Arthaud | 0,0 % | 0,0 % | 0,0 % | 5,2 % |
+| Karim Bouamrane | 0,0 % | 0,0 % | 0,0 % | 5,2 % |
+| Joueur | 0,0 % | 0,0 % | 0,0 % | 5,1 % |
+| Marine Tondelier | 0,0 % | 0,0 % | 0,0 % | 5,0 % |
+| François Asselineau | 0,0 % | 0,0 % | 0,0 % | 4,8 % |
+| Nicolas Dupont-Aignan | 0,0 % | 0,0 % | 0,0 % | 4,7 % |
+| François Ruffin | 0,0 % | 0,0 % | 0,0 % | 3,9 % |
+| Fabien Roussel | 0,0 % | 0,0 % | 0,0 % | 3,8 % |
+| Éric Zemmour | 0,0 % | 0,0 % | 82,0 % | 0,5 % |
+
+Rang médian du joueur au 1er tour : 11.
+
+### Incarner Édouard Philippe, joueur IA, Standard (`incarne-reel-philippe`, 300 parties)
+
+| Candidat | Victoires | 2nd tour | Sans parrainages | Score moyen T1 |
+|---|---|---|---|---|
+| Gabriel Attal | 83,7 % | 92,0 % | 0,0 % | 10,7 % |
+| Joueur | 14,0 % | 29,3 % | 0,0 % | 8,4 % |
+| Raphaël Glucksmann | 1,0 % | 9,3 % | 0,0 % | 7,7 % |
+| Olivier Becht | 1,0 % | 2,7 % | 0,0 % | 6,9 % |
+| Xavier Bertrand | 0,3 % | 0,7 % | 0,0 % | 6,3 % |
+| Marine Le Pen | 0,0 % | 65,3 % | 0,0 % | 9,1 % |
+| Bruno Retailleau | 0,0 % | 0,7 % | 0,0 % | 6,1 % |
+| Jean-Luc Mélenchon | 0,0 % | 0,0 % | 0,0 % | 5,8 % |
+| David Lisnard | 0,0 % | 0,0 % | 0,0 % | 5,8 % |
+| Karim Bouamrane | 0,0 % | 0,0 % | 0,0 % | 5,2 % |
+| Nathalie Arthaud | 0,0 % | 0,0 % | 0,0 % | 5,0 % |
+| Marine Tondelier | 0,0 % | 0,0 % | 0,0 % | 5,0 % |
+| Nicolas Dupont-Aignan | 0,0 % | 0,0 % | 0,0 % | 4,8 % |
+| François Asselineau | 0,0 % | 0,0 % | 0,0 % | 4,7 % |
+| François Ruffin | 0,0 % | 0,0 % | 0,0 % | 3,8 % |
+| Fabien Roussel | 0,0 % | 0,0 % | 0,0 % | 3,8 % |
+| Éric Zemmour | 0,0 % | 0,0 % | 66,7 % | 0,9 % |
+
+Rang médian du joueur au 1er tour : 3.
+
