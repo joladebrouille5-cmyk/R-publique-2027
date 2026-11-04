@@ -44,3 +44,12 @@ départ (200, niveau d'organisation « aucune », hypothèse commune à sept per
 cinquantaine en semaine 12 par conversion en intentions et renoncements, puis remontent sans
 dépasser le seuil avec marge. Les autres personnalités du même niveau ne sont jamais écartées sur ce
 banc.
+
+### Décision (phase 24)
+
+Aucun paramètre de parrainage ni d'alliance n'est modifié dans cette phase. Après la phase
+(300 parties) : Zemmour reste écarté dans 62 à 64 % des parties (départ équitable et sondages
+actuels), Étincelle reste absente du premier tour par ralliement. Pistes proposées pour une phase
+suivante, à mesurer au banc : promesses de départ du niveau d'organisation « aucune » (200 → 300,
+commune à sept personnalités) et probabilité hebdomadaire de ralliement (`alliances.probabiliteHebdo`,
+0,25 → 0,10, environ 65 % sur dix semaines au lieu de 94 %).

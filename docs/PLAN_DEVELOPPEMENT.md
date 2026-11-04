@@ -1092,6 +1092,24 @@ Demande de l'utilisateur du 04/11/2026 : « faire en sorte que les candidats et 
 - **P23-07 faite** — revue finale de la branche (relecture par l'auteur) : un choix de successeur était ignoré si le gouvernement changeait entre la décision et l'ouverture de la campagne (remaniement) ; corrigé (le successeur doit seulement exister encore) et testé. `pnpm check` (92 fichiers, 853 tests), intégration (11 fichiers, 106 tests), e2e (99 réussis sur les projets bureau et téléphone, 3 propres au téléphone sautés sur le bureau), `pnpm test:mobile` (paquet de l'APK, réseau coupé : réussi) ; application 1.15.0 (`versionCode` 16), APK sans nouvelle permission.
 
 **Bilan (04/11/2026)** — les sept tâches sont réalisées ; moteur 0.23.0, jeu de règles 21.0.0, format de sauvegarde 23 ; application 1.15.0 (`versionCode` 16). Limites : paramètres des candidatures et du bilan non calibrés (hypothèses, R-59) ; pas de primaires, ni d'annonces au fil des semaines, ni d'alliances avant le premier tour (hors périmètre) ; les entrants n'ont ni implantation régionale ni programme ; un ancien candidat du joueur ne revient jamais ; le reclassement des annonces dans l'interface repose sur la copie fixe du moteur.
+
+### Phase 24 — Rééquilibrage de la présidentielle (terminée, critères partiellement atteints)
+
+Demande de l'utilisateur du 04/11/2026 (brief « Phase 24 : rééquilibrage », choix « Rééquilibrage d'abord ») : un banc d'essai reproductible, puis des corrections mesurées par lui. Spécification : `docs/superpowers/specs/2026-11-04-reequilibrage-design.md` ; plan : `docs/superpowers/plans/2026-11-04-reequilibrage.md` ; mesures : [docs/equilibrage](./equilibrage/) (référence [avant](./equilibrage/reference-phase-24-avant.md) et [après](./equilibrage/reference-phase-24-apres.md)). Jeu de règles 22.0.0, format de sauvegarde 24, moteur 0.24.0, application 1.16.0.
+
+| # | Tâche | Critère d'acceptation | État |
+|---|---|---|---|
+| P24-01 | Banc d'essai et référence. | `pnpm sim:equilibrage`, déterministe graine par graine, 300 parties par scénario ; référence avant commitée. | fait |
+| P24-02 | Schémas, jeu de règles 22.0.0, format 24, sondages sourcés. | cinq enquêtes et 25 duels relus dans une révision figée, chacun avec sa notice ; migration 23 → 24 sans variation des intentions. | fait |
+| P24-03 | Départ « Sondages actuels ». | semaine 0 à ± 2 points de la moyenne, seconds tours à ± 4 points des duels ; facteur « Socle électoral (sondages au JJ/MM/AAAA) » ; refus sans personnalité réelle (API et moteur local) ; étiquette fixe à l'étape « Le terrain ». | fait |
+| P24-04 | Candidat personnalisé jouable. | Découverte 35–60 %, Standard 15–30 %, Expert 5–15 %, Légende 1–8 %, strictement décroissant. | fait : 50 / 35,7 / 16,7 / 12,7 / 2 % |
+| P24-05 | Programme visible et programme de départ suggéré. | alerte du QG avec l'effet estimé ; bouton qui ajoute les propositions au plan ; sans programme en Standard, au moins 5 points de victoires de moins. | fait : 0 % contre 16,7 % |
+| P24-06 | Avantage du centre. | fictifs : aucun > 45 %, au moins 4 vainqueurs, 3 qualifiés > 10 % ; réels équitable : aucun > 55 % ; miroirs : écart ≤ 3 points. | en partie : 49 %, 4, 3 ; 41 % ; miroirs non atteints |
+| P24-07 | « Naïf < passif », parrainages, essai Android. | diagnostic écrit ; parrainages documentés ; script adapté à l'assistant. | fait (non reproduit ; ralliements et échec de justesse documentés ; script non exécuté faute d'émulateur) |
+| P24-08 | Vérifications, documentation, APK 1.16.0. | `pnpm check`, intégration, e2e, `pnpm test:mobile` ; APK sans nouvelle permission. | voir le bilan |
+
+- **Critères non atteints** (chiffres de la référence après) : candidat fictif le plus victorieux à 49 % (cible 45 %) ; positions miroirs à 13,7 % (droite) contre 0 % (gauche), recul par rapport à la référence ; en « Sondages actuels », Marine Le Pen gagne 86,7 % (cible 55–85 %) et Philippe, Glucksmann et Mélenchon incarnés restent sous 2 % (cible 5 %). Cause commune : le second tour reste très déterministe une fois les qualifiés connus ; une règle générale de second tour moins joué d'avance est à concevoir dans une phase suivante, sans règle ciblée sur une personne.
+- **Proposition non implémentée (brief)** : un événement « décision de la Cour de cassation » concernant l'éligibilité d'une personnalité réelle. Il ne pourrait s'appuyer que sur une décision publiée, datée et sourcée (jamais anticipée ni inventée), et être présenté comme tel ; à instruire avec l'utilisateur avant toute écriture.
 ---
 
 ## 5. Questions ouvertes

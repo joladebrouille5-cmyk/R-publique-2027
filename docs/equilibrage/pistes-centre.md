@@ -47,3 +47,12 @@ référence) à 38 %.
 
 Aucune piste n'est ciblée sur une personne réelle : la saturation vaut pour tous les candidats, et
 seule une fiche fictive (Boussole) voit ses moyens changer.
+
+## Mesure finale (300 parties, jeu de règles 22.0.0)
+
+Observateur, candidats fictifs : Antoine Rivière 49,0 %, Claire Delorme 32,3 %, Mathieu Laborde
+15,0 %, Julien Castaing 3,7 % de victoires (4 vainqueurs ; Rivière, Laborde et Delorme qualifiés
+dans plus de 10 % des parties). La cible de 45 % est manquée de 4 points ; l'avantage est passé du
+centre (Boussole) au centre droit (Pilier), qui profite à son tour de la proximité saturée au second
+tour. Effet secondaire mesuré : la position miroir de droite (joueur IA) gagne 13,7 %, celle de
+gauche jamais (la gauche fictive compte quatre candidats). Détail : [référence après](./reference-phase-24-apres.md).
