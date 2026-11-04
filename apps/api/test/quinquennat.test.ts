@@ -360,3 +360,57 @@ describe('fin du quinquennat', () => {
     expect(next.report.notices.every((n) => n.date >= '2031-10-06')).toBe(true);
   });
 });
+
+describe('présidentielle suivante : candidature du joueur (phase 23)', () => {
+  it('s’arrête sur la décision de candidature, puis ouvre la campagne avec le successeur', async () => {
+    const client = new Client(app);
+    const game = await electedGame(client, 'candidat_personnalise');
+    let state = game.state;
+    while (state.meta.date < '2031-08-25') {
+      const decisions = state.pendingDecisions.map((d) => ({
+        decisionId: d.id,
+        optionId: d.defaultOptionId,
+      }));
+      state = advanceWeek(state, { actions: [], decisions }, { ruleset }).state;
+    }
+    await forceState(game.id, state);
+    const asked = await fastForward(client, { ...game, state, week: state.meta.week }, 8);
+    expect(asked.avanceRapide!.arret).toBe('decision');
+    expect(asked.game.state.meta.date).toBe('2031-09-01');
+    const decision = asked.game.state.pendingDecisions.find((d) => d.kind === 'candidature')!;
+    expect(decision).toMatchObject({ id: 'candidature-2032', defaultOptionId: 'se-representer' });
+    const successor = decision.options.find((o) => o.id.startsWith('successeur-'))!;
+
+    let answered = await fastForward(client, asked.game, 8, [
+      ...asked.game.state.pendingDecisions.map((d) => ({
+        decisionId: d.id,
+        optionId: d.id === decision.id ? successor.id : d.defaultOptionId,
+      })),
+    ]);
+    // Un événement majeur du quinquennat peut arrêter l'avance : elle reprend jusqu'à la campagne.
+    while (answered.game.state.meta.phase === 'presidence')
+      answered = await fastForward(client, answered.game, 8);
+    expect(answered.avanceRapide!.arret).toBe('changement_de_phase');
+    const opened = answered.game.state;
+    expect(opened.meta).toMatchObject({
+      phase: 'campagne',
+      date: '2031-09-29',
+      saveSchemaVersion: 23,
+    });
+    expect(opened.succession).toMatchObject({ annee: 2032, choixJoueur: successor.id });
+    expect(opened.player.actorId).not.toBe(PLAYER_ACTOR_ID);
+    expect(opened.actors[opened.player.actorId!]).toMatchObject({
+      kind: 'joueur',
+      status: 'candidat',
+    });
+    expect(opened.actors[PLAYER_ACTOR_ID]).toMatchObject({ kind: 'adversaire', status: 'retire' });
+    expect(answered.report.events.some((e) => e.label.startsWith('Vous passez la main : '))).toBe(
+      true,
+    );
+    const stored = await db.game.findUniqueOrThrow({ where: { id: game.id } });
+    expect(stored.stateHash).toBe(hashState(opened));
+    // Relue, la partie est valide au format 23.
+    const reread = GameDetailSchema.parse((await client.get(`/api/games/${game.id}`)).json());
+    expect(reread.state).toEqual(opened);
+  }, 60_000);
+});

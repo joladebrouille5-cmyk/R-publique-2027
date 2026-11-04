@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { IDBFactory } from 'fake-indexeddb';
 import { advanceWeek } from '@r2027/engine';
 import { CURRENT_RULESET_KEY, getRuleset } from '@r2027/rulesets';
-import { hashState } from '@r2027/save-engine';
+import { buildExport, hashState, loadStoredState } from '@r2027/save-engine';
 import {
   AdvanceResponseSchema,
   ApiErrorSchema,
@@ -30,6 +30,7 @@ import {
   type LocalResponse,
 } from './server';
 import { MemoryStore, type Store } from './store';
+import V22 from '../../save-engine/src/fixtures/v22-phase-22.json' with { type: 'json' };
 
 // Phase 8 : serveur local de l'application mobile (même contrat que l'API, hors ligne).
 
@@ -755,4 +756,61 @@ describe('serveur local : progression (phase 20)', () => {
       201,
     );
   });
+});
+
+describe('serveur local : présidentielle suivante (phase 23)', () => {
+  it('importe une partie du format 22, s’arrête sur la candidature, passe la main comme le moteur', async () => {
+    const api = server();
+    const document = buildExport({
+      name: 'Fin de quinquennat',
+      state: V22.state as never,
+      stateHash: V22.stateHash,
+      exportedAt: '2026-11-04T10:00:00.000Z',
+    });
+    const imported = GameDetailSchema.parse(
+      (await call(api, 'POST', '/api/games/import', document)).body,
+    );
+    expect(imported.state.meta.saveSchemaVersion).toBe(23);
+    const asked = await advance(api, imported, { semaines: 8 });
+    expect(asked.avanceRapide!.arret).toBe('decision');
+    const decision = asked.game.state.pendingDecisions.find((d) => d.kind === 'candidature')!;
+    expect(asked.game.state.meta.date).toBe('2031-09-01');
+    const figure = decision.options.find((o) => o.id.startsWith('successeur-figure-'))!;
+    const response = await call(
+      api,
+      'POST',
+      `/api/games/${asked.game.id}/advance`,
+      {
+        expectedWeek: asked.game.week,
+        actions: [],
+        decisions: [{ decisionId: decision.id, optionId: figure.id }],
+        semaines: 8,
+      },
+      'cle-locale-candidature',
+    );
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+    let opened = AdvanceResponseSchema.parse(response.body);
+    // Un événement majeur du quinquennat peut arrêter l'avance : elle reprend jusqu'à la campagne.
+    while (opened.game.state.meta.phase === 'presidence')
+      opened = await advance(api, opened.game, { semaines: 8 });
+    expect(opened.report.phaseChange).toEqual({ from: 'presidence', to: 'campagne' });
+    expect(opened.game.state.player.actorId).toMatch(/^entrant-2032-figure-/);
+
+    // Même état final que le moteur seul, pour la même graine et les mêmes réponses.
+    const ruleset = getRuleset(CURRENT_RULESET_KEY);
+    let state = loadStoredState(V22.state, V22.stateHash, 22).state;
+    while (state.meta.phase === 'presidence')
+      state = advanceWeek(
+        state,
+        {
+          actions: [],
+          decisions: state.pendingDecisions.map((d) => ({
+            decisionId: d.id,
+            optionId: d.kind === 'candidature' ? figure.id : d.defaultOptionId,
+          })),
+        },
+        { ruleset },
+      ).state;
+    expect(hashState(opened.game.state)).toBe(hashState(state));
+  }, 30_000);
 });
