@@ -3,6 +3,7 @@ import { Navigate, type RouteObject } from 'react-router';
 import { AppLayout } from './components/AppLayout';
 import { Dashboard } from './screens/Dashboard';
 import { Plateau } from './screens/Plateau';
+import { SECTION_SCREENS } from './screens/sections';
 import { Espace } from './screens/Espace';
 import { GameLayout } from './screens/GameLayout';
 import { Home } from './screens/Home';
@@ -64,11 +65,21 @@ export const routes: RouteObject[] = [
             path: hub.path,
             element: <Espace key={hub.path} hub={hub} />,
           })),
-          // Anciennes adresses d'écran : l'espace, avec la section dépliée.
+          // Anciennes adresses d'écran (phase 25) : le plateau, panneau de l'écran ouvert ; un écran
+          // hors de la boîte de jeu garde son espace, section dépliée.
           ...GAME_SCREENS.filter((screen) => !HUBS.some((hub) => hub.path === screen.path)).map(
             (screen) => ({
               path: screen.path,
-              element: <Navigate to={`../${screenHref(screen.path)}`} replace />,
+              element: (
+                <Navigate
+                  to={
+                    screen.path in SECTION_SCREENS
+                      ? `../plateau?panneau=${screen.path}`
+                      : `../${screenHref(screen.path)}`
+                  }
+                  replace
+                />
+              ),
             }),
           ),
           { path: 'soiree/:tour', element: <Soiree /> },

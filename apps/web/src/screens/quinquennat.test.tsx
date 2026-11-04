@@ -254,7 +254,8 @@ describe('quinquennat', () => {
     let state = elected;
     while (!state.quinquennat!.gouvernement) state = step(state);
     mockApi(base(state));
-    renderRoute(`/parties/${GAME_ID}/gouvernement`);
+    // Espace Pouvoir, section dépliée (l'ancienne adresse ouvre désormais le panneau du plateau).
+    renderRoute(`/parties/${GAME_ID}/pouvoir#gouvernement`);
     expect(await screen.findByRole('heading', { name: 'Gouvernement n° 1' })).toBeInTheDocument();
     // Section dépliée « Gouvernement » (la vue du mandat, en tête de l'espace, nomme aussi les
     // postes).
@@ -282,7 +283,7 @@ describe('quinquennat', () => {
     let state = elected;
     for (let i = 0; i < 40; i++) state = step(state);
     mockApi(base(state));
-    renderRoute(`/parties/${GAME_ID}/parlement`);
+    renderRoute(`/parties/${GAME_ID}/pouvoir#parlement`);
     const assembly = await screen.findByRole('region', {
       name: /Assemblée nationale \(17e législature\)/,
     });

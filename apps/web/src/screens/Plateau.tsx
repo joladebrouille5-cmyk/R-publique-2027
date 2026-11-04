@@ -11,17 +11,20 @@ import {
   type PlannedAction,
   type Ruleset,
 } from '@r2027/shared';
-import { useMemo, useState } from 'react';
-import { Link } from 'react-router';
+import { useMemo, useRef, useState } from 'react';
+import { Link, useSearchParams } from 'react-router';
 import { useRuleset, useSupports } from '../api/hooks';
 import { sound } from '../audio/systeme';
 import { spendingCapOf } from '../campaign';
+import { Drawer } from '../components/Drawer';
 import { ErrorMessage } from '../components/ErrorMessage';
 import { boutonOr, buttonSecondary, carton, inputCompact } from '../components/ui';
 import { Verdict } from '../plateau/Verdict';
 import { useGeoManifest, useTopology } from '../map/data';
 import { Board } from '../plateau/Board';
 import { DepartmentSheet } from '../plateau/DepartmentSheet';
+import { GameBox } from '../plateau/GameBox';
+import { Panel } from '../plateau/Panel';
 import { boardShapes } from '../plateau/geometry';
 import { Hand, type HandCard } from '../plateau/Hand';
 import { departmentName, READINGS, type Reading } from '../plateau/readings';
@@ -90,6 +93,15 @@ export function Plateau() {
   // Archives repliées par défaut (une seule section s'ouvrirait d'elle-même) ; une ancre
   // « #journal » ou « #sauvegardes » les déplie.
   const archives = useOpenSections(['archives', 'plateau']);
+  // Boîte de jeu (phase 25) : `?panneau=boite` ouvre la grille, `?panneau=<écran>` son panneau.
+  const [params, setParams] = useSearchParams();
+  const panneau = params.get('panneau');
+  const boxButton = useRef<HTMLButtonElement>(null);
+  const openPanel = (screen: string) => setParams({ panneau: screen });
+  const closePanel = () => {
+    setParams({});
+    setTimeout(() => boxButton.current?.focus(), 0);
+  };
 
   const manifest = useGeoManifest();
   const topology = useTopology(manifest.data?.apercu ?? null);
@@ -192,6 +204,9 @@ export function Plateau() {
   return (
     <section
       aria-labelledby="titre-plateau"
+      // Un panneau de la boîte de jeu ouvert : le plateau, dessous, est inerte (fenêtre modale).
+      inert={panneau ? true : undefined}
+      aria-hidden={panneau ? true : undefined}
       className="feutrine -mx-4 -mt-4 min-h-[calc(100dvh-8rem)] space-y-4 px-3 pt-3 pb-40 sm:-mx-6 sm:px-5"
     >
       <h1 id="titre-plateau" className="sr-only">
@@ -220,9 +235,29 @@ export function Plateau() {
           announce={spotlightId === null}
         />
       )}
-      {data && (
-        <TopBar state={state} ruleset={data} actor={actor} hoursLeft={remaining?.time ?? 0} />
+      {panneau === 'boite' ? (
+        <Drawer title="Boîte de jeu" onClose={closePanel}>
+          <GameBox game={game} ruleset={data} onOpen={openPanel} />
+        </Drawer>
+      ) : (
+        panneau && <Panel screen={panneau} onClose={closePanel} />
       )}
+      <div className="flex items-start gap-2">
+        <div className="min-w-0 flex-1">
+          {data && (
+            <TopBar state={state} ruleset={data} actor={actor} hoursLeft={remaining?.time ?? 0} />
+          )}
+        </div>
+        <button
+          ref={boxButton}
+          type="button"
+          onClick={() => openPanel('boite')}
+          aria-haspopup="dialog"
+          className="min-h-11 shrink-0 rounded-2xl bg-or px-3.5 font-display text-sm font-extrabold text-sur-or shadow-pion"
+        >
+          Boîte de jeu
+        </button>
+      </div>
 
       {week.blocked && (
         <p role="alert" className="rounded-2xl bg-carton px-3 py-2 text-sm text-encre-carton">
