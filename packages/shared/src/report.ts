@@ -221,6 +221,30 @@ export const CouncilReportSchema = z
   .strict();
 export type CouncilReport = z.infer<typeof CouncilReportSchema>;
 
+/** Variation d'implantation d'un candidat dans un département (phase 25), facteurs exacts. */
+export const ImplantationChangeSchema = z
+  .object({
+    actorId: z.string().min(1),
+    departement: z.string().min(1),
+    before: z.number().int().min(0).max(100),
+    after: z.number().int().min(0).max(100),
+    factors: z.array(z.object({ label: z.string().min(1), value: z.number().int() }).strict()),
+  })
+  .strict();
+export type ImplantationChange = z.infer<typeof ImplantationChangeSchema>;
+
+/** Combo déclenché par le plan d'un candidat dans la semaine (phase 25). */
+export const ComboAppliedSchema = z
+  .object({
+    actorId: z.string().min(1),
+    kind: z.enum(['serie', 'bastion', 'tour-de-region']),
+    libelle: z.string().min(1),
+    /** Département du bastion, région du tour, null pour une série. */
+    cible: z.string().min(1).nullable(),
+  })
+  .strict();
+export type ComboApplied = z.infer<typeof ComboAppliedSchema>;
+
 export const WeeklyReportSchema = z
   .object({
     /** Semaine résolue et son lundi. */
@@ -280,6 +304,9 @@ export const WeeklyReportSchema = z
     // débloqués dans la semaine (identifiants du jeu de règles).
     conseil: CouncilReportSchema.nullable().default(null),
     succes: z.array(z.string().min(1)).default([]),
+    // Ajouts de la phase 25 : variations d'implantation par département et combos de la semaine.
+    implantation: z.array(ImplantationChangeSchema).default([]),
+    combos: z.array(ComboAppliedSchema).default([]),
   })
   .strict();
 export type WeeklyReport = z.infer<typeof WeeklyReportSchema>;

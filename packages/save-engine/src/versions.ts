@@ -39,10 +39,12 @@ import {
   GameStateV21Schema,
   GameStateV22Schema,
   GameStateV23Schema,
+  GameStateV24Schema,
   addDays,
   DIGITAL_HISTORY_WEEKS,
   daysFromCivil,
   parseIsoDate,
+  startingImplantation,
   type Actor,
   type ActorV4,
   type ActorV5,
@@ -70,6 +72,7 @@ import {
   type GameStateV21,
   type GameStateV22,
   type GameStateV23,
+  type GameStateV24,
   type GameStateV17,
 } from '@r2027/shared';
 import { z } from 'zod';
@@ -122,7 +125,8 @@ const SCHEMAS: Record<number, z.ZodType> = {
   21: GameStateV21Schema,
   22: GameStateV22Schema,
   23: GameStateV23Schema,
-  24: GameStateSchema,
+  24: GameStateV24Schema,
+  25: GameStateSchema,
 };
 
 /** Jeux de règles des parties aux formats 2 (phase 2) et 3 (phase 3). */
@@ -838,7 +842,7 @@ function migrateV22ToV23(v22: GameStateV22): GameStateV23 {
  * 23 → 24 (phase 24) : rééquilibrage. Une partie existante garde son départ équitable (aucun
  * socle électoral) ; les nouvelles règles du jeu de règles 22 s'appliquent dès la semaine suivante.
  */
-function migrateV23ToV24(v23: GameStateV23): GameState {
+function migrateV23ToV24(v23: GameStateV23): GameStateV24 {
   return {
     ...v23,
     meta: {
@@ -849,6 +853,29 @@ function migrateV23ToV24(v23: GameStateV23): GameState {
     },
     player: { ...v23.player, depart: 'equitable' },
     socle: null,
+  };
+}
+
+/**
+ * Format 24 → 25 (phase 25) : chaque candidat reçoit son implantation de départ (30 dans les
+ * départements des régions d'une personnalité ou d'un candidat fictif, 0 partout pour le
+ * candidat personnalisé), comme une partie neuve ; la projection par département reste vide
+ * jusqu'à la semaine suivante, les intentions ne bougent pas.
+ */
+function migrateV24ToV25(v24: GameStateV24): GameState {
+  const ruleset = getRuleset(CURRENT_RULESET_KEY);
+  return {
+    ...v24,
+    meta: {
+      ...v24.meta,
+      engineVersion: ENGINE_VERSION,
+      rulesetVersion: CURRENT_RULESET_KEY,
+      saveSchemaVersion: 25,
+    },
+    opinion: v24.opinion ? { ...v24.opinion, departements: {} } : null,
+    implantation: Object.fromEntries(
+      Object.values(v24.actors).map((actor) => [actor.id, startingImplantation(actor, ruleset)]),
+    ),
   };
 }
 
@@ -876,6 +903,7 @@ const MIGRATIONS: Record<number, (state: never) => unknown> = {
   21: migrateV21ToV22,
   22: migrateV22ToV23,
   23: migrateV23ToV24,
+  24: migrateV24ToV25,
 };
 
 export type LoadedState = { state: GameState; stateHash: string; migratedFrom: number | null };

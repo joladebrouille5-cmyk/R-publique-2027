@@ -253,6 +253,8 @@ export function reportFixture(overrides: Partial<WeeklyReport> = {}): WeeklyRepo
     numerique: [],
     conseil: null,
     succes: [],
+    implantation: [],
+    combos: [],
     ...overrides,
   };
 }

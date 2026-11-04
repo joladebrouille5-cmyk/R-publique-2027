@@ -331,6 +331,7 @@ describe('financement (§6)', () => {
       participation: 7_000,
       intentions: { joueur: 800 },
       breakdown: {},
+      departements: {},
     };
     requestLoan(book, state, RULESET, PLAYER_ACTOR_ID, 100_000_000, 'Prêt', 5);
     expect(player(state).finances.recettes.emprunts).toBe(100_000_000);
@@ -495,6 +496,7 @@ describe('relations et alliances (§7)', () => {
       participation: 7_000,
       intentions: { ...others, ...intentions },
       breakdown: {},
+      departements: {},
     };
     return state;
   }

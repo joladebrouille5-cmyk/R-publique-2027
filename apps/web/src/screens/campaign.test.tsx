@@ -123,6 +123,25 @@ describe('actions ciblées', () => {
     });
   });
 
+  it('laisse jouer un meeting sans département, ou le pose dans un département', async () => {
+    const calls = mockApi(base());
+    renderRoute(`/parties/${GAME_ID}/tableau-de-bord`);
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Ajouter Meeting public' }));
+    await user.click(screen.getByRole('button', { name: 'Ajouter Meeting public' }));
+    const submit = screen.getByRole('button', { name: 'Résoudre la semaine 0' });
+    expect(submit).toBeEnabled();
+    expect(screen.queryByText(/Choisissez la cible/)).not.toBeInTheDocument();
+    const second = screen.getByLabelText(/Cible de l’action n° 2 \(Meeting public\)/);
+    expect(second).not.toHaveAttribute('aria-invalid', 'true');
+    await user.selectOptions(second, '971');
+    await user.click(submit);
+    await waitFor(() => expect(calls.some((c) => c.method === 'POST')).toBe(true));
+    expect(calls.find((c) => c.method === 'POST')!.body).toMatchObject({
+      actions: [{ actionId: 'meeting' }, { actionId: 'meeting', cible: '971' }],
+    });
+  });
+
   it('présente les parrainages et le compte de campagne sur le tableau de bord', async () => {
     mockApi(base());
     renderRoute(`/parties/${GAME_ID}/tableau-de-bord`);

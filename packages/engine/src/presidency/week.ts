@@ -517,6 +517,8 @@ export function advancePresidencyWeek(
       numerique: [],
       conseil,
       succes,
+      implantation: [],
+      combos: [],
     },
   };
 }

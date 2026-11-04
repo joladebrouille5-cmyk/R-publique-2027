@@ -158,6 +158,10 @@ export const ActionDefinitionSchema = z
      * personnalité réelle (négociation de soutien) ou un ministère (remaniement ciblé).
      */
     cible: z.enum(['departement', 'media', 'emission', 'personnalite', 'poste']).nullable(),
+    /** Phase 25 : la cible départementale peut manquer (carte Terrain jouée sans lieu). */
+    cibleFacultative: z.boolean().optional(),
+    /** Phase 25 : famille de la carte pour les séries (combos). */
+    famille: z.enum(['terrain', 'medias', 'numerique', 'organisation']).optional(),
     cout: z
       .object({
         budgetCentimes: z.number().int().min(0),
@@ -1937,6 +1941,46 @@ export const RulesetSchema = z
         decroissanceSecondTour: z.number().min(0).max(1),
         /** Cycle électoral auquel s'appliquent ces sondages. */
         cycle: z.number().int().min(2027),
+      })
+      .strict(),
+    /**
+     * Implantation par département (phase 25, hypothèses) : départ dans les régions
+     * d'implantation, gains des cartes Terrain, érosion, effet sur le vote.
+     */
+    implantation: z
+      .object({
+        statut: z.literal('hypothese'),
+        note: z.string().min(1),
+        depart: z.number().int().min(0).max(100),
+        plafond: z.number().int().min(1).max(100),
+        erosion: z.number().int().min(0).max(100),
+        gains: z.record(Id, z.number().int().min(0).max(100)),
+        regionGrandMeeting: z.number().int().min(0).max(100),
+        /** La tournée fait gagner son gain à tous les départements de la région visée. */
+        regionTournee: z.boolean(),
+        deplacementPresident: z.number().int().min(0).max(100),
+        poids: z.number().min(0).max(5),
+        pivot: z.number().min(0).max(100),
+        alpha: z.number().min(0).max(5),
+      })
+      .strict(),
+    /** Combos de la semaine (phase 25, hypothèses) : séries, bastion, tour de région. */
+    combos: z
+      .object({
+        statut: z.literal('hypothese'),
+        note: z.string().min(1),
+        serie: z
+          .object({ deuxieme: z.number().min(0).max(2), suivantes: z.number().min(0).max(2) })
+          .strict(),
+        bastion: z
+          .object({ cartesMin: z.number().int().min(2), multiplicateur: z.number().min(1).max(5) })
+          .strict(),
+        tourDeRegion: z
+          .object({
+            departementsMin: z.number().int().min(2),
+            gain: z.number().int().min(0).max(100),
+          })
+          .strict(),
       })
       .strict(),
     /**

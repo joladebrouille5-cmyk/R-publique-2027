@@ -74,7 +74,9 @@ function targetError(ruleset: Ruleset, definition: ActionDefinition, cible: stri
   if (definition.cible === null) {
     return cible === undefined ? null : 'Cette action ne se dirige pas vers une cible.';
   }
-  if (cible === undefined) return MISSING_TARGET[definition.cible];
+  // Phase 25 : une carte Terrain peut se jouer sans lieu (effets nationaux seuls).
+  if (cible === undefined)
+    return definition.cibleFacultative ? null : MISSING_TARGET[definition.cible];
   const known =
     definition.cible === 'departement'
       ? cible in ruleset.parrainages.reservoir.departements

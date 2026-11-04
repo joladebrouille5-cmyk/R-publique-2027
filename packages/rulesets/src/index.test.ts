@@ -1158,9 +1158,8 @@ describe('présidentielle suivante : candidatures et bilan (phase 23)', () => {
 });
 
 describe('rééquilibrage : sondages réels et départ « Sondages actuels » (phase 24)', () => {
-  it('passe au jeu de règles 22.0.0', () => {
-    expect(ruleset.version).toBe('22.0.0');
-    expect(CURRENT_RULESET_KEY).toBe('presidentielle-2027@22.0.0');
+  it('a introduit le départ « Sondages actuels » (jeu de règles 22.0.0 et suivants)', () => {
+    expect(ruleset.departSondages.statut).toBe('hypothese');
   });
 
   it('cite pour chaque enquête son institut, son commanditaire, son terrain, son échantillon et sa source', () => {
@@ -1195,5 +1194,76 @@ describe('rééquilibrage : sondages réels et départ « Sondages actuels » (p
     expect(ruleset.programme.minimumRecommande).toBe(8);
     const boussole = ruleset.candidatsFictifs.find((c) => c.id === 'adv-boussole')!;
     expect(boussole.ressources).toMatchObject({ notoriete: 3500, budgetCentimes: 400_000_000 });
+  });
+});
+
+describe('implantation par département et combos (phase 25)', () => {
+  it('passe au jeu de règles 23.0.0', () => {
+    expect(ruleset.version).toBe('23.0.0');
+    expect(CURRENT_RULESET_KEY).toBe('presidentielle-2027@23.0.0');
+  });
+
+  it('étiquette l’implantation et les combos comme hypothèses, aux valeurs de la spécification', () => {
+    expect(ruleset.implantation).toMatchObject({
+      statut: 'hypothese',
+      depart: 30,
+      plafond: 100,
+      erosion: 1,
+      gains: {
+        meeting: 12,
+        'grand-meeting': 20,
+        tournee: 6,
+        'porte-a-porte': 8,
+        recrutement: 6,
+        'elus-locaux': 10,
+      },
+      regionGrandMeeting: 5,
+      regionTournee: true,
+      deplacementPresident: 8,
+      poids: 0.5,
+      pivot: 15,
+      alpha: 0.6,
+    });
+    expect(ruleset.combos).toMatchObject({
+      statut: 'hypothese',
+      serie: { deuxieme: 0.25, suivantes: 0.5 },
+      bastion: { cartesMin: 2, multiplicateur: 1.5 },
+      tourDeRegion: { departementsMin: 3, gain: 5 },
+    });
+    // Chaque carte qui fait gagner de l'implantation existe et se pose sur un département.
+    for (const id of Object.keys(ruleset.implantation.gains)) {
+      const action = ruleset.actions.find((a) => a.id === id)!;
+      expect(action.cible, id).toBe('departement');
+      expect(action.famille, id).toBe('terrain');
+    }
+  });
+
+  it('range chaque carte de campagne dans sa famille', () => {
+    const families = {
+      terrain: [
+        'meeting',
+        'grand-meeting',
+        'tournee',
+        'porte-a-porte',
+        'recrutement',
+        'elus-locaux',
+      ],
+      medias: ['interview', 'emission-politique', 'interview-longue', 'decryptage'],
+      numerique: ['numerique', 'vague-video-courte', 'live-twitch'],
+      organisation: [
+        'collecte',
+        'emprunt-bancaire',
+        'preparation-debat',
+        'negocier-soutien',
+        'negocier-soutien-ministere',
+      ],
+    };
+    for (const [famille, ids] of Object.entries(families))
+      for (const id of ids)
+        expect(ruleset.actions.find((a) => a.id === id)?.famille, id).toBe(famille);
+    // Les cinq cartes Terrain sans cible d'avant la phase 25 peuvent se jouer sans département.
+    for (const id of ['meeting', 'grand-meeting', 'tournee', 'porte-a-porte', 'recrutement'])
+      expect(ruleset.actions.find((a) => a.id === id)?.cibleFacultative, id).toBe(true);
+    expect(ruleset.actions.find((a) => a.id === 'elus-locaux')?.cibleFacultative).toBeUndefined();
   });
 });

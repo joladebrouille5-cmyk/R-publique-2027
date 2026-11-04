@@ -1,6 +1,6 @@
 {
   "id": "presidentielle-2027",
-  "version": "22.0.0",
+  "version": "23.0.0",
   "libelle": "Présidentielle 2027 et quinquennat — campagne, parrainages, financement, médias réels, présidence, gouvernement et figures réelles nominables, Parlement, économie, crises et législatives",
   "verifieLe": "2026-11-03",
   "sources": {
@@ -328,17 +328,19 @@
         ]
       },
       "note": null,
-      "cible": null,
+      "cible": "departement",
       "campagne": {
         "exposition": 300
-      }
+      },
+      "famille": "terrain",
+      "cibleFacultative": true
     },
     {
       "id": "grand-meeting",
       "libelle": "Grand meeting national",
       "description": "Rassemblement de plusieurs milliers de personnes, retransmis : forte exposition, logistique lourde.",
       "portee": "nationale",
-      "cible": null,
+      "cible": "departement",
       "cout": {
         "budgetCentimes": 45000000,
         "tempsHeures": 16
@@ -385,7 +387,9 @@
           }
         ]
       },
-      "note": null
+      "note": null,
+      "famille": "terrain",
+      "cibleFacultative": true
     },
     {
       "id": "tournee",
@@ -429,8 +433,10 @@
         ]
       },
       "note": null,
-      "cible": null,
-      "campagne": null
+      "cible": "departement",
+      "campagne": null,
+      "famille": "terrain",
+      "cibleFacultative": true
     },
     {
       "id": "interview",
@@ -477,7 +483,8 @@
       "cible": "media",
       "campagne": {
         "exposition": 2500
-      }
+      },
+      "famille": "medias"
     },
     {
       "id": "emission-politique",
@@ -524,7 +531,8 @@
       "cible": "emission",
       "campagne": {
         "exposition": 3500
-      }
+      },
+      "famille": "medias"
     },
     {
       "id": "numerique",
@@ -550,7 +558,8 @@
       "risque": null,
       "note": null,
       "cible": null,
-      "campagne": null
+      "campagne": null,
+      "famille": "numerique"
     },
     {
       "id": "interview-longue",
@@ -638,7 +647,8 @@
         ]
       },
       "note": "Effets et risque : hypothèses du jeu. Le format et ses exemples sont réels ; l’entretien, ses questions et ses réponses sont simulés. Le passage est noté sans tirage (préparation, posture, format, situation, lassitude) ; l’aléa ne survient que si le passage est raté et ne décrit aucun contenu.",
-      "format": "interview-longue"
+      "format": "interview-longue",
+      "famille": "medias"
     },
     {
       "id": "decryptage",
@@ -705,7 +715,8 @@
         ]
       },
       "note": "Effets et risque : hypothèses du jeu. Le format et ses exemples sont réels ; le passage est simulé.",
-      "format": "decryptage"
+      "format": "decryptage",
+      "famille": "medias"
     },
     {
       "id": "vague-video-courte",
@@ -765,7 +776,8 @@
         ]
       },
       "note": "Effets, coût de production et risque : hypothèses du jeu. Les vidéos et leurs réactions sont simulées.",
-      "format": "video-courte"
+      "format": "video-courte",
+      "famille": "numerique"
     },
     {
       "id": "live-twitch",
@@ -832,7 +844,8 @@
         ]
       },
       "note": "Effets et risque : hypothèses du jeu. Le direct et ses échanges sont simulés.",
-      "format": "direct"
+      "format": "direct",
+      "famille": "numerique"
     },
     {
       "id": "recrutement",
@@ -857,8 +870,10 @@
       ],
       "risque": null,
       "note": null,
-      "cible": null,
-      "campagne": null
+      "cible": "departement",
+      "campagne": null,
+      "famille": "terrain",
+      "cibleFacultative": true
     },
     {
       "id": "collecte",
@@ -899,7 +914,8 @@
           "probaDepassement": 0.15,
           "probaEspeces": 0.1
         }
-      }
+      },
+      "famille": "organisation"
     },
     {
       "id": "porte-a-porte",
@@ -931,8 +947,10 @@
       ],
       "risque": null,
       "note": null,
-      "cible": null,
-      "campagne": null
+      "cible": "departement",
+      "campagne": null,
+      "famille": "terrain",
+      "cibleFacultative": true
     },
     {
       "id": "elus-locaux",
@@ -963,7 +981,8 @@
           "base": 25,
           "ecart": 10
         }
-      }
+      },
+      "famille": "terrain"
     },
     {
       "id": "emprunt-bancaire",
@@ -985,7 +1004,8 @@
         }
       },
       "risque": null,
-      "note": "Les banques prêtent sur la base du remboursement forfaitaire attendu (hypothèse de jeu)."
+      "note": "Les banques prêtent sur la base du remboursement forfaitaire attendu (hypothèse de jeu).",
+      "famille": "organisation"
     },
     {
       "id": "preparation-debat",
@@ -1005,7 +1025,8 @@
         "preparationDebat": 10
       },
       "risque": null,
-      "note": null
+      "note": null,
+      "famille": "organisation"
     },
     {
       "id": "negocier-soutien",
@@ -1027,7 +1048,8 @@
         }
       },
       "risque": null,
-      "note": "Négociation simulée (hypothèses du jeu, `negociations`) : une personnalité refuse si un candidat de son parti est en lice, si elle soutient déjà un candidat ou si elle est trop éloignée de vous."
+      "note": "Négociation simulée (hypothèses du jeu, `negociations`) : une personnalité refuse si un candidat de son parti est en lice, si elle soutient déjà un candidat ou si elle est trop éloignée de vous.",
+      "famille": "organisation"
     },
     {
       "id": "negocier-soutien-ministere",
@@ -1049,7 +1071,8 @@
         }
       },
       "risque": null,
-      "note": "Négociation simulée (hypothèses du jeu, `negociations`) ; la personnalité promise est proposée en tête pour un ministère à l’investiture."
+      "note": "Négociation simulée (hypothèses du jeu, `negociations`) ; la personnalité promise est proposée en tête pour un ministère à l’investiture.",
+      "famille": "organisation"
     }
   ],
   "evenements": [
@@ -11016,6 +11039,43 @@
     "decroissanceSecondTour": 0.95,
     "cycle": 2027
   },
+  "implantation": {
+    "statut": "hypothese",
+    "note": "Implantation par département (phase 25) : de 0 (terre inconnue) à 100 (fief). Départ : 30 dans les départements des régions d'implantation d'une personnalité ou d'un candidat fictif, 0 partout pour le candidat personnalisé ; ce départ est aussi le plancher de l'érosion. Les cartes Terrain posées sur un département y font gagner des points ; l'implantation moyenne pondérée par les inscrits pèse sur le vote, et l'implantation locale déplace le score d'un département à l'autre au dépouillement. Paramètres de jeu, sans prétention de mesure.",
+    "depart": 30,
+    "plafond": 100,
+    "erosion": 1,
+    "gains": {
+      "porte-a-porte": 8,
+      "elus-locaux": 10,
+      "recrutement": 6,
+      "meeting": 12,
+      "grand-meeting": 20,
+      "tournee": 6
+    },
+    "regionGrandMeeting": 5,
+    "regionTournee": true,
+    "deplacementPresident": 8,
+    "poids": 0.5,
+    "pivot": 15,
+    "alpha": 0.6
+  },
+  "combos": {
+    "statut": "hypothese",
+    "note": "Combos de la semaine (phase 25) : la deuxième carte d'une même famille a 25 % d'effet en plus, les suivantes 50 % ; deux cartes ou plus dans un département y multiplient le gain d'implantation par 1,5 (bastion) ; trois départements distincts d'une région donnent 5 points d'implantation à toute la région (tour de région). Paramètres de jeu.",
+    "serie": {
+      "deuxieme": 0.25,
+      "suivantes": 0.5
+    },
+    "bastion": {
+      "cartesMin": 2,
+      "multiplicateur": 1.5
+    },
+    "tourDeRegion": {
+      "departementsMin": 3,
+      "gain": 5
+    }
+  },
   "rattrapageNotoriete": {
     "statut": "hypothese",
     "note": "Rattrapage de notoriété (phase 24) : un candidat peu connu gagne davantage à chaque action qui le fait connaître (la nouveauté attire la couverture), tant que sa notoriété reste sous le seuil ; même règle pour tous les candidats, joueur comme adversaires. Paramètre de jeu, sans prétention de mesure.",
@@ -11029,9 +11089,20 @@
     "maxCandidats": 12,
     "maxSuccesseurs": 4,
     "representation": {
-      "sortant": { "base": 0.5, "pente": 1.5, "pivot": 3000, "min": 0.1, "max": 0.95 },
+      "sortant": {
+        "base": 0.5,
+        "pente": 1.5,
+        "pivot": 3000,
+        "min": 0.1,
+        "max": 0.95
+      },
       "finaliste": 0.85,
-      "elimine": { "base": 0.25, "pente": 2, "min": 0.15, "max": 0.8 },
+      "elimine": {
+        "base": 0.25,
+        "pente": 2,
+        "min": 0.15,
+        "max": 0.8
+      },
       "autre": 0.3
     },
     "ministreSeuilPopularite": 4500,

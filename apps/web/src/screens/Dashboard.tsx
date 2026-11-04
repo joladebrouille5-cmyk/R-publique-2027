@@ -260,9 +260,13 @@ export function Dashboard() {
     ? plan.actions.filter(
         (a) =>
           a.cible === undefined &&
-          [...ruleset.data.actions, ...ruleset.data.quinquennat.actions].find(
-            (d) => d.id === a.actionId,
-          )?.cible,
+          (() => {
+            const definition = [...ruleset.data.actions, ...ruleset.data.quinquennat.actions].find(
+              (d) => d.id === a.actionId,
+            );
+            // Phase 25 : une carte Terrain se joue aussi sans lieu (effets nationaux seuls).
+            return Boolean(definition?.cible) && !definition?.cibleFacultative;
+          })(),
       ).length
     : 0;
   const nameOf = (id: string) =>

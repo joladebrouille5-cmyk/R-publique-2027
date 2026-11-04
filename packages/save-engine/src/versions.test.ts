@@ -7,7 +7,12 @@ import {
   SAVE_SCHEMA_VERSION,
 } from '@r2027/engine';
 import { CURRENT_RULESET_KEY, getRuleset } from '@r2027/rulesets';
-import { debateAwaitingPlayer, GameStateSchema, type GameState } from '@r2027/shared';
+import {
+  debateAwaitingPlayer,
+  GameStateSchema,
+  startingImplantation,
+  type GameState,
+} from '@r2027/shared';
 import { describe, expect, it } from 'vitest';
 import { canonicalStringify, hashState, sha256 } from './canonical';
 import { buildExport, readExport } from './exchange';
@@ -134,9 +139,37 @@ const withoutDepart = <T extends object>(state: T) => {
  * de migration : aucune orientation, négociation ni succès ; Parlement sans échauffement ni QAG ;
  * quinquennat sans suivi des ministres, objectifs ni déplacements ; bilans sans note.
  */
-const withoutPhase15 = <T extends object>(state: T): T => {
+/**
+ * Format 25 (phase 25) : une partie migrée reçoit l'implantation de départ de chaque candidat et
+ * une projection par département vide ; le reste de l'état est inchangé.
+ */
+const withoutPhase25 = <T extends object>(state: T): T => {
   const s = state as Partial<GameState>;
   const out: Record<string, unknown> = { ...(state as Record<string, unknown>) };
+  if ('implantation' in s) {
+    if (s.actors)
+      expect(s.implantation).toEqual(
+        Object.fromEntries(
+          Object.entries(s.actors).map(([id, actor]) => [id, startingImplantation(actor, ruleset)]),
+        ),
+      );
+    else
+      for (const map of Object.values(s.implantation ?? {}))
+        for (const value of Object.values(map))
+          expect([0, ruleset.implantation.depart]).toContain(value);
+    delete out.implantation;
+  }
+  if (s.opinion) {
+    const { departements, ...opinion } = s.opinion;
+    expect(departements).toEqual({});
+    out.opinion = opinion;
+  }
+  return out as T;
+};
+
+const withoutPhase15 = <T extends object>(state: T): T => {
+  const s = state as Partial<GameState>;
+  const out: Record<string, unknown> = { ...withoutPhase25(state as Record<string, unknown>) };
   if (s.player) {
     // Format 21 (phase 20) : une partie migrée continue au format complet.
     // Format 24 (phase 24) : une partie migrée garde un départ équitable.
@@ -1098,7 +1131,7 @@ describe('migrations de sauvegarde', () => {
     });
     // La difficulté est figée à la création : ni le niveau ni les moyens des candidats ne
     // changent à la migration.
-    const { meta: _meta, player, suites, succession, socle, ...rest } = state;
+    const { meta: _meta, player, suites, succession, socle, ...rest } = withoutPhase25(state);
     const { meta: _m, player: before, ...restBefore } = V19.state;
     expect(suites).toEqual([]);
     expect(succession).toBeNull();
@@ -1149,7 +1182,7 @@ describe('migrations de sauvegarde', () => {
       rulesetVersion: CURRENT_RULESET_KEY,
     });
     expect(state.player.format).toBe('complet');
-    const { meta: _meta, player, suites, succession, socle, ...rest } = state;
+    const { meta: _meta, player, suites, succession, socle, ...rest } = withoutPhase25(state);
     const { meta: _m, player: before, ...restBefore } = V20.state;
     expect(suites).toEqual([]);
     expect(succession).toBeNull();
@@ -1180,7 +1213,7 @@ describe('migrations de sauvegarde', () => {
       engineVersion: ENGINE_VERSION,
       rulesetVersion: CURRENT_RULESET_KEY,
     });
-    const { meta: _meta, suites, succession, socle, player, ...rest } = state;
+    const { meta: _meta, suites, succession, socle, player, ...rest } = withoutPhase25(state);
     const { meta: _m, player: before, ...restBefore } = V21.state;
     expect(socle).toBeNull();
     expect(player).toEqual({ ...before, depart: 'equitable' });
@@ -1217,10 +1250,10 @@ describe('migrations de sauvegarde', () => {
       engineVersion: ENGINE_VERSION,
       rulesetVersion: CURRENT_RULESET_KEY,
     });
-    expect(SAVE_SCHEMA_VERSION).toBe(24);
+    expect(SAVE_SCHEMA_VERSION).toBe(25);
     expect(stateHash).toBe(hashState(state));
     expect(stateHash).not.toBe(V22.stateHash);
-    const { meta: _meta, succession, socle, player, ...rest } = state;
+    const { meta: _meta, succession, socle, player, ...rest } = withoutPhase25(state);
     const { meta: _m, player: before, ...restBefore } = V22.state;
     expect(socle).toBeNull();
     expect(player).toEqual({ ...before, depart: 'equitable' });
@@ -1286,6 +1319,45 @@ describe('migrations de sauvegarde', () => {
     expect(current.actors[successorId]).toMatchObject({ kind: 'joueur', status: 'candidat' });
     expect(current.actors[PLAYER_ACTOR_ID]).toMatchObject({ kind: 'adversaire', status: 'retire' });
     expect(GameStateSchema.parse(current)).toEqual(current);
+  });
+
+  it('passe au format 25 en pleine campagne : implantation de départ, projection vide, intentions inchangées', () => {
+    // Partie la plus récente en campagne (format 21, format court) : joueur personnalisé et
+    // adversaires fictifs ; migrée de proche en proche jusqu'au format 25.
+    const { state } = loadStoredState(V21.state, V21.stateHash, 21);
+    expect(state.meta.saveSchemaVersion).toBe(25);
+    const departements = ruleset.parrainages.reservoir.departements;
+    const codes = Object.keys(departements).sort();
+    expect(Object.keys(state.implantation).sort()).toEqual(Object.keys(state.actors).sort());
+    for (const [id, actor] of Object.entries(state.actors)) {
+      const map = state.implantation[id]!;
+      expect(Object.keys(map).sort()).toEqual(codes);
+      for (const code of codes) {
+        const expected =
+          actor.candidate.nature === 'personnalise'
+            ? 0
+            : actor.implantation.includes(departements[code]!.region)
+              ? 30
+              : 0;
+        expect(map[code], `${id} ${code}`).toBe(expected);
+      }
+    }
+    expect(Object.values(state.implantation[PLAYER_ACTOR_ID]!).every((v) => v === 0)).toBe(true);
+    expect(state.implantation['adv-aurore']!['75']).toBe(30);
+    expect(state.implantation['adv-aurore']!['29']).toBe(0);
+    // Aucune projection avant la semaine suivante, intentions et participation inchangées.
+    expect(state.opinion?.departements).toEqual({});
+    expect(state.opinion?.intentions).toEqual(V21.state.opinion!.intentions);
+    expect(state.opinion?.participation).toBe(V21.state.opinion!.participation);
+    expect(GameStateSchema.parse(state)).toEqual(state);
+    // Une personnalité réelle (joueur de la phase 22) part de 30 dans sa région d'implantation.
+    const presidence = loadStoredState(V22.state, V22.stateHash, 22).state;
+    const reel = presidence.actors[PLAYER_ACTOR_ID]!;
+    expect(reel.candidate.nature).toBe('reel');
+    for (const code of codes)
+      expect(presidence.implantation[PLAYER_ACTOR_ID]![code]).toBe(
+        reel.implantation.includes(departements[code]!.region) ? 30 : 0,
+      );
   });
 
   it('refuse un état qui cite une personnalité absente du vivier courant', () => {

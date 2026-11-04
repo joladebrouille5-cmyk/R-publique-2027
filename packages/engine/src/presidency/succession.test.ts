@@ -1,5 +1,6 @@
 import {
   GameStateSchema,
+  startingImplantation,
   type GameState,
   type QuinquennatReview,
   type Ruleset,
@@ -275,6 +276,8 @@ describe('les autres candidats décident ; les entrants (phase 23, §2 et §3)',
       // Moyens de départ d'un entrant (jeu de règles), sans passer par le registre.
       expect(actor.resources.budgetCentimes).toBe(RULES.succession.entrants.budgetCentimes);
       expect(actor.resources.popularite).toBe(RULES.succession.entrants.popularite);
+      // Phase 25 : implantation de départ d'un entrant, dans les régions de son profil.
+      expect(state.implantation[actorId]).toEqual(startingImplantation(actor, RULES));
     }
     // Chaque groupe d'électeurs a désormais un candidat déclaré à moins de 0,35, s'il en restait.
     for (const group of RULES.electorat.groupes) {
@@ -462,6 +465,7 @@ describe('le choix du joueur et la passation (phase 23, §1 et §3)', () => {
     const successor = state.actors[successorId]!;
     expect(successor).toMatchObject({ kind: 'joueur', status: 'candidat', style: null });
     expect(successor.candidate).toMatchObject({ nature: 'reel', figureId: figure.source.ref });
+    expect(state.implantation[successorId]).toEqual(startingImplantation(successor, RULES));
     expect(state.actors[PLAYER_ACTOR_ID]).toMatchObject({ kind: 'adversaire', status: 'retire' });
     const militants = report.changes.find(
       (c) => c.actorId === successorId && c.ressource === 'militants',

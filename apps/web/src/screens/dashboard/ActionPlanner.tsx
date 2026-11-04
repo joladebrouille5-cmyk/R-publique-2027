@@ -316,9 +316,13 @@ function TargetSelect({
         value={value ?? ''}
         onChange={(event) => onChange(event.target.value)}
         aria-label={`Cible de l’action n° ${index + 1} (${action.libelle})`}
-        aria-invalid={value === undefined}
+        aria-invalid={value === undefined && !action.cibleFacultative}
       >
-        <option value="">{TARGET_PROMPTS[action.cible ?? 'media']}</option>
+        <option value="">
+          {action.cibleFacultative
+            ? 'Sans lieu précis (effets nationaux)'
+            : TARGET_PROMPTS[action.cible ?? 'media']}
+        </option>
         {action.cible === 'departement' &&
           departements.map(([code, dep]) => {
             const held = showSupport
@@ -433,7 +437,7 @@ function PresidentialDetails({ action, ruleset }: { action: ActionDefinition; ru
     if (parts.length > 0) rows.push(['Parlement', parts.join(' ; ')]);
   }
   if (poste) rows.push(['Ministre', `l’effet est modulé par la compétence de ${poste}`]);
-  if (action.cible === 'departement')
+  if (action.cible === 'departement' && !action.cibleFacultative)
     rows.push([
       'Législatives',
       'pendant la campagne, mobilise votre camp dans le département visité (hypothèse de jeu)',

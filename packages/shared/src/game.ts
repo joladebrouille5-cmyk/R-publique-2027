@@ -4,6 +4,7 @@ import {
   AllianceSchema,
   CampaignRegimeSchema,
   DebateDetailSchema,
+  DepartementCodeSchema,
   FinancesStateSchema,
   MediaStateSchema,
   MediaStateV6Schema,
@@ -411,8 +412,11 @@ export const UtilityFactorSchema = z
   .strict();
 export type UtilityFactor = z.infer<typeof UtilityFactorSchema>;
 
-/** Intentions de vote « réelles » du modèle (non publiées) : les sondages en sont un échantillon. */
-export const OpinionSchema = z
+/**
+ * Intentions de vote « réelles » du modèle (non publiées) : les sondages en sont un échantillon.
+ * Figé au format 24.
+ */
+export const OpinionV24Schema = z
   .object({
     week: z.number().int().min(0),
     round: z.union([z.literal(1), z.literal(2)]),
@@ -423,6 +427,17 @@ export const OpinionSchema = z
     breakdown: z.record(Id, z.array(UtilityFactorSchema)),
   })
   .strict();
+
+/**
+ * Intentions de vote du modèle (format 25) : en plus du format 24, le score de chaque candidat par
+ * département (`departements`, centièmes de point des exprimés), projeté depuis les intentions
+ * nationales et l'implantation locale ; vide tant qu'aucune base territoriale n'est chargée.
+ */
+export const OpinionSchema = OpinionV24Schema.extend({
+  departements: z
+    .record(DepartementCodeSchema, z.record(Id, z.number().int().min(0).max(10_000)))
+    .default({}),
+}).strict();
 export type Opinion = z.infer<typeof OpinionSchema>;
 
 export const POLL_KINDS = ['intentions_t1', 'intentions_t2', 'popularite'] as const;
@@ -578,7 +593,7 @@ export const GameStateV3Schema = z
     scheduled: z.array(ScheduledEffectSchema),
     pendingDecisions: z.array(PendingDecisionV7Schema),
     eventHistory: EventHistorySchema,
-    opinion: OpinionSchema.nullable(),
+    opinion: OpinionV24Schema.nullable(),
     polls: z.array(PollV15Schema),
     elections: z
       .object({
@@ -619,7 +634,7 @@ export const GameStateV4Schema = z
     scheduled: z.array(ScheduledEffectSchema),
     pendingDecisions: z.array(PendingDecisionV7Schema),
     eventHistory: EventHistorySchema,
-    opinion: OpinionSchema.nullable(),
+    opinion: OpinionV24Schema.nullable(),
     polls: z.array(PollV15Schema),
     elections: ElectionsV4Schema,
     calendar: CalendarSchema,
@@ -636,7 +651,7 @@ export const GameStateV5Schema = z
     scheduled: z.array(ScheduledEffectSchema),
     pendingDecisions: z.array(PendingDecisionV7Schema),
     eventHistory: EventHistorySchema,
-    opinion: OpinionSchema.nullable(),
+    opinion: OpinionV24Schema.nullable(),
     polls: z.array(PollV15Schema),
     elections: ElectionsV4Schema.extend({
       /** Composantes de la prestation de chaque finaliste au débat (§8), une fois tenu. */
@@ -991,16 +1006,34 @@ export type Socle = z.infer<typeof SocleSchema>;
 /**
  * État complet d'une partie, format de sauvegarde n° 24 (phase 24) : en plus du format 23, le
  * point de départ choisi (`player.depart`) et le socle électoral calibré (`socle`, null en départ
- * équitable). Toute évolution s'accompagne d'un nouveau numéro de format et d'une migration
- * (packages/save-engine).
+ * équitable). Figé au format 24.
  */
-export const GameStateSchema = GameStateV23Schema.extend({
+export const GameStateV24Schema = GameStateV23Schema.extend({
   meta: MetaV1Schema.extend({
     difficulty: DifficultySchema,
     saveSchemaVersion: z.literal(24),
   }).strict(),
   player: PlayerSchema.extend({ format: GameFormatSchema, depart: DepartSchema }).strict(),
   socle: SocleSchema.nullable(),
+}).strict();
+export type GameStateV24 = z.infer<typeof GameStateV24Schema>;
+
+/** Implantation d'un candidat dans un département, de 0 (terre inconnue) à 100 (fief). */
+export const ImplantationSchema = z.record(DepartementCodeSchema, z.number().int().min(0).max(100));
+
+/**
+ * État complet d'une partie, format de sauvegarde n° 25 (phase 25) : en plus du format 24,
+ * l'implantation de chaque candidat par département (`implantation`) et le score projeté par
+ * département dans les intentions (`opinion.departements`). Toute évolution s'accompagne d'un
+ * nouveau numéro de format et d'une migration (packages/save-engine).
+ */
+export const GameStateSchema = GameStateV24Schema.extend({
+  meta: MetaV1Schema.extend({
+    difficulty: DifficultySchema,
+    saveSchemaVersion: z.literal(25),
+  }).strict(),
+  opinion: OpinionSchema.nullable(),
+  implantation: z.record(Id, ImplantationSchema),
 }).strict();
 export type GameState = z.infer<typeof GameStateSchema>;
 

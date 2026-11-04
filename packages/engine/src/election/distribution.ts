@@ -329,5 +329,6 @@ export function summarize(
     participation: Math.round((totalVotants / totalInscrits) * 10_000),
     intentions,
     breakdown,
+    departements: {},
   };
 }

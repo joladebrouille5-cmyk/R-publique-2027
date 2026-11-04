@@ -5,6 +5,7 @@ import {
   parseSuccessorOptionId,
   REPRESENT_OPTION_ID,
   successorOptionId,
+  startingImplantation,
   type Actor,
   type CandidateIdentity,
   type GameState,
@@ -428,6 +429,7 @@ export function applySuccession(
   const enter = (source: EntrantSource, motif: string, majeur: boolean) => {
     const actor = createEntrantActor(source, state, ruleset, false);
     state.actors[actor.id] = actor;
+    state.implantation[actor.id] = startingImplantation(actor, ruleset);
     announce(state, annonces, events, { actorId: actor.id, choix: 'entree', motif }, majeur);
     return actor;
   };
@@ -787,6 +789,7 @@ function handOver(
       true,
     );
   state.actors[successor.id] = successor;
+  state.implantation[successor.id] ??= startingImplantation(successor, ruleset);
   successor.kind = 'joueur';
   successor.style = null;
   successor.toleranceRisque = null;

@@ -429,6 +429,8 @@ export function advanceWeek(
       numerique: posts,
       conseil: null,
       succes,
+      implantation: [],
+      combos: [],
     },
   };
 }

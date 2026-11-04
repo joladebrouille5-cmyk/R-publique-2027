@@ -8,6 +8,7 @@ import {
   rulesetKey,
   START_DATE_MAX,
   START_DATE_MIN,
+  startingImplantation,
   type Actor,
   type CandidateInput,
   type Depart,
@@ -486,6 +487,10 @@ export function createGame(input: CreateGameInput, ruleset: Ruleset): GameState 
     suites: [],
     succession: null,
     socle: null,
+    // Phase 25 : implantation de départ de chaque candidat, par département.
+    implantation: Object.fromEntries(
+      Object.values(actors).map((actor) => [actor.id, startingImplantation(actor, ruleset)]),
+    ),
     opinion: null,
     polls: [],
     sondagesBase: {},
