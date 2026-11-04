@@ -395,7 +395,7 @@ describe('présidentielle suivante : candidature du joueur (phase 23)', () => {
     expect(opened.meta).toMatchObject({
       phase: 'campagne',
       date: '2031-09-29',
-      saveSchemaVersion: 23,
+      saveSchemaVersion: 24,
     });
     expect(opened.succession).toMatchObject({ annee: 2032, choixJoueur: successor.id });
     expect(opened.player.actorId).not.toBe(PLAYER_ACTOR_ID);

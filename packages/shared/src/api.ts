@@ -2,6 +2,7 @@ import { z } from 'zod';
 import {
   AlliancePlanSchema,
   DecisionAnswerSchema,
+  DepartSchema,
   DifficultySchema,
   GameFormatSchema,
   GameModeSchema,
@@ -65,6 +66,11 @@ export const CreateGameRequestSchema = z
       .optional(),
     /** Format de la partie (phase 20) : complet, ou court (fin au soir de la présidentielle). */
     format: GameFormatSchema.default('complet'),
+    /**
+     * Point de départ avec des personnalités réelles (phase 24) : « Sondages actuels » (par
+     * défaut) ou « Départ équitable » ; refusé sans personnalité réelle dans la partie.
+     */
+    depart: DepartSchema.optional(),
     /**
      * Défi du jour (phase 20) : graine du jour, niveau, format et scénario imposés par le jeu de
      * règles ; la graine, la date de départ et ces paramètres ne se choisissent pas.

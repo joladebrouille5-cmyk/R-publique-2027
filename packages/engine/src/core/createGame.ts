@@ -9,6 +9,7 @@ import {
   START_DATE_MIN,
   type Actor,
   type CandidateInput,
+  type Depart,
   type Difficulty,
   type GameFormat,
   type GameMode,
@@ -47,6 +48,8 @@ export type CreateGameInput = {
   orientationId?: string | undefined;
   /** Format de la partie (phase 20) : complet par défaut, ou court (fin au soir de l'élection). */
   format?: GameFormat | undefined;
+  /** Point de départ avec des personnalités réelles (phase 24) ; par défaut : sondages actuels. */
+  depart?: Depart | undefined;
 };
 
 export class GameCreationError extends Error {
@@ -59,7 +62,8 @@ export class GameCreationError extends Error {
       | 'personnalite_inconnue'
       | 'scenario_inconnu'
       | 'orientation_inconnue'
-      | 'orientation_sans_candidat',
+      | 'orientation_sans_candidat'
+      | 'depart_sans_personnalites',
     message: string,
   ) {
     super(message);
@@ -373,6 +377,15 @@ export function createGame(input: CreateGameInput, ruleset: Ruleset): GameState 
       'Le mode observateur n’a pas de mouvement à orienter : choisissez un candidat.',
     );
   }
+  // Départ « Sondages actuels » (phase 24) : il faut des personnalités réelles en lice.
+  const withReal = input.adversaires === 'reels';
+  if (input.depart === 'sondages' && !withReal) {
+    throw new GameCreationError(
+      'depart_sans_personnalites',
+      'Le départ « Sondages actuels » demande des personnalités réelles comme adversaires.',
+    );
+  }
+  const depart: Depart = input.depart ?? (withReal ? 'sondages' : 'equitable');
   const scenarioId = input.scenarioId ?? 'standard';
   const scenario = ruleset.scenarios.find((s) => s.id === scenarioId);
   if (!scenario) {
@@ -463,6 +476,7 @@ export function createGame(input: CreateGameInput, ruleset: Ruleset): GameState 
       adversaires,
       orientation: orientation?.id ?? null,
       format: input.format ?? 'complet',
+      depart,
     },
     actors,
     scheduled: [],
@@ -470,6 +484,7 @@ export function createGame(input: CreateGameInput, ruleset: Ruleset): GameState 
     eventHistory: {},
     suites: [],
     succession: null,
+    socle: null,
     opinion: null,
     polls: [],
     sondagesBase: {},

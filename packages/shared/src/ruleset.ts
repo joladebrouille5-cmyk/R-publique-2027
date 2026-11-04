@@ -11,6 +11,7 @@ import { RealLegislativesSchema } from './legislatives';
 import { RealMediaSchema } from './medias';
 import { ProgressionRulesSchema } from './progression';
 import { GovernmentFiguresSchema } from './figures';
+import { RealPollsSchema } from './sondages';
 import { RealPersonalitiesSchema } from './personalities';
 import { MinisterProfileSchema } from './quinquennat';
 import { CampaignStyleSchema, PositionSchema } from './politics';
@@ -1899,6 +1900,28 @@ export const RulesetSchema = z
       })
       .strict(),
     personnalites: RealPersonalitiesSchema,
+    /**
+     * Sondages réels d'intentions de vote (phase 24, `sondages-2027.json`) et paramètres du départ
+     * « Sondages actuels » : socle électoral calibré à la création sur leur moyenne (hypothèses
+     * de jeu pour le socle minimal, la tolérance et la décroissance ; données sourcées pour les
+     * sondages).
+     */
+    sondagesReels: RealPollsSchema,
+    departSondages: z
+      .object({
+        statut: z.literal('hypothese'),
+        note: z.string().min(1),
+        /** Cible d'une personnalité jamais testée (centièmes de point). */
+        socleMinimal: Points,
+        /** Écart toléré entre intentions simulées et cible en semaine 0 (centièmes). */
+        tolerance: Points,
+        iterations: z.number().int().min(1).max(200),
+        /** Facteur multiplicatif hebdomadaire du socle (1 : stable). */
+        decroissance: z.number().min(0).max(1),
+        /** Cycle électoral auquel s'appliquent ces sondages. */
+        cycle: z.number().int().min(2027),
+      })
+      .strict(),
     /** Figures réelles nominables au gouvernement (`pnpm data:gouvernement`, phase 11). */
     figures: GovernmentFiguresSchema,
   })

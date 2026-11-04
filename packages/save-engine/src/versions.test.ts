@@ -139,9 +139,11 @@ const withoutPhase15 = <T extends object>(state: T): T => {
   const out: Record<string, unknown> = { ...(state as Record<string, unknown>) };
   if (s.player) {
     // Format 21 (phase 20) : une partie migrée continue au format complet.
-    const { orientation, format, ...player } = s.player;
+    // Format 24 (phase 24) : une partie migrée garde un départ équitable.
+    const { orientation, format, depart, ...player } = s.player;
     expect(orientation).toBeNull();
     expect(format).toBe('complet');
+    expect(depart).toBe('equitable');
     out.player = player;
   }
   if (s.negociations) {
@@ -157,6 +159,10 @@ const withoutPhase15 = <T extends object>(state: T): T => {
   if ('succession' in s) {
     expect(s.succession).toBeNull();
     delete out.succession;
+  }
+  if ('socle' in s) {
+    expect(s.socle).toBeNull();
+    delete out.socle;
   }
   if (s.succes) {
     expect(s.succes).toEqual([]);
@@ -443,6 +449,7 @@ describe('migrations de sauvegarde', () => {
       adversaires: 'fictifs',
       orientation: null,
       format: 'complet',
+      depart: 'equitable',
     });
     for (const [id, actor] of Object.entries(state.actors)) {
       const before = V5.state.actors[id as keyof typeof V5.state.actors];
@@ -1091,12 +1098,13 @@ describe('migrations de sauvegarde', () => {
     });
     // La difficulté est figée à la création : ni le niveau ni les moyens des candidats ne
     // changent à la migration.
-    const { meta: _meta, player, suites, succession, ...rest } = state;
+    const { meta: _meta, player, suites, succession, socle, ...rest } = state;
     const { meta: _m, player: before, ...restBefore } = V19.state;
     expect(suites).toEqual([]);
     expect(succession).toBeNull();
     expect(rest).toEqual(restBefore);
-    expect(player).toEqual({ ...before, format: 'complet' });
+    expect(player).toEqual({ ...before, format: 'complet', depart: 'equitable' });
+    expect(socle).toBeNull();
     // La campagne continue avec le jeu de règles courant, débats compris, de façon déterministe.
     const play = () => {
       let current = state;
@@ -1141,12 +1149,13 @@ describe('migrations de sauvegarde', () => {
       rulesetVersion: CURRENT_RULESET_KEY,
     });
     expect(state.player.format).toBe('complet');
-    const { meta: _meta, player, suites, succession, ...rest } = state;
+    const { meta: _meta, player, suites, succession, socle, ...rest } = state;
     const { meta: _m, player: before, ...restBefore } = V20.state;
     expect(suites).toEqual([]);
     expect(succession).toBeNull();
     expect(rest).toEqual(restBefore);
-    expect(player).toEqual({ ...before, format: 'complet' });
+    expect(player).toEqual({ ...before, format: 'complet', depart: 'equitable' });
+    expect(socle).toBeNull();
     const next = advanceWeek(
       state,
       {
@@ -1171,8 +1180,10 @@ describe('migrations de sauvegarde', () => {
       engineVersion: ENGINE_VERSION,
       rulesetVersion: CURRENT_RULESET_KEY,
     });
-    const { meta: _meta, suites, succession, ...rest } = state;
-    const { meta: _m, ...restBefore } = V21.state;
+    const { meta: _meta, suites, succession, socle, player, ...rest } = state;
+    const { meta: _m, player: before, ...restBefore } = V21.state;
+    expect(socle).toBeNull();
+    expect(player).toEqual({ ...before, depart: 'equitable' });
     expect(suites).toEqual([]);
     expect(succession).toBeNull();
     expect(rest).toEqual(restBefore);
@@ -1206,11 +1217,13 @@ describe('migrations de sauvegarde', () => {
       engineVersion: ENGINE_VERSION,
       rulesetVersion: CURRENT_RULESET_KEY,
     });
-    expect(SAVE_SCHEMA_VERSION).toBe(23);
+    expect(SAVE_SCHEMA_VERSION).toBe(24);
     expect(stateHash).toBe(hashState(state));
     expect(stateHash).not.toBe(V22.stateHash);
-    const { meta: _meta, succession, ...rest } = state;
-    const { meta: _m, ...restBefore } = V22.state;
+    const { meta: _meta, succession, socle, player, ...rest } = state;
+    const { meta: _m, player: before, ...restBefore } = V22.state;
+    expect(socle).toBeNull();
+    expect(player).toEqual({ ...before, depart: 'equitable' });
     expect(succession).toBeNull();
     expect(rest).toEqual(restBefore);
     // Aucun acteur ne reçoit de fiche de figure : seules les entrées de la phase 23 en ont une.

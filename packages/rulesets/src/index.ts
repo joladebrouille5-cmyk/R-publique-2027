@@ -6,6 +6,7 @@ import legislatives2024 from './legislatives-2024.json';
 import medias2027 from './medias-2027.json';
 import personnalites2027 from './personnalites-2027.json';
 import presidentielle2027 from './presidentielle-2027.json';
+import sondages2027 from './sondages-2027.json';
 
 // Registre des jeux de règles disponibles. Une partie référence le sien par « id@version » :
 // une nouvelle version s'ajoute ici sans modifier les anciennes (parties en cours inchangées).
@@ -24,6 +25,7 @@ const RULESETS: ReadonlyMap<string, Ruleset> = new Map(
       assemblee: assemblee2026,
       economieReelle: economie2026,
       legislatives2024,
+      sondagesReels: sondages2027,
     },
   ].map((data) => {
     const ruleset = RulesetSchema.parse(data);
@@ -32,7 +34,7 @@ const RULESETS: ReadonlyMap<string, Ruleset> = new Map(
 );
 
 /** Jeu de règles utilisé pour les nouvelles parties. */
-export const CURRENT_RULESET_KEY = 'presidentielle-2027@21.0.0';
+export const CURRENT_RULESET_KEY = 'presidentielle-2027@22.0.0';
 
 export class UnknownRulesetError extends Error {
   constructor(readonly key: string) {

@@ -45,6 +45,7 @@ describe('personnalités réelles', () => {
       adversaires: 'fictifs',
       orientation: null,
       format: 'complet',
+      depart: 'equitable',
     });
     expect(
       Object.keys(state.actors)

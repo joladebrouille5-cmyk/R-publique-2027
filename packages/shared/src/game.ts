@@ -956,7 +956,7 @@ export type Succession = z.infer<typeof SuccessionSchema>;
  * `candidature`. Toute évolution s'accompagne d'un nouveau numéro de format et d'une migration
  * (packages/save-engine).
  */
-export const GameStateSchema = GameStateV22Schema.extend({
+export const GameStateV23Schema = GameStateV22Schema.extend({
   meta: MetaV1Schema.extend({
     difficulty: DifficultySchema,
     saveSchemaVersion: z.literal(23),
@@ -964,6 +964,43 @@ export const GameStateSchema = GameStateV22Schema.extend({
   actors: z.record(Id, ActorSchema),
   pendingDecisions: z.array(PendingDecisionSchema),
   succession: SuccessionSchema.nullable(),
+}).strict();
+export type GameStateV23 = z.infer<typeof GameStateV23Schema>;
+
+/**
+ * Point de départ d'une partie avec des personnalités réelles (phase 24) : « Sondages actuels »
+ * (socle électoral calibré sur les sondages publiés) ou « Départ équitable » (tous à égalité).
+ */
+export const DEPARTS = ['sondages', 'equitable'] as const;
+export const DepartSchema = z.enum(DEPARTS);
+export type Depart = z.infer<typeof DepartSchema>;
+
+/**
+ * Socle électoral (phase 24) : décalages d'utilité calibrés à la création, par personnalité, au
+ * premier et au second tour, et date des sondages dont ils viennent.
+ */
+export const SocleSchema = z
+  .object({
+    date: IsoDateSchema,
+    t1: z.record(Id, z.number().min(-20).max(20)),
+    t2: z.record(Id, z.number().min(-20).max(20)),
+  })
+  .strict();
+export type Socle = z.infer<typeof SocleSchema>;
+
+/**
+ * État complet d'une partie, format de sauvegarde n° 24 (phase 24) : en plus du format 23, le
+ * point de départ choisi (`player.depart`) et le socle électoral calibré (`socle`, null en départ
+ * équitable). Toute évolution s'accompagne d'un nouveau numéro de format et d'une migration
+ * (packages/save-engine).
+ */
+export const GameStateSchema = GameStateV23Schema.extend({
+  meta: MetaV1Schema.extend({
+    difficulty: DifficultySchema,
+    saveSchemaVersion: z.literal(24),
+  }).strict(),
+  player: PlayerSchema.extend({ format: GameFormatSchema, depart: DepartSchema }).strict(),
+  socle: SocleSchema.nullable(),
 }).strict();
 export type GameState = z.infer<typeof GameStateSchema>;
 

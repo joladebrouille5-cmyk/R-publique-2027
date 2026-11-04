@@ -38,6 +38,7 @@ import {
   GameStateV20Schema,
   GameStateV21Schema,
   GameStateV22Schema,
+  GameStateV23Schema,
   addDays,
   DIGITAL_HISTORY_WEEKS,
   daysFromCivil,
@@ -68,6 +69,7 @@ import {
   type GameStateV20,
   type GameStateV21,
   type GameStateV22,
+  type GameStateV23,
   type GameStateV17,
 } from '@r2027/shared';
 import { z } from 'zod';
@@ -119,7 +121,8 @@ const SCHEMAS: Record<number, z.ZodType> = {
   20: GameStateV20Schema,
   21: GameStateV21Schema,
   22: GameStateV22Schema,
-  23: GameStateSchema,
+  23: GameStateV23Schema,
+  24: GameStateSchema,
 };
 
 /** Jeux de règles des parties aux formats 2 (phase 2) et 3 (phase 3). */
@@ -818,7 +821,7 @@ function migrateV21ToV22(v21: GameStateV21): GameStateV22 {
  * poids du bilan s'appliquent à l'approche de la prochaine campagne. Aucun candidat ne renvoie
  * à une fiche de figure (`figureId` absent).
  */
-function migrateV22ToV23(v22: GameStateV22): GameState {
+function migrateV22ToV23(v22: GameStateV22): GameStateV23 {
   return {
     ...v22,
     meta: {
@@ -828,6 +831,24 @@ function migrateV22ToV23(v22: GameStateV22): GameState {
       saveSchemaVersion: 23,
     },
     succession: null,
+  };
+}
+
+/**
+ * 23 → 24 (phase 24) : rééquilibrage. Une partie existante garde son départ équitable (aucun
+ * socle électoral) ; les nouvelles règles du jeu de règles 22 s'appliquent dès la semaine suivante.
+ */
+function migrateV23ToV24(v23: GameStateV23): GameState {
+  return {
+    ...v23,
+    meta: {
+      ...v23.meta,
+      engineVersion: ENGINE_VERSION,
+      rulesetVersion: CURRENT_RULESET_KEY,
+      saveSchemaVersion: 24,
+    },
+    player: { ...v23.player, depart: 'equitable' },
+    socle: null,
   };
 }
 
@@ -854,6 +875,7 @@ const MIGRATIONS: Record<number, (state: never) => unknown> = {
   20: migrateV20ToV21,
   21: migrateV21ToV22,
   22: migrateV22ToV23,
+  23: migrateV23ToV24,
 };
 
 export type LoadedState = { state: GameState; stateHash: string; migratedFrom: number | null };

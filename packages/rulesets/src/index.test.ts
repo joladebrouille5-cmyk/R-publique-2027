@@ -22,6 +22,7 @@ import legislatives2024 from './legislatives-2024.json';
 import mediasReels from './medias-2027.json';
 import personnalites from './personnalites-2027.json';
 import raw from './presidentielle-2027.json';
+import sondagesReels from './sondages-2027.json';
 
 /** Jeu de règles complet (base + données importées), copié pour les tests de rejet. */
 const full = () =>
@@ -34,6 +35,7 @@ const full = () =>
       assemblee,
       economieReelle,
       legislatives2024,
+      sondagesReels,
     }),
   ) as typeof raw & {
     personnalites: typeof personnalites;
@@ -1089,9 +1091,8 @@ describe('contenu approfondi (phase 7)', () => {
 describe('présidentielle suivante : candidatures et bilan (phase 23)', () => {
   const { succession } = ruleset;
 
-  it('passe au jeu de règles 21.0.0', () => {
-    expect(ruleset.version).toBe('21.0.0');
-    expect(CURRENT_RULESET_KEY).toBe('presidentielle-2027@21.0.0');
+  it('suit le jeu de règles courant', () => {
+    expect(CURRENT_RULESET_KEY).toBe(`presidentielle-2027@${ruleset.version}`);
   });
 
   it('a des paramètres de succession étiquetés comme hypothèses, aux valeurs de la spécification', () => {
@@ -1148,5 +1149,32 @@ describe('présidentielle suivante : candidatures et bilan (phase 23)', () => {
     const tooMany = full();
     tooMany.succession.maxSuccesseurs = 13;
     expect(RulesetSchema.safeParse(tooMany).success).toBe(false);
+  });
+});
+
+describe('rééquilibrage : sondages réels et départ « Sondages actuels » (phase 24)', () => {
+  it('passe au jeu de règles 22.0.0', () => {
+    expect(ruleset.version).toBe('22.0.0');
+    expect(CURRENT_RULESET_KEY).toBe('presidentielle-2027@22.0.0');
+  });
+
+  it('cite pour chaque enquête son institut, son commanditaire, son terrain, son échantillon et sa source', () => {
+    const { sondagesReels } = ruleset;
+    expect(sondagesReels.source.revision).toBe(240992329);
+    expect(sondagesReels.enquetes).toHaveLength(5);
+    const ids = new Set(ruleset.personnalites.personnalites.map((p) => p.id));
+    for (const e of sondagesReels.enquetes) {
+      expect(e.echantillon).toBeGreaterThan(500);
+      expect(e.terrain.debut <= e.terrain.fin).toBe(true);
+      expect(e.source).toMatch(/^https:\/\/(www\.commission-des-sondages\.fr|www\.tf1info\.fr)\//);
+      for (const id of Object.keys(e.intentions)) expect(ids.has(id), id).toBe(true);
+    }
+    for (const d of sondagesReels.duels) expect(d.partA + d.partB).toBe(10_000);
+  });
+
+  it('a des paramètres de départ étiquetés comme hypothèses', () => {
+    expect(ruleset.departSondages.statut).toBe('hypothese');
+    expect(ruleset.departSondages.socleMinimal).toBe(50);
+    expect(ruleset.departSondages.cycle).toBe(2027);
   });
 });

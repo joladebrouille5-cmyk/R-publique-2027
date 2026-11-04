@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { IDBFactory } from 'fake-indexeddb';
-import { advanceWeek } from '@r2027/engine';
+import { advanceWeek, SAVE_SCHEMA_VERSION } from '@r2027/engine';
 import { CURRENT_RULESET_KEY, getRuleset } from '@r2027/rulesets';
 import { buildExport, hashState, loadStoredState } from '@r2027/save-engine';
 import {
@@ -770,7 +770,7 @@ describe('serveur local : présidentielle suivante (phase 23)', () => {
     const imported = GameDetailSchema.parse(
       (await call(api, 'POST', '/api/games/import', document)).body,
     );
-    expect(imported.state.meta.saveSchemaVersion).toBe(23);
+    expect(imported.state.meta.saveSchemaVersion).toBe(SAVE_SCHEMA_VERSION);
     const asked = await advance(api, imported, { semaines: 8 });
     expect(asked.avanceRapide!.arret).toBe('decision');
     const decision = asked.game.state.pendingDecisions.find((d) => d.kind === 'candidature')!;

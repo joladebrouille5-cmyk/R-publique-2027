@@ -1,6 +1,6 @@
 {
   "id": "presidentielle-2027",
-  "version": "21.0.0",
+  "version": "22.0.0",
   "libelle": "Présidentielle 2027 et quinquennat — campagne, parrainages, financement, médias réels, présidence, gouvernement et figures réelles nominables, Parlement, économie, crises et législatives",
   "verifieLe": "2026-11-03",
   "sources": {
@@ -11002,6 +11002,15 @@
       "actionsParSemaine": 5,
       "temperature": 0.2
     }
+  },
+  "departSondages": {
+    "statut": "hypothese",
+    "note": "Départ « Sondages actuels » (phase 24) : le socle électoral de chaque personnalité réelle est calibré à la création pour que les intentions simulées de la semaine 0 collent à la moyenne des sondages publiés (fichier sondages-2027.json, sources dans docs/SOURCES.md), puis il s'érode au facteur hebdomadaire indiqué. Le socle minimal d'une personnalité jamais testée, la tolérance du calibrage et l'érosion sont des hypothèses de jeu ; la suite de la campagne est simulée.",
+    "socleMinimal": 50,
+    "tolerance": 50,
+    "iterations": 60,
+    "decroissance": 0.99,
+    "cycle": 2027
   },
   "succession": {
     "statut": "hypothese",
