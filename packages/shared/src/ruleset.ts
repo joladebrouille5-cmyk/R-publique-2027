@@ -1529,6 +1529,11 @@ export const RulesetSchema = z
         domaines: z.array(z.object({ id: Id, libelle: z.string().min(1) }).strict()).length(17),
         propositions: z.array(ProposalSchema).min(17),
         maxPropositions: z.number().int().min(1),
+        /**
+         * Taille de programme sous laquelle le QG alerte et propose un programme de départ
+         * (phase 24, hypothèse de jeu).
+         */
+        minimumRecommande: z.number().int().min(1),
         /** Heures de travail pour annoncer une proposition. */
         heuresParProposition: z.number().int().min(0),
         /** Coût annuel total (millions d'euros) au-delà duquel la crédibilité baisse. */
@@ -1916,8 +1921,10 @@ export const RulesetSchema = z
         /** Écart toléré entre intentions simulées et cible en semaine 0 (centièmes). */
         tolerance: Points,
         iterations: z.number().int().min(1).max(200),
-        /** Facteur multiplicatif hebdomadaire du socle (1 : stable). */
+        /** Facteur multiplicatif hebdomadaire du socle du premier tour (1 : stable). */
         decroissance: z.number().min(0).max(1),
+        /** Facteur multiplicatif hebdomadaire du socle du second tour (1 : stable). */
+        decroissanceSecondTour: z.number().min(0).max(1),
         /** Cycle électoral auquel s'appliquent ces sondages. */
         cycle: z.number().int().min(2027),
       })

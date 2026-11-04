@@ -1,5 +1,6 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { suggestedProgramme } from '@r2027/shared';
 import { describe, expect, it } from 'vitest';
 import {
   GAME_ID,
@@ -9,6 +10,7 @@ import {
   playedState,
   renderRoute,
   reportFixture,
+  RULESET,
   RULESET_URL,
   rulesetHandler,
 } from '../test/utils';
@@ -88,6 +90,41 @@ describe('tableau de bord', () => {
     await user.click(screen.getByRole('button', { name: /^Bilan de la semaine 0/ }));
     expect(screen.getByText('Meeting public : coût')).toBeInTheDocument();
     expect(screen.getByRole('list', { name: 'Catalogue des actions' })).toBeInTheDocument();
+  });
+
+  it('alerte sur un programme trop court et ajoute le programme de départ suggéré au plan', async () => {
+    const game = gameFixture();
+    const actor = game.state.actors.joueur!;
+    expect(actor.programme.propositions.length).toBeLessThan(RULESET.programme.minimumRecommande);
+    const calls = mockApi({
+      ...base(game),
+      [`POST /api/games/${GAME_ID}/advance`]: () => ({
+        body: {
+          game: gameFixture({ week: 1, date: '2026-10-05', version: 4 }),
+          report: reportFixture(),
+        },
+      }),
+    });
+    renderRoute(`/parties/${GAME_ID}/tableau-de-bord`);
+    const user = userEvent.setup();
+    const note = await screen.findByRole('note', { name: 'Programme trop court' });
+    expect(note).toHaveTextContent(
+      `${actor.programme.propositions.length} proposition(s), pour un minimum recommandé de ${RULESET.programme.minimumRecommande}`,
+    );
+    const suggestion = suggestedProgramme(
+      actor.candidate.positionnement,
+      actor.programme.propositions,
+      RULESET,
+    );
+    await user.click(within(note).getByRole('button', { name: /^Programme de départ suggéré/ }));
+    // Le programme atteint le minimum : l'alerte disparaît, les annonces sont au plan.
+    expect(screen.queryByRole('note', { name: 'Programme trop court' })).not.toBeInTheDocument();
+    expect(screen.getByText(/^À annoncer :/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Résoudre la semaine 0' }));
+    await waitFor(() => expect(calls.some((c) => c.method === 'POST')).toBe(true));
+    expect(calls.find((c) => c.method === 'POST')!.body).toMatchObject({
+      programme: { ajouter: suggestion, retirer: [] },
+    });
   });
 
   it('choisit la posture d’un passage dans les médias et en montre la raison au bilan', async () => {

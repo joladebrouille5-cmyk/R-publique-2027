@@ -108,6 +108,11 @@ describe('socle « Sondages actuels »', () => {
       offset * ruleset.departSondages.decroissance ** 10,
       3,
     );
+    const t2 = state.socle!.t2['reel-le-pen']!;
+    expect(socleFactors(week10, ruleset, 'reel-le-pen', 2)[0]!.value).toBeCloseTo(
+      t2 * ruleset.departSondages.decroissanceSecondTour ** 10,
+      3,
+    );
     const next = { ...state, cycle: { ...state.cycle, annee: 2032 } };
     expect(socleFactors(next, ruleset, 'reel-le-pen', 1)).toEqual([]);
     expect(socleFactors(next, ruleset, 'reel-le-pen', 2)).toEqual([]);

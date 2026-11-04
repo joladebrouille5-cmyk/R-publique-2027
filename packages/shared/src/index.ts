@@ -34,4 +34,5 @@ export * from './sons';
 export * from './feries';
 export * from './progression';
 export * from './succession';
+export * from './programme-suggere';
 export * from './sondages';

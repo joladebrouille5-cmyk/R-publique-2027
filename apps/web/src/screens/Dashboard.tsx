@@ -7,6 +7,8 @@ import {
   MAX_FAST_FORWARD_WEEKS,
   membersMajority,
   presidentialActionBlocked,
+  programmeEffect,
+  suggestedProgramme,
   supportSeats,
   type GameState,
   type Ruleset,
@@ -267,6 +269,18 @@ export function Dashboard() {
     state.actors[id] ? candidateName(state.actors[id].candidate) : id;
   const programmeLabel = (id: string) =>
     ruleset.data?.programme.propositions.find((p) => p.id === id)?.libelle ?? id;
+  // Phase 24 : alerte du programme trop court et programme de départ suggéré (règle partagée),
+  // ajouté au plan de la semaine par le flux normal des annonces.
+  const plannedProgramme = actor
+    ? [...actor.programme.propositions.filter((id) => !plan.retirer.includes(id)), ...plan.ajouter]
+    : [];
+  const programmeMinimum = ruleset.data?.programme.minimumRecommande ?? 0;
+  const programmeShort = actor !== undefined && plannedProgramme.length < programmeMinimum;
+  const programmeSuggestion =
+    programmeShort && ruleset.data
+      ? suggestedProgramme(actor.candidate.positionnement, plannedProgramme, ruleset.data)
+      : [];
+  const programmeWeight = actor ? programmeEffect(state.opinion, actor.id) : null;
   const answer = (decisionId: string, optionId: string) => {
     attemptKey.current = null;
     setAnswers((current) => ({ ...current, [decisionId]: optionId }));
@@ -933,6 +947,31 @@ export function Dashboard() {
                 )}
                 {plan.proposer.length > 0 && (
                   <p>Propositions de ralliement : {plan.proposer.map(nameOf).join(', ')}.</p>
+                )}
+                {programmeShort && (
+                  <div role="note" aria-label="Programme trop court" className="space-y-2">
+                    <p>
+                      <strong>Programme trop court :</strong> {plannedProgramme.length}{' '}
+                      proposition(s), pour un minimum recommandé de {programmeMinimum}. Sans
+                      programme, les électeurs n’ont aucune mesure à juger : les facteurs «
+                      Programme » et « Crédibilité » ne vous rapportent{' '}
+                      {programmeWeight === null || programmeWeight === 0
+                        ? 'rien pour l’instant'
+                        : `qu’environ ${(programmeWeight / 100).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} point d’intentions (estimation)`}
+                      . Un programme complet vous ferait gagner des points dans les groupes proches
+                      de vos propositions.
+                    </p>
+                    {programmeSuggestion.length > 0 && (
+                      <button
+                        type="button"
+                        className={buttonSecondary}
+                        onClick={changePlan(() => plan.announceMany(programmeSuggestion))}
+                      >
+                        Programme de départ suggéré ({programmeSuggestion.length} proposition
+                        {programmeSuggestion.length > 1 ? 's' : ''})
+                      </button>
+                    )}
+                  </div>
                 )}
                 <p className="flex flex-wrap gap-2">
                   <button

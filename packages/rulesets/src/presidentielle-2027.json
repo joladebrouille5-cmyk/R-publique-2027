@@ -5324,6 +5324,7 @@
       }
     ],
     "maxPropositions": 15,
+    "minimumRecommande": 8,
     "heuresParProposition": 3,
     "coutSoutenable": 40000,
     "penaliteRevirement": 0.1
@@ -11005,11 +11006,12 @@
   },
   "departSondages": {
     "statut": "hypothese",
-    "note": "Départ « Sondages actuels » (phase 24) : le socle électoral de chaque personnalité réelle est calibré à la création pour que les intentions simulées de la semaine 0 collent à la moyenne des sondages publiés (fichier sondages-2027.json, sources dans docs/SOURCES.md), puis il s'érode au facteur hebdomadaire indiqué. Le socle minimal d'une personnalité jamais testée, la tolérance du calibrage et l'érosion sont des hypothèses de jeu ; la suite de la campagne est simulée.",
+    "note": "Départ « Sondages actuels » (phase 24) : le socle électoral de chaque personnalité réelle est calibré à la création pour que les intentions simulées de la semaine 0 collent à la moyenne des sondages publiés (fichier sondages-2027.json, sources dans docs/SOURCES.md), puis il s'érode chaque semaine au facteur indiqué pour chaque tour (plus vite au second tour : les duels de l'automne pèsent moins à mesure que la campagne simulée avance). Le socle minimal d'une personnalité jamais testée, la tolérance du calibrage et l'érosion sont des hypothèses de jeu ; la suite de la campagne est simulée.",
     "socleMinimal": 50,
     "tolerance": 50,
     "iterations": 60,
     "decroissance": 0.99,
+    "decroissanceSecondTour": 0.95,
     "cycle": 2027
   },
   "rattrapageNotoriete": {

@@ -1,6 +1,7 @@
 import {
   cycleRuleset,
   debateAwaitingPlayer,
+  suggestedProgramme,
   type Difficulty,
   type GameState,
   type PlannedAction,
@@ -55,20 +56,12 @@ function concludeDebates(state: GameState, ruleset: Ruleset): GameState {
   return current;
 }
 
-/** Programme du joueur à annoncer : celui du candidat fictif le plus proche (copie, hypothèse). */
+/**
+ * Programme du joueur à annoncer : le programme de départ suggéré du QG (phase 24, règle partagée
+ * `suggestedProgramme`), celui qu'un joueur obtient d'un geste.
+ */
 export function referenceProgramme(position: Position, ruleset: Ruleset): string[] {
-  const closest = [...ruleset.candidatsFictifs].sort(
-    (a, b) =>
-      Math.hypot(
-        a.positionnement.economie - position.economie,
-        a.positionnement.societe - position.societe,
-      ) -
-        Math.hypot(
-          b.positionnement.economie - position.economie,
-          b.positionnement.societe - position.societe,
-        ) || a.id.localeCompare(b.id),
-  )[0]!;
-  return [...closest.programme];
+  return suggestedProgramme(position, [], ruleset);
 }
 
 /** Actions du joueur pour la semaine selon sa stratégie. */

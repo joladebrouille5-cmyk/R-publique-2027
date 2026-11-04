@@ -68,6 +68,12 @@ export function useWeeklyPlan(gameId: string, week: number) {
         ajouter: toggle(p.ajouter, id),
         retirer: p.retirer.filter((x) => x !== id),
       })),
+    /** Phase 24 : annonce de plusieurs propositions (programme de départ suggéré). */
+    announceMany: (ids: readonly string[]) =>
+      update((p) => ({
+        ajouter: [...p.ajouter, ...ids.filter((id) => !p.ajouter.includes(id))],
+        retirer: p.retirer.filter((x) => !ids.includes(x)),
+      })),
     toggleWithdraw: (id: string) =>
       update((p) => ({
         retirer: toggle(p.retirer, id),

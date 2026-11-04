@@ -10,7 +10,25 @@ const args = process.argv.slice(2);
 const at = args.indexOf('--parties');
 const parties = at >= 0 ? Number(args[at + 1]) : 300;
 const wanted = args.filter((a, i) => !a.startsWith('--') && (at < 0 || i !== at + 1));
-const ruleset = getRuleset(CURRENT_RULESET_KEY);
+// Réglage au banc : surcharge JSON fusionnée dans le jeu de règles (jamais en jeu), par exemple
+// R2027_SIM_SURCHARGE='{"departSondages":{"decroissance":0.97}}'.
+const surcharge = process.env.R2027_SIM_SURCHARGE;
+const merge = (base: unknown, patch: unknown): unknown =>
+  patch && typeof patch === 'object' && !Array.isArray(patch) && base && typeof base === 'object'
+    ? Object.fromEntries(
+        [...new Set([...Object.keys(base), ...Object.keys(patch)])].map((k) => [
+          k,
+          k in patch
+            ? merge((base as Record<string, unknown>)[k], (patch as Record<string, unknown>)[k])
+            : (base as Record<string, unknown>)[k],
+        ]),
+      )
+    : patch;
+const ruleset = (
+  surcharge
+    ? merge(getRuleset(CURRENT_RULESET_KEY), JSON.parse(surcharge))
+    : getRuleset(CURRENT_RULESET_KEY)
+) as ReturnType<typeof getRuleset>;
 const all = scenarios(ruleset);
 const ids = wanted.length
   ? wanted.flatMap((w) => Object.keys(all).filter((id) => id === w || id.startsWith(`${w}`)))
@@ -22,7 +40,7 @@ for (const c of ruleset.candidatsFictifs) names.set(c.id, `${c.prenom} ${c.nom}`
 for (const p of ruleset.personnalites.personnalites) names.set(p.id, `${p.prenom} ${p.nom}`);
 names.set('joueur', 'Joueur');
 console.log(
-  `# Banc d'essai d'équilibrage — ${CURRENT_RULESET_KEY}, ${parties} parties par scénario\n`,
+  `# Banc d'essai d'équilibrage — ${CURRENT_RULESET_KEY}, ${parties} parties par scénario${surcharge ? ` (surcharge ${surcharge})` : ''}\n`,
 );
 for (const id of ids) {
   const scenario = all[id]!;

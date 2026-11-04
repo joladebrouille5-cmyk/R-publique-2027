@@ -20,6 +20,7 @@ export function socleFactors(
   if (!socle || state.cycle.annee !== ruleset.departSondages.cycle) return [];
   const offset = (round === 1 ? socle.t1 : socle.t2)[contenderId];
   if (offset === undefined) return [];
-  const decay = ruleset.departSondages.decroissance ** state.meta.week;
+  const { decroissance, decroissanceSecondTour } = ruleset.departSondages;
+  const decay = (round === 1 ? decroissance : decroissanceSecondTour) ** state.meta.week;
   return [{ label: socleLabel(socle.date), value: round4(offset * decay) }];
 }
