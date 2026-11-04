@@ -1,5 +1,5 @@
 import { candidateName, type GameState, type Poll } from '@r2027/shared';
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { formatShare } from '../labels';
@@ -54,6 +54,19 @@ describe('évolution des sondages en courbes (phase 22)', () => {
     expect(status).toHaveTextContent(`Semaine ${POLLS[0]!.week}`);
     await userEvent.keyboard('{End}');
     expect(status).toHaveTextContent(`Semaine ${LAST.week}`);
+  });
+
+  it('au doigt, garde la vague touchée une fois le doigt levé', () => {
+    render(<PollTrend polls={POLLS} state={STATE} ruleset={RULESET} />);
+    const explorer = screen.getByRole('group', { name: /Parcourir les sondages/ });
+    // jsdom : boîte de 0 px, la position la plus à gauche désigne la première vague.
+    fireEvent.pointerMove(explorer, { clientX: 0, pointerType: 'touch' });
+    expect(screen.getByRole('status')).toHaveTextContent(`Semaine ${POLLS[0]!.week}`);
+    fireEvent.pointerLeave(explorer, { pointerType: 'touch' });
+    expect(screen.getByRole('status')).toHaveTextContent(`Semaine ${POLLS[0]!.week}`);
+    // À la souris, quitter le graphique revient à la dernière vague.
+    fireEvent.pointerLeave(explorer, { pointerType: 'mouse' });
+    expect(screen.getByRole('status')).toHaveTextContent(`Semaine ${LAST.week}`);
   });
 
   it('a une légende : chaque série colorée, puis les autres candidats', () => {

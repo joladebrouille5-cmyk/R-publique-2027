@@ -19,10 +19,15 @@ test('les paramètres rassemblent le thème, les crédits et les mentions légal
   const credits = page.getByRole('region', { name: 'Crédits et mentions légales' });
   await expect(credits.getByRole('heading', { name: 'Photos des personnalités' })).toBeVisible();
   await expect(credits.getByRole('heading', { name: 'Logos des médias' })).toBeVisible();
+  // Phase 22 : catégories repliées ; le filtre ouvre celles qui répondent.
+  const filter = credits.getByRole('searchbox', { name: 'Filtrer les crédits' });
+  await filter.fill('MapLibre');
   await expect(credits.getByRole('link', { name: 'MapLibre GL JS' })).toBeVisible();
+  await filter.fill('Code officiel géographique');
   await expect(
     credits.getByRole('link', { name: /Code officiel géographique/ }).first(),
   ).toBeVisible();
+  await filter.fill('');
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
   );

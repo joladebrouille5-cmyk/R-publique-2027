@@ -49,6 +49,8 @@ test('incarner une personnalité réelle face aux adversaires réels', async ({ 
   // Phase 11 : crédit de la photo et sources des fiches dans Paramètres → Crédits.
   await page.getByRole('banner').getByRole('link', { name: 'Paramètres' }).click();
   const credits = page.getByRole('region', { name: 'Crédits et mentions légales' });
+  // Phase 22 : catégories repliées ; le filtre ouvre celle de la photo.
+  await credits.getByRole('searchbox', { name: 'Filtrer les crédits' }).fill('Wasasaq8');
   await expect(credits.getByText(/Photo : Wasasaq8, CC0/)).toBeVisible();
   await expect(credits).toContainText('Chapel Hill');
 });

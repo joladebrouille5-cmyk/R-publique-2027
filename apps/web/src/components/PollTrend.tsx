@@ -109,9 +109,11 @@ export function PollTrend({ polls, state, ruleset }: Props) {
         onFocus={() => setActive(true)}
         onBlur={() => setActive(false)}
         onPointerMove={onPointerMove}
-        onPointerLeave={() => {
+        onPointerLeave={(event) => {
           setActive(false);
-          setCursor(null);
+          // Au doigt, la vague touchée reste lue une fois le doigt levé ; à la souris, quitter le
+          // graphique revient à la dernière vague.
+          if (event.pointerType !== 'touch') setCursor(null);
         }}
         className="relative touch-pan-y rounded-md outline-none focus-visible:ring-2 focus-visible:ring-republique-600 dark:focus-visible:ring-dorure"
       >
