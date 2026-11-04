@@ -9,6 +9,7 @@ import {
 import { orientationFactors } from '../campaign/orientation';
 import { credibility, programmeAppeal } from '../campaign/programme';
 import { supportFactors } from '../campaign/soutiens';
+import { recordFactors } from '../presidency/succession';
 import { compareStrings } from '../core/ledger';
 import { stream } from '../core/random';
 import { largestRemainder } from './apportion';
@@ -71,7 +72,8 @@ export function contendersFromState(state: GameState, round: Round): Contender[]
 /**
  * Facteurs de campagne (phase 5, §5.1) : attrait du programme pour le groupe, crédibilité du
  * programme, indice médiatique de la semaine passée et soutien des candidats ralliés ; phase 15 :
- * base électorale de départ du joueur (orientation) et soutiens des personnalités (simulés).
+ * base électorale de départ du joueur (orientation) et soutiens des personnalités (simulés) ;
+ * phase 23 : bilan du quinquennat écoulé pour le président sortant et son camp.
  */
 function campaignFactors(
   state: GameState,
@@ -101,6 +103,8 @@ function campaignFactors(
     ...digitalFactors(ruleset, group, actor.resources),
     ...orientationFactors(state, ruleset, group, contender.id),
     ...supportFactors(state, ruleset, group, contender.id),
+    // Phase 23 : bilan du quinquennat écoulé (président sortant et son camp).
+    ...recordFactors(state, contender.id),
   ];
   for (const alliance of state.alliances) {
     if (alliance.vers !== contender.id) continue;
