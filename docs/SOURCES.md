@@ -748,7 +748,7 @@ Point de départ « Sondages actuels » des personnalités réelles (jeu de règ
 - **Méthode** (champ `methode` du fichier) : cinq dernières enquêtes du premier tour par date de fin de terrain ; pour chacune, l'hypothèse qui teste le plus de personnalités du jeu (la première en cas d'égalité) ; moyenne de chaque personnalité sur les enquêtes qui la testent ; « moins de 1 % » compté 0,5 % et signalé (`inferieursA1`) ; moyenne renormalisée à 100 % sur les 17 personnalités du jeu. C'est une moyenne de jeu, pas un agrégateur ni une prévision.
 - **Duels de second tour** : 25 duels de 2026 (au plus les cinq plus récents par paire de personnalités du jeu), relus dans la même révision, chacun avec son institut, son terrain, son échantillon et sa source ; ils servent à caler le socle du second tour.
 - **Commanditaires** : lus dans le nom de la notice de la Commission des sondages ou dans l'article ; l'enquête OpinionWay (une seule hypothèse) a été saisie à la main depuis le tableau de la révision.
-- **Paramètres de jeu** (bloc `departSondages`, statut `hypothese`) : socle minimal 0,5 %, tolérance de calage ± 0,5 point, 60 itérations au plus, décroissance hebdomadaire 0,99 du socle, cycle 2027 seulement (pas de socle aux présidentielles suivantes).
+- **Paramètres de jeu** (bloc `departSondages`, statut `hypothese`) : socle minimal 0,5 %, tolérance de calage ± 0,5 point, 60 itérations au plus, décroissance hebdomadaire du socle 0,985 au premier tour et 0,95 au second (réglées au banc d'équilibrage, docs/equilibrage), cycle 2027 seulement (pas de socle aux présidentielles suivantes).
 - Toute mise à jour des sondages impose une nouvelle version du jeu de règles.
 
 ## 8 terdecies. Musique et jingles (phases 19 et 21)
