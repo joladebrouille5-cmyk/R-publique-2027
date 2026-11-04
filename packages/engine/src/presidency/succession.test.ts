@@ -9,8 +9,16 @@ import { advanceWeek } from '../core/advanceWeek';
 import { concludeDebates, newGame, playToEnd, QUIET, sponsorship } from '../core/testing';
 import { distribute } from '../election/distribution';
 import { sumFactors } from '../election/model';
-import { presidentOf } from './government';
-import { RECORD_FACTOR_LABEL, recordFactors, recordScore, runProbability } from './succession';
+import { PLAYER_ACTOR_ID } from '../core/createGame';
+import { openQuinquennat, presidentOf } from './government';
+import {
+  RECORD_FACTOR_LABEL,
+  recordFactors,
+  recordScore,
+  runProbability,
+  successorOptions,
+  successorOptionsFor,
+} from './succession';
 
 // Phase 23 : présidentielle suivante — candidatures, successeur du joueur, poids du bilan.
 
@@ -350,5 +358,242 @@ describe('les autres candidats décident ; les entrants (phase 23, §2 et §3)',
       if (p === 1)
         expect(state.succession!.annonces.some((a) => /plafond du jeu/.test(a.motif))).toBe(true);
     }
+  });
+});
+
+/** Joue avec un choix pour la décision de candidature, les autres décisions par défaut. */
+function playChoosing(
+  start: GameState,
+  until: (state: GameState) => boolean,
+  choose: (options: string[]) => string,
+  ruleset: Ruleset = RULES,
+) {
+  let state = start;
+  for (let i = 0; i < 400 && !until(state) && !state.calendar.blockedBy; i++) {
+    state = concludeDebates(state, ruleset);
+    state = advanceWeek(
+      state,
+      {
+        actions: [],
+        decisions: state.pendingDecisions.map((d) => ({
+          decisionId: d.id,
+          optionId:
+            d.kind === 'candidature' ? choose(d.options.map((o) => o.id)) : d.defaultOptionId,
+        })),
+      },
+      { ruleset },
+    ).state;
+  }
+  return state;
+}
+
+const candidacyOf = (state: GameState) =>
+  state.pendingDecisions.find((d) => d.kind === 'candidature');
+
+/** Le joueur déclaré élu en 2027 (ouverture du quinquennat identique à celle du moteur). */
+const presiding = (() => {
+  const state = clone(elected);
+  for (const actor of Object.values(state.actors))
+    if (actor.status === 'elu') actor.status = 'battu';
+  state.actors[PLAYER_ACTOR_ID]!.status = 'elu';
+  state.quinquennat = null;
+  openQuinquennat(state, RULES, PLAYER_ACTOR_ID);
+  return state;
+})();
+/** Président joueur, la semaine où sa décision de candidature apparaît. */
+const presidingDecision = play(presiding, (s) => candidacyOf(s) !== undefined);
+
+describe('le choix du joueur et la passation (phase 23, §1 et §3)', () => {
+  it('ouvre la décision quatre semaines avant la campagne, pas avant', () => {
+    const decision = candidacyOf(presidingDecision)!;
+    expect(presidingDecision.meta.date).toBe('2031-09-01');
+    expect(decision).toMatchObject({
+      id: 'candidature-2032',
+      kind: 'candidature',
+      actorId: PLAYER_ACTOR_ID,
+      defaultOptionId: 'se-representer',
+    });
+    const weekBefore = play(presiding, (s) => s.meta.date === '2031-08-25');
+    expect(candidacyOf(weekBefore)).toBeUndefined();
+    // Se représenter, puis le Premier ministre et les ministres les plus proches (quatre au plus).
+    const ids = decision.options.map((o) => o.id);
+    expect(ids[0]).toBe('se-representer');
+    expect(ids.length).toBeLessThanOrEqual(1 + RULES.succession.maxSuccesseurs);
+    const government = presidingDecision.quinquennat!.gouvernement!;
+    const pm = government.premierMinistre;
+    expect(ids[1]).toMatch(new RegExp(`^successeur-(acteur|${pm.nature})-`));
+    expect(decision.options[1]!.description).toMatch(/Premier ministre/);
+    for (const option of decision.options.slice(1))
+      expect(option.description).toMatch(
+        /personnalité réelle, candidature simulée|personnage fictif/,
+      );
+    expect(decision.description).not.toMatch(/[«»]/);
+    expect(GameStateSchema.safeParse(presidingDecision).error).toBeUndefined();
+  });
+
+  it('au terme de deux mandats, le président joueur ne peut que passer la main', () => {
+    const start = clone(presiding);
+    start.quinquennat!.mandat.numero = 2;
+    const state = play(start, (s) => candidacyOf(s) !== undefined);
+    const decision = candidacyOf(state)!;
+    expect(decision.options.map((o) => o.id)).not.toContain('se-representer');
+    expect(decision.defaultOptionId).toBe(decision.options[0]!.id);
+    expect(decision.description).toMatch(/art\. 6/);
+  });
+
+  it('passe la main à une figure : nouveau candidat du joueur, militants transmis par le registre', () => {
+    const government = presidingDecision.quinquennat!.gouvernement!;
+    const options = successorOptions(presidingDecision, RULES);
+    const figure = options.find((o) => o.source.nature === 'figure')!;
+    expect(figure).toBeDefined();
+    const last = play(presidingDecision, (s) => s.meta.date === '2031-09-22');
+    expect(last.meta.phase).toBe('presidence');
+    // Réponse jouée dès la semaine de la décision ; elle s'applique à l'ouverture.
+    const chosen = playChoosing(
+      presidingDecision,
+      (s) => s.meta.date === '2031-09-22',
+      () => figure.id,
+    );
+    expect(chosen.succession).toMatchObject({ annee: 2032, choixJoueur: figure.id });
+    const predecessorMilitants = chosen.actors[PLAYER_ACTOR_ID]!.resources.militants;
+    const { state, report } = open(chosen);
+    const successorId = `entrant-2032-${figure.source.ref}`;
+    expect(state.player.actorId).toBe(successorId);
+    const successor = state.actors[successorId]!;
+    expect(successor).toMatchObject({ kind: 'joueur', status: 'candidat', style: null });
+    expect(successor.candidate).toMatchObject({ nature: 'reel', figureId: figure.source.ref });
+    expect(state.actors[PLAYER_ACTOR_ID]).toMatchObject({ kind: 'adversaire', status: 'retire' });
+    const militants = report.changes.find(
+      (c) => c.actorId === successorId && c.ressource === 'militants',
+    )!;
+    expect(militants.factors).toContainEqual(
+      expect.objectContaining({
+        label: 'Passation de la campagne : militants du camp',
+        value: Math.round(0.6 * predecessorMilitants),
+      }),
+    );
+    expect(militants.factors.reduce((sum, f) => sum + f.value, 0)).toBe(
+      militants.after - militants.before,
+    );
+    // Successeur d'un président : il porte la moitié du bilan ; annonces sans propos.
+    const score = recordScore(reviewOf(state), RULES);
+    expect(state.succession!.bilan[successorId]).toEqual({
+      facteur: Math.round(0.5 * score * 10_000) / 10_000,
+      role: 'heritier',
+    });
+    expect(state.succession!.annonces).toContainEqual(
+      expect.objectContaining({ actorId: successorId, choix: 'successeur' }),
+    );
+    expect(report.events.map((e) => e.label)).toContain(
+      `Vous passez la main : ${successor.candidate.prenom} ${successor.candidate.nom} porte votre camp en 2032`,
+    );
+    // Le camp sortant n'a pas d'autre héritier : c'est le successeur du joueur.
+    expect(
+      Object.values(state.succession!.bilan).filter((b) => b.role === 'heritier'),
+    ).toHaveLength(1);
+    expect(government.premierMinistre).toBeDefined();
+  });
+
+  it('passe la main à un acteur déjà dans la partie, sans le dédoubler', () => {
+    // Un rival de 2027 devenu Premier ministre, avant l'ouverture de la décision.
+    const start = clone(play(presiding, (s) => s.meta.date === '2031-08-25'));
+    const rival = Object.values(start.actors).find((a) => a.status === 'battu')!;
+    start.quinquennat!.gouvernement!.premierMinistre = { nature: 'acteur', ref: rival.id };
+    const option = successorOptions(start, RULES)[0]!;
+    expect(option).toMatchObject({ source: { nature: 'acteur', ref: rival.id } });
+    const asked = play(start, (s) => candidacyOf(s) !== undefined);
+    expect(candidacyOf(asked)!.options.map((o) => o.id)).toContain(option.id);
+    const chosen = playChoosing(
+      asked,
+      (s) => s.meta.date === '2031-09-22',
+      () => option.id,
+    );
+    const { state } = open(chosen);
+    expect(state.player.actorId).toBe(rival.id);
+    expect(state.actors[rival.id]).toMatchObject({
+      kind: 'joueur',
+      status: 'candidat',
+      style: null,
+    });
+    const sameName = Object.values(state.actors).filter(
+      (a) =>
+        a.candidate.nom === rival.candidate.nom && a.candidate.prenom === rival.candidate.prenom,
+    );
+    expect(sameName).toHaveLength(1);
+  });
+
+  it('joueur battu en 2027 : figures de son parti, puis profils proches', () => {
+    const state = clone(before);
+    const playerId = state.player.actorId!;
+    const president = presidentOf(state).id;
+    const context = {
+      presidentId: president,
+      government: state.quinquennat!.gouvernement,
+      suivi: state.quinquennat!.suivi,
+    };
+    const custom = successorOptionsFor(state, RULES, context);
+    expect(custom.length).toBe(RULES.succession.maxSuccesseurs);
+    for (const option of custom) expect(option.source.nature).toBe('profil');
+    state.actors[playerId]!.candidate.parti = 'Horizons';
+    const horizons = successorOptionsFor(state, RULES, context);
+    const figures = horizons.filter((o) => o.source.nature === 'figure');
+    expect(figures.length).toBeGreaterThan(0);
+    for (const option of figures) {
+      const figure = RULES.figures.figures.find((f) => f.id === option.source.ref)!;
+      expect(figure.parti).toBe('Horizons');
+      expect(option.description).toMatch(/personnalité réelle, candidature simulée$/);
+    }
+    expect(horizons[0]!.source.nature).toBe('figure');
+  });
+
+  it('observateur : aucune décision, les candidatures des autres s’appliquent', () => {
+    const start = playToEnd(
+      newGame({ seed: 'succession-obs', mode: 'observateur' }, RULES),
+      RULES,
+    ).state;
+    const last = play(start, (s) => s.meta.date === '2031-09-22');
+    expect(last.pendingDecisions.some((d) => d.kind === 'candidature')).toBe(false);
+    const { state } = open(last, everyone(0));
+    expect(state.player.actorId).toBeNull();
+    expect(declared(state).length).toBeGreaterThanOrEqual(2);
+    expect(state.succession!.annonces.some((a) => a.choix === 'successeur')).toBe(false);
+  });
+
+  it('2037 : le successeur passe la main à son tour, identifiants uniques', () => {
+    const government = presidingDecision.quinquennat!.gouvernement!;
+    const first = successorOptions(presidingDecision, RULES).find(
+      (o) => o.source.nature !== 'acteur',
+    )!;
+    const campaign2032 = playChoosing(
+      presidingDecision,
+      (s) => s.meta.phase === 'campagne',
+      () => first.id,
+    );
+    const heir = campaign2032.player.actorId!;
+    expect(heir).toMatch(/^entrant-2032-/);
+    const decision2037 = playChoosing(
+      campaign2032,
+      (s) => candidacyOf(s)?.id === 'candidature-2037',
+      () => 'se-representer',
+    );
+    const decision = candidacyOf(decision2037)!;
+    const next = decision.options.find((o) => o.id !== 'se-representer' && !o.id.includes(heir))!;
+    const campaign2037 = playChoosing(
+      decision2037,
+      (s) => s.cycle.annee === 2037,
+      () => next.id,
+    );
+    expect(campaign2037.meta.phase).toBe('campagne');
+    const successor = campaign2037.player.actorId!;
+    expect(successor).not.toBe(heir);
+    expect(campaign2037.actors[heir]).toMatchObject({ kind: 'adversaire' });
+    expect(['retire', 'ineligible']).toContain(campaign2037.actors[heir]!.status);
+    expect(campaign2037.succession!.annee).toBe(2037);
+    const ids = Object.keys(campaign2037.actors);
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const id of ids.filter((i) => i.startsWith('entrant-')))
+      expect(id).toMatch(/^entrant-(2032|2037)-(figure|profil)-/);
+    expect(GameStateSchema.safeParse(campaign2037).error).toBeUndefined();
+    expect(government).toBeDefined();
   });
 });

@@ -40,6 +40,7 @@ import { dissolve, legislativeNotices, legislativeWeek } from './legislatives';
 import { ensureObjectives } from './objectifs';
 import { advanceParliament, refreshBillDecisions } from './parliament';
 import { answerQag, holdQag } from './qag';
+import { answerCandidacy, requestCandidacy } from './succession';
 import { weeklyTension, updateTension } from './tension';
 import { ministerEffects } from './themes';
 import { answerUrgency, drawUrgencies } from './urgences';
@@ -187,13 +188,22 @@ export function advancePresidencyWeek(
   set(4, false, 'Pas de campagne en cours : relations et ralliements inchangés.');
 
   // 5. Décisions, effets des actions, remaniement, Parlement.
-  const institutional = new Set(['gouvernement', 'texte', 'crise', 'alliance', 'urgence', 'qag']);
+  const institutional = new Set([
+    'gouvernement',
+    'texte',
+    'crise',
+    'alliance',
+    'urgence',
+    'qag',
+    'candidature',
+  ]);
   const allianceAnswers = answers.filter((a) => a.decision.kind === 'alliance');
   const governmentAnswers = answers.filter((a) => a.decision.kind === 'gouvernement');
   const billAnswers = answers.filter((a) => a.decision.kind === 'texte');
   const crisisAnswers = answers.filter((a) => a.decision.kind === 'crise');
   const urgencyAnswers = answers.filter((a) => a.decision.kind === 'urgence');
   const qagAnswers = answers.filter((a) => a.decision.kind === 'qag');
+  const candidacyAnswers = answers.filter((a) => a.decision.kind === 'candidature');
   const decisions = applyDecisions(
     state,
     ruleset,
@@ -209,6 +219,7 @@ export function advancePresidencyWeek(
     ...crisisAnswers,
     ...urgencyAnswers,
     ...qagAnswers,
+    ...candidacyAnswers,
   ]) {
     const option = answer.decision.options.find((o) => o.id === answer.optionId)!;
     decisions.push({
@@ -227,6 +238,11 @@ export function advancePresidencyWeek(
         ? answerAlliance(state, ruleset, answer.optionId)
         : answerCoalition(state, ruleset, answer.optionId),
     );
+  // Candidature à la présidentielle suivante (phase 23) : choix enregistré pour l'ouverture.
+  for (const answer of candidacyAnswers) {
+    const event = answerCandidacy(state, ruleset, answer.decision, answer.optionId);
+    if (event) events.push(event);
+  }
   for (const answer of governmentAnswers) {
     if (answer.decision.eventId === MINISTER_DECISION_EVENT) {
       const event = answerMinister(state, ruleset, answer.decision, answer.optionId, {
@@ -440,6 +456,7 @@ export function advancePresidencyWeek(
     events.push(...transition);
   } else {
     requestGovernment(state, ruleset);
+    requestCandidacy(state, ruleset);
     endOfGame(state, ruleset);
   }
   // Tension parlementaire de fin de semaine : popularité, économie et Assemblée telles que le

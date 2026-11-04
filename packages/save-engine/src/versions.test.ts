@@ -1239,6 +1239,42 @@ describe('migrations de sauvegarde', () => {
     expect(play()).toEqual(later);
   });
 
+  it('une partie migrée en fin de quinquennat reçoit la décision de candidature (format 22)', () => {
+    const { state } = loadStoredState(V22.state, V22.stateHash, 22);
+    const step = (current: GameState, choose: (ids: string[]) => string | undefined) =>
+      advanceWeek(
+        current,
+        {
+          actions: [],
+          decisions: current.pendingDecisions.map((d) => ({
+            decisionId: d.id,
+            optionId:
+              d.kind === 'candidature'
+                ? (choose(d.options.map((o) => o.id)) ?? d.defaultOptionId)
+                : d.defaultOptionId,
+          })),
+        },
+        { ruleset },
+      ).state;
+    let current = state;
+    while (!current.pendingDecisions.some((d) => d.kind === 'candidature'))
+      current = step(current, () => undefined);
+    expect(current.meta.date).toBe('2031-09-01');
+    const decision = current.pendingDecisions.find((d) => d.kind === 'candidature')!;
+    // Édouard Philippe (Horizons), battu en 2027 : se représenter, ou une figure de son parti.
+    expect(decision.defaultOptionId).toBe('se-representer');
+    const figure = decision.options.find((o) => o.id.startsWith('successeur-figure-'))!;
+    expect(figure.description).toMatch(
+      /^Horizons ; .+ ; personnalité réelle, candidature simulée$/,
+    );
+    while (current.meta.phase === 'presidence') current = step(current, () => figure.id);
+    const successorId = `entrant-2032-${figure.id.replace('successeur-figure-', '')}`;
+    expect(current.player.actorId).toBe(successorId);
+    expect(current.actors[successorId]).toMatchObject({ kind: 'joueur', status: 'candidat' });
+    expect(current.actors[PLAYER_ACTOR_ID]).toMatchObject({ kind: 'adversaire', status: 'retire' });
+    expect(GameStateSchema.parse(current)).toEqual(current);
+  });
+
   it('refuse un état qui cite une personnalité absente du vivier courant', () => {
     const altered = JSON.parse(JSON.stringify(V17.state)) as typeof V17.state;
     altered.quinquennat.gouvernement.ministres[0]!.ref = 'figure-inconnue';

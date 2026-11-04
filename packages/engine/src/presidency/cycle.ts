@@ -113,6 +113,7 @@ export function openNextCampaign(
     });
   }
   const previous = state.elections.t1 ? state.historique.presidentielles.at(-1)! : null;
+  const rallied = state.alliances.map((a) => a.de);
   // Textes en cours : caducs (simplification : le nouveau président aura sa feuille de route).
   for (const bill of state.parlement?.textes ?? []) {
     if (!IN_PROGRESS.has(bill.etape)) continue;
@@ -138,12 +139,13 @@ export function openNextCampaign(
   // Conséquences achevées : archivées dans le bilan, retirées de l'état courant.
   state.consequences = state.consequences.filter((c) => c.fin >= week);
   // 3. Candidatures (phase 23) : qui se représente, qui se retire, qui entre ; facteurs de bilan.
-  const candidacies = applySuccession(state, ruleset, bilan, {
+  const candidacies = applySuccession(state, ruleset, ledger, step, bilan, {
     presidentId: president.id,
     termLimited,
     previous,
     government,
     suivi,
+    rallied,
   });
   for (const id of Object.keys(state.actors).sort(compareStrings)) {
     const actor = state.actors[id]!;
