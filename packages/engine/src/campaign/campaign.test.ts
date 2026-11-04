@@ -637,8 +637,11 @@ describe('difficulté (§1.3)', () => {
       opponents(s).reduce((n, a) => n + a.resources[r], 0);
     for (let i = 1; i < games.length; i++) {
       const [easier, harder] = [games[i - 1]!, games[i]!];
-      for (const r of ['budgetCentimes', 'militants', 'notoriete', 'popularite'] as const)
+      for (const r of ['budgetCentimes', 'militants', 'popularite'] as const)
         expect(player(harder).resources[r]).toBeLessThan(player(easier).resources[r]);
+      // Phase 24 : notoriété du joueur plus faible, rapportée à celle de ses adversaires.
+      const relative = (s: GameState) => player(s).resources.notoriete / total(s, 'notoriete');
+      expect(relative(harder)).toBeLessThan(relative(easier));
       expect(total(harder, 'budgetCentimes')).toBeGreaterThan(total(easier, 'budgetCentimes'));
       expect(total(harder, 'notoriete')).toBeGreaterThanOrEqual(total(easier, 'notoriete'));
     }

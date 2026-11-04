@@ -240,32 +240,32 @@
       "decouverte": {
         "budgetCentimes": 1000000000,
         "militants": 2000,
-        "notoriete": 3500,
+        "notoriete": 3600,
         "popularite": 4200
       },
       "accessible": {
-        "budgetCentimes": 600000000,
-        "militants": 800,
-        "notoriete": 1200,
-        "popularite": 3500
+        "budgetCentimes": 950000000,
+        "militants": 1800,
+        "notoriete": 6200,
+        "popularite": 4100
       },
       "standard": {
-        "budgetCentimes": 300000000,
-        "militants": 400,
-        "notoriete": 600,
-        "popularite": 3000
+        "budgetCentimes": 800000000,
+        "militants": 1500,
+        "notoriete": 6000,
+        "popularite": 3600
       },
       "expert": {
-        "budgetCentimes": 150000000,
-        "militants": 150,
-        "notoriete": 300,
-        "popularite": 2500
+        "budgetCentimes": 450000000,
+        "militants": 900,
+        "notoriete": 5300,
+        "popularite": 3000
       },
       "legende": {
-        "budgetCentimes": 100000000,
-        "militants": 100,
-        "notoriete": 250,
-        "popularite": 2300
+        "budgetCentimes": 350000000,
+        "militants": 700,
+        "notoriete": 4800,
+        "popularite": 2900
       }
     },
     "opinion": {

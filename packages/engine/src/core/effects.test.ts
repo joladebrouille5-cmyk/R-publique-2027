@@ -49,6 +49,8 @@ describe('rattrapage de notoriété', () => {
 
   it('s’applique aux actions de la semaine, inscrit au registre', () => {
     const state = newGame({ seed: 'rattrapage-1' });
+    // Candidat peu connu (le joueur Standard part au-dessus du seuil depuis la phase 24).
+    state.actors.joueur!.resources.notoriete = 1000;
     const before = state.actors.joueur!.resources.notoriete;
     expect(before).toBeLessThan(catchUp.seuil);
     const { state: next, report } = advanceWeek(

@@ -254,8 +254,13 @@ describe('jeu de règles presidentielle-2027', () => {
         ruleset.jeu.ressourcesInitiales[facile],
         ruleset.jeu.ressourcesInitiales[dur],
       ];
-      for (const ressource of ['budgetCentimes', 'militants', 'notoriete', 'popularite'] as const)
+      for (const ressource of ['budgetCentimes', 'militants', 'popularite'] as const)
         expect(apres[ressource]).toBeLessThan(avant[ressource]);
+      // … et, phase 24, une notoriété plus faible rapportée à celle de ses adversaires (en
+      // Découverte, ceux-ci partent avec la moitié de la leur).
+      const relative = (d: (typeof DIFFICULTIES)[number]) =>
+        ruleset.jeu.ressourcesInitiales[d].notoriete / ruleset.ia[d].multiplicateurNotoriete;
+      expect(relative(dur)).toBeLessThan(relative(facile));
       expect(ruleset.jeu.promessesInitialesJoueur[dur]).toBeLessThan(
         ruleset.jeu.promessesInitialesJoueur[facile],
       );
@@ -269,12 +274,12 @@ describe('jeu de règles presidentielle-2027', () => {
         ruleset.debats.ia.difficulte[facile],
       );
     }
-    // Les trois niveaux historiques gardent leurs valeurs du jeu de règles 16.
+    // Phase 24 : moyens du joueur recalés au banc d'équilibrage (docs/equilibrage).
     expect(ruleset.jeu.ressourcesInitiales.standard).toEqual({
-      budgetCentimes: 300_000_000,
-      militants: 400,
-      notoriete: 600,
-      popularite: 3000,
+      budgetCentimes: 800_000_000,
+      militants: 1500,
+      notoriete: 6000,
+      popularite: 3600,
     });
     for (const niveau of ['accessible', 'standard', 'expert'] as const)
       expect(ruleset.ia[niveau].multiplicateurNotoriete).toBe(1);

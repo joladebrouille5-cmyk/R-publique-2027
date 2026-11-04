@@ -469,7 +469,12 @@ describe('le choix du joueur et la passation (phase 23, §1 et §3)', () => {
     expect(militants.factors).toContainEqual(
       expect.objectContaining({
         label: 'Passation de la campagne : militants du camp',
-        value: Math.round(0.6 * predecessorMilitants),
+        // Militants du prédécesseur après l'attrition de la semaine (étape 6, avant l'étape 9).
+        value: Math.round(
+          0.6 *
+            (predecessorMilitants -
+              Math.round(predecessorMilitants * RULES.jeu.opinion.attritionMilitants)),
+        ),
       }),
     );
     expect(militants.factors.reduce((sum, f) => sum + f.value, 0)).toBe(

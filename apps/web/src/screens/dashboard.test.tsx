@@ -33,8 +33,8 @@ describe('tableau de bord', () => {
     expect(screen.queryByTestId('ressource-budgetCentimes')).not.toBeInTheDocument();
     await userEvent.click(section);
     expect(section).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByTestId('ressource-budgetCentimes')).toHaveTextContent(/3\s000\s000\s€/);
-    expect(screen.getByTestId('ressource-notoriete')).toHaveTextContent(/6,00\s%/);
+    expect(screen.getByTestId('ressource-budgetCentimes')).toHaveTextContent(/8\s000\s000\s€/);
+    expect(screen.getByTestId('ressource-notoriete')).toHaveTextContent(/60,00\s%/);
     expect(screen.getByTestId('ressource-tempsHeures')).toHaveTextContent('70 h');
     expect(screen.getByText('Valeurs simulées')).toBeInTheDocument();
   });
@@ -67,7 +67,7 @@ describe('tableau de bord', () => {
     const planned = screen.getByRole('list', { name: 'Actions programmées' });
     expect(within(planned).getAllByRole('listitem')).toHaveLength(2);
     expect(
-      screen.getByText(/Reste après le plan : 2\s880\s000\s€ · 59 h · 2\/8 actions/),
+      screen.getByText(/Reste après le plan : 7\s880\s000\s€ · 59 h · 2\/8 actions/),
     ).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Retirer Interview dans un média' }));
