@@ -1,9 +1,11 @@
-# Phase 24 — Le plateau : refonte intégrale en jeu de plateau et de cartes
+# Phase 25 — Le plateau : refonte intégrale en jeu de plateau et de cartes
 
 Demande de l'utilisateur (04/11/2026) : « j'ai toujours pas eu ma refonte intégrale de l'interface
 du jeu, rien n'a changé quasiment ; débrouille-toi mais je veux que ce soit totalement différent,
-addictif et incroyablement magnifique ». Les limites de la phase 23 (candidatures) suivront en
-phase 25.
+addictif et incroyablement magnifique ». Ordre décidé par l'utilisateur le 04/11/2026 : le
+rééquilibrage (phase 24) d'abord, puis ce plateau (phase 25), puis les limites des candidatures
+(phase 26). L'implantation et les combos sont réglés au banc d'essai de la phase 24 et doivent en
+respecter les critères d'acceptation.
 
 Décisions de l'utilisateur (questionnaire et maquettes du 04/11/2026) :
 
@@ -38,7 +40,7 @@ Maquettes validées (jetables, non commitées) : planche des trois directions, p
 
 ## Conception
 
-### 1. Implantation par département (moteur, jeu de règles 22.0.0)
+### 1. Implantation par département (moteur, jeu de règles 23.0.0)
 
 - **Donnée** : pour chaque candidat, une implantation entière de 0 à 100 dans chacun des 101
   départements du jeu de règles (`parrainages.reservoir.departements`, codes en chaînes) ; les
@@ -146,16 +148,16 @@ Maquettes validées (jetables, non commitées) : planche des trois directions, p
 
 ### 5. Données et formats
 
-- **Jeu de règles 22.0.0** : bloc `implantation` (départ, gains, érosion, poids, pivot, α, paliers),
+- **Jeu de règles 23.0.0** : bloc `implantation` (départ, gains, érosion, poids, pivot, α, paliers),
   bloc `combos` (série, bastion, tour de région), champ `famille` des actions de campagne, cible
   départementale des cartes Terrain ; tout étiqueté `hypothese`.
-- **Format de sauvegarde 24** : `implantation: Record<actorId, Record<code département, entier>>` ;
+- **Format de sauvegarde 25** : `implantation: Record<actorId, Record<code département, entier>>` ;
   `opinion.departements` (projection de la semaine, `Record<code, Record<actorId, centièmes>>`) ;
   bilan de la semaine : `implantation` (variations avec facteurs) et `combos` (combos appliqués).
-  Migration 23 → 24 : implantation de départ recalculée pour chaque acteur (règle du §1), aucune
+  Migration 24 → 25 : implantation de départ recalculée pour chaque acteur (règle du §1), aucune
   variation passée.
-- **Moteur 0.24.0** ; aucune route nouvelle (la topologie géo est déjà servie, le plan de la semaine
-  porte les cibles) ; schémas partagés ; application 1.16.0.
+- **Moteur 0.25.0** ; aucune route nouvelle (la topologie géo est déjà servie, le plan de la semaine
+  porte les cibles) ; schémas partagés ; application 1.17.0.
 
 ## Tests
 
@@ -163,7 +165,7 @@ Maquettes validées (jetables, non commitées) : planche des trois directions, p
   série, bastion, tour de région (bonus exacts, registre) ; effet national et territorial
   (renormalisation, total national) ; projection par département (somme cohérente avec le
   national, déterministe) ; IA qui vise des départements ; quinquennat (déplacements) ;
-  déterminisme ; migration 23 → 24 sur un état réel.
+  déterminisme ; migration 24 → 25 sur un état réel ; critères du banc d'essai de la phase 24 toujours respectés.
 - Règles partagées : `implantationTier`, militants par département, `weekCombos`.
 - API et moteur local : plan avec cibles départementales, même état final.
 - Interface : plateau (couleurs et légende, fiche de département, lectures), main (indisponibles,
@@ -174,4 +176,4 @@ Maquettes validées (jetables, non commitées) : planche des trois directions, p
 ## Hors périmètre
 
 Main tirée au hasard, objectifs de la semaine, combos du quinquennat, nouvelles musiques, limites
-des candidatures (phase 25).
+des candidatures (phase 26).
