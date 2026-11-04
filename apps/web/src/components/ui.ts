@@ -73,3 +73,27 @@ export const optionTile =
 
 /** Bouton radio d'une tuile de choix. */
 export const radio = 'mt-0.5 size-4 shrink-0 accent-republique-600 dark:accent-dorure';
+
+// Identité « Feutrine » (phase 25) : la boîte de jeu. Le plateau en carton bordé d'or, les
+// cartes épaisses (tranche sombre en ombres empilées, bandeau de famille), les pastilles dorées.
+
+/** Plateau de carton crème bordé d'or, posé sur la feutrine. */
+export const carton = 'rounded-plateau bg-carton text-encre-carton shadow-plateau';
+
+/** Carte épaisse : face de carton, bord sombre, tranche en ombres empilées. */
+export const carte = `relative flex flex-col overflow-hidden rounded-carte border-2 border-bord-carte bg-carton text-encre-carton shadow-carte ${pressable}`;
+
+/** Bandeau de famille en tête de carte (couleur franche, texte blanc). */
+export const bandeauFamille = {
+  terrain: 'bg-famille-terrain text-white',
+  medias: 'bg-famille-medias text-white',
+  numerique: 'bg-famille-numerique text-white',
+  organisation: 'bg-famille-organisation text-white',
+} as const;
+
+/** Pastille dorée (rang, compteur, pion) : chiffre gras sur l'or. */
+export const pastille =
+  'inline-flex min-h-8 min-w-8 items-center justify-center rounded-full bg-or px-2.5 font-display text-sm font-extrabold text-sur-or tabular-nums shadow-pion';
+
+/** Gros bouton doré (valider la semaine) : il s'enfonce d'un cran à l'appui. */
+export const boutonOr = `inline-flex min-h-12 items-center justify-center gap-2.5 rounded-2xl bg-or px-6 py-3 font-display text-[1.05rem] font-extrabold text-sur-or shadow-[0_4px_0_0_var(--color-or-ombre)] hover:brightness-105 active:translate-y-[3px] active:scale-100 active:shadow-[0_1px_0_0_var(--color-or-ombre)] ${pressable}`;

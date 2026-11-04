@@ -3,6 +3,7 @@
 @import '@fontsource-variable/archivo/wdth.css';
 @import '@fontsource-variable/anybody/standard.css';
 @import '@fontsource-variable/atkinson-hyperlegible-next/wght.css';
+@import '@fontsource-variable/bricolage-grotesque/standard.css';
 
 /* Thème sombre piloté par la classe `dark` sur <html> (soirée électorale / clair / système). */
 @custom-variant dark (&:where(.dark, .dark *));
@@ -24,7 +25,10 @@
   --font-sans:
     'Atkinson Hyperlegible Next Variable', system-ui, -apple-system, 'Segoe UI', Roboto,
     'Helvetica Neue', Arial, sans-serif;
-  --font-display: 'Anybody Variable', 'Arial Narrow', system-ui, sans-serif;
+  /* Phase 25 (« Feutrine ») : Bricolage Grotesque, grotesque d'affichage à largeur variable,
+     graisses 600 à 800 ; Anybody reste en secours. */
+  --font-display:
+    'Bricolage Grotesque Variable', 'Anybody Variable', 'Arial Narrow', system-ui, sans-serif;
   --font-broadcast: 'Archivo Variable', 'Anybody Variable', system-ui, sans-serif;
   --font-broadcast--font-variation-settings: 'wdth' 78;
 
@@ -91,6 +95,51 @@
   --color-or-700: #5a4e00;
   --color-or-800: #463d00;
   --color-or-900: #2e2800;
+
+  /*
+   * Identité « Feutrine » (phase 25) : la boîte de jeu. Feutrine bleu nuit du tapis, plateau en
+   * carton crème bordé d'or, cartes épaisses à bord sombre et bandeau de famille, pions dorés.
+   * Texte de craie sur la feutrine, encre brune sur le carton. Implantation : une seule teinte,
+   * du blanc au rouge, chaque palier avec la couleur de texte qui s'y lit.
+   */
+  --color-feutrine: #16234f;
+  --color-feutrine-2: #1f3166;
+  --color-feutrine-3: #0e1738;
+  --color-craie: #f6f1e4;
+  --color-craie-2: #c9cfe6;
+  --color-carton: #f2e4c4;
+  --color-carton-2: #e3cd9e;
+  --color-encre-carton: #2a1f14;
+  --color-encre-carton-2: #5b4a33;
+  --color-trait: #3b2f22;
+  --color-or: #f0b929;
+  --color-sur-or: #2a1d00;
+  --color-or-ombre: #9a6b00;
+  --color-bord-carte: #3b2f22;
+  --color-implantation-0: #fbf6f0;
+  --color-implantation-1: #f8cfc0;
+  --color-implantation-2: #ee9a80;
+  --color-implantation-3: #c9442f;
+  --color-implantation-4: #a8161f;
+  --color-sur-implantation-0: #2a1f14;
+  --color-sur-implantation-1: #2a1f14;
+  --color-sur-implantation-2: #2a1f14;
+  --color-sur-implantation-3: #ffffff;
+  --color-sur-implantation-4: #ffffff;
+  /* Bandeaux de famille des cartes : couleurs franches, texte blanc. */
+  --color-famille-terrain: #1f7a46;
+  --color-famille-medias: #b4441b;
+  --color-famille-numerique: #6a3fb5;
+  --color-famille-organisation: #1f5aa8;
+
+  /* Relief des cartes et du plateau : ombres empilées, sans flou sous la tranche. */
+  --shadow-carte:
+    0 1px 0 #6b5636, 0 2px 0 #6b5636, 0 3px 0 #4a3a22, 0 10px 16px -8px rgb(5 10 30 / 0.6);
+  --shadow-plateau:
+    0 0 0 3px var(--color-or), 0 6px 0 0 #6b5636, 0 22px 30px -16px rgb(5 10 30 / 0.7);
+  --shadow-pion: 0 2px 0 0 var(--color-or-ombre), 0 4px 8px -2px rgb(5 10 30 / 0.5);
+  --radius-carte: 0.9rem;
+  --radius-plateau: 1.5rem;
 
   /* Feuilles d'imprimé : coins à peine adoucis, hiérarchie par l'épaisseur des filets. */
   --radius-card: 0.5rem;
@@ -265,6 +314,14 @@
     --color-encre-3: #9297ae;
     --color-filet: #353859;
     --color-feuille: #1b1a3a;
+    /* Feutrine de nuit : tapis plus sombre ; le plateau reste un carton crème, adouci, comme
+       sous une lampe (l'encre brune s'y lit toujours). */
+    --color-feutrine: #0c1430;
+    --color-feutrine-2: #142049;
+    --color-carton: #d9c9a6;
+    --color-carton-2: #c7b48a;
+    --color-encre-carton: #2a1f14;
+    --color-encre-carton-2: #4f4029;
   }
   body {
     @apply bg-slate-50 text-slate-900 antialiased dark:bg-transparent dark:text-slate-100;
@@ -319,6 +376,15 @@
   .tabular-nums {
     font-variant-numeric: tabular-nums;
   }
+}
+
+/* Feutrine du tapis de jeu (phase 25) : aplat bleu nuit et grain de tissu. */
+@utility feutrine {
+  background-color: var(--color-feutrine);
+  background-image:
+    radial-gradient(60rem 40rem at 50% -10%, rgb(255 255 255 / 0.06), transparent 70%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='f'><feTurbulence type='fractalNoise' baseFrequency='1.6' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.7  0 0 0 0 0.75  0 0 0 0 0.95  0 0 0 0.09 0'/></filter><rect width='100%' height='100%' filter='url(%23f)'/></svg>");
+  color: var(--color-craie);
 }
 
 /* Habillage télévisé (soirée électorale, débats) : bandeaux condensés de plateau. Hors couche,

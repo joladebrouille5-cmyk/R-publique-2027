@@ -63,3 +63,65 @@ describe('jetons d’encre (phase 22)', () => {
     );
   });
 });
+
+describe('identité « Feutrine » (phase 25)', () => {
+  const day = blockOf('@theme');
+  const night = blockOf('html.dark {');
+  const channels = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+
+  it('charge Bricolage Grotesque, police d’affichage', () => {
+    expect(CSS).toContain("@import '@fontsource-variable/bricolage-grotesque/standard.css'");
+    expect(CSS).toMatch(/--font-display:\s*'Bricolage Grotesque Variable'/);
+  });
+
+  it('texte clair sur la feutrine, encre sur le carton, de jour comme de nuit', () => {
+    for (const block of [day, night]) {
+      for (const felt of ['feutrine', 'feutrine-2'])
+        for (const ink of ['craie', 'craie-2'])
+          expect(
+            ratio(tokenIn(day, ink), tokenIn(block, felt)),
+            `${ink} sur ${felt}`,
+          ).toBeGreaterThanOrEqual(4.5);
+      for (const ink of ['encre-carton', 'encre-carton-2'])
+        expect(
+          ratio(tokenIn(block, ink), tokenIn(block, 'carton')),
+          `${ink} sur carton`,
+        ).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it('une seule teinte du blanc au rouge, chaque palier lisible avec son texte', () => {
+    const steps = [0, 1, 2, 3, 4].map((i) => tokenIn(day, `implantation-${i}`));
+    for (let i = 1; i < steps.length; i++)
+      expect(luminance(steps[i]!), `palier ${i}`).toBeLessThan(luminance(steps[i - 1]!));
+    for (const step of steps) {
+      const [r, g, b] = channels(step);
+      expect(r).toBeGreaterThanOrEqual(g!);
+      expect(r).toBeGreaterThanOrEqual(b!);
+    }
+    steps.forEach((step, i) =>
+      expect(
+        ratio(step, tokenIn(day, `sur-implantation-${i}`)),
+        `texte sur le palier ${i}`,
+      ).toBeGreaterThanOrEqual(4.5),
+    );
+    expect(ratio(steps[0]!, steps[4]!)).toBeGreaterThanOrEqual(3);
+  });
+
+  it('bords, pions et plateau : au moins 3:1', () => {
+    for (const block of [day, night]) {
+      expect(ratio(tokenIn(day, 'or'), tokenIn(block, 'feutrine'))).toBeGreaterThanOrEqual(3);
+      expect(ratio(tokenIn(block, 'carton'), tokenIn(block, 'feutrine'))).toBeGreaterThanOrEqual(3);
+    }
+    expect(ratio(tokenIn(day, 'trait'), tokenIn(day, 'carton'))).toBeGreaterThanOrEqual(3);
+    expect(ratio(tokenIn(day, 'trait'), tokenIn(day, 'implantation-0'))).toBeGreaterThanOrEqual(3);
+    expect(ratio(tokenIn(day, 'sur-or'), tokenIn(day, 'or'))).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('bandeaux de famille en couleurs franches, texte blanc lisible', () => {
+    for (const famille of ['terrain', 'medias', 'numerique', 'organisation'])
+      expect(ratio(tokenIn(day, `famille-${famille}`), '#ffffff'), famille).toBeGreaterThanOrEqual(
+        4.5,
+      );
+  });
+});
