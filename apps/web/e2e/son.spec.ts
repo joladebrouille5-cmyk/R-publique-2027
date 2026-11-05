@@ -87,10 +87,14 @@ test('chaque jingle se rend sans silence ni saturation, à la durée de sa parti
   const entries = Object.entries(
     results as Record<string, { peak: number; rms: number; seconds: number; duree: number }>,
   );
+  // Phase 25 : les bruitages du plateau (carte posée, carte retournée, combo) aussi.
   expect(entries.map(([cue]) => cue).sort()).toEqual([
+    'combo',
     'debat',
     'defaite',
     'flash',
+    'glisser',
+    'retourner',
     'tampon',
     'victoire',
     'vingt-heures',

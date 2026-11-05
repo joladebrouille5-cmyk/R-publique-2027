@@ -132,10 +132,17 @@ export function Plateau() {
   const boxButton = useRef<HTMLButtonElement>(null);
   const flashCount = useRef(0);
   const openPanel = (screen: string) => setParams({ panneau: screen });
-  const closePanel = () => {
-    setParams({});
-    setTimeout(() => boxButton.current?.focus(), 0);
-  };
+  const closePanel = () => setParams({});
+  // Panneau refermé : le focus revient au bouton « Boîte de jeu », une fois le plateau
+  // redevenu actif (il est inerte tant qu'un panneau est ouvert).
+  const panelWasOpen = useRef(false);
+  useEffect(() => {
+    if (panneau) panelWasOpen.current = true;
+    else if (panelWasOpen.current) {
+      panelWasOpen.current = false;
+      boxButton.current?.focus();
+    }
+  }, [panneau]);
   // Arrivée sur la table (création, accueil) : en haut, le bandeau et la carte.
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -428,7 +435,7 @@ export function Plateau() {
       // Un panneau de la boîte de jeu ouvert : le plateau, dessous, est inerte (fenêtre modale).
       inert={panneau ? true : undefined}
       aria-hidden={panneau ? true : undefined}
-      className={`feutrine min-h-dvh px-3 pt-[calc(var(--sat)+0.75rem)] pr-[max(0.75rem,var(--sar))] pl-[max(0.75rem,var(--sal))] text-craie sm:px-5 ${playing ? 'pb-[calc(17rem+var(--sab))] sm:pb-[calc(19.5rem+var(--sab))]' : 'pb-[calc(7.5rem+var(--sab))]'}`}
+      className={`feutrine min-h-dvh px-3 pt-[calc(var(--sat)+0.75rem)] pr-[max(0.75rem,var(--sar))] pl-[max(0.75rem,var(--sal))] text-craie sm:px-5 pb-6`}
     >
       <h1 id="titre-plateau" className="sr-only">
         Plateau

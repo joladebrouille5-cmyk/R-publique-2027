@@ -22,8 +22,9 @@ test('la posture d’un passage se choisit au plan et s’explique au bilan', as
   expect(audit.violations.map((v) => `${v.id} : ${v.help} (${v.nodes.length})`)).toEqual([]);
 
   await page.getByRole('button', { name: 'Résoudre la semaine 0' }).click();
-  // Débriefing plein écran : le passage, son niveau et ses raisons ; audit d'accessibilité.
-  const debrief = page.getByRole('dialog', { name: 'Débriefing de la semaine 0' });
+  // Verdict plein écran (phase 25) : le passage, son niveau et ses raisons ; audit
+  // d'accessibilité.
+  const debrief = page.getByRole('dialog', { name: 'Verdict de la semaine 0' });
   await expect(debrief.getByRole('list', { name: 'Raisons du score' })).toContainText(
     'Posture offensive, format « Décryptage »',
   );
@@ -34,8 +35,8 @@ test('la posture d’un passage se choisit au plan et s’explique au bilan', as
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
     .analyze();
   expect(overlay.violations.map((v) => `${v.id} : ${v.help} (${v.nodes.length})`)).toEqual([]);
-  // Sur téléphone, le bouton « Continuer » reste au-dessus de la barre de gestes.
-  const proceed = debrief.getByRole('button', { name: 'Continuer' });
+  // Sur téléphone, le bouton « Semaine suivante » reste au-dessus de la barre de gestes.
+  const proceed = debrief.getByRole('button', { name: 'Semaine suivante' });
   const box = (await proceed.boundingBox())!;
   expect(box.y + box.height).toBeLessThanOrEqual(page.viewportSize()!.height);
   await page.keyboard.press('Escape');

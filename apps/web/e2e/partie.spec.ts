@@ -9,6 +9,7 @@ import {
   openScreen,
   openSection,
   resolveWeek,
+  toQG,
   wizardTo,
 } from './helpers';
 
@@ -115,6 +116,9 @@ test('export puis import dans une nouvelle partie identique', async ({ page }) =
     mimeType: 'application/json',
     buffer: Buffer.from(content),
   });
+  // La partie importée s'ouvre sur le plateau ; son nom se lit au QG détaillé.
+  await page.waitForURL(/\/plateau$/);
+  await toQG(page);
   await expect(page.getByText('Partie exportée (importée)')).toBeVisible();
   expect(await readStateHash(page)).toBe(hash);
 });
@@ -283,7 +287,7 @@ test('scénario de départ fictif : choisi à la création, affiché pendant la 
   await scenarios.getByRole('radio', { name: /Colère sociale/ }).check();
   await expect(scenarios.getByText(/Événements de campagne × 1,5/)).toBeVisible();
   await finishWizard(page, { name: 'Scénario' });
-  await expect(page.getByRole('heading', { name: 'Tableau de bord' })).toBeVisible();
+  await toQG(page);
   // Le scénario se lit dans la ligne d'état de la section « La partie », et dans ses faits.
   await expect(page.getByRole('button', { name: /^La partie/ })).toContainText('Colère sociale');
   await openSection(page, 'partie');

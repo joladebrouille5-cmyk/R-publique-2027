@@ -1,7 +1,15 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { GameDetailSchema, SupportProspectsSchema } from '@r2027/shared';
-import { closeDebrief, fillCandidate, finishWizard, gameIdOf, settled, wizardTo } from './helpers';
+import {
+  closeDebrief,
+  fillCandidate,
+  finishWizard,
+  gameIdOf,
+  settled,
+  toQG,
+  wizardTo,
+} from './helpers';
 
 // Phase 15 : pré-campagne dans le navigateur — orientation du mouvement à la création, course aux
 // parrainages, négociation d'un soutien (vivier servi par l'API, issue simulée par le moteur),
@@ -35,7 +43,7 @@ test('pré-campagne : orientation, course aux parrainages, soutien négocié, re
     .getByRole('radio', { name: /S’appuyer sur les élus locaux/ })
     .check();
   await finishWizard(page, { name: 'Pré-campagne', seed: 'e2e-elus' });
-  await expect(page.getByRole('heading', { name: 'Tableau de bord' })).toBeVisible();
+  await toQG(page);
   expect((await readGame(page)).state.player.orientation).toBe('elus-locaux');
 
   // Course aux parrainages : seuil, départements, compte à rebours, classement.
@@ -67,7 +75,7 @@ test('pré-campagne : orientation, course aux parrainages, soutien négocié, re
 
   // Résolution : issue simulée par le moteur, sans propos attribué.
   await page.getByRole('button', { name: 'Résoudre la semaine 0' }).click();
-  const debrief = page.getByRole('dialog', { name: 'Débriefing de la semaine 0' });
+  const debrief = page.getByRole('dialog', { name: 'Verdict de la semaine 0' });
   await expect(
     debrief.getByText(/Camille Durand \((soutien|refus) simulé\)$/).first(),
   ).toBeVisible();

@@ -41,12 +41,49 @@ export async function finishWizard(
   if (options.submit !== false) await page.getByRole('button', { name: 'Créer la partie' }).click();
 }
 
+/**
+ * Création d'une partie, puis le QG détaillé : la partie s'ouvre sur le plateau (phase 25) ;
+ * les scénarios qui jouent par le QG détaillé y vont ensuite (voir `toQG`).
+ */
 export async function createGame(page: Page, name: string, seed = 'e2e-boucle') {
   await page.goto('/');
   await expect(page.getByText(/Serveur connecté/)).toBeVisible();
   await page.getByRole('link', { name: 'Nouvelle partie' }).click();
   await fillCandidate(page);
   await finishWizard(page, { name, seed });
+  await toQG(page);
+}
+
+/** Le plateau (phase 25) : l'écran où s'ouvre la partie, son gros bouton doré à l'écran. */
+export async function onPlateau(page: Page) {
+  await expect(page.getByRole('button', { name: /^Jouer la semaine \d+/ })).toBeVisible();
+}
+
+/**
+ * Le QG détaillé (`tableau-de-bord`), comme un joueur et sans recharger la page (le plan en
+ * cours reste en mémoire) : l'onglet « Plateau », puis la boîte de jeu et son lien « QG
+ * détaillé ». Les décisions ouvertes en cartes plein écran sur le plateau sont remises à plus
+ * tard (Échap) ; le QG les présente à son tour.
+ */
+export async function toQG(page: Page) {
+  if (!page.url().endsWith('/tableau-de-bord')) {
+    // Juste après la création ou une importation : l'adresse de la partie d'abord.
+    await page.waitForURL(/\/parties\/[0-9a-f-]{36}\//);
+    if (!/\/plateau(\?|#|$)/.test(page.url())) {
+      const nav = page.getByRole('navigation', { name: 'Espaces de la partie' });
+      await nav.getByRole('link', { name: 'Plateau', exact: true }).click();
+      await page.waitForURL(/\/plateau(\?|#|$)/);
+    }
+    const box = page.getByRole('button', { name: 'Boîte de jeu' });
+    await expect(async () => {
+      if (await page.getByRole('dialog').first().isVisible()) await page.keyboard.press('Escape');
+      await box.click({ timeout: 1_000 });
+    }).toPass({ timeout: 20_000 });
+    await page
+      .getByRole('dialog', { name: 'Boîte de jeu' })
+      .getByRole('link', { name: 'QG détaillé' })
+      .click();
+  }
   await expect(page.getByRole('heading', { name: 'Tableau de bord' })).toBeVisible();
 }
 
@@ -173,17 +210,30 @@ const SCREENS: Record<string, { espace: string; section?: string }> = {
   'Bilan du quinquennat': { espace: 'Pouvoir', section: 'bilan' },
 };
 
+/** Adresse de chaque espace (phase 12). */
+const HUB_PATHS: Record<string, string> = {
+  Carte: 'carte',
+  Campagne: 'campagne',
+  Opinion: 'opinion',
+  Pouvoir: 'pouvoir',
+};
+
 /**
  * Ouvre un écran (phase 12) : l'onglet de son espace dans « Espaces de la partie » (rail sur
  * ordinateur, barre du bas sur mobile), puis, pour un écran secondaire, sa section dépliable.
+ * Phase 25 : le QG détaillé (et ses archives) s’atteint par son adresse (voir `toQG`) ; le
+ * plateau, plein cadre, n'a pas la barre des espaces : on y gagne l'espace par son adresse.
  */
 export async function openScreen(page: Page, label: string) {
   const target = SCREENS[label];
   if (!target) throw new Error(`Écran inconnu : ${label}`);
-  await page
-    .getByRole('navigation', { name: 'Espaces de la partie' })
-    .getByRole('link', { name: target.espace, exact: true })
-    .click();
+  if (target.espace === 'QG') await toQG(page);
+  else {
+    const nav = page.getByRole('navigation', { name: 'Espaces de la partie' });
+    if (await nav.isVisible())
+      await nav.getByRole('link', { name: target.espace, exact: true }).click();
+    else await page.goto(`/parties/${gameIdOf(page)}/${HUB_PATHS[target.espace]}`);
+  }
   if (!target.section) return;
   await openSection(page, target.section);
 }
@@ -216,11 +266,11 @@ export async function resolveWeek(page: Page, week: number) {
   await expect(page.getByRole('button', { name: `Résoudre la semaine ${week + 1}` })).toBeVisible();
 }
 
-/** Débriefing de la semaine (phase 11), ouvert après la résolution : le lire, puis continuer. */
+/** Verdict de la semaine (phase 25, ancien débriefing), ouvert après la résolution. */
 export async function closeDebrief(page: Page, week: number) {
-  const debrief = page.getByRole('dialog', { name: `Débriefing de la semaine ${week}` });
+  const debrief = page.getByRole('dialog', { name: `Verdict de la semaine ${week}` });
   await expect(debrief).toBeVisible();
-  await debrief.getByRole('button', { name: 'Continuer' }).click();
+  await debrief.getByRole('button', { name: 'Semaine suivante' }).click();
   await expect(debrief).toBeHidden();
 }
 

@@ -139,7 +139,8 @@ test('aucun espace ne déborde en largeur, toutes sections dépliées (360 et 39
   const nav = page.getByRole('navigation', { name: 'Espaces de la partie' });
   for (const width of [360, 390]) {
     await page.setViewportSize({ width, height: 800 });
-    for (const space of ['QG', 'Carte', 'Campagne', 'Opinion', 'Pouvoir']) {
+    // Le plateau, plein cadre et sans barre des espaces, a son propre scénario (plateau.spec).
+    for (const space of ['Carte', 'Campagne', 'Opinion', 'Pouvoir']) {
       const tab = nav.getByRole('link', { name: space, exact: true });
       await tab.click();
       // Transition de vue (phase 16) : la page change un instant après le clic ; l'onglet n'est

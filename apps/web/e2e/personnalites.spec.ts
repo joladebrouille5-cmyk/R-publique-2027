@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { finishWizard, openScreen, openSection, resolveWeek, wizardTo } from './helpers';
+import { finishWizard, openScreen, openSection, resolveWeek, toQG, wizardTo } from './helpers';
 
 // Personnalités réelles (phase 5 bis) : création d'une partie où l'on incarne une personnalité
 // sourcée face aux adversaires réels, photos créditées, rappels de simulation, accessibilité.
@@ -30,7 +30,7 @@ test('incarner une personnalité réelle face aux adversaires réels', async ({ 
   await wizardTo(page, 'Le terrain');
   await page.getByRole('radio', { name: /Personnalités réelles/ }).check();
   await finishWizard(page, { name: 'Personnalités', seed: 'e2e-reel' });
-  await expect(page.getByRole('heading', { name: 'Tableau de bord' })).toBeVisible();
+  await toQG(page);
   await expect(page.getByText(/Partie avec des personnalités réelles/)).toBeVisible();
 
   await resolveWeek(page, 0);

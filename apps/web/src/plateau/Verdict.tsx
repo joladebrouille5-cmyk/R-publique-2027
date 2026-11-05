@@ -138,7 +138,7 @@ function BriefDelta({ ressource, delta, index }: Impact & { index: number }) {
       <span
         aria-hidden="true"
         className={`block font-display text-xl leading-tight font-extrabold whitespace-nowrap tabular-nums ${
-          delta > 0 ? 'text-famille-terrain' : 'text-famille-medias'
+          delta > 0 ? 'text-gain' : 'text-perte'
         }`}
       >
         <span className="mr-0.5 font-sans text-[0.8em] font-bold">{sign}</span>
@@ -167,7 +167,7 @@ function TileImpacts({ impacts }: { impacts: Impact[] }) {
       {impacts.map((i) => (
         <span
           key={i.ressource}
-          className={`whitespace-nowrap ${i.delta > 0 ? 'text-famille-terrain' : 'text-famille-medias'}`}
+          className={`whitespace-nowrap ${i.delta > 0 ? 'text-gain' : 'text-perte'}`}
         >
           {RESOURCE_LABELS[i.ressource]} {formatDelta(i.ressource, i.delta)}
         </span>

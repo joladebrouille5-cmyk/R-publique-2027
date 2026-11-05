@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { fillCandidate, finishWizard, openSection, settled, wizardTo } from './helpers';
+import { fillCandidate, finishWizard, openSection, settled, toQG, wizardTo } from './helpers';
 
 // Phase 18 : cinq niveaux de difficulté. Échelle et fiche du niveau à la création (accessibilité
 // dans les deux thèmes, largeur des téléphones), niveau enregistré par le serveur et rappelé,
@@ -58,7 +58,7 @@ test('cinq niveaux, fiche du niveau choisi, Légende verrouillée, partie créé
   await group.getByRole('radio', { name: /Expert/ }).check();
   await expect(page.getByRole('complementary', { name: 'Récapitulatif' })).toContainText('Expert');
   await finishWizard(page, { name: 'Sans filet', seed: 'e2e-expert' });
-  await expect(page.getByRole('heading', { name: 'Tableau de bord' })).toBeVisible();
+  await toQG(page);
 
   // Le niveau est celui de l'état produit par le serveur ; il ne se change plus.
   await openSection(page, 'partie');

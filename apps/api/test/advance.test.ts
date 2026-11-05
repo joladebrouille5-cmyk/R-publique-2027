@@ -14,8 +14,10 @@ import type { FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { Database } from '../src/db';
 import V2 from '../../../packages/save-engine/src/fixtures/v2-phase-2.json' with { type: 'json' };
+import { ElectoralRepository, resultsDirectory } from '../src/services/electoral';
+import { geoDirectories, GeoRepository } from '../src/services/geo';
 import { AUTO_SAVE_RETENTION } from '../src/services/saves';
-import { Client, resetDatabase, testApp, testDatabase } from './helpers';
+import { Client, DEMO_GEO_DIR, resetDatabase, testApp, testDatabase } from './helpers';
 
 const ruleset = getRuleset(CURRENT_RULESET_KEY);
 let db: Database;
@@ -142,6 +144,39 @@ describe('progression hebdomadaire', () => {
     expect(events).toHaveLength(1);
     const autos = await db.gameSave.findMany({ where: { gameId: game.id, kind: 'auto' } });
     expect(autos.map((s) => [s.week, s.stateHash])).toEqual([[1, next.stateHash]]);
+  });
+
+  it('joue un plan à cibles départementales comme le moteur : implantation, combos (phase 25)', async () => {
+    const client = new Client(app);
+    const game = await createGameVia(client);
+    const actions = [
+      { actionId: 'porte-a-porte', cible: '29' },
+      { actionId: 'porte-a-porte', cible: '29' },
+      { actionId: 'meeting' },
+    ];
+    const response = await advanceVia(client, game, {
+      expectedWeek: game.week,
+      actions,
+      decisions: [],
+    });
+    expect(response.statusCode, response.body).toBe(200);
+    const { game: next, report } = AdvanceResponseSchema.parse(response.json());
+    expect(next.state.implantation.joueur!['29']).toBeGreaterThan(
+      game.state.implantation.joueur!['29'] ?? 0,
+    );
+    expect(report.combos.map((c) => c.kind)).toEqual(expect.arrayContaining(['serie', 'bastion']));
+    // Même état final que le moteur seul, avec la géographie que sert l'API.
+    const electoral = ElectoralRepository.load(
+      GeoRepository.load(geoDirectories(DEMO_GEO_DIR)),
+      resultsDirectory(undefined),
+    );
+    const expected = advanceWeek(
+      game.state,
+      { actions, decisions: [] },
+      { ruleset, territory: electoral.baselineFor(ruleset) },
+    );
+    expect(next.stateHash).toBe(hashState(expected.state));
+    // Le moteur local rejoue la même règle (packages/local-api, test homonyme).
   });
 
   it('est idempotent : même clé et même requête ⇒ une seule progression', async () => {

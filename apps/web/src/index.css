@@ -127,6 +127,9 @@
   --color-sur-implantation-2: #2a1f14;
   --color-sur-implantation-3: #2a1f14;
   --color-sur-implantation-4: #ffffff;
+  /* Effets écrits sur le carton (gains, pertes) : encres assez sombres pour le petit texte. */
+  --color-gain: #145a35;
+  --color-perte: #8a2e0f;
   /* Bandeaux de famille des cartes : couleurs franches, texte blanc. */
   --color-famille-terrain: #1f7a46;
   --color-famille-medias: #b4441b;

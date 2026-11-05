@@ -81,7 +81,11 @@ function Reprendre({ summary }: { summary: GameSummary }) {
   const player = state?.player.actorId ? state.actors[state.player.actorId] : undefined;
   const ballot = ruleset.data ? nextBallot(ruleset.data, summary.date) : null;
   return (
-    <section aria-labelledby="titre-reprendre" className={`${cardRaised} animate-revele`}>
+    // Sur la feutrine (qui écrit à la craie), la carte garde l’encre du papier.
+    <section
+      aria-labelledby="titre-reprendre"
+      className={`${cardRaised} animate-revele text-slate-900 dark:text-slate-100`}
+    >
       <h2 id="titre-reprendre" className="text-xl">
         Dernière partie
       </h2>

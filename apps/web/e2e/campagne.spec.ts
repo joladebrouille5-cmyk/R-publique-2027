@@ -7,6 +7,7 @@ import {
   openScreen,
   openSection,
   resolveWeek,
+  toQG,
 } from './helpers';
 
 // Campagne approfondie (phase 5) : programme, actions ciblées, parrainages, finances,
@@ -120,6 +121,7 @@ test('observateur : les adversaires agissent, collectent et se motivent seuls', 
   await page.goto('/nouvelle-partie');
   await page.getByLabel('Observateur').check();
   await finishWizard(page, { name: 'Observation', seed: 'e2e-observateur' });
+  await toQG(page);
   await resolveWeek(page, 0);
   await openSection(page, 'bilan-semaine');
   const report = page.getByRole('region', { name: /Bilan de la semaine 0/ });

@@ -90,6 +90,15 @@ describe('identité « Feutrine » (phase 25)', () => {
     }
   });
 
+  it('gains en vert et pertes en rouge, lisibles en petit sur le carton de jour comme de nuit', () => {
+    for (const block of [day, night])
+      for (const ink of ['gain', 'perte'])
+        expect(
+          ratio(tokenIn(day, ink), tokenIn(block, 'carton')),
+          `${ink} sur carton`,
+        ).toBeGreaterThanOrEqual(4.5);
+  });
+
   it('une seule teinte du crème à l’orange brûlé, chaque palier lisible avec son texte', () => {
     const steps = [0, 1, 2, 3, 4].map((i) => tokenIn(day, `implantation-${i}`));
     for (let i = 1; i < steps.length; i++)

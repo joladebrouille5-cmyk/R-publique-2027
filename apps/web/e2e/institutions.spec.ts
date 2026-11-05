@@ -134,7 +134,7 @@ test('mandat : urgence ministérielle et questions au gouvernement en pop-up, pu
   ]);
   const next = AdvanceResponseSchema.parse(await response.json());
   expect(next.report.conseil).not.toBeNull();
-  const debrief = page.getByRole('dialog', { name: `Débriefing de la semaine ${game.week}` });
+  const debrief = page.getByRole('dialog', { name: `Verdict de la semaine ${game.week}` });
   await expect(debrief.getByRole('region', { name: 'Conseil des ministres' })).toBeVisible();
   await closeDebrief(page, game.week);
   await closeSpotlights(page, next.game);

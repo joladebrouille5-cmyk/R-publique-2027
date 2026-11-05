@@ -785,6 +785,33 @@ describe('serveur local : progression (phase 20)', () => {
 });
 
 describe('serveur local : présidentielle suivante (phase 23)', () => {
+  it('joue un plan à cibles départementales comme le moteur : implantation, combos, projection (phase 25)', async () => {
+    const api = server();
+    const game = await newGame(api);
+    const player = game.state.player.actorId!;
+    const actions = [
+      { actionId: 'porte-a-porte', cible: '29' },
+      { actionId: 'porte-a-porte', cible: '29' },
+      { actionId: 'meeting' },
+    ];
+    const next = await advance(api, game, { actions });
+    expect(next.game.state.implantation[player]!['29']).toBeGreaterThan(
+      game.state.implantation[player]!['29'] ?? 0,
+    );
+    expect(next.report.combos.map((c) => c.kind)).toEqual(
+      expect.arrayContaining(['serie', 'bastion']),
+    );
+    expect(Object.keys(next.game.state.opinion?.departements ?? {}).length).toBeGreaterThan(0);
+    // Même état final que le moteur seul, avec la même géographie.
+    const ruleset = getRuleset(game.state.meta.rulesetVersion);
+    const expected = advanceWeek(
+      game.state,
+      { actions, decisions: [] },
+      { ruleset, territory: await geo.baselineFor(ruleset) },
+    );
+    expect(hashState(next.game.state)).toBe(hashState(expected.state));
+  });
+
   it('importe une partie du format 22, s’arrête sur la candidature, passe la main comme le moteur', async () => {
     const api = server();
     const document = buildExport({

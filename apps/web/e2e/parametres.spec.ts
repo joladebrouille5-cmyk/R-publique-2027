@@ -58,6 +58,8 @@ test('aucun lien de source sur les écrans de jeu ni à la création de partie',
     .getByRole('link')
     .evaluateAll((links) => links.map((a) => a.getAttribute('href')!));
   expect(spaces).toHaveLength(5);
+  // Phase 25 : le plateau n'a pas de sections ; le QG détaillé, hors des espaces, les garde.
+  spaces.push(spaces[0]!.replace(/\/plateau$/, '/tableau-de-bord'));
   let sections = 0;
   for (const href of spaces) {
     await page.goto(href);

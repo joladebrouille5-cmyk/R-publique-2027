@@ -69,6 +69,19 @@ describe('boîte de jeu', () => {
   });
 
   it.each([
+    ['#journal', 'Journal'],
+    ['#sauvegardes', 'Sauvegardes'],
+    ['#archives', 'Journal'],
+  ])('l’ancienne ancre « %s » du plateau ouvre son panneau', async (hash, title) => {
+    mockApi(handlers());
+    const { router } = renderRoute(`/parties/${GAME_ID}/plateau${hash}`);
+    expect(await screen.findByRole('dialog', { name: title })).toBeVisible();
+    expect(router.state.location.search).toBe(
+      `?panneau=${title === 'Journal' ? 'journal' : 'sauvegardes'}`,
+    );
+  });
+
+  it.each([
     ['programme', 'Programme'],
     ['candidats', 'Candidats'],
     ['sondages', 'Sondages'],

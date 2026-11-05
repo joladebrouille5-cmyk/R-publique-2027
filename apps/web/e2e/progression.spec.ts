@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
-import { fillCandidate, settled, wizardTo } from './helpers';
+import { fillCandidate, settled, toQG, wizardTo } from './helpers';
 
 // Phase 20 : palmarès à l'écran-titre (niveau, déblocages, défi du jour) et défi du jour lancé
 // depuis l'écran-titre, paramètres imposés par le serveur.
@@ -27,7 +27,7 @@ test('palmarès et défi du jour : niveau, verrous, défi lancé puis compté', 
   await expect(page.getByText('Étape 4 sur 4')).toBeVisible();
   await expect(page.getByRole('group', { name: 'Difficulté' })).toHaveCount(0);
   await page.getByRole('button', { name: 'Relever le défi' }).click();
-  await expect(page.getByRole('heading', { name: 'Tableau de bord' })).toBeVisible();
+  await toQG(page);
   // Partie au format court, niveau Standard, comme le défi l'impose.
   await expect(page.getByRole('button', { name: /^La partie/ })).toContainText('Standard');
 

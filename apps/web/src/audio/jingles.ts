@@ -255,7 +255,12 @@ const GLISSER: Jingle = {
   quand: 'Quand une carte est posée sur le plateau.',
   duree: 1.05,
   reverb: 0.08,
-  notes: [note(0, 'souffle', [], 0.18, 0.35), note(0.12, 'pizz', [N.E4], 0.2, 0.3)],
+  // Le carton qui glisse (souffle), puis la carte qui se pose : deux pincements nets.
+  notes: [
+    note(0, 'souffle', [], 0.26, 0.55),
+    note(0.1, 'pizz', [N.E4], 0.3, 0.5),
+    note(0.2, 'pizz', [N.B4], 0.3, 0.4),
+  ],
 };
 
 /** Carte retournée au verdict : le claquement du carton (phase 25). */
@@ -265,7 +270,7 @@ const RETOURNER: Jingle = {
   quand: 'Au verdict de la semaine, à chaque carte retournée.',
   duree: 1.05,
   reverb: 0.1,
-  notes: [note(0, 'claque', [], 0.12, 0.5), note(0.05, 'marimba', [N.C5], 0.3, 0.32)],
+  notes: [note(0, 'claque', [], 0.14, 0.9), note(0.05, 'marimba', [N.C5], 0.35, 0.65)],
 };
 
 /** Combo : arpège montant de marimba et cloche (phase 25). */

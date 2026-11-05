@@ -156,41 +156,49 @@ try {
   await page.getByLabel('Nom de la partie').fill('Partie Android');
   await page.getByLabel('Graine (facultative)').fill('android');
   await activate(page, page.getByRole('button', { name: 'Créer la partie' }));
-  await expect(page.getByRole('heading', { name: 'Tableau de bord' })).toBeVisible();
-  await activate(page, page.getByRole('button', { name: 'Ajouter Meeting public' }));
-  await activate(page, page.getByRole('button', { name: 'Résoudre la semaine 0' }));
-  // Débriefing de la semaine (phase 11) : plein écran, au-dessus de la navigation basse.
-  const debrief = page.getByRole('dialog', { name: 'Débriefing de la semaine 0' });
-  await expect(debrief).toBeVisible();
-  await writeFile(join(captures, '1-debriefing.png'), await device.screenshot());
-  await activate(page, debrief.getByRole('button', { name: 'Continuer' }));
-  await expect(debrief).toBeHidden();
-  await expect(page.getByRole('button', { name: 'Résoudre la semaine 1' })).toBeVisible();
-  await writeFile(join(captures, '1-tableau-de-bord.png'), await device.screenshot());
+  // Phase 25 : la partie s'ouvre sur le plateau ; une carte Terrain se pose au Finistère.
+  await expect(page.getByRole('button', { name: 'Jouer la semaine 0' })).toBeVisible();
+  await writeFile(join(captures, '1-plateau.png'), await device.screenshot());
+  await activate(page, page.getByRole('button', { name: /^Carte « Porte-à-porte »/ }));
+  await activate(page, page.getByRole('button', { name: /^Finistère \(29\)/ }));
+  await activate(page, page.getByRole('button', { name: 'Jouer la semaine 0' }));
+  // Verdict de la semaine (phase 25) : plein écran, sur la feutrine.
+  const verdict = page.getByRole('dialog', { name: 'Verdict de la semaine 0' });
+  await expect(verdict).toBeVisible();
+  await activate(page, verdict.getByRole('button', { name: 'Tout afficher' }));
+  await writeFile(join(captures, '2-verdict.png'), await device.screenshot());
+  await activate(page, verdict.getByRole('button', { name: 'Semaine suivante' }));
+  await expect(verdict).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Jouer la semaine 1' })).toBeVisible();
+
+  // Boîte de jeu du plateau, après avoir remis à plus tard les décisions en cartes plein écran.
+  const openBox = async () => {
+    for (let i = 0; i < 6; i++) {
+      if (!(await page.getByRole('dialog').first().isVisible())) break;
+      await shell('input keyevent KEYCODE_ESCAPE');
+      await new Promise((r) => setTimeout(r, 500));
+    }
+    await activate(page, page.getByRole('button', { name: 'Boîte de jeu' }));
+    return page.getByRole('dialog', { name: 'Boîte de jeu' });
+  };
 
   step('Carte électorale (MapLibre dans la WebView)');
-  // Phase 12 : cinq espaces dans la barre du bas, écrans secondaires en sections dépliables.
-  const openScreen = async (space, section) => {
-    await activate(
-      page,
-      page
-        .getByRole('navigation', { name: 'Espaces de la partie' })
-        .getByRole('link', { name: space, exact: true }),
-    );
-    if (!section) return;
-    const toggle = page.locator(`section#${section} > h2 > button`);
-    if ((await toggle.getAttribute('aria-expanded')) !== 'true') await activate(page, toggle);
-    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
-  };
-  await openScreen('Carte');
+  await activate(page, (await openBox()).getByRole('link', { name: 'Carte électorale détaillée' }));
   await expect(page.getByRole('region', { name: 'Carte de la métropole' })).toHaveAttribute(
     'data-ready',
     'oui',
   );
-  await writeFile(join(captures, '2-carte.png'), await device.screenshot());
+  await writeFile(join(captures, '3-carte.png'), await device.screenshot());
 
   step('Export natif : fichier écrit dans cache/exports puis feuille de partage');
-  await openScreen('QG', 'sauvegardes');
+  // Le panneau « Sauvegardes » de la boîte de jeu, depuis le plateau.
+  await activate(
+    page,
+    page
+      .getByRole('navigation', { name: 'Espaces de la partie' })
+      .getByRole('link', { name: 'Plateau', exact: true }),
+  );
+  await activate(page, (await openBox()).getByRole('button', { name: /^Sauvegardes/ }));
   await activate(page, page.getByRole('button', { name: 'Exporter la partie (JSON)' }));
   let exported = '';
   for (let i = 0; i < 120 && !exported.includes('.json'); i++) {
@@ -201,7 +209,7 @@ try {
   // Feuille de partage du système au premier plan, puis fermée : « Retour » n'est envoyé qu'une
   // fois la feuille affichée (sinon il ferait quitter l'écran des sauvegardes).
   await waitForeground((a) => a !== '' && !a.startsWith(PKG), 'Feuille de partage');
-  await writeFile(join(captures, '3-partage.png'), await device.screenshot());
+  await writeFile(join(captures, '4-partage.png'), await device.screenshot());
   // Fermer la feuille de partage n'est pas une erreur : le bouton revient, sans alerte.
   await shell('input keyevent KEYCODE_BACK');
   await waitForeground((activity) => activity.startsWith(PKG), 'Retour à l’application');
@@ -215,7 +223,7 @@ try {
   await Promise.race([closed, new Promise((resolve) => setTimeout(resolve, 30_000))]);
   ({ webview, page } = await launch());
   await expect(page.getByRole('link', { name: /Partie Android/ })).toBeVisible();
-  await writeFile(join(captures, '4-reprise.png'), await device.screenshot());
+  await writeFile(join(captures, '5-reprise.png'), await device.screenshot());
   step('Essai réussi');
 } catch (error) {
   await diagnose().catch((e) => console.log(`Diagnostic impossible : ${e}`));

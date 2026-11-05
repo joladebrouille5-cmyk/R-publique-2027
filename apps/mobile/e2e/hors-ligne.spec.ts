@@ -47,19 +47,21 @@ async function createGame(page: Page, name: string) {
   // Assistant de création (phase 20) : candidat, puis options avancées de la dernière étape.
   await fillCandidate(page, 'Hors-Ligne');
   await finishWizard(page, { name, seed: 'android' });
-  await expect(page.getByRole('heading', { name: 'Tableau de bord' })).toBeVisible();
+  // Phase 25 : la partie s'ouvre sur le plateau.
+  await expect(page.getByRole('button', { name: 'Jouer la semaine 0' })).toBeVisible();
 }
 
-/** Ouvre un espace (barre du bas), puis, au besoin, déplie une de ses sections (phase 12). */
-async function openScreen(page: Page, space: string, section?: string) {
-  await page
-    .getByRole('navigation', { name: 'Espaces de la partie' })
-    .getByRole('link', { name: space, exact: true })
-    .click();
-  if (!section) return;
-  const toggle = page.locator(`section#${section} > h2 > button`);
-  if ((await toggle.getAttribute('aria-expanded')) !== 'true') await toggle.click();
-  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+/**
+ * Ouvre la boîte de jeu du plateau (phase 25), après avoir remis à plus tard les décisions
+ * ouvertes en cartes plein écran.
+ */
+async function openBox(page: Page) {
+  const box = page.getByRole('button', { name: 'Boîte de jeu' });
+  await expect(async () => {
+    if (await page.getByRole('dialog').first().isVisible()) await page.keyboard.press('Escape');
+    await box.click({ timeout: 1_000 });
+  }).toPass({ timeout: 20_000 });
+  return page.getByRole('dialog', { name: 'Boîte de jeu' });
 }
 
 test('partie complète sans réseau : création, semaine, reprise, carte, export et import', async ({
@@ -80,26 +82,34 @@ test('partie complète sans réseau : création, semaine, reprise, carte, export
     )
     .toEqual(['/sons/catalyst.mp3']);
 
-  await page.getByRole('button', { name: 'Ajouter Meeting public' }).click();
-  await page.getByRole('button', { name: 'Résoudre la semaine 0' }).click();
-  // Débriefing de la semaine (phase 11), plein écran, calculé hors ligne par le moteur local.
-  const debrief = page.getByRole('dialog', { name: 'Débriefing de la semaine 0' });
-  await expect(debrief.getByText('Meeting public')).toBeVisible();
-  await debrief.getByRole('button', { name: 'Continuer' }).click();
-  await expect(debrief).toBeHidden();
-  await expect(page.getByRole('heading', { name: /Bilan de la semaine 0/ })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Résoudre la semaine 1' })).toBeVisible();
+  // Une carte Terrain posée au Finistère, sur le plateau dessiné par la géographie embarquée.
+  await page.getByRole('button', { name: /^Carte « Porte-à-porte »/ }).click();
+  await page.getByRole('button', { name: /^Finistère \(29\)/ }).click();
+  await page.getByRole('button', { name: 'Jouer la semaine 0' }).click();
+  // Verdict de la semaine (phase 25), plein écran, calculé hors ligne par le moteur local.
+  const verdict = page.getByRole('dialog', { name: 'Verdict de la semaine 0' });
+  await verdict.getByRole('button', { name: 'Tout afficher' }).click();
+  await expect(
+    verdict.getByRole('region', { name: 'Vos cartes de la semaine' }).getByText('Porte-à-porte'),
+  ).toBeVisible();
+  await verdict.getByRole('button', { name: 'Semaine suivante' }).click();
+  await expect(verdict).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Jouer la semaine 1' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Finistère \(29\)/ })).toHaveAccessibleName(
+    /implantation [1-9]\d* sur 100/,
+  );
 
   // Fermeture puis réouverture de l'application : la partie est relue depuis IndexedDB.
   const gameUrl = page.url();
   await page.reload();
-  await expect(page.getByRole('button', { name: 'Résoudre la semaine 1' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Jouer la semaine 1' })).toBeVisible();
   await page.goto('/');
   await expect(page.getByRole('link', { name: /Partie Android/ })).toBeVisible();
   await page.goto(gameUrl);
 
-  // Carte : référentiel de démonstration embarqué, rendu par MapLibre dans la politique CSP.
-  await openScreen(page, 'Carte');
+  // Carte : référentiel de démonstration embarqué, rendu par MapLibre dans la politique CSP ;
+  // on l'ouvre depuis la boîte de jeu du plateau.
+  await (await openBox(page)).getByRole('link', { name: 'Carte électorale détaillée' }).click();
   await expect(page.getByRole('region', { name: 'Carte de la métropole' })).toHaveAttribute(
     'data-ready',
     'oui',
@@ -111,8 +121,14 @@ test('partie complète sans réseau : création, semaine, reprise, carte, export
     }),
   ).toBeVisible();
 
-  // Export (hors application native : téléchargement), puis import en nouvelle partie.
-  await openScreen(page, 'QG', 'archives');
+  // Export (hors application native : téléchargement), puis import en nouvelle partie : le
+  // panneau « Sauvegardes » de la boîte de jeu.
+  await page
+    .getByRole('navigation', { name: 'Espaces de la partie' })
+    .getByRole('link', { name: 'Plateau', exact: true })
+    .click();
+  await (await openBox(page)).getByRole('button', { name: /^Sauvegardes/ }).click();
+  await expect(page.getByRole('dialog', { name: 'Sauvegardes' })).toBeVisible();
   const [download] = await Promise.all([
     page.waitForEvent('download'),
     page.getByRole('button', { name: 'Exporter la partie (JSON)' }).click(),
@@ -122,8 +138,8 @@ test('partie complète sans réseau : création, semaine, reprise, carte, export
   expect(exported.format).toBe('republique-2027/partie');
   expect(download.suggestedFilename()).toMatch(/\.json$/);
   await page.getByLabel('Importer un fichier de partie').setInputFiles(path);
-  await expect(page.getByRole('heading', { name: 'Tableau de bord' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Résoudre la semaine 1' })).toBeVisible();
+  await page.waitForURL((url) => url.href !== gameUrl && url.pathname.endsWith('/plateau'));
+  await expect(page.getByRole('button', { name: 'Jouer la semaine 1' })).toBeVisible();
   await page.goto('/');
   await expect(page.getByRole('link', { name: /Partie Android/ })).toHaveCount(2);
 

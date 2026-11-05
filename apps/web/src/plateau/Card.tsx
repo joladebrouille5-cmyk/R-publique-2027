@@ -119,7 +119,7 @@ export function Card({
       )}
       <span
         aria-hidden="true"
-        className="mt-auto px-1.5 pb-1.5 text-center text-[0.66rem] leading-tight font-extrabold text-famille-terrain sm:px-2 sm:pb-2 sm:text-[0.68rem]"
+        className="mt-auto px-1.5 pb-1.5 text-center text-[0.66rem] leading-tight font-extrabold text-gain sm:px-2 sm:pb-2 sm:text-[0.68rem]"
       >
         {reason ?? short}
       </span>

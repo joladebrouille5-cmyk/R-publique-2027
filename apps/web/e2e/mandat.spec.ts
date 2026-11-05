@@ -9,6 +9,7 @@ import {
   gameIdOf,
   openScreen,
   settled,
+  toQG,
 } from './helpers';
 
 // Phase 13 : photo du candidat préparée par le navigateur (recadrage, réduction, encodage),
@@ -35,7 +36,7 @@ test('photo du candidat : préparée sur l’appareil, envoyée et conservée av
   const preview = page.getByRole('img', { name: 'Photo choisie pour le candidat' });
   await expect(preview).toHaveAttribute('src', /^data:image\/(webp|jpeg);base64,/);
   await finishWizard(page, { name: 'Partie avec photo' });
-  await expect(page.getByRole('heading', { name: 'Tableau de bord' })).toBeVisible();
+  await toQG(page);
   const game = GameDetailSchema.parse(
     await (await page.request.get(`/api/games/${gameIdOf(page)}`)).json(),
   );

@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { closeDebrief, createGame, settled, wizardTo } from './helpers';
+import { closeDebrief, createGame, settled, toQG, wizardTo } from './helpers';
 
 // Phase 16 : refonte « Grand Soir ». Écran-titre (mur d'affichage des candidats fictifs),
 // création en chapitres avec l'affiche en direct, QG et débriefing : accessibilité (axe) dans les
@@ -12,7 +12,10 @@ async function audit(page: Page, label: string) {
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
     .analyze();
   expect(
-    result.violations.map((v) => `${label} — ${v.id} : ${v.help} (${v.nodes.length})`),
+    result.violations.map(
+      (v) =>
+        `${label} — ${v.id} : ${v.help} (${v.nodes.length}) ${v.nodes.map((n) => `${n.target.join(' ')} ${n.any.map((a) => JSON.stringify(a.data)).join('')}`).join(' | ')}`,
+    ),
   ).toEqual([]);
 }
 
@@ -58,7 +61,7 @@ test('écran-titre : mur d’affichage des candidats fictifs, reprise de la dern
   }
 
   await latest.getByRole('link', { name: 'Reprendre la partie' }).click();
-  await expect(page.getByRole('heading', { name: 'Tableau de bord' })).toBeVisible();
+  await toQG(page);
 });
 
 test('mouvement réduit : les affiches et le titre ne s’animent pas', async ({ browser }) => {
@@ -178,7 +181,7 @@ test('QG et débriefing : thème clair, cibles tactiles de 44 px', async ({ page
 
   await page.getByRole('button', { name: 'Ajouter Meeting public' }).click();
   await resolve.click();
-  const debrief = page.getByRole('dialog', { name: 'Débriefing de la semaine 0' });
+  const debrief = page.getByRole('dialog', { name: 'Verdict de la semaine 0' });
   await expect(debrief.getByRole('list', { name: 'Votre semaine en bref' })).toBeVisible();
   await audit(page, 'Débriefing (clair)');
   await closeDebrief(page, 0);

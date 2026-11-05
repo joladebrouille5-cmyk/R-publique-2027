@@ -108,7 +108,7 @@ export function AppLayout() {
         <Outlet />
       </main>
       <footer
-        className={`border-t text-xs ${immersive ? 'border-white/10 bg-feutrine-3 pb-[calc(6rem+var(--sab))] text-craie-2' : `border-slate-200 text-slate-600 dark:border-white/[0.07] dark:text-slate-400 ${inGame ? 'max-lg:pb-[calc(6rem+var(--sab))]' : ''}`}`}
+        className={`border-t text-xs ${immersive ? 'border-white/10 bg-feutrine-3 pb-[calc(17rem+var(--sab))] text-craie-2 sm:pb-[calc(19.5rem+var(--sab))]' : `border-slate-200 text-slate-600 dark:border-white/[0.07] dark:text-slate-400 ${inGame ? 'max-lg:pb-[calc(6rem+var(--sab))]' : ''}`}`}
       >
         <div className="mx-auto flex max-w-7xl flex-col gap-1 px-4 py-4 sm:flex-row sm:justify-between">
           <ServerStatus />
@@ -117,7 +117,9 @@ export function AppLayout() {
           </p>
         </div>
         {storageNotice && (
-          <p className="mx-auto max-w-7xl px-4 pb-3 text-amber-800 dark:text-amber-300">
+          <p
+            className={`mx-auto max-w-7xl px-4 pb-3 ${immersive ? 'text-amber-300' : 'text-amber-800 dark:text-amber-300'}`}
+          >
             {storageNotice}
           </p>
         )}
