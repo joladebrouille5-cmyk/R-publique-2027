@@ -32,7 +32,8 @@ function projected(): GameState {
     breakdown: {},
     departements: {
       '29': { [PLAYER]: 3_100, 'adv-aurore': 2_400 },
-      '13': { [PLAYER]: 900, 'adv-aurore': 2_600 },
+      '13': { [PLAYER]: 900, 'adv-aurore': 2_600, 'adv-pilier': 1_800 },
+      '33': { [PLAYER]: 1_200, 'adv-pilier': 2_900, 'adv-aurore': 1_700 },
     },
   };
   return state;
@@ -53,6 +54,23 @@ const renderBoard = (props: Partial<Parameters<typeof Board>[0]> = {}) => {
     />,
   );
   return { onSelect };
+};
+
+const renderWithContainer = (props: Partial<Parameters<typeof Board>[0]> = {}) => {
+  const onSelect = vi.fn();
+  const { container } = render(
+    <Board
+      shapes={shapes}
+      state={anchored()}
+      ruleset={RULESET}
+      reading="implantation"
+      selected={null}
+      placed={{}}
+      onSelect={onSelect}
+      {...props}
+    />,
+  );
+  return { container, onSelect };
 };
 
 describe('plateau', () => {
@@ -103,6 +121,57 @@ describe('plateau', () => {
     ).toBeVisible();
   });
 
+  it('lecture « Qui mène » : une couleur par candidat en tête, légende qui les nomme', () => {
+    renderBoard({ state: projected(), reading: 'qui-mene' });
+    const marseille = screen.getByRole('button', { name: /^Bouches-du-Rhône \(13\)/ });
+    const gironde = screen.getByRole('button', {
+      name: /^Gironde \(33\) : Antoine Rivière mène, 29,0 %/,
+    });
+    expect(marseille.getAttribute('data-fill')).toMatch(/^#[0-9a-f]{6}$/);
+    expect(gironde.getAttribute('data-fill')).toMatch(/^#[0-9a-f]{6}$/);
+    expect(marseille.getAttribute('data-fill')).not.toBe(gironde.getAttribute('data-fill'));
+    const legend = screen.getByRole('list', { name: 'Légende' });
+    expect(
+      within(legend)
+        .getAllByRole('listitem')
+        .map((li) => li.textContent),
+    ).toEqual([
+      'Vous menez (1 département)',
+      'Élise Marchetti (1 département)',
+      'Antoine Rivière (1 département)',
+      'Projection indisponible (98 départements)',
+    ]);
+  });
+
+  it('complète le nom de chaque département par le classement local, sans toucher au début', () => {
+    renderBoard({ state: projected() });
+    expect(
+      screen.getByRole('button', {
+        name: 'Finistère (29) : Bastion, implantation 60 sur 100 ; intentions (projection simulée) : vous 31,0 %, Marchetti 24,0 %',
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', {
+        name: /^Bouches-du-Rhône \(13\) : .* ; intentions \(projection simulée\) : Marchetti 26,0 %, Rivière 18,0 %, vous 9,0 %$/,
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it('lecture « Sondage local » : votre score écrit sur les départements où il tient', () => {
+    const { container } = renderWithContainer({ state: projected(), reading: 'sondage-local' });
+    const labels = container.querySelector('[data-etiquettes="sondage-local"]')!;
+    expect(labels).toHaveAttribute('aria-hidden', 'true');
+    expect(within(labels as HTMLElement).getByText('31')).toBeInTheDocument();
+    expect(within(labels as HTMLElement).getByText('9')).toBeInTheDocument();
+    expect(screen.getByText(/Chiffres : votre score projeté/)).toBeInTheDocument();
+  });
+
+  it('un toucher sur l’encart d’outre-mer choisit son département', async () => {
+    const { container, onSelect } = renderWithContainer();
+    await userEvent.click(container.querySelector('rect[data-code="971"]')!);
+    expect(onSelect).toHaveBeenCalledWith('971');
+  });
+
   it('lecture « Sondage local » : votre score projeté par département', () => {
     renderBoard({ state: projected(), reading: 'sondage-local' });
     expect(
@@ -151,12 +220,54 @@ describe('fiche d’un département', () => {
         `Militants estimés : ${militants!.toLocaleString('fr-FR').replace(/\s/g, ' ')}`,
       ),
     ).toBeVisible();
-    expect(screen.getByText(/Sondage local \(projection simulée\) : vous 31,0 %/)).toBeVisible();
+    const poll = screen.getByRole('table', {
+      name: 'Intentions de vote dans Finistère (29), projection simulée',
+    });
+    expect(
+      within(poll)
+        .getAllByRole('row')
+        .slice(1)
+        .map((row) => row.textContent),
+    ).toEqual(['1Camille Test (vous)31,0 %', '2Élise Marchetti24,0 %']);
     await userEvent.click(screen.getByRole('button', { name: /^Jouer « Meeting public » ici/ }));
     expect(onPlay).toHaveBeenCalledWith('meeting');
     expect(
       screen.getByRole('button', { name: /^Jouer « Rencontre avec des élus locaux » ici/ }),
     ).toBeVisible();
+  });
+
+  it('mini-sondage : les cinq premiers, puis le joueur s’il est plus loin, mis en évidence', () => {
+    const state = projected();
+    state.opinion!.departements['59'] = {
+      'adv-pilier': 2_400,
+      'adv-rempart': 2_100,
+      'adv-aurore': 1_800,
+      'adv-boussole': 1_500,
+      'adv-agora': 1_200,
+      'adv-canopee': 900,
+      [PLAYER]: 500,
+    };
+    render(<DepartmentSheet code="59" state={state} ruleset={RULESET} onPlay={() => {}} />);
+    const poll = screen.getByRole('table', { name: /^Intentions de vote dans Nord \(59\)/ });
+    const rows = within(poll).getAllByRole('row').slice(1);
+    expect(rows.map((row) => row.textContent)).toEqual([
+      '1Antoine Rivière24,0 %',
+      '2Mathieu Laborde21,0 %',
+      '3Élise Marchetti18,0 %',
+      '4Claire Delorme15,0 %',
+      '5Julien Castaing12,0 %',
+      '7Camille Test (vous)5,0 %',
+    ]);
+    expect(rows.at(-1)).toHaveAttribute('data-joueur', 'oui');
+  });
+
+  it('en observateur, le classement sans ligne « vous »', () => {
+    const state = projected();
+    state.player.actorId = null;
+    render(<DepartmentSheet code="13" state={state} ruleset={RULESET} onPlay={() => {}} />);
+    const poll = screen.getByRole('table', { name: /^Intentions de vote dans Bouches-du-Rhône/ });
+    expect(within(poll).queryByText(/\(vous\)/)).toBeNull();
+    expect(within(poll).getAllByRole('row')).toHaveLength(4);
   });
 
   it('sans projection, le dit', () => {

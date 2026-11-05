@@ -28,6 +28,7 @@ import { Board } from '../plateau/Board';
 import { DepartmentSheet } from '../plateau/DepartmentSheet';
 import { GameBox } from '../plateau/GameBox';
 import { Panel } from '../plateau/Panel';
+import { ReadingBubble } from '../plateau/ReadingBubble';
 import { boardShapes } from '../plateau/geometry';
 import { Hand, type HandCard } from '../plateau/Hand';
 import { departmentName, READINGS, type Reading } from '../plateau/readings';
@@ -338,12 +339,23 @@ export function Plateau() {
       </>
     );
   };
+  // Phase 25 bis : sans carte prise ni pose récente, l'infobulle de lecture du département
+  // survolé (bureau) ou touché (téléphone), commune aux trois lectures.
+  const readingCode = hovered ?? selected;
   const bubble =
     armedCard?.cible === 'departement' && hovered
       ? { code: hovered, content: bubbleFor(armedCard, hovered) }
       : flash
         ? { code: flash.code, content: flash.content }
-        : null;
+        : readingCode && data && !armedCard
+          ? {
+              code: readingCode,
+              announce: false,
+              content: (
+                <ReadingBubble code={readingCode} reading={reading} state={state} ruleset={data} />
+              ),
+            }
+          : null;
 
   const placed = (
     <section aria-label="Cartes posées et combos" className="space-y-2">
@@ -549,7 +561,7 @@ export function Plateau() {
                 placed={placedCount}
                 onSelect={onDepartment}
                 onDropCard={playing ? (actionId, code) => place(actionId, code) : undefined}
-                onHover={armedCard?.cible === 'departement' ? setHovered : undefined}
+                onHover={setHovered}
                 bubble={bubble}
               />
             ) : topology.isError || manifest.isError ? (

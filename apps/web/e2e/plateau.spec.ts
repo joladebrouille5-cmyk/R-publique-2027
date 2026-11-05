@@ -81,6 +81,24 @@ test('une semaine au plateau : pose, combos, verdict, boîte de jeu', async ({ p
     await page.keyboard.press('Escape');
   }
 
+  // Phase 25 bis : la carte des intentions de vote, dans chaque lecture, au toucher.
+  const readings = page.getByRole('radiogroup', { name: 'Lecture du plateau' });
+  for (const reading of ['Implantation', 'Qui mène', 'Sondage local']) {
+    await readings.getByRole('radio', { name: reading }).click();
+    await finistere(page).evaluate((el) => el.scrollIntoView({ block: 'center' }));
+    await finistere(page).click();
+    await expect(
+      page.getByRole('table', { name: /^Intentions de vote dans Finistère \(29\)/ }),
+    ).toBeVisible();
+    await expect(finistere(page)).toHaveAccessibleName(/intentions.* : .*\d+,\d %/);
+    await finistere(page).click();
+  }
+  await expect(page.getByRole('list', { name: 'Légende' })).toBeVisible();
+  await audit(page, 'Plateau, lecture « Sondage local »');
+  await readings.getByRole('radio', { name: 'Qui mène' }).click();
+  await expect(page.getByRole('list', { name: 'Légende' })).toContainText(/\(\d+ départements?\)/);
+  await audit(page, 'Plateau, lecture « Qui mène »');
+
   // La boîte de jeu : chaque écran dans son panneau, Échap rend le focus au bouton.
   const box = page.getByRole('button', { name: 'Boîte de jeu' });
   await box.click();

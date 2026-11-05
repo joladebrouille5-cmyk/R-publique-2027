@@ -43,6 +43,9 @@ const base = (state: GameState = initialState()) => ({
 });
 
 const department = (name: RegExp) => screen.findByRole('button', { name });
+/** Ligne de l'infobulle de lecture, texte complet (le score y est un élément à part). */
+const line = (text: string) => (_: string, element: Element | null) =>
+  element?.classList.contains('block') === true && element.textContent === text;
 const handCard = (name: string) =>
   screen.findByRole('button', { name: new RegExp(`^Carte « ${name} »`) });
 
@@ -128,6 +131,53 @@ describe('plateau de jeu', () => {
     mockApi(base());
     renderRoute(`/parties/${GAME_ID}/plateau`);
     expect(await screen.findByRole('note', { name: 'Programme trop court' })).toBeVisible();
+  });
+
+  it('infobulle de lecture : au toucher d’un département, le leader, son score et le vôtre', async () => {
+    const state = initialState();
+    state.opinion = {
+      week: 1,
+      round: 1,
+      participation: 7_000,
+      intentions: {},
+      breakdown: {},
+      departements: {
+        '29': { joueur: 3_100, 'adv-aurore': 2_400 },
+        '13': { joueur: 900, 'adv-aurore': 2_600, 'adv-pilier': 1_800 },
+      },
+    };
+    mockApi(base(state));
+    renderRoute(`/parties/${GAME_ID}/plateau`);
+    const user = userEvent.setup();
+    await user.click(await department(/^Bouches-du-Rhône \(13\)/));
+    const board = screen.getByRole('figure');
+    expect(within(board).getByText(line('En tête : Élise Marchetti 26,0 %'))).toBeInTheDocument();
+    expect(within(board).getByText(line('Vous : 9,0 % (3e)'))).toBeInTheDocument();
+    // Le mini-sondage de la fiche, sous la carte.
+    expect(
+      screen.getByRole('table', { name: /^Intentions de vote dans Bouches-du-Rhône \(13\)/ }),
+    ).toBeInTheDocument();
+    // Même infobulle dans les deux autres lectures.
+    await user.click(screen.getByRole('radio', { name: 'Sondage local' }));
+    expect(within(board).getByText(line('Vous : 9,0 % (3e)'))).toBeInTheDocument();
+    await user.click(screen.getByRole('radio', { name: 'Qui mène' }));
+    await user.click(await department(/^Finistère \(29\)/));
+    expect(within(board).getByText(line('Vous menez : 31,0 %'))).toBeInTheDocument();
+    expect(within(board).getByText(line('Puis : Élise Marchetti 24,0 %'))).toBeInTheDocument();
+    // L'infobulle n'est pas annoncée : le nom du département porte déjà le classement.
+    expect(
+      within(board).getByText(line('Vous menez : 31,0 %')).closest('[aria-hidden="true"]'),
+    ).not.toBeNull();
+  });
+
+  it('infobulle de lecture en semaine 0 : la projection viendra', async () => {
+    mockApi(base());
+    renderRoute(`/parties/${GAME_ID}/plateau`);
+    const user = userEvent.setup();
+    await user.click(await department(/^Finistère \(29\)/));
+    expect(
+      within(screen.getByRole('figure')).getByText(/Projection disponible après une semaine/),
+    ).toBeInTheDocument();
   });
 
   it('en observateur : le plateau sans main, la semaine se résout', async () => {

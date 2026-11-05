@@ -12,6 +12,8 @@ export type BoardShape = {
   zone: 'metropole' | 'outre-mer';
   /** Point d'étiquette (pion, numéro) dans le repère du plateau. */
   label: [number, number];
+  /** Largeur et hauteur de l'anneau principal (place disponible pour une étiquette). */
+  size: [number, number];
 };
 
 /** Repère SVG du plateau : métropole en haut, encarts d'outre-mer en bas. */
@@ -111,6 +113,25 @@ function labelOf(
   return [round1(x), round1(y)];
 }
 
+/** Largeur et hauteur du plus grand anneau (repère du plateau). */
+function sizeOf(
+  polygons: Position[][],
+  project: (p: Position) => [number, number],
+): [number, number] {
+  let best: [number, number] = [0, 0];
+  for (const ring of polygons) {
+    const points = ring.map(project);
+    const xs = points.map((p) => p[0]);
+    const ys = points.map((p) => p[1]);
+    const size: [number, number] = [
+      round1(Math.max(...xs) - Math.min(...xs)),
+      round1(Math.max(...ys) - Math.min(...ys)),
+    ];
+    if (size[0] * size[1] > best[0] * best[1]) best = size;
+  }
+  return best;
+}
+
 /**
  * Formes du plateau, triées par code : métropole projetée dans son cadre, chaque DROM dans son
  * encart (même projection, latitude propre).
@@ -134,6 +155,7 @@ export function boardShapes(collection: TerritoryCollection): BoardShape[] {
       d: pathOf(polygons, metroProject),
       zone: 'metropole',
       label: labelOf(polygons, metroProject),
+      size: sizeOf(polygons, metroProject),
     };
   });
   for (const f of features.filter((x) => isOverseas(x.properties.code))) {
@@ -158,6 +180,7 @@ export function boardShapes(collection: TerritoryCollection): BoardShape[] {
       d: pathOf(polygons, project),
       zone: 'outre-mer',
       label: labelOf(polygons, project),
+      size: sizeOf(polygons, project),
     });
   }
   return shapes.sort((a, b) => (a.code < b.code ? -1 : a.code > b.code ? 1 : 0));
