@@ -551,9 +551,18 @@ export const AJOUTS_MANUELS: RealPersonality[] = [
       detail:
         'Aucun parti ni rattachement noté par l’enquête d’experts CHES : milieu de l’échelle du jeu (0, 0), hypothèse de jeu ; aucune prise de position ne lui est prêtée.',
     },
-    photo: null,
-    photoAbsente:
-      'Fiche ajoutée hors de l’importeur (candidature postérieure à la révision importée) : aucune photo sous licence libre importée.',
+    photo: {
+      fichier: 'personnalites/reel-riner.webp',
+      auteur: 'Georges Biard',
+      licence: 'CC BY-SA 3.0',
+      licenceUrl: 'https://creativecommons.org/licenses/by-sa/3.0',
+      source: 'https://commons.wikimedia.org/wiki/File:Teddy_Riner_Cannes_2016.jpg',
+      modification:
+        'Redimensionnée (240 pixels de large) et convertie en WebP ; métadonnées retirées.',
+      choix:
+        'Photo de l’infobox de l’article Wikipédia (Cannes, 21 mai 2016), choisie à la main sur Wikimedia Commons : fiche ajoutée hors de l’importeur.',
+    },
+    photoAbsente: null,
     implantation: { departements: [], regions: [], faits: [] },
     moyens: {
       notoriete: 3,

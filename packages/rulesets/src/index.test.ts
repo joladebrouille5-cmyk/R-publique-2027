@@ -1350,7 +1350,12 @@ describe('Teddy Riner, candidat sans parti (phase 25 ter)', () => {
       partisReference: [],
       ches: null,
     });
-    expect(riner.photo).toBeNull();
+    // Photo sous licence libre, créditée (Wikimedia Commons).
+    expect(riner.photo).toMatchObject({
+      fichier: 'personnalites/reel-riner.webp',
+      auteur: 'Georges Biard',
+      licence: 'CC BY-SA 3.0',
+    });
     expect(ruleset.mediasReels.rattachements.some((r) => r.personnaliteId === riner.id)).toBe(true);
   });
 });
