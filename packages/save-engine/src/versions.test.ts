@@ -207,11 +207,13 @@ const withoutPhase15 = <T extends object>(state: T): T => {
     out.parlement = parlement;
   }
   if (s.quinquennat) {
-    const { suivi, objectifs, deplacements, ...quinquennat } = s.quinquennat;
-    expect({ suivi, objectifs, deplacements }).toEqual({
+    // Format 26 (phase 25 ter) : journal de mandat vide.
+    const { suivi, objectifs, deplacements, suivisDecisions, ...quinquennat } = s.quinquennat;
+    expect({ suivi, objectifs, deplacements, suivisDecisions }).toEqual({
       suivi: {},
       objectifs: [],
       deplacements: {},
+      suivisDecisions: [],
     });
     out.quinquennat = quinquennat;
   }
@@ -613,6 +615,8 @@ describe('migrations de sauvegarde', () => {
       suivi: {},
       objectifs: [],
       deplacements: {},
+      // Format 26 : journal de mandat vide.
+      suivisDecisions: [],
     });
     // Rien d'autre ne change : candidats, résultats, médias, relations.
     const {
@@ -1250,7 +1254,7 @@ describe('migrations de sauvegarde', () => {
       engineVersion: ENGINE_VERSION,
       rulesetVersion: CURRENT_RULESET_KEY,
     });
-    expect(SAVE_SCHEMA_VERSION).toBe(25);
+    expect(SAVE_SCHEMA_VERSION).toBe(26);
     expect(stateHash).toBe(hashState(state));
     expect(stateHash).not.toBe(V22.stateHash);
     const { meta: _meta, succession, socle, player, ...rest } = withoutPhase25(state);
@@ -1258,7 +1262,10 @@ describe('migrations de sauvegarde', () => {
     expect(socle).toBeNull();
     expect(player).toEqual({ ...before, depart: 'equitable' });
     expect(succession).toBeNull();
-    expect(rest).toEqual(restBefore);
+    // Format 26 : le journal de mandat naît vide.
+    const { suivisDecisions, ...quinquennat } = rest.quinquennat!;
+    expect(suivisDecisions).toEqual([]);
+    expect({ ...rest, quinquennat }).toEqual(restBefore);
     // Aucun acteur ne reçoit de fiche de figure : seules les entrées de la phase 23 en ont une.
     for (const actor of Object.values(state.actors))
       expect(actor.candidate.figureId).toBeUndefined();
@@ -1325,7 +1332,7 @@ describe('migrations de sauvegarde', () => {
     // Partie la plus récente en campagne (format 21, format court) : joueur personnalisé et
     // adversaires fictifs ; migrée de proche en proche jusqu'au format 25.
     const { state } = loadStoredState(V21.state, V21.stateHash, 21);
-    expect(state.meta.saveSchemaVersion).toBe(25);
+    expect(state.meta.saveSchemaVersion).toBe(SAVE_SCHEMA_VERSION);
     const departements = ruleset.parrainages.reservoir.departements;
     const codes = Object.keys(departements).sort();
     expect(Object.keys(state.implantation).sort()).toEqual(Object.keys(state.actors).sort());

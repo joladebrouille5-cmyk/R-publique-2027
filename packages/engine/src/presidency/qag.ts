@@ -4,6 +4,9 @@ import {
   QAG_HISTORY,
   signedHundredths,
   type GameState,
+  type QagBank,
+  type QagContextId,
+  type QagReply,
   type PendingDecision,
   type ReportEvent,
   type Ruleset,
@@ -14,6 +17,7 @@ import type { CouncilBook } from './conseil';
 import { weekReaches } from './dates';
 import type { EconomyBook } from './economy';
 import { memberInCharge, memberName, postCompetenceOf } from './members';
+import { membersMajority } from './parliament';
 
 // Questions au gouvernement (phase 15). Règle citée (Constitution, art. 48) : une séance par
 // semaine au moins est réservée aux questions des parlementaires et aux réponses du gouvernement.
@@ -23,6 +27,10 @@ import { memberInCharge, memberName, postCompetenceOf } from './members';
 // propos attribué) selon la ligne choisie par le président : répondre sur le fond, annoncer une
 // mesure, contre-attaquer. Effets : échauffement ou apaisement de l'hémicycle (tension
 // parlementaire), popularité du président modulée par la compétence du ministre, économie.
+// Phase 25 ter : la ligne se choisit dans une banque de répliques tirée selon le contexte de la
+// séance (majorité solide ou fragile, cohabitation, nature du sujet), jamais la même deux séances
+// de suite ; certaines répliques touchent aussi le ministre qui répond ou le Premier ministre.
+// Texte d'introduction court (qui interpelle, sur quoi, qui répond), le reste en légende.
 
 export const QAG_EVENT = 'questions-au-gouvernement';
 
@@ -87,14 +95,96 @@ function groupName(ruleset: Ruleset, groupeId: string): string {
   return group ? `${group.libelle} (${group.sigle})` : groupeId;
 }
 
-/** Effets d'une réplique, en clair (hypothèses du jeu). */
-function replySummary(reply: Ruleset['parlement']['qag']['reponses'][number]): string {
+/** Banque « classique » (phases 15 à 25) : toujours possible. */
+export const CLASSIC_QAG_BANK = 'classique';
+
+/** Banques de répliques du jeu de règles, la classique en tête. */
+export function qagBanks(ruleset: Ruleset): QagBank[] {
+  const rules = ruleset.parlement.qag;
+  return [
+    {
+      id: CLASSIC_QAG_BANK,
+      libelle: 'Répliques classiques',
+      contextes: ['tous'],
+      reponses: rules.reponses,
+      reponseParDefaut: rules.reponseParDefaut,
+    },
+    ...rules.banques,
+  ];
+}
+
+/** Réplique (et sa banque) d'après son identifiant, unique dans le jeu de règles. */
+export function qagReply(ruleset: Ruleset, id: string): { bank: QagBank; reply: QagReply } | null {
+  for (const bank of qagBanks(ruleset)) {
+    const reply = bank.reponses.find((r) => r.id === id);
+    if (reply) return { bank, reply };
+  }
+  return null;
+}
+
+/**
+ * Contextes de la séance : « tous », l'état de l'Assemblée (cohabitation, ou majorité solide si
+ * les groupes de soutien détiennent la majorité absolue, fragile sinon) et la nature du sujet.
+ */
+export function qagContexts(state: GameState, ruleset: Ruleset, themeId: string): QagContextId[] {
+  const theme = ruleset.parlement.qag.themes.find((t) => t.id === themeId);
+  const parliament = state.parlement;
+  const contexts: QagContextId[] = ['tous'];
+  if (parliament) {
+    const soutien = Object.values(parliament.groupes)
+      .filter((g) => g.alignement === 'soutien')
+      .reduce((sum, g) => sum + g.sieges, 0);
+    if (state.legislatives?.derniere.cohabitation) contexts.push('cohabitation');
+    else
+      contexts.push(
+        soutien >= membersMajority(parliament) ? 'majorite-solide' : 'majorite-fragile',
+      );
+  }
+  if (theme) contexts.push(theme.categorie);
+  return contexts;
+}
+
+/**
+ * Banque de la séance : parmi celles dont un contexte s'applique, tirage pondéré (une banque
+ * dédiée pèse autant que de contextes précis qu'elle partage avec la séance, la classique 1),
+ * en écartant la banque de la séance précédente : deux séances de suite n'offrent jamais les
+ * mêmes répliques. Aléa déterministe (graine, semaine).
+ */
+export function pickQagBank(state: GameState, ruleset: Ruleset, themeId: string): QagBank {
+  const contexts = qagContexts(state, ruleset, themeId);
+  const previousReply = state.parlement?.qag.at(-1)?.reponseId;
+  const previous = previousReply ? qagReply(ruleset, previousReply)?.bank.id : undefined;
+  const banks = qagBanks(ruleset)
+    .map((bank) => ({
+      bank,
+      weight: bank.contextes.includes('tous')
+        ? 1
+        : bank.contextes.filter((c) => contexts.includes(c)).length,
+    }))
+    .filter((b) => b.weight > 0);
+  const fresh = banks.filter((b) => b.bank.id !== previous);
+  const pool = fresh.length > 0 ? fresh : banks;
+  const rng = stream(state.meta.seed, state.meta.week, 'qag', 'banque');
+  let target = rng.nextFloat() * pool.reduce((sum, b) => sum + b.weight, 0);
+  return (pool.find((b) => (target -= b.weight) < 0) ?? pool.at(-1)!).bank;
+}
+
+/** Effets d'une réplique, en clair (la légende de la séance rappelle : hypothèses du jeu). */
+function replySummary(reply: QagReply): string {
   const parts = [
     `tension de l’hémicycle ${signedHundredths(reply.tension * 100)} (${reply.tension > 0 ? 'échauffement' : 'apaisement'})`,
-    `popularité du président ${signedHundredths(reply.popularite)} pt (selon la compétence du ministre)`,
+    `popularité du président ${signedHundredths(reply.popularite)} pt`,
     ...reply.economie.map((e) => describeIndicatorChange(e.indicateur, e.valeur)),
   ];
-  return `${reply.description} Effets (hypothèses du jeu) : ${parts.join(', ')}.`;
+  for (const [who, effect] of [
+    ['du ministre', reply.ministre],
+    ['du Premier ministre', reply.premierMinistre],
+  ] as const) {
+    if (effect?.popularite)
+      parts.push(`popularité prêtée ${who} ${signedHundredths(effect.popularite)} pt`);
+    if (effect?.loyaute) parts.push(`loyauté ${who} ${signedHundredths(effect.loyaute * 100)}`);
+  }
+  return `${reply.description} Effets : ${parts.join(', ')}.`;
 }
 
 /**
@@ -120,8 +210,12 @@ export function holdQag(context: QagContext, playerPresides: boolean): ReportEve
   const group = groupName(ruleset, groupeId);
   const sigle = ruleset.assemblee.groupes.find((g) => g.id === groupeId)?.sigle ?? groupeId;
   const week = state.meta.week;
+  const bank = pickQagBank(state, ruleset, theme.id);
+  const fallback = bank.reponses.find((r) => r.id === bank.reponseParDefaut)!;
   const label = `Questions au gouvernement : le groupe ${sigle} interpelle sur ${theme.libelle}`;
-  const description = `Séance de questions au gouvernement (Constitution, art. 48) : le groupe ${group} interpelle le gouvernement sur ${theme.libelle}. Répond pour le gouvernement : ${memberName(state, ruleset, member)} (${poste}) — réponse simulée, aucun propos n’est attribué, aucun député n’est nommé.`;
+  // Phase 25 ter : l'essentiel en une phrase, le reste en légende discrète.
+  const description = `Le groupe ${sigle} interpelle ${memberName(state, ruleset, member)} (${poste}) sur ${theme.libelle}.`;
+  const contexte = `Séance simulée (Constitution, art. 48) : groupe ${group}. Aucun propos attribué, aucun député nommé. ${bank.libelle} ; sans choix : « ${fallback.libelle} ». Effets : hypothèses du jeu.`;
   let decisionId: string | null = null;
   let outcome = '';
   if (playerPresides) {
@@ -132,13 +226,14 @@ export function holdQag(context: QagContext, playerPresides: boolean): ReportEve
       actorId: presidentId,
       createdWeek: week,
       label,
-      description: `${description} Choisissez la ligne de la réplique ; sans choix de votre part, le gouvernement répond sur le fond.`,
-      options: rules.reponses.map((r) => ({
+      description,
+      contexte,
+      options: bank.reponses.map((r) => ({
         id: r.id,
         libelle: r.libelle,
         description: replySummary(r),
       })),
-      defaultOptionId: rules.reponseParDefaut,
+      defaultOptionId: bank.reponseParDefaut,
       groupeId,
       themeId: theme.id,
       ...(theme.poste ? { posteId: theme.poste } : {}),
@@ -146,9 +241,8 @@ export function holdQag(context: QagContext, playerPresides: boolean): ReportEve
     state.pendingDecisions.push(decision);
     decisionId = decision.id;
   } else {
-    const reply = rules.reponses.find((r) => r.id === rules.reponseParDefaut)!;
-    answerQag(context, { createdWeek: week, groupeId, themeId: theme.id }, reply.id);
-    outcome = ` Ligne retenue par le président (IA) : ${reply.libelle}.`;
+    answerQag(context, { createdWeek: week, groupeId, themeId: theme.id }, fallback.id);
+    outcome = ` Ligne retenue par le président (IA) : ${fallback.libelle}.`;
   }
   return [
     {
@@ -156,7 +250,7 @@ export function holdQag(context: QagContext, playerPresides: boolean): ReportEve
       kind: 'evenement',
       refId: QAG_EVENT,
       label,
-      description: `${description}${outcome}`,
+      description: `${description} Réponse simulée, aucun propos attribué.${outcome}`,
       nature: 'simule',
       majeur: false,
       decisionId,
@@ -177,7 +271,7 @@ export function answerQag(
   const { state, ruleset, ledger, economy, council, presidentId, step } = context;
   const rules = ruleset.parlement.qag;
   const theme = rules.themes.find((t) => t.id === question.themeId);
-  const reply = rules.reponses.find((r) => r.id === reponseId);
+  const reply = qagReply(ruleset, reponseId)?.reply;
   const parliament = state.parlement;
   if (!theme || !reply || !question.groupeId)
     throw new Error(`Questions au gouvernement inconnues : ${question.themeId}/${reponseId}`);
@@ -211,6 +305,19 @@ export function answerQag(
       popularite: value,
     },
   ].slice(-QAG_HISTORY);
-  if (member) council.note(member.ref, `${label} (${groupName(ruleset, question.groupeId)})`);
+  // Phase 25 ter : effets sur le ministre qui répond et sur le Premier ministre (hypothèses).
+  const fact = `${label} (${groupName(ruleset, question.groupeId)})`;
+  const pm = memberInCharge(state, null);
+  const effects = new Map<string, { popularite: number; loyaute: number }>();
+  const add = (ref: string, effect: { popularite: number; loyaute: number } | undefined) => {
+    const current = effects.get(ref) ?? { popularite: 0, loyaute: 0 };
+    effects.set(ref, {
+      popularite: current.popularite + (effect?.popularite ?? 0),
+      loyaute: current.loyaute + (effect?.loyaute ?? 0),
+    });
+  };
+  if (member) add(member.ref, reply.ministre);
+  if (pm && reply.premierMinistre) add(pm.ref, reply.premierMinistre);
+  for (const [ref, effect] of effects) council.note(ref, fact, effect);
   return label;
 }

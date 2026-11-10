@@ -6,7 +6,7 @@ import {
   type PendingDecision,
   type Ruleset,
 } from '@r2027/shared';
-import { Check } from 'lucide-react';
+import { Check, CircleMinus, CirclePlus, Landmark } from 'lucide-react';
 import { useState } from 'react';
 import { Avatar } from '../../components/Avatar';
 import { Badge, type BadgeTone } from '../../components/Badge';
@@ -211,7 +211,7 @@ function nominationGroups(
  * repliables sauf le premier ; recherche et filtres (parti, expertise) parmi les personnalités
  * réelles (phase 14). Le choix déjà fait reste affiché quel que soit le filtre.
  */
-function GroupedOptions({
+export function GroupedOptions({
   decision,
   answer,
   onAnswer,
@@ -303,9 +303,130 @@ function GroupedOptions({
 }
 
 /**
+ * Nomination à Matignon (phase 25 ter) : le contexte de l'Assemblée, cinq propositions ciblées
+ * (portrait, profil, justification, atouts et limites, écrits en toutes lettres et pas seulement
+ * par la couleur), puis toutes les personnalités sous « Voir toutes les personnalités ». Tout
+ * vient du moteur ; choisir renseigne la réponse de la semaine.
+ */
+export function NominationChoice({
+  decision,
+  answer,
+  onPick,
+  state,
+  ruleset,
+}: {
+  decision: PendingDecision;
+  answer: string | undefined;
+  onPick: (optionId: string) => void;
+  state: GameState | undefined;
+  ruleset: Ruleset | undefined;
+}) {
+  const proposals = decision.propositions ?? [];
+  const proposed = new Set(proposals.map((p) => p.optionId));
+  const others = { ...decision, options: decision.options.filter((o) => !proposed.has(o.id)) };
+  const chosenElsewhere = answer !== undefined && !proposed.has(answer);
+  return (
+    <div className="space-y-3">
+      {decision.contexte && (
+        <p className="flex items-start gap-2 rounded-2xl bg-slate-50 p-3 text-sm text-encre-2 dark:bg-slate-800/60">
+          <Landmark aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+          <span>{decision.contexte}</span>
+        </p>
+      )}
+      <ul className="grid gap-2.5" aria-label="Cinq propositions pour Matignon">
+        {proposals.map((proposal) => {
+          const option = decision.options.find((o) => o.id === proposal.optionId);
+          if (!option) return null;
+          const chosen = answer === option.id;
+          const portrait = optionPortrait(option.id, state, ruleset);
+          return (
+            <li key={option.id}>
+              <button
+                type="button"
+                aria-pressed={chosen}
+                onClick={() => onPick(option.id)}
+                className={`relative flex w-full gap-3 rounded-card border-2 p-3 pr-11 text-left transition duration-150 active:scale-[0.99] ${
+                  chosen
+                    ? 'border-slate-900 bg-or-100 dark:border-dorure/70 dark:bg-dorure/[0.08]'
+                    : 'border-slate-200 bg-white hover:border-slate-500 dark:border-white/10 dark:bg-white/[0.03] dark:hover:border-dorure/40'
+                }`}
+              >
+                {portrait && <Avatar portrait={portrait} size="md" />}
+                <span className="min-w-0 space-y-1">
+                  <span className="block font-bold">{option.libelle}</span>
+                  <span className="block text-sm text-encre-2">{proposal.justification}</span>
+                  {(proposal.forces.length > 0 || proposal.limites.length > 0) && (
+                    <span className="block space-y-0.5 text-xs">
+                      {proposal.forces.map((force) => (
+                        <span key={force} className="flex items-start gap-1">
+                          <CirclePlus
+                            aria-hidden="true"
+                            className="mt-px size-3.5 shrink-0 text-emerald-700 dark:text-emerald-400"
+                          />
+                          <span>
+                            <span className="font-semibold">Atout : </span>
+                            {force}
+                          </span>
+                        </span>
+                      ))}
+                      {proposal.limites.map((limite) => (
+                        <span key={limite} className="flex items-start gap-1">
+                          <CircleMinus
+                            aria-hidden="true"
+                            className="mt-px size-3.5 shrink-0 text-orange-700 dark:text-orange-400"
+                          />
+                          <span>
+                            <span className="font-semibold">Limite : </span>
+                            {limite}
+                          </span>
+                        </span>
+                      ))}
+                    </span>
+                  )}
+                  {option.id === decision.defaultOptionId && (
+                    <span className="block text-xs font-semibold text-encre-3">Choix proposé</span>
+                  )}
+                </span>
+                <span
+                  aria-hidden="true"
+                  className={`absolute top-3 right-3 inline-flex size-6 items-center justify-center rounded-full border-2 ${
+                    chosen
+                      ? 'border-slate-900 bg-slate-900 text-white dark:border-dorure dark:bg-dorure dark:text-[#1d1503]'
+                      : 'border-slate-300 dark:border-slate-600'
+                  }`}
+                >
+                  {chosen && <Check className="size-4" strokeWidth={3} />}
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+      {others.options.length > 0 && (
+        <details open={chosenElsewhere} className="rounded-card">
+          <summary className="cursor-pointer py-2 text-sm font-semibold text-republique-700 dark:text-republique-300">
+            Voir toutes les personnalités ({others.options.length})
+            {chosenElsewhere && ' · votre choix est dans cette liste'}
+          </summary>
+          <div className="pt-2">
+            <GroupedOptions
+              decision={others}
+              answer={answer}
+              onAnswer={(_, optionId) => onPick(optionId)}
+              state={state}
+              ruleset={ruleset}
+            />
+          </div>
+        </details>
+      )}
+    </div>
+  );
+}
+
+/**
  * Décisions (§2), présentées comme des dossiers posés sur le bureau : la semaine ne peut pas être
  * résolue sans réponse, sauf pour une décision facultative (questions au gouvernement, phase 15 :
- * le gouvernement répond alors sur le fond).
+ * le gouvernement retient alors la réplique par défaut de la séance).
  */
 export function DecisionsPanel({
   decisions,
@@ -332,7 +453,7 @@ export function DecisionsPanel({
               <p className="flex flex-wrap gap-1.5">
                 <Badge tone={kind.tone}>{kind.badge}</Badge>
                 {isOptionalDecision(decision) && (
-                  <Badge tone="neutre">Facultatif : réponse sur le fond par défaut</Badge>
+                  <Badge tone="neutre">Facultatif : réplique par défaut sinon</Badge>
                 )}
               </p>
               <p className="font-display text-2xl leading-tight font-bold tracking-tight sm:text-3xl">
@@ -342,6 +463,9 @@ export function DecisionsPanel({
                 <ResponsibleMinister decision={decision} state={state} ruleset={ruleset} />
               )}
               <p className="max-w-prose text-encre-2">{decision.description}</p>
+              {decision.contexte && decision.kind !== 'gouvernement' && (
+                <p className="max-w-prose text-xs text-encre-3">{decision.contexte}</p>
+              )}
               {onSpotlight && SPOTLIGHT_KINDS.has(decision.kind) && (
                 <button
                   type="button"
@@ -353,7 +477,15 @@ export function DecisionsPanel({
                 </button>
               )}
             </div>
-            {decision.kind === 'gouvernement' && decision.options.length > 6 ? (
+            {decision.kind === 'gouvernement' && decision.propositions?.length ? (
+              <NominationChoice
+                decision={decision}
+                answer={answers[decision.id]}
+                onPick={(optionId) => onAnswer(decision.id, optionId)}
+                state={state}
+                ruleset={ruleset}
+              />
+            ) : decision.kind === 'gouvernement' && decision.options.length > 6 ? (
               <GroupedOptions
                 decision={decision}
                 answer={answers[decision.id]}

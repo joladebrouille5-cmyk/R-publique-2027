@@ -12,6 +12,7 @@ import { ImportError } from '../geometry/coverage';
 import { FAMILY_LABELS, familyAt, partyAt, toAxis, type ChesParty } from './ches';
 import type { CommonsLicense } from './commons';
 import {
+  AJOUTS_MANUELS,
   ARTICLE,
   DECISION,
   METHODE,
@@ -318,7 +319,10 @@ export function buildPersonalities(input: BuildInput): RealPersonalities {
   // Les autres candidatures déclarées : listées, avec le motif de leur absence. Une candidature
   // nouvelle sous l'étiquette d'un parti noté par CHES impose de revoir la sélection.
   const all = allRows(input.article);
-  const selected = new Set(selection.map((s) => s.nom));
+  const selected = new Set([
+    ...selection.map((s) => s.nom),
+    ...AJOUTS_MANUELS.map((p) => `${p.prenom} ${p.nom}`),
+  ]);
   const nonIntegrees = [...all.principale, ...all.primaire]
     .filter((r) => !selected.has(r.nom))
     .map((r) => {
@@ -343,7 +347,7 @@ export function buildPersonalities(input: BuildInput): RealPersonalities {
     decision: DECISION,
     sources: input.sources,
     methode: METHODE,
-    personnalites,
+    personnalites: [...personnalites, ...AJOUTS_MANUELS],
     nonIntegrees,
   });
 }

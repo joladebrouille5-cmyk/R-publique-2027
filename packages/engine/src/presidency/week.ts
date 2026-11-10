@@ -45,7 +45,7 @@ import { answerQag, holdQag } from './qag';
 import { answerCandidacy, requestCandidacy } from './succession';
 import { weeklyTension, updateTension } from './tension';
 import { ministerEffects } from './themes';
-import { answerUrgency, drawUrgencies } from './urgences';
+import { answerUrgency, drawUrgencies, resolveFollowUps } from './urgences';
 import { unlockAchievements } from '../core/succes';
 import { openNextCampaign } from './cycle';
 import { nextCampaignStart, weekReaches } from './dates';
@@ -329,6 +329,8 @@ export function advancePresidencyWeek(
   if (urgencyContext)
     for (const answer of urgencyAnswers)
       answerUrgency(urgencyContext, answer.decision.eventId, answer.optionId);
+  // Suivi des décisions ministérielles (phase 25 ter) : bilans arrivés à échéance.
+  if (urgencyContext) events.push(...resolveFollowUps(urgencyContext));
   const qagContext = {
     state,
     ruleset,

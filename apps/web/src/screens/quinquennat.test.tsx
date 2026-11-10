@@ -61,9 +61,32 @@ describe('quinquennat', () => {
     expect(await within(panel).findByText(/Matignon est vacant/)).toBeInTheDocument();
     expect(screen.getByText('Nomination')).toBeInTheDocument();
     const decision = screen.getByRole('group', { name: 'Nommer le Premier ministre' });
-    const profile = RULESET.quinquennat.profils[0]!;
+    // Phase 25 ter : le contexte de l'Assemblée, puis cinq propositions justifiées.
+    const pending = state.pendingDecisions.find((d) => d.kind === 'gouvernement')!;
+    expect(within(decision).getByText(pending.contexte!)).toBeVisible();
+    const proposals = within(decision).getByRole('list', {
+      name: 'Cinq propositions pour Matignon',
+    });
+    expect(within(proposals).getAllByRole('button')).toHaveLength(5);
+    for (const p of pending.propositions!) {
+      expect(within(proposals).getByText(p.justification)).toBeVisible();
+      for (const force of p.forces) expect(within(proposals).getAllByText(force)[0]).toBeVisible();
+    }
+    // Atouts et limites écrits en toutes lettres (pas seulement par la couleur).
+    expect(within(proposals).getAllByText(/^(Atout|Limite) :$/).length).toBeGreaterThan(0);
+    const user = userEvent.setup();
+    const first = pending.options.find((o) => o.id === pending.propositions![0]!.optionId)!;
+    const card = within(proposals).getByRole('button', {
+      name: new RegExp(`^${first.libelle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`),
+    });
+    expect(card).toHaveAttribute('aria-pressed', 'false');
+    // La liste complète reste accessible.
+    await user.click(within(decision).getByText(/^Voir toutes les personnalités \(\d+\)/));
+    const profile = RULESET.quinquennat.profils.find(
+      (p) => !pending.propositions!.some((x) => x.optionId === p.id),
+    )!;
     // Groupe replié : ses options ne sont rendues qu'une fois déplié (vivier de la phase 14).
-    await userEvent.setup().click(within(decision).getByText(/^Profils fictifs \(\d+\)$/));
+    await user.click(within(decision).getByText(/^Profils fictifs \(\d+\)$/));
     expect(
       within(decision).getByRole('radio', {
         name: new RegExp(`${profile.prenom} ${profile.nom} — profil fictif`),

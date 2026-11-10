@@ -37,21 +37,43 @@ export const CandidacySchema = z
   })
   .strict();
 
-export const POSITION_METHODS = ['parti', 'parti_soutien', 'ancien_parti', 'famille'] as const;
+/**
+ * Méthodes de position ; `sans_parti` (phase 25 ter) : personnalité sans parti ni rattachement
+ * noté par CHES, placée au milieu de l'échelle du jeu (hypothèse, aucune prise de position prêtée).
+ */
+export const POSITION_METHODS = [
+  'parti',
+  'parti_soutien',
+  'ancien_parti',
+  'famille',
+  'sans_parti',
+] as const;
 export type PositionMethod = (typeof POSITION_METHODS)[number];
 
 export const EstimatedPositionSchema = PositionSchema.extend({
   /** estimation : position d'experts du parti ; hypothese : rattachement indirect (voir detail). */
   statut: z.enum(['estimation', 'hypothese']),
   methode: z.enum(POSITION_METHODS),
-  /** Parti ou partis de l'enquête CHES utilisés (abréviations du fichier CHES). */
-  partisReference: z.array(z.string().min(1)).min(1),
+  /** Parti ou partis de l'enquête CHES utilisés (abréviations du fichier CHES) ; aucun sans parti. */
+  partisReference: z.array(z.string().min(1)),
   /** Vague de l'enquête CHES (année). */
   vague: z.number().int().min(1999),
-  /** Positions brutes CHES (0 à 10) avant conversion. */
-  ches: z.object({ lrecon: z.number(), galtan: z.number() }).strict(),
+  /** Positions brutes CHES (0 à 10) avant conversion ; null sans parti. */
+  ches: z.object({ lrecon: z.number(), galtan: z.number() }).strict().nullable(),
   detail: z.string().min(1),
-}).strict();
+})
+  .strict()
+  .superRefine((p, ctx) => {
+    const sansParti = p.methode === 'sans_parti';
+    if (sansParti !== (p.ches === null) || sansParti !== (p.partisReference.length === 0))
+      ctx.addIssue({
+        code: 'custom',
+        path: ['partisReference'],
+        message: 'Parti CHES et positions brutes exigés, sauf sans parti (ni l’un ni l’autre)',
+      });
+    if (sansParti && p.statut !== 'hypothese')
+      ctx.addIssue({ code: 'custom', path: ['statut'], message: 'Sans parti : hypothèse' });
+  });
 export type EstimatedPosition = z.infer<typeof EstimatedPositionSchema>;
 
 /**

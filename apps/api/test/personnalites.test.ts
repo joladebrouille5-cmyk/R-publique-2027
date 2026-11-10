@@ -61,7 +61,10 @@ describe('personnalités réelles', () => {
     });
     const opponents = Object.keys(game.state.actors).filter((id) => id !== PLAYER_ACTOR_ID);
     expect(opponents.sort()).toEqual(
-      fiches.map((p) => p.id).filter((id) => id !== 'reel-retailleau'),
+      fiches
+        .map((p) => p.id)
+        .filter((id) => id !== 'reel-retailleau')
+        .sort(),
     );
 
     const advanced = await client.request({
@@ -85,6 +88,6 @@ describe('personnalités réelles', () => {
     });
     expect(response.statusCode).toBe(201);
     const game = GameDetailSchema.parse(response.json());
-    expect(Object.keys(game.state.actors).sort()).toEqual(fiches.map((p) => p.id));
+    expect(Object.keys(game.state.actors).sort()).toEqual(fiches.map((p) => p.id).sort());
   });
 });

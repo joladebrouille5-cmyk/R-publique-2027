@@ -2,6 +2,7 @@ import {
   addDays,
   candidateName,
   figureMainFunction,
+  membersMajority,
   MINISTER_DECISION_EVENT,
   PRIME_MINISTER_POST,
   promisedMinistries,
@@ -10,6 +11,7 @@ import {
   type Government,
   type MemberRef,
   type MinisterProfile,
+  type DecisionProposal,
   type PendingDecision,
   type Position,
   type Quinquennat,
@@ -472,6 +474,195 @@ function profileOption(president: Actor, profile: MinisterProfile) {
   };
 }
 
+/** Nombre de personnalités proposées pour Matignon (phase 25 ter). */
+export const PRIME_MINISTER_PROPOSALS = 5;
+
+/** État de l'Assemblée au moment de nommer le Premier ministre (phase 25 ter). */
+export type AssemblySituation = {
+  /** Majorité d'opposition issue des dernières législatives (sa position moyenne), sinon null. */
+  cohabitation: Position | null;
+  soutien: number;
+  opposition: number;
+  independants: number;
+  majorite: number;
+  /** Assemblée issue des législatives de 2024 (réelles) ou d'un scrutin simulé. */
+  simulee: boolean;
+};
+
+export function assemblySituation(state: GameState, ruleset: Ruleset): AssemblySituation {
+  const groupes = Object.values(state.parlement?.groupes ?? {});
+  const seats = (alignment: string) =>
+    groupes.filter((g) => g.alignement === alignment).reduce((sum, g) => sum + g.sieges, 0);
+  return {
+    cohabitation: cohabitationMajority(state, ruleset),
+    soutien: seats('soutien'),
+    opposition: seats('opposition'),
+    independants: seats('independant'),
+    majorite: state.parlement ? membersMajority(state.parlement) : 0,
+    simulee: (state.legislatives?.derniere.motif ?? 'reelles-2024') !== 'reelles-2024',
+  };
+}
+
+/** Le contexte de la nomination, en clair (phase 25 ter). */
+export function assemblyContext(situation: AssemblySituation): string {
+  const origin = situation.simulee
+    ? 'issue du scrutin législatif simulé'
+    : 'issue des législatives de 2024 (groupes actuels)';
+  const seats = `${situation.soutien} sièges pour votre camp, ${situation.opposition} pour l’opposition, ${situation.independants} non alignés ; majorité absolue : ${situation.majorite}.`;
+  const verdict = situation.cohabitation
+    ? 'Cohabitation : l’opposition détient la majorité absolue, les propositions viennent de cette majorité.'
+    : situation.soutien >= situation.majorite
+      ? 'Majorité absolue pour votre camp : cohabitation improbable, les propositions viennent de votre camp.'
+      : 'Majorité relative : cohabitation improbable, les propositions viennent de votre camp et de ses alliés.';
+  return `Assemblée nationale ${origin} : ${seats} ${verdict}`;
+}
+
+/** Personnalité ou profil envisageable pour Matignon, avec ce qui fonde la proposition. */
+type PrimeMinisterPool = {
+  member: MemberRef;
+  position: Position;
+  competence: number;
+  proximite: number;
+};
+
+function primeMinisterPool(state: GameState, ruleset: Ruleset, president: Actor) {
+  const actors = Object.values(state.actors)
+    .filter((a) => a.id !== president.id && a.id !== state.player.actorId)
+    .map((a) => ({ nature: 'acteur' as const, ref: a.id }));
+  const figures = ruleset.figures.figures.map((f) => ({ nature: 'figure' as const, ref: f.id }));
+  const profiles = ruleset.quinquennat.profils.map((p) => ({
+    nature: 'profil' as const,
+    ref: p.id,
+  }));
+  return [...actors, ...figures, ...profiles]
+    .filter((member) => !recentlyRefused(state, ruleset, member.ref))
+    .map((member): PrimeMinisterPool => {
+      const traits = memberTraits(state, ruleset, member);
+      return {
+        member,
+        position: traits.position,
+        competence: traits.competence,
+        proximite: closeness(president, member.ref, traits.position),
+      };
+    });
+}
+
+/**
+ * Une proposition est cohérente avec l'Assemblée : en cohabitation, plus proche de la majorité
+ * d'opposition que du président ; sinon, dans le camp du président (proximité au moins égale au
+ * seuil d'acceptation).
+ */
+export function coherentWithAssembly(
+  state: GameState,
+  ruleset: Ruleset,
+  president: Actor,
+  member: MemberRef,
+): boolean {
+  const position = memberTraits(state, ruleset, member).position;
+  const majority = cohabitationMajority(state, ruleset);
+  if (majority)
+    return distance(position, majority) < distance(position, president.candidate.positionnement);
+  return closeness(president, member.ref, position) >= ruleset.quinquennat.acceptation.proximiteMin;
+}
+
+/** Forces et limites d'une proposition (faits du jeu de règles, estimations, hypothèses). */
+function proposalTraits(
+  state: GameState,
+  ruleset: Ruleset,
+  candidate: PrimeMinisterPool,
+  cohabitation: boolean,
+): { forces: string[]; limites: string[] } {
+  const forces: string[] = [];
+  const limites: string[] = [];
+  const { member, competence } = candidate;
+  if (competence >= 0.7)
+    forces.push(`Compétence de gestion élevée (${pct(competence)}, estimation)`);
+  else if (competence < 0.5)
+    limites.push(`Compétence de gestion limitée (${pct(competence)}, estimation)`);
+  const groupe = memberTraits(state, ruleset, member).groupe;
+  const sigle = ruleset.assemblee.groupes.find((g) => g.id === groupe)?.sigle;
+  if (cohabitation && groupe && state.parlement?.groupes[groupe]?.alignement === 'opposition')
+    forces.push(`Rattachement au groupe ${sigle ?? groupe}, de la majorité`);
+  if (member.nature === 'profil') {
+    forces.push('Accepte toujours (profil fictif)');
+    limites.push('Sans notoriété ni groupe à l’Assemblée');
+  } else {
+    if (member.nature === 'figure') {
+      const niveau = figureById(ruleset, member.ref)!.notoriete.niveau;
+      if (niveau === 3) forces.push('Popularité prêtée élevée (hypothèse)');
+      if (niveau === 1) limites.push('Peu connue du grand public (hypothèse)');
+    }
+    if (!cohabitation && candidate.proximite < ruleset.quinquennat.acceptation.proximiteMin + 10)
+      limites.push(`Refus possible (proximité ${candidate.proximite}/100)`);
+    if (cohabitation) limites.push('Éloignement de votre ligne : arbitrages à négocier');
+    else if (forces.length === 0 && limites.length === 0)
+      forces.push(`Acceptation attendue (proximité ${candidate.proximite}/100)`);
+  }
+  return { forces: forces.slice(0, 2), limites: limites.slice(0, 2) };
+}
+
+function proposalJustification(
+  state: GameState,
+  ruleset: Ruleset,
+  candidate: PrimeMinisterPool,
+  cohabitation: boolean,
+): string {
+  const { member, proximite } = candidate;
+  const camp = cohabitation
+    ? 'proche de la majorité d’opposition, que la cohabitation impose de ménager'
+    : `proche de votre ligne (proximité ${proximite}/100)`;
+  if (member.nature === 'figure') {
+    const main = figureMainFunction(figureById(ruleset, member.ref)!);
+    return `${main.enCours ? main.libelle : `Ancienne fonction : ${main.libelle}`} ; ${camp}.`;
+  }
+  if (member.nature === 'acteur') {
+    const actor = state.actors[member.ref]!;
+    return `Candidature à la présidentielle (${actor.candidate.parti}) ; ${camp}.`;
+  }
+  const profile = profileById(ruleset, member.ref)!;
+  return `Profil fictif (${profile.famille}) ; ${camp}.`;
+}
+
+/**
+ * Cinq propositions pour Matignon (phase 25 ter), cohérentes avec l'Assemblée : en cohabitation,
+ * les plus proches de la majorité d'opposition (puis les plus compétentes) ; sinon, les alliés du
+ * président (proximité, puis compétence). Quatre personnalités (acteurs de la partie, figures
+ * réelles) et un profil fictif, complétés au besoin. Déterministe ; aucun propos attribué.
+ */
+export function primeMinisterProposals(
+  state: GameState,
+  ruleset: Ruleset,
+  president: Actor,
+): { member: MemberRef; proposal: Omit<DecisionProposal, 'optionId'> }[] {
+  const majority = cohabitationMajority(state, ruleset);
+  const coherent = primeMinisterPool(state, ruleset, president)
+    .filter((c) => coherentWithAssembly(state, ruleset, president, c.member))
+    .sort((a, b) =>
+      majority
+        ? distance(a.position, majority) - distance(b.position, majority) ||
+          b.competence - a.competence ||
+          compareStrings(a.member.ref, b.member.ref)
+        : b.proximite +
+            COMPETENCE_WEIGHT * b.competence -
+            (a.proximite + COMPETENCE_WEIGHT * a.competence) ||
+          compareStrings(a.member.ref, b.member.ref),
+    );
+  const people = coherent.filter((c) => c.member.nature !== 'profil');
+  const profiles = coherent.filter((c) => c.member.nature === 'profil');
+  const chosen = [...people.slice(0, PRIME_MINISTER_PROPOSALS - 1), ...profiles.slice(0, 1)];
+  for (const c of coherent) {
+    if (chosen.length >= PRIME_MINISTER_PROPOSALS) break;
+    if (!chosen.includes(c)) chosen.push(c);
+  }
+  return chosen.map((c) => ({
+    member: c.member,
+    proposal: {
+      justification: proposalJustification(state, ruleset, c, majority !== null),
+      ...proposalTraits(state, ruleset, c, majority !== null),
+    },
+  }));
+}
+
 /** Décision du président joueur : nommer le Premier ministre. */
 export function governmentDecision(state: GameState, ruleset: Ruleset): PendingDecision {
   const president = presidentOf(state);
@@ -482,6 +673,10 @@ export function governmentDecision(state: GameState, ruleset: Ruleset): PendingD
   const profiles = sortedProfiles(president, ruleset, new Set()).map(({ profile }) =>
     profileOption(president, profile),
   );
+  const options = [...candidates, ...profiles];
+  // Phase 25 ter : les cinq propositions viennent en tête ; la liste complète reste ouverte.
+  const proposals = primeMinisterProposals(state, ruleset, president);
+  const first = new Set(proposals.map((p) => p.member.ref));
   return {
     id: `g-${week}-${PRIME_MINISTER_POST}`,
     kind: 'gouvernement',
@@ -491,8 +686,13 @@ export function governmentDecision(state: GameState, ruleset: Ruleset): PendingD
     label: 'Nommer le Premier ministre',
     description:
       'Le Premier ministre proposera les ministres : des personnalités proches de vous si elles acceptent, sinon des profils fictifs ; vous pourrez ensuite pourvoir vous-même les ministères régaliens. Une personnalité éloignée de vous peut refuser.',
-    options: [...candidates, ...profiles],
+    options: [
+      ...proposals.map((p) => options.find((o) => o.id === p.member.ref)!),
+      ...options.filter((o) => !first.has(o.id)),
+    ],
     defaultOptionId: aiPrimeMinister(state, ruleset, president).ref,
+    contexte: assemblyContext(assemblySituation(state, ruleset)),
+    propositions: proposals.map((p) => ({ optionId: p.member.ref, ...p.proposal })),
   };
 }
 
@@ -823,6 +1023,7 @@ export function openQuinquennat(state: GameState, ruleset: Ruleset, winnerId: st
     suivi: {},
     objectifs: [],
     deplacements: {},
+    suivisDecisions: [],
   };
   state.quinquennat = quinquennat;
   state.parlement = openParliament(ruleset, winner, state.parlement);

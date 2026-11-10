@@ -1966,6 +1966,11 @@
       "personnaliteId": "reel-zemmour",
       "partiArcom": "Reconquête",
       "motif": "parti de la fiche : « Reconquête »"
+    },
+    {
+      "personnaliteId": "reel-riner",
+      "partiArcom": null,
+      "motif": "Sans parti : aucun temps de parole Arcom relevé sur la période (candidature du 9 novembre 2026, postérieure) : exposition moyenne (hypothèse de jeu, ajout à la main en phase 25 ter)"
     }
   ],
   "exclus": [

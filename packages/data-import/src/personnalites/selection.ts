@@ -5,8 +5,10 @@
 // documenté. Chaque fait cité ici doit figurer mot pour mot dans la ligne de la personnalité
 // (texte lisible de la révision importée), sinon l'import échoue.
 
+import type { RealPersonality } from '@r2027/shared';
+
 export const DECISION =
-  'Décision de l’utilisateur du 21/10/2026 : personnalités réelles jouables et adversaires ; candidatures déclarées seulement ; photos sous licence libre créditées ; position d’après l’enquête d’experts Chapel Hill (CHES) ; candidatures dont aucun parti n’est noté par CHES non intégrées, sauf Nathalie Arthaud, François Asselineau, David Lisnard et François Ruffin (position « hypothèse »).';
+  'Décision de l’utilisateur du 21/10/2026 : personnalités réelles jouables et adversaires ; candidatures déclarées seulement ; photos sous licence libre créditées ; position d’après l’enquête d’experts Chapel Hill (CHES) ; candidatures dont aucun parti n’est noté par CHES non intégrées, sauf Nathalie Arthaud, François Asselineau, David Lisnard et François Ruffin (position « hypothèse ») ; décision du 10/11/2026 : Teddy Riner ajouté à la main (candidature du 9 novembre 2026, sans parti, position « hypothèse »).';
 
 export const ARTICLE = "Candidatures à l'élection présidentielle française de 2027";
 export const SECTION_PRINCIPALE = 'Candidats déclarés';
@@ -97,9 +99,9 @@ export type Selected = {
 
 export const METHODE = {
   position:
-    'Position du parti dans l’enquête d’experts Chapel Hill (vague 2024, sinon la plus récente), convertie par (x − 5) × 20 sur chaque axe : économie = lrecon, société = galtan. Parti soutien : parti qui soutient officiellement la candidature (source). Ancien parti : dernier parti noté par CHES dont la personne a été membre selon Wikidata (P102) — hypothèse. Famille : moyenne des partis français de la même famille CHES (vague 2024) que le parti de référence — hypothèse.',
+    'Position du parti dans l’enquête d’experts Chapel Hill (vague 2024, sinon la plus récente), convertie par (x − 5) × 20 sur chaque axe : économie = lrecon, société = galtan. Parti soutien : parti qui soutient officiellement la candidature (source). Ancien parti : dernier parti noté par CHES dont la personne a été membre selon Wikidata (P102) — hypothèse. Famille : moyenne des partis français de la même famille CHES (vague 2024) que le parti de référence — hypothèse. Sans parti (phase 25 ter) : ni parti ni rattachement noté par CHES, milieu de l’échelle du jeu (0, 0) — hypothèse, aucune prise de position prêtée.',
   notoriete:
-    'Niveau 3 : ancien Premier ministre ou au moins 5 % des exprimés à un premier tour présidentiel. Niveau 2 : ancien ministre, ancien candidat à la présidentielle, candidat désigné par un parti, dirigeant national d’un parti représenté à l’Assemblée nationale, présidence d’une région ou d’une association nationale d’élus. Niveau 1 : autres. Faits cités de la source ; niveaux convertis en moyens par le jeu de règles (hypothèse de jeu).',
+    'Niveau 3 : ancien Premier ministre ou au moins 5 % des exprimés à un premier tour présidentiel, ou personnalité de premier plan hors politique (titres olympiques multiples ; phase 25 ter). Niveau 2 : ancien ministre, ancien candidat à la présidentielle, candidat désigné par un parti, dirigeant national d’un parti représenté à l’Assemblée nationale, présidence d’une région ou d’une association nationale d’élus. Niveau 1 : autres. Faits cités de la source ; niveaux convertis en moyens par le jeu de règles (hypothèse de jeu).',
   organisation:
     'Taille du groupe à l’Assemblée nationale du parti sous l’étiquette duquel la personnalité est candidate (relevé du 19/10/2026) : grande (60 députés ou plus), moyenne (30 à 59), petite (moins de 30) ; si plusieurs candidatures déclarées partagent un parti, seule celle que le parti a désignée ou que dirige un de ses responsables nationaux en bénéficie ; au moins « petite » pour la présidence d’une région ou d’une association nationale d’élus ; sinon « aucune » (hypothèse de jeu).',
   implantation:
@@ -509,5 +511,56 @@ export const SELECTION: Selected[] = [
     },
     organisation: aucune('parti sans groupe à l’Assemblée nationale'),
     implantation: [],
+  },
+];
+
+/**
+ * Fiches ajoutées à la main (phase 25 ter, décision de l'utilisateur du 10/11/2026) : candidature
+ * postérieure à la révision importée de l'article, sourcée par la presse datée. Elles sont jointes
+ * telles quelles à chaque import, après les fiches importées, et retirées des « non intégrées ».
+ * Faits seulement : aucun propos, slogan ni programme n'est repris.
+ */
+export const AJOUTS_MANUELS: RealPersonality[] = [
+  {
+    id: 'reel-riner',
+    prenom: 'Teddy',
+    nom: 'Riner',
+    parti: 'Sans parti',
+    fonctions: ['Judoka en activité, quintuple champion olympique'],
+    wikidata: null,
+    article: 'https://fr.wikipedia.org/wiki/Teddy_Riner',
+    candidature: {
+      statut: 'declaree',
+      date: '2026-11-09',
+      libelle: 'Candidature annoncée le 9 novembre 2026, sans parti ni élus.',
+      source: {
+        titre: 'Présidentielle 2027 : Teddy Riner annonce sa candidature',
+        url: 'https://www.rts.ch/info/monde/2026/article/presidentielle-2027-teddy-riner-annonce-sa-candidature-29410550.html',
+        site: 'RTS',
+        date: null,
+      },
+    },
+    position: {
+      economie: 0,
+      societe: 0,
+      statut: 'hypothese',
+      methode: 'sans_parti',
+      partisReference: [],
+      vague: 2024,
+      ches: null,
+      detail:
+        'Aucun parti ni rattachement noté par l’enquête d’experts CHES : milieu de l’échelle du jeu (0, 0), hypothèse de jeu ; aucune prise de position ne lui est prêtée.',
+    },
+    photo: null,
+    photoAbsente:
+      'Fiche ajoutée hors de l’importeur (candidature postérieure à la révision importée) : aucune photo sous licence libre importée.',
+    implantation: { departements: [], regions: [], faits: [] },
+    moyens: {
+      notoriete: 3,
+      motifNotoriete: 'personnalité de premier plan hors politique (quintuple champion olympique)',
+      organisation: 'aucune',
+      motifOrganisation:
+        'aucun parti ni élu ; campagne financée par dons et fonds propres (hypothèse de jeu)',
+    },
   },
 ];

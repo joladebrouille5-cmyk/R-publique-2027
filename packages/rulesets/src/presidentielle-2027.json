@@ -1,6 +1,6 @@
 {
   "id": "presidentielle-2027",
-  "version": "23.0.0",
+  "version": "24.0.0",
   "libelle": "Présidentielle 2027 et quinquennat — campagne, parrainages, financement, médias réels, présidence, gouvernement et figures réelles nominables, Parlement, économie, crises et législatives",
   "verifieLe": "2026-11-03",
   "sources": {
@@ -5923,7 +5923,7 @@
     "sourceId": "conception-du-jeu",
     "note": "Organes, audiences, temps de parole et émissions réels (medias-2027.json, sources citées). Paramètres de jeu : poids relatif des types de média, crédibilité identique pour tous les organes, bornes de la propension d’exposition, report d’une émission sur ses autres diffuseurs. Aucune ligne éditoriale n’est prêtée à un média ; la couverture d’un candidat est simulée.",
     "fichier": "medias-2027.json",
-    "empreinte": "ebf724b507053e64f27e10a812736182312088f88b905c5efe8e34d2da5d5cb7",
+    "empreinte": "be16c5734bc8b274f4f78608d4e2bd57c17521223783524b80e248879500dfe9",
     "poidsParType": {
       "television": 1,
       "radio": 0.6,
@@ -7604,68 +7604,78 @@
     "qag": {
       "statut": "hypothese",
       "sourceId": "constitution-art-48",
-      "note": "Questions au gouvernement (phase 15). Règle citée : une séance par semaine au moins est réservée par priorité aux questions des parlementaires et aux réponses du gouvernement (Constitution, art. 48) ; à l’Assemblée nationale, les séances ont lieu le mardi et le mercredi (article Wikipédia « Questions au gouvernement »). Le jeu en retient une interpellation emblématique par semaine de session ordinaire (octobre à juin, art. 28) ; les sessions extraordinaires ne sont pas simulées. Thèmes, répliques et effets : hypothèses du jeu. Un groupe d’opposition interpelle, choisi au prorata de ses sièges ; aucun député n’est nommé, aucun propos n’est rapporté.",
+      "note": "Questions au gouvernement (phase 15). Règle citée : une séance par semaine au moins est réservée par priorité aux questions des parlementaires et aux réponses du gouvernement (Constitution, art. 48) ; à l’Assemblée nationale, les séances ont lieu le mardi et le mercredi (article Wikipédia « Questions au gouvernement »). Le jeu en retient une interpellation emblématique par semaine de session ordinaire (octobre à juin, art. 28) ; les sessions extraordinaires ne sont pas simulées. Thèmes, répliques et effets : hypothèses du jeu. Un groupe d’opposition interpelle, choisi au prorata de ses sièges ; aucun député n’est nommé, aucun propos n’est rapporté. Phase 25 ter : en plus de la banque classique (répondre sur le fond, annoncer une mesure, contre-attaquer), cinq banques de répliques tirées selon le contexte de la séance (majorité solide ou fragile, cohabitation, nature du sujet), jamais la même deux séances de suite ; certaines répliques touchent aussi le ministre qui répond ou le Premier ministre (popularité prêtée, loyauté). Hypothèses du jeu.",
       "moisSansSeance": [7, 8, 9],
       "themes": [
         {
           "id": "pouvoir-achat",
           "libelle": "le pouvoir d’achat",
           "poste": "economie",
-          "indicateur": "pouvoirAchat"
+          "indicateur": "pouvoirAchat",
+          "categorie": "economie"
         },
         {
           "id": "emploi",
           "libelle": "l’emploi et le chômage",
           "poste": "travail",
-          "indicateur": "chomage"
+          "indicateur": "chomage",
+          "categorie": "social"
         },
         {
           "id": "comptes-publics",
           "libelle": "la dette et les comptes publics",
           "poste": "economie",
-          "indicateur": "deficit"
+          "indicateur": "deficit",
+          "categorie": "economie"
         },
         {
           "id": "climat-social",
           "libelle": "le climat social",
           "poste": "travail",
-          "indicateur": "tensions"
+          "indicateur": "tensions",
+          "categorie": "social"
         },
         {
           "id": "confiance",
           "libelle": "le moral des ménages",
           "poste": null,
-          "indicateur": "confiance"
+          "indicateur": "confiance",
+          "categorie": "economie"
         },
         {
           "id": "securite",
           "libelle": "la sécurité du quotidien",
           "poste": "interieur",
-          "indicateur": null
+          "indicateur": null,
+          "categorie": "regalien"
         },
         {
           "id": "hopital",
           "libelle": "l’hôpital et l’accès aux soins",
           "poste": "sante",
-          "indicateur": null
+          "indicateur": null,
+          "categorie": "social"
         },
         {
           "id": "ecole",
           "libelle": "l’école",
           "poste": "education",
-          "indicateur": null
+          "indicateur": null,
+          "categorie": "societe"
         },
         {
           "id": "climat",
           "libelle": "le climat et l’énergie",
           "poste": "transition-ecologique",
-          "indicateur": null
+          "indicateur": null,
+          "categorie": "societe"
         },
         {
           "id": "international",
           "libelle": "la situation internationale",
           "poste": "affaires-etrangeres",
-          "indicateur": null
+          "indicateur": null,
+          "categorie": "regalien"
         }
       ],
       "poidsDegradation": 3,
@@ -7704,6 +7714,245 @@
         }
       ],
       "reponseParDefaut": "fond",
+      "banques": [
+        {
+          "id": "apaisement",
+          "libelle": "Apaiser l’hémicycle",
+          "contextes": ["majorite-fragile", "cohabitation", "social"],
+          "reponseParDefaut": "temporiser",
+          "reponses": [
+            {
+              "id": "temporiser",
+              "libelle": "Temporiser",
+              "description": "Le ministre annonce une concertation sans trancher.",
+              "tension": -3,
+              "popularite": 10,
+              "economie": [],
+              "modulation": 1
+            },
+            {
+              "id": "tendre-la-main",
+              "libelle": "Tendre la main à l’opposition",
+              "description": "Le gouvernement propose de travailler avec le groupe qui interpelle.",
+              "tension": -6,
+              "popularite": 20,
+              "economie": [],
+              "modulation": 1,
+              "ministre": {
+                "popularite": 0,
+                "loyaute": -2
+              },
+              "premierMinistre": {
+                "popularite": 60,
+                "loyaute": 0
+              }
+            },
+            {
+              "id": "mediateur",
+              "libelle": "Saisir un médiateur",
+              "description": "Une personnalité indépendante est chargée du dossier.",
+              "tension": -4,
+              "popularite": 15,
+              "economie": [],
+              "modulation": 0.5,
+              "ministre": {
+                "popularite": -40,
+                "loyaute": 0
+              }
+            }
+          ]
+        },
+        {
+          "id": "expertise",
+          "libelle": "Jouer l’expertise",
+          "contextes": ["economie", "societe", "majorite-solide"],
+          "reponseParDefaut": "chiffres",
+          "reponses": [
+            {
+              "id": "etude",
+              "libelle": "Dévoiler une étude",
+              "description": "Le ministre rend publique une étude de ses services.",
+              "tension": -1,
+              "popularite": 25,
+              "economie": [],
+              "modulation": 3,
+              "ministre": {
+                "popularite": 60,
+                "loyaute": 0
+              }
+            },
+            {
+              "id": "chiffres",
+              "libelle": "Opposer les chiffres",
+              "description": "Le ministre répond chiffres à l’appui.",
+              "tension": 2,
+              "popularite": 20,
+              "economie": [],
+              "modulation": 2
+            },
+            {
+              "id": "renvoi-matignon",
+              "libelle": "Renvoyer vers le Premier ministre",
+              "description": "Le dossier remonte à Matignon, qui arbitrera.",
+              "tension": 0,
+              "popularite": 10,
+              "economie": [],
+              "modulation": 0,
+              "ministre": {
+                "popularite": -30,
+                "loyaute": 0
+              },
+              "premierMinistre": {
+                "popularite": -50,
+                "loyaute": 0
+              }
+            }
+          ]
+        },
+        {
+          "id": "autorite",
+          "libelle": "Afficher l’autorité",
+          "contextes": ["regalien", "majorite-solide"],
+          "reponseParDefaut": "plan-action",
+          "reponses": [
+            {
+              "id": "fermete",
+              "libelle": "Afficher la fermeté",
+              "description": "Le ministre tient une ligne ferme, sans concession.",
+              "tension": 4,
+              "popularite": 40,
+              "economie": [],
+              "modulation": 1.5,
+              "ministre": {
+                "popularite": 80,
+                "loyaute": 0
+              }
+            },
+            {
+              "id": "plan-action",
+              "libelle": "Annoncer un plan d’action",
+              "description": "Un plan chiffré est présenté pour le trimestre.",
+              "tension": -2,
+              "popularite": 50,
+              "economie": [
+                {
+                  "indicateur": "deficit",
+                  "valeur": -2
+                }
+              ],
+              "modulation": 1
+            },
+            {
+              "id": "bilan-opposition",
+              "libelle": "Renvoyer l’opposition à ses votes",
+              "description": "Le gouvernement rappelle les votes passés du groupe (simulés).",
+              "tension": 8,
+              "popularite": 15,
+              "economie": [],
+              "modulation": 0.5,
+              "premierMinistre": {
+                "popularite": 0,
+                "loyaute": -2
+              }
+            }
+          ]
+        },
+        {
+          "id": "solidarite",
+          "libelle": "Répondre au terrain",
+          "contextes": ["social", "majorite-solide"],
+          "reponseParDefaut": "terrain",
+          "reponses": [
+            {
+              "id": "geste",
+              "libelle": "Annoncer un geste ciblé",
+              "description": "Une aide ciblée est annoncée pour les personnes concernées.",
+              "tension": -4,
+              "popularite": 50,
+              "economie": [
+                {
+                  "indicateur": "deficit",
+                  "valeur": -3
+                }
+              ],
+              "modulation": 1
+            },
+            {
+              "id": "terrain",
+              "libelle": "Envoyer le ministre sur le terrain",
+              "description": "Le ministre se rend sur place dans la semaine.",
+              "tension": -2,
+              "popularite": 30,
+              "economie": [],
+              "modulation": 2,
+              "ministre": {
+                "popularite": 80,
+                "loyaute": 0
+              }
+            },
+            {
+              "id": "partenaires",
+              "libelle": "Renvoyer aux partenaires sociaux",
+              "description": "Le gouvernement laisse syndicats et employeurs négocier.",
+              "tension": -3,
+              "popularite": 5,
+              "economie": [],
+              "modulation": 0.5,
+              "ministre": {
+                "popularite": -40,
+                "loyaute": 0
+              }
+            }
+          ]
+        },
+        {
+          "id": "cohabitation",
+          "libelle": "Composer avec Matignon",
+          "contextes": ["cohabitation", "majorite-fragile"],
+          "reponseParDefaut": "laisser-matignon",
+          "reponses": [
+            {
+              "id": "laisser-matignon",
+              "libelle": "Laisser Matignon en première ligne",
+              "description": "Le Premier ministre porte seul la réponse du gouvernement.",
+              "tension": -2,
+              "popularite": 5,
+              "economie": [],
+              "modulation": 0.5,
+              "premierMinistre": {
+                "popularite": 80,
+                "loyaute": 2
+              }
+            },
+            {
+              "id": "distance",
+              "libelle": "Prendre ses distances",
+              "description": "L’Élysée fait savoir son désaccord avec la ligne du gouvernement.",
+              "tension": 3,
+              "popularite": 35,
+              "economie": [],
+              "modulation": 0.5,
+              "premierMinistre": {
+                "popularite": -60,
+                "loyaute": -3
+              }
+            },
+            {
+              "id": "arbitrage",
+              "libelle": "Rappeler l’arbitrage de l’Élysée",
+              "description": "Le président rappelle qu’il a tranché ce dossier.",
+              "tension": 1,
+              "popularite": 20,
+              "economie": [],
+              "modulation": 1,
+              "ministre": {
+                "popularite": 0,
+                "loyaute": -1
+              }
+            }
+          ]
+        }
+      ],
       "decroissanceEchauffement": 0.25
     }
   },
@@ -9478,7 +9727,7 @@
   ],
   "urgences": {
     "statut": "hypothese",
-    "note": "Urgences ministérielles du quinquennat (phase 15) : situations sectorielles fictives, étiquetées comme telles, rattachées à un ministère ; au plus une par semaine, aucune tant qu’une urgence ou une crise attend la décision du président. Le ministre en charge est présenté (photo, nomination simulée) sans qu’aucun propos ne lui soit prêté. Effets de chaque choix : popularité du président (modulée par la compétence du ministre en charge : × (0,5 + compétence)), indicateurs économiques, popularité prêtée et loyauté du ministre. Paramètres de jeu (hypothèses).",
+    "note": "Urgences ministérielles du quinquennat (phase 15) : situations sectorielles fictives, étiquetées comme telles, rattachées à un ministère ; au plus une par semaine, aucune tant qu’une urgence ou une crise attend la décision du président. Le ministre en charge est présenté (photo, nomination simulée) sans qu’aucun propos ne lui soit prêté. Effets de chaque choix : popularité du président (modulée par la compétence du ministre en charge : × (0,5 + compétence)), indicateurs économiques, popularité prêtée et loyauté du ministre. Paramètres de jeu (hypothèses). Suivi des décisions (phase 25 ter) : 2 à 5 semaines après l’arbitrage, un bilan simulé dit si la décision a porté ses fruits ; une part de l’effet sur l’opinion n’arrive qu’à ce moment, dans le sens du bilan. Probabilité d’un bilan favorable selon la compétence du ministre et la nature du choix : hypothèses du jeu.",
     "liste": [
       {
         "id": "urgence-greve-transports",
@@ -10062,7 +10311,17 @@
         ],
         "choixParDefaut": "indemniser"
       }
-    ]
+    ],
+    "suivi": {
+      "delaiMin": 2,
+      "delaiMax": 5,
+      "partDifferee": 0.4,
+      "plancher": 20,
+      "reussiteBase": 0.55,
+      "poidsCompetence": 0.6,
+      "bonusChoix": 0.15,
+      "ministre": 80
+    }
   },
   "objectifs": {
     "statut": "hypothese",
@@ -11132,7 +11391,7 @@
     "sourceId": "conception-du-jeu",
     "note": "Moyens de départ des personnalités réelles selon leurs niveaux de notoriété (1 à 3) et d’organisation (grande, moyenne, petite, aucune), établis par des règles documentées à partir de faits sourcés (personnalites-2027.json). Valeurs de jeu, sans prétention de mesure : popularité de départ identique pour toutes ; aucun programme attribué par le jeu ; comportement simulé, style et goût du risque identiques pour toutes.",
     "fichier": "personnalites-2027.json",
-    "empreinte": "2b961950de4da934e692358371cd42c1befc0b77e46797a3c04a0c9e0854eded",
+    "empreinte": "63bb40f62a426c2922f7813c1ae4cdbbec3b8de9cbf2d98b93e6454a8a9683bd",
     "notoriete": [2500, 4500, 7000],
     "popularite": 3000,
     "organisation": {

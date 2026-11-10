@@ -41,6 +41,74 @@ export type DataStatus = z.infer<typeof DataStatusSchema>;
 const Id = z.string().regex(/^[a-z0-9]+(?:[-_][a-z0-9]+)*$/, 'identifiant en minuscules');
 const Probability = z.number().min(0).max(1);
 const Fraction = z.number().min(0).max(1);
+
+/** Nature d'un sujet de questions au gouvernement (phase 25 ter). */
+export const QAG_THEME_CATEGORIES = ['social', 'economie', 'regalien', 'societe'] as const;
+/**
+ * Contextes d'une séance de questions au gouvernement (phase 25 ter) : « tous » convient
+ * toujours ; les autres selon l'Assemblée (cohabitation, majorité solide ou fragile) et la nature
+ * du sujet.
+ */
+export const QAG_CONTEXTS = [
+  'tous',
+  'majorite-solide',
+  'majorite-fragile',
+  'cohabitation',
+  'social',
+  'economie',
+  'regalien',
+  'societe',
+] as const;
+export type QagContextId = (typeof QAG_CONTEXTS)[number];
+
+/** Effet d'une réplique sur un membre du gouvernement (popularité prêtée, loyauté). */
+const QagMemberEffectSchema = z
+  .object({
+    popularite: z.number().int().min(-2_000).max(2_000),
+    loyaute: z.number().int().min(-30).max(30),
+  })
+  .strict();
+
+/**
+ * Réplique du gouvernement à une question (phases 15 et 25 ter). Hypothèses du jeu ; aucun
+ * propos n'est rapporté, aucun député n'est nommé.
+ */
+export const QagReplySchema = z
+  .object({
+    id: Id,
+    libelle: z.string().min(1),
+    description: z.string().min(1),
+    /** Points de tension : positifs, échauffement ; négatifs, apaisement. */
+    tension: z.number().int().min(-20).max(20),
+    /** Popularité du président (centièmes), modulée par la compétence du ministre. */
+    popularite: z.number().int().min(-1_000).max(1_000),
+    economie: z
+      .array(z.object({ indicateur: EconomicIndicatorSchema, valeur: z.number().int() }).strict())
+      .default([]),
+    /** Poids de la compétence du ministre du thème : × (1 + poids × (compétence − 0,5)). */
+    modulation: z.number().min(0).max(4),
+    /** Effet sur le ministre qui répond (phase 25 ter). */
+    ministre: QagMemberEffectSchema.optional(),
+    /** Effet sur le Premier ministre (phase 25 ter). */
+    premierMinistre: QagMemberEffectSchema.optional(),
+  })
+  .strict();
+export type QagReply = z.infer<typeof QagReplySchema>;
+
+/** Banque de répliques (phase 25 ter), retenue quand l'un de ses contextes s'applique. */
+export const QagBankSchema = z
+  .object({
+    id: Id,
+    libelle: z.string().min(1),
+    contextes: z.array(z.enum(QAG_CONTEXTS)).min(1),
+    reponses: z.array(QagReplySchema).min(2).max(4),
+    reponseParDefaut: Id,
+  })
+  .strict()
+  .refine((b) => b.reponses.some((r) => r.id === b.reponseParDefaut), {
+    message: 'Réplique par défaut absente de la banque',
+  });
+export type QagBank = z.infer<typeof QagBankSchema>;
 /** Notoriété ou popularité, en centièmes de point (0 à 10 000). */
 const Points = z.number().int().min(0).max(10_000);
 
@@ -627,38 +695,22 @@ export const ParliamentRulesSchema = z
                 poste: Id.nullable(),
                 /** Indicateur dont la dégradation depuis le début du mandat rend le thème probable. */
                 indicateur: EconomicIndicatorSchema.nullable(),
+                /** Nature du sujet (phase 25 ter) : oriente le choix de la banque de répliques. */
+                categorie: z.enum(QAG_THEME_CATEGORIES),
               })
               .strict(),
           )
           .min(3),
         /** Poids d'un thème dont l'indicateur s'est dégradé depuis le début du mandat. */
         poidsDegradation: z.number().min(1).max(10),
-        reponses: z
-          .array(
-            z
-              .object({
-                id: Id,
-                libelle: z.string().min(1),
-                description: z.string().min(1),
-                /** Points de tension : positifs, échauffement ; négatifs, apaisement. */
-                tension: z.number().int().min(-20).max(20),
-                /** Popularité du président (centièmes), modulée par la compétence du ministre. */
-                popularite: z.number().int().min(-1_000).max(1_000),
-                economie: z
-                  .array(
-                    z
-                      .object({ indicateur: EconomicIndicatorSchema, valeur: z.number().int() })
-                      .strict(),
-                  )
-                  .default([]),
-                /** Poids de la compétence du ministre du thème : × (1 + poids × (compétence − 0,5)). */
-                modulation: z.number().min(0).max(4),
-              })
-              .strict(),
-          )
-          .min(2)
-          .max(4),
+        /** Répliques de la banque « classique » (phases 15 à 25), toujours disponible. */
+        reponses: z.array(QagReplySchema).min(2).max(4),
         reponseParDefaut: Id,
+        /**
+         * Banques de répliques (phase 25 ter), tirées selon le contexte de la séance (majorité,
+         * cohabitation, nature du sujet), jamais deux fois de suite la même quand une autre convient.
+         */
+        banques: z.array(QagBankSchema).min(4),
         /** Part de l'échauffement perdue chaque semaine. */
         decroissanceEchauffement: Fraction,
       })
@@ -1774,6 +1826,30 @@ export const RulesetSchema = z
         statut: z.literal('hypothese'),
         note: z.string().min(1),
         liste: z.array(UrgencyDefinitionSchema).min(4),
+        /**
+         * Suivi des décisions (phase 25 ter) : un retour 2 à 5 semaines après l'arbitrage, qui
+         * applique la part différée de l'effet sur l'opinion et dit si la décision a porté ses
+         * fruits (probabilité selon la compétence du ministre et la nature du choix).
+         */
+        suivi: z
+          .object({
+            delaiMin: z.number().int().min(1).max(10),
+            delaiMax: z.number().int().min(1).max(12),
+            /** Part de l'effet sur la popularité du président reportée au suivi. */
+            partDifferee: Fraction,
+            /** Ampleur minimale (centièmes) de l'effet du bilan sur la popularité du président. */
+            plancher: z.number().int().min(0).max(500),
+            /** Probabilité d'un bilan favorable pour un ministre de compétence 0,5. */
+            reussiteBase: Probability,
+            /** Effet de la compétence : + poids × (compétence − 0,5). */
+            poidsCompetence: z.number().min(0).max(2),
+            /** Bonus (ou malus) d'un choix qui ménage l'opinion (ou qui la heurte). */
+            bonusChoix: z.number().min(0).max(0.5),
+            /** Effet du bilan sur la popularité prêtée du ministre (centièmes). */
+            ministre: z.number().int().min(0).max(2_000),
+          })
+          .strict()
+          .refine((s) => s.delaiMin <= s.delaiMax, { message: 'Délais du suivi inversés' }),
       })
       .strict(),
     /** Objectifs de mandat et note finale (phase 15), paramètres de jeu (hypothèses). */

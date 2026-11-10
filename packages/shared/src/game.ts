@@ -29,6 +29,7 @@ import { NegotiationSchema } from './precampagne';
 import {
   CycleSchema,
   QuinquennatSchema,
+  QuinquennatV25Schema,
   QuinquennatSummarySchema,
   QuinquennatSummaryV18Schema,
   QuinquennatV16Schema,
@@ -394,7 +395,7 @@ export type DecisionKind = (typeof DECISION_KINDS)[number];
 export const OPTIONAL_DECISION_KINDS: readonly DecisionKind[] = ['qag'];
 export const isOptionalDecision = (decision: { kind: DecisionKind }) =>
   OPTIONAL_DECISION_KINDS.includes(decision.kind);
-export const PendingDecisionSchema = PendingDecisionV2Schema.extend({
+export const PendingDecisionV25Schema = PendingDecisionV2Schema.extend({
   kind: z.enum(DECISION_KINDS),
   departement: z
     .string()
@@ -403,6 +404,32 @@ export const PendingDecisionSchema = PendingDecisionV2Schema.extend({
   posteId: Id.optional(),
   groupeId: Id.optional(),
   themeId: Id.optional(),
+}).strict();
+export type PendingDecisionV25 = z.infer<typeof PendingDecisionV25Schema>;
+
+/**
+ * Proposition mise en avant dans une décision (format 26, phase 25 ter) : pour Matignon, cinq
+ * personnalités cohérentes avec le camp du président et la composition de l'Assemblée, chacune
+ * justifiée en une phrase, avec une ou deux forces et limites (faits et hypothèses du jeu).
+ */
+export const DecisionProposalSchema = z
+  .object({
+    optionId: Id,
+    justification: z.string().min(1),
+    forces: z.array(z.string().min(1)).max(2),
+    limites: z.array(z.string().min(1)).max(2),
+  })
+  .strict();
+export type DecisionProposal = z.infer<typeof DecisionProposalSchema>;
+
+/**
+ * Décision en attente (format 26) : en plus, le contexte affiché en légende (composition de
+ * l'Assemblée pour Matignon, mentions de simulation des questions au gouvernement) et les
+ * propositions mises en avant.
+ */
+export const PendingDecisionSchema = PendingDecisionV25Schema.extend({
+  contexte: z.string().min(1).optional(),
+  propositions: z.array(DecisionProposalSchema).max(5).optional(),
 }).strict();
 export type PendingDecision = z.infer<typeof PendingDecisionSchema>;
 
@@ -848,7 +875,7 @@ export const GameStateV19Schema = GameStateV18Schema.extend({
   player: PlayerSchema,
   pendingDecisions: z.array(PendingDecisionV22Schema),
   parlement: ParliamentSchema.nullable(),
-  quinquennat: QuinquennatSchema.nullable(),
+  quinquennat: QuinquennatV25Schema.nullable(),
   historique: z
     .object({
       presidentielles: z.array(PresidentialArchiveSchema),
@@ -982,7 +1009,7 @@ export const GameStateV23Schema = GameStateV22Schema.extend({
     saveSchemaVersion: z.literal(23),
   }).strict(),
   actors: z.record(Id, ActorSchema),
-  pendingDecisions: z.array(PendingDecisionSchema),
+  pendingDecisions: z.array(PendingDecisionV25Schema),
   succession: SuccessionSchema.nullable(),
 }).strict();
 export type GameStateV23 = z.infer<typeof GameStateV23Schema>;
@@ -1032,13 +1059,27 @@ export const ImplantationSchema = z.record(DepartementCodeSchema, z.number().int
  * département dans les intentions (`opinion.departements`). Toute évolution s'accompagne d'un
  * nouveau numéro de format et d'une migration (packages/save-engine).
  */
-export const GameStateSchema = GameStateV24Schema.extend({
+export const GameStateV25Schema = GameStateV24Schema.extend({
   meta: MetaV1Schema.extend({
     difficulty: DifficultySchema,
     saveSchemaVersion: z.literal(25),
   }).strict(),
   opinion: OpinionSchema.nullable(),
   implantation: z.record(Id, ImplantationSchema),
+}).strict();
+export type GameStateV25 = z.infer<typeof GameStateV25Schema>;
+
+/**
+ * État de partie, format 26 (phase 25 ter) : propositions et contexte des décisions (Matignon,
+ * questions au gouvernement), journal de mandat des décisions ministérielles et de leur suivi.
+ */
+export const GameStateSchema = GameStateV25Schema.extend({
+  meta: MetaV1Schema.extend({
+    difficulty: DifficultySchema,
+    saveSchemaVersion: z.literal(26),
+  }).strict(),
+  pendingDecisions: z.array(PendingDecisionSchema),
+  quinquennat: QuinquennatSchema.nullable(),
 }).strict();
 export type GameState = z.infer<typeof GameStateSchema>;
 

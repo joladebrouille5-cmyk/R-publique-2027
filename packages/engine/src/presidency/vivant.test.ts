@@ -17,7 +17,7 @@ import { reviewQuinquennat } from './cycle';
 import { openQuinquennat } from './government';
 import { memberInCharge, memberName, memberTraits, postCompetenceOf } from './members';
 import { gradeMandate } from './objectifs';
-import { QAG_EVENT } from './qag';
+import { QAG_EVENT, qagBanks } from './qag';
 
 // Phase 15 (P15-03) : ministres vivants et départs simulés, remaniement ciblé, urgences
 // ministérielles, Conseil des ministres, questions au gouvernement, objectifs et note du mandat,
@@ -296,8 +296,10 @@ describe('urgences ministérielles', () => {
     const factor = playerChange(second.report, 'popularite')!.factors.find((f) =>
       f.label.startsWith(label),
     )!;
+    // Phase 25 ter : la part différée attend le suivi de la décision.
+    const total = Math.round(choice.popularite * (0.5 + competence));
     expect(factor).toMatchObject({
-      value: Math.round(choice.popularite * (0.5 + competence)),
+      value: total - Math.round(total * RULES.urgences.suivi.partDifferee),
       source: 'decision',
     });
     for (const e of choice.economie)
@@ -338,23 +340,25 @@ describe('questions au gouvernement', () => {
   it('un groupe d’opposition interpelle le gouvernement chaque semaine de séance', () => {
     const first = step(governed, [], SITTING);
     const decision = first.state.pendingDecisions.find((d) => d.kind === 'qag')!;
-    expect(decision).toMatchObject({ eventId: QAG_EVENT, defaultOptionId: 'fond' });
-    expect(decision.options.map((o) => o.id)).toEqual(['fond', 'mesure', 'contre-attaque']);
+    // Phase 25 ter : les répliques viennent d'une banque tirée selon le contexte.
+    const bank = qagBanks(RULES).find((b) =>
+      b.reponses.some((r) => r.id === decision.options[0]!.id),
+    )!;
+    expect(decision).toMatchObject({ eventId: QAG_EVENT, defaultOptionId: bank.reponseParDefaut });
+    expect(decision.options.map((o) => o.id)).toEqual(bank.reponses.map((r) => r.id));
     expect(first.state.parlement!.groupes[decision.groupeId!]!.alignement).toBe('opposition');
     expect(RULES.parlement.qag.themes.some((t) => t.id === decision.themeId)).toBe(true);
-    expect(decision.description).toMatch(/aucun député n’est nommé/);
+    expect(decision.contexte).toMatch(/aucun député nommé/);
     // Titre court (sigle du groupe), nom complet dans la description ; effets en clair.
     const group = RULES.assemblee.groupes.find((g) => g.id === decision.groupeId)!;
     expect(decision.label).toMatch(
       new RegExp(`^Questions au gouvernement : le groupe ${group.sigle} interpelle sur `),
     );
-    expect(decision.description).toContain(`le groupe ${group.libelle} (${group.sigle})`);
-    expect(decision.options.find((o) => o.id === 'contre-attaque')!.description).toMatch(
-      /tension de l’hémicycle \+6 \(échauffement\)/,
-    );
-    expect(decision.options.find((o) => o.id === 'mesure')!.description).toMatch(
-      /tension de l’hémicycle −4 \(apaisement\).*solde public −0,03 pt de PIB/,
-    );
+    expect(decision.contexte).toContain(`groupe ${group.libelle} (${group.sigle})`);
+    for (const reply of bank.reponses.filter((r) => r.tension !== 0))
+      expect(decision.options.find((o) => o.id === reply.id)!.description).toContain(
+        `tension de l’hémicycle ${reply.tension > 0 ? '+' : '−'}${Math.abs(reply.tension)} (${reply.tension > 0 ? 'échauffement' : 'apaisement'})`,
+      );
     expect(first.report.events.find((e) => e.refId === QAG_EVENT)).toMatchObject({
       nature: 'simule',
       decisionId: decision.id,
@@ -373,6 +377,9 @@ describe('questions au gouvernement', () => {
     }));
     const question = first.state.pendingDecisions.find((d) => d.kind === 'qag')!;
     const { decroissanceEchauffement, reponses } = RULES.parlement.qag;
+    // Séance aux répliques classiques (la banque est tirée selon le contexte, phase 25 ter).
+    question.options = reponses.map((r) => ({ id: r.id, libelle: r.libelle, description: '' }));
+    question.defaultOptionId = 'fond';
     const hot = step(first.state, [], SITTING, { qag: 'contre-attaque' });
     const reply = reponses.find((r) => r.id === 'contre-attaque')!;
     expect(hot.state.parlement!.echauffement).toBe(
@@ -416,10 +423,12 @@ describe('questions au gouvernement', () => {
       SITTING,
     );
     expect(result.report.decisions.find((d) => d.decisionId === question.id)).toMatchObject({
-      optionId: 'fond',
+      optionId: question.defaultOptionId,
       automatic: true,
     });
-    expect(result.state.parlement!.qag.at(-1)).toMatchObject({ reponseId: 'fond' });
+    expect(result.state.parlement!.qag.at(-1)).toMatchObject({
+      reponseId: question.defaultOptionId,
+    });
   });
 
   it('aucune séance pendant l’intersession', () => {
@@ -524,7 +533,10 @@ describe('président IA', () => {
     expect(
       result.state.pendingDecisions.some((d) => d.kind === 'qag' || d.kind === 'urgence'),
     ).toBe(false);
-    expect(result.state.parlement!.qag.at(-1)).toMatchObject({ reponseId: 'fond' });
+    // Réplique par défaut de la banque tirée (phase 25 ter).
+    const last = result.state.parlement!.qag.at(-1)!;
+    const bank = qagBanks(RULES).find((b) => b.reponses.some((r) => r.id === last.reponseId))!;
+    expect(last.reponseId).toBe(bank.reponseParDefaut);
     expect(result.report.events.find((e) => e.refId === URGENCY)!.description).toMatch(
       /Arbitrage du président \(IA\)/,
     );

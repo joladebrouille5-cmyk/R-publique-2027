@@ -173,9 +173,7 @@ describe('questions au gouvernement (phase 15)', () => {
       within(dialog).getByText(/aucun député n’est nommé, aucun propos n’est rapporté/),
     ).toBeVisible();
     const choices = within(dialog).getByRole('list', { name: 'Choix possibles' });
-    expect(within(choices).getAllByRole('button')).toHaveLength(
-      RULESET.parlement.qag.reponses.length,
-    );
+    expect(within(choices).getAllByRole('button')).toHaveLength(qag!.options.length);
     expect(within(choices).getByText('Réponse par défaut')).toBeInTheDocument();
   });
 
@@ -185,13 +183,19 @@ describe('questions au gouvernement (phase 15)', () => {
     renderRoute(`/parties/${GAME_ID}/tableau-de-bord`);
     const user = userEvent.setup();
     const dialog = await screen.findByRole('dialog', { name: qag.label });
+    // Phase 25 ter : texte court, légende discrète (simulation, réplique par défaut).
+    expect(within(dialog).getByText(qag.description)).toBeVisible();
+    expect(within(dialog).getByText(qag.contexte!)).toBeVisible();
+    const fallback = qag.options.find((o) => o.id === qag.defaultOptionId)!;
     await user.click(
-      within(dialog).getByRole('button', { name: 'Laisser le gouvernement répondre sur le fond' }),
+      within(dialog).getByRole('button', {
+        name: `Laisser la réplique par défaut (${fallback.libelle})`,
+      }),
     );
     expect(screen.queryByRole('dialog', { name: qag.label })).not.toBeInTheDocument();
     const decision = screen.getByRole('group', { name: qag.label });
     expect(
-      within(decision).getByText('Facultatif : réponse sur le fond par défaut'),
+      within(decision).getByText('Facultatif : réplique par défaut sinon'),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: `Résoudre la semaine ${sitting.meta.week}` }),
@@ -199,9 +203,11 @@ describe('questions au gouvernement (phase 15)', () => {
     // La séance se rouvre à la demande ; une réplique choisie la referme et coche la réponse.
     await user.click(within(decision).getByRole('button', { name: 'Suivre la séance en direct' }));
     const again = screen.getByRole('dialog', { name: qag.label });
-    await user.click(within(again).getByRole('button', { name: /^Contre-attaquer/ }));
+    const other = qag.options.find((o) => o.id !== qag.defaultOptionId)!;
+    const name = new RegExp(`^${escape(other.libelle)}`);
+    await user.click(within(again).getByRole('button', { name }));
     expect(screen.queryByRole('dialog', { name: qag.label })).not.toBeInTheDocument();
-    expect(within(decision).getByRole('radio', { name: /^Contre-attaquer/ })).toBeChecked();
+    expect(within(decision).getByRole('radio', { name })).toBeChecked();
   });
 });
 
@@ -324,6 +330,33 @@ describe('gouvernement vivant (phase 15)', () => {
       governed.quinquennat!.gouvernement!.ministres.length + 1,
     );
     expect(within(members).queryAllByRole('button', { name: /^Facteurs/ })).toEqual([]);
+  });
+
+  it('le journal de mandat liste les décisions, leur statut et leur bilan (phase 25 ter)', async () => {
+    const urgent = withUrgencies(Object.fromEntries(RULESET.urgences.liste.map((u) => [u.id, 1])));
+    let state = governed;
+    for (let i = 0; i < 14; i++) state = step(state, urgent).state;
+    const suivis = state.quinquennat!.suivisDecisions;
+    const done = suivis.filter((s) => s.bilan);
+    expect(done.length).toBeGreaterThan(0);
+    expect(suivis.some((s) => !s.bilan)).toBe(true);
+    mockApi(base(state));
+    renderRoute(`/parties/${GAME_ID}/conseil`);
+    const journal = await screen.findByRole('list', { name: 'Décisions du mandat' });
+    expect(screen.getByRole('heading', { name: 'Suivi des décisions' })).toBeVisible();
+    expect(within(journal).getAllByRole('listitem')).toHaveLength(suivis.length);
+    // Statut en toutes lettres ; bilan chiffré et rappel de la décision.
+    for (const suivi of done) {
+      const item = within(journal).getAllByText(suivi.libelle)[0]!.closest('li')!;
+      expect(item).toHaveTextContent(
+        `Suivi fait : bilan ${suivi.bilan!.favorable ? 'favorable' : 'défavorable'}`,
+      );
+      expect(item).toHaveTextContent(suivi.bilan!.texte);
+    }
+    const pending = suivis.find((s) => !s.bilan)!;
+    expect(
+      within(journal).getAllByText(`En cours : bilan attendu semaine ${pending.echeance}`)[0],
+    ).toBeVisible();
   });
 
   it('fixe les objectifs du mandat et en donne la note provisoire', async () => {

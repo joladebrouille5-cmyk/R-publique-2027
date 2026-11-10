@@ -10,6 +10,8 @@ import {
   FREE_LICENSES,
   isoWeekday,
   parseIsoDate,
+  QAG_CONTEXTS,
+  QAG_THEME_CATEGORIES,
   RulesetSchema,
   type Ruleset,
 } from '@r2027/shared';
@@ -332,6 +334,8 @@ describe('personnalités réelles (phase 5 bis)', () => {
       'reel-ruffin',
       'reel-tondelier',
       'reel-zemmour',
+      // Phase 25 ter : ajout à la main (candidature du 9 novembre 2026), après les fiches importées.
+      'reel-riner',
     ]);
     expect(ruleset.personnalites.nonIntegrees.length).toBeGreaterThan(0);
     for (const n of ruleset.personnalites.nonIntegrees) expect(n.motif).toMatch(/CHES/);
@@ -340,7 +344,12 @@ describe('personnalités réelles (phase 5 bis)', () => {
   it('source chaque fiche : candidature datée, position étiquetée, sources importées avec empreinte', () => {
     for (const p of list) {
       expect(p.candidature.source.url).toMatch(/^https:\/\//);
-      expect(p.candidature.date <= ruleset.personnalites.verifieLe).toBe(true);
+      // Fiches importées : candidature antérieure à la vérification ; ajout à la main de la phase
+      // 25 ter : candidature du 9 novembre 2026, ajoutée le 10.
+      expect(
+        p.candidature.date <=
+          (p.id === 'reel-riner' ? '2026-11-10' : ruleset.personnalites.verifieLe),
+      ).toBe(true);
       expect(p.position.statut).toBe(
         p.position.methode === 'parti' || p.position.methode === 'parti_soutien'
           ? 'estimation'
@@ -1198,9 +1207,8 @@ describe('rééquilibrage : sondages réels et départ « Sondages actuels » (p
 });
 
 describe('implantation par département et combos (phase 25)', () => {
-  it('passe au jeu de règles 23.0.0', () => {
-    expect(ruleset.version).toBe('23.0.0');
-    expect(CURRENT_RULESET_KEY).toBe('presidentielle-2027@23.0.0');
+  it('a introduit l’implantation au jeu de règles 23.0.0 (inchangée depuis)', () => {
+    expect(ruleset.implantation.depart).toBe(30);
   });
 
   it('étiquette l’implantation et les combos comme hypothèses, aux valeurs de la spécification', () => {
@@ -1265,5 +1273,84 @@ describe('implantation par département et combos (phase 25)', () => {
     for (const id of ['meeting', 'grand-meeting', 'tournee', 'porte-a-porte', 'recrutement'])
       expect(ruleset.actions.find((a) => a.id === id)?.cibleFacultative, id).toBe(true);
     expect(ruleset.actions.find((a) => a.id === 'elus-locaux')?.cibleFacultative).toBeUndefined();
+  });
+});
+
+describe('mandat présidentiel approfondi (phase 25 ter)', () => {
+  const qag = ruleset.parlement.qag;
+
+  it('passe au jeu de règles 24.0.0', () => {
+    expect(ruleset.version).toBe('24.0.0');
+    expect(CURRENT_RULESET_KEY).toBe('presidentielle-2027@24.0.0');
+  });
+
+  it('au moins quatre banques de répliques QAG, aux identifiants uniques', () => {
+    expect(qag.banques.length).toBeGreaterThanOrEqual(4);
+    const ids = [
+      ...qag.reponses.map((r) => r.id),
+      ...qag.banques.flatMap((b) => b.reponses.map((r) => r.id)),
+    ];
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(new Set(qag.banques.map((b) => b.id)).size).toBe(qag.banques.length);
+  });
+
+  it('des effets variés : ministre, Premier ministre, pas seulement tension et popularité', () => {
+    const replies = qag.banques.flatMap((b) => b.reponses);
+    expect(replies.some((r) => r.ministre)).toBe(true);
+    expect(replies.some((r) => r.premierMinistre)).toBe(true);
+    expect(replies.some((r) => r.economie.length > 0)).toBe(true);
+    // Chaque banque compte au moins une réplique qui touche un membre du gouvernement.
+    for (const bank of qag.banques)
+      expect(
+        bank.reponses.some((r) => r.ministre || r.premierMinistre),
+        bank.id,
+      ).toBe(true);
+  });
+
+  it('chaque nature de sujet et chaque état de l’Assemblée a au moins une banque dédiée', () => {
+    for (const context of QAG_CONTEXTS.filter((c) => c !== 'tous'))
+      expect(
+        qag.banques.some((b) => b.contextes.includes(context)),
+        context,
+      ).toBe(true);
+    for (const theme of qag.themes) expect(QAG_THEME_CATEGORIES).toContain(theme.categorie);
+  });
+
+  it('suivi des décisions : 2 à 5 semaines, part différée, hypothèses', () => {
+    expect(ruleset.urgences.suivi).toMatchObject({ delaiMin: 2, delaiMax: 5 });
+    expect(ruleset.urgences.suivi.partDifferee).toBeGreaterThan(0);
+    expect(ruleset.urgences.suivi.partDifferee).toBeLessThan(1);
+    expect(ruleset.urgences.statut).toBe('hypothese');
+  });
+});
+
+describe('Teddy Riner, candidat sans parti (phase 25 ter)', () => {
+  const riner = ruleset.personnalites.personnalites.find((p) => p.id === 'reel-riner')!;
+
+  it('fiche sourcée : candidature datée, faits seulement, aucun propos ni programme', () => {
+    expect(riner).toMatchObject({
+      prenom: 'Teddy',
+      nom: 'Riner',
+      parti: 'Sans parti',
+      candidature: { statut: 'declaree', date: '2026-11-09' },
+    });
+    expect(riner.candidature.source.url).toMatch(/^https:\/\/www\.rts\.ch\//);
+    expect(riner.fonctions).toEqual(['Judoka en activité, quintuple champion olympique']);
+    expect(JSON.stringify(riner)).not.toMatch(/[«»“”]/);
+  });
+
+  it('notoriété haute, implantation nulle, aucune organisation, position hypothèse au centre', () => {
+    expect(riner.moyens).toMatchObject({ notoriete: 3, organisation: 'aucune' });
+    expect(riner.implantation).toEqual({ departements: [], regions: [], faits: [] });
+    expect(riner.position).toMatchObject({
+      economie: 0,
+      societe: 0,
+      statut: 'hypothese',
+      methode: 'sans_parti',
+      partisReference: [],
+      ches: null,
+    });
+    expect(riner.photo).toBeNull();
+    expect(ruleset.mediasReels.rattachements.some((r) => r.personnaliteId === riner.id)).toBe(true);
   });
 });

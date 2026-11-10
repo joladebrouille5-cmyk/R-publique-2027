@@ -159,10 +159,56 @@ const DepartementCode = z.string().regex(/^(\d{2}|2A|2B|97\d)$/);
  * gouvernement (par identifiant de la personnalité, du profil ou de l'acteur), objectifs du
  * mandat et déplacements du président par département (trace de la carte).
  */
-export const QuinquennatSchema = QuinquennatV18Schema.extend({
+export const QuinquennatV25Schema = QuinquennatV18Schema.extend({
   suivi: z.record(Id, MinisterTrackSchema),
   objectifs: z.array(MandateObjectiveSchema),
   deplacements: z.record(DepartementCode, z.number().int().min(1)),
+}).strict();
+export type QuinquennatV25 = z.infer<typeof QuinquennatV25Schema>;
+
+/** Nombre de décisions gardées au journal de mandat (les plus récentes). */
+export const DECISION_FOLLOW_UP_HISTORY = 60;
+
+/**
+ * Suivi d'une décision ministérielle (format 26, phase 25 ter) : une urgence tranchée par le
+ * président enclenche un retour 2 à 5 semaines plus tard (échéance tirée à la décision), qui
+ * applique la part différée des effets et dit si la décision a porté ses fruits. Tout est simulé ;
+ * aucun propos n'est attribué au ministre ni à quiconque.
+ */
+export const DecisionFollowUpSchema = z
+  .object({
+    id: Id,
+    urgenceId: Id,
+    choixId: Id,
+    /** Rappel de la décision en une ligne. */
+    libelle: z.string().min(1),
+    /** Membre du gouvernement en charge au moment de la décision (son identifiant), ou null. */
+    ministre: Id.nullable(),
+    /** Compétence du ministre sur le poste au moment de la décision (0 à 1). */
+    competence: z.number().min(0).max(1),
+    /** Part différée de la popularité du président (centièmes, signe du choix). */
+    popularite: z.number().int(),
+    semaine: z.number().int().min(0),
+    echeance: z.number().int().min(0),
+    statut: z.enum(['en-cours', 'fait']),
+    bilan: z
+      .object({
+        favorable: z.boolean(),
+        texte: z.string().min(1),
+        /** Effet appliqué au suivi sur la popularité du président (centièmes). */
+        popularite: z.number().int(),
+        /** Effet sur la popularité prêtée du ministre (centièmes). */
+        ministrePopularite: z.number().int(),
+      })
+      .strict()
+      .nullable(),
+  })
+  .strict();
+export type DecisionFollowUp = z.infer<typeof DecisionFollowUpSchema>;
+
+/** Quinquennat (format 26, phase 25 ter) : le journal de mandat des décisions ministérielles. */
+export const QuinquennatSchema = QuinquennatV25Schema.extend({
+  suivisDecisions: z.array(DecisionFollowUpSchema).max(DECISION_FOLLOW_UP_HISTORY),
 }).strict();
 export type Quinquennat = z.infer<typeof QuinquennatSchema>;
 

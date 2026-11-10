@@ -7,6 +7,7 @@ import { ScreenHeading } from '../components/Disclosure';
 import { ErrorMessage } from '../components/ErrorMessage';
 import { InfoPopover } from '../components/InfoPopover';
 import { card } from '../components/ui';
+import { DecisionJournal } from './DecisionJournal';
 import { useCurrentGame } from './GameLayout';
 import { memberInfo } from './Government';
 
@@ -214,6 +215,7 @@ export function Conseil() {
       )}
       {ruleset.isPending && <p>Chargement du jeu de règles…</p>}
       {ruleset.data && <Content state={game.state} ruleset={ruleset.data} report={report} />}
+      {game.state.quinquennat && <DecisionJournal quinquennat={game.state.quinquennat} />}
     </section>
   );
 }

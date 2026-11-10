@@ -45,6 +45,7 @@ export const POSITION_METHOD_LABELS: Record<PositionMethod, string> = {
   parti_soutien: 'position estimée du parti qui soutient sa candidature',
   ancien_parti: 'hypothèse : position d’un ancien parti',
   famille: 'hypothèse : moyenne de sa famille politique',
+  sans_parti: 'hypothèse : sans parti, milieu de l’échelle du jeu',
 };
 
 /** Format de la partie (phase 20). */

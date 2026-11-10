@@ -67,7 +67,10 @@ describe('personnalités réelles', () => {
     );
     const opponents = Object.values(real.actors).filter((a) => a.kind === 'adversaire');
     expect(opponents.map((a) => a.id).sort()).toEqual(
-      fiches.map((p) => p.id).filter((id) => id !== 'reel-philippe'),
+      fiches
+        .map((p) => p.id)
+        .filter((id) => id !== 'reel-philippe')
+        .sort(),
     );
     for (const a of opponents) {
       const f = fiche(a.id);
@@ -99,7 +102,7 @@ describe('personnalités réelles', () => {
       { seed: 'reel-4', mode: 'observateur', difficulty: 'standard', adversaires: 'reels' },
       ruleset,
     );
-    expect(Object.keys(observer.actors).sort()).toEqual(fiches.map((p) => p.id));
+    expect(Object.keys(observer.actors).sort()).toEqual(fiches.map((p) => p.id).sort());
   });
 
   it('moyens de départ : niveaux de la fiche ; la difficulté ne joue que sur les budgets et la pression du joueur', () => {

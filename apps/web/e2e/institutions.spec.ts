@@ -119,13 +119,19 @@ test('mandat : urgence ministérielle et questions au gouvernement en pop-up, pu
   await expect(live.getByText(nameOf(rules, inCharge(game, qag)), { exact: true })).toBeVisible();
   await expect(live.getByText(/^Répond pour le gouvernement · /)).toBeVisible();
   await audit(page, 'Questions au gouvernement');
-  // Facultative : sans réponse, le gouvernement répond sur le fond ; la semaine se résout.
-  await live.getByRole('button', { name: 'Laisser le gouvernement répondre sur le fond' }).click();
+  // Phase 25 ter : texte court et légende ; facultative, la réplique par défaut de la séance
+  // s'applique sans réponse ; la semaine se résout.
+  // (Séance d'une sauvegarde antérieure au format 26 : sans légende, champ facultatif.)
+  if (qag.contexte) await expect(live.getByText(qag.contexte)).toBeVisible();
+  const fallback = qag.options.find((o) => o.id === qag.defaultOptionId)!;
+  await live
+    .getByRole('button', { name: `Laisser la réplique par défaut (${fallback.libelle})` })
+    .click();
   await expect(live).toBeHidden();
   await expect(
     page
       .getByRole('group', { name: qag.label })
-      .getByText('Facultatif : réponse sur le fond par défaut'),
+      .getByText('Facultatif : réplique par défaut sinon'),
   ).toBeVisible();
 
   const [response] = await Promise.all([

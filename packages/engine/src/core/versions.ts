@@ -1,5 +1,5 @@
 /** Version du moteur, enregistrée dans chaque partie et chaque sauvegarde (§11). */
-export const ENGINE_VERSION = '0.25.0';
+export const ENGINE_VERSION = '0.26.0';
 
 /**
  * Version du format de `GameState` ; toute évolution s'accompagne d'une migration
@@ -24,6 +24,8 @@ export const ENGINE_VERSION = '0.25.0';
  * chaîne et coups des adversaires, suites programmées) ; 23 : phase 23 (jeu de règles 21 :
  * candidatures à la présidentielle suivante, successeur du joueur, poids du bilan) ; 24 : phase 24
  * (jeu de règles 22 : départ « Sondages actuels », socle électoral, rééquilibrage) ; 25 : phase 25
- * (jeu de règles 23 : implantation par département, combos, score projeté par département).
+ * (jeu de règles 23 : implantation par département, combos, score projeté par département) ; 26 : phase 25 ter
+ * (jeu de règles 24 : propositions pour Matignon, banques de répliques QAG, suivi des décisions
+ * ministérielles).
  */
-export const SAVE_SCHEMA_VERSION = 25;
+export const SAVE_SCHEMA_VERSION = 26;

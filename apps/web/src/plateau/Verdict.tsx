@@ -87,7 +87,10 @@ const from = (source: Factor['source'], label: string) => (f: Factor) =>
 const eventFactor = (event: ReportEvent) => (f: Factor) =>
   event.kind === 'risque'
     ? f.source === 'risque' && f.label.includes(` — ${event.label} : `)
-    : from('evenement', event.label)(f);
+    : event.refId === 'suivi-decision'
+      ? // Phase 25 ter : le bilan d'une décision ministérielle, au registre des décisions.
+        f.source === 'decision' && f.label.startsWith(`${event.label} — bilan `)
+      : from('evenement', event.label)(f);
 
 const isMainPoll = (poll: Poll) => poll.kind !== 'popularite' && !poll.id.endsWith('-hypothese-t2');
 
@@ -636,6 +639,8 @@ export function Verdict({
                         {eventFamily(event.refId) && (
                           <Badge>{EVENT_FAMILY_LABELS[eventFamily(event.refId)!]}</Badge>
                         )}
+                        {/* Phase 25 ter : bilan d'une décision ministérielle (journal de mandat). */}
+                        {event.refId === 'suivi-decision' && <Badge>Suivi de décision</Badge>}
                         <span className="font-semibold">{event.label}</span>
                       </p>
                       {/* Phase 20 : un événement en chaîne rappelle celui dont il découle. */}

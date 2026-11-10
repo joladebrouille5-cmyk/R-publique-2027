@@ -40,6 +40,7 @@ import {
   GameStateV22Schema,
   GameStateV23Schema,
   GameStateV24Schema,
+  GameStateV25Schema,
   addDays,
   DIGITAL_HISTORY_WEEKS,
   daysFromCivil,
@@ -73,6 +74,7 @@ import {
   type GameStateV22,
   type GameStateV23,
   type GameStateV24,
+  type GameStateV25,
   type GameStateV17,
 } from '@r2027/shared';
 import { z } from 'zod';
@@ -126,7 +128,8 @@ const SCHEMAS: Record<number, z.ZodType> = {
   22: GameStateV22Schema,
   23: GameStateV23Schema,
   24: GameStateV24Schema,
-  25: GameStateSchema,
+  25: GameStateV25Schema,
+  26: GameStateSchema,
 };
 
 /** Jeux de règles des parties aux formats 2 (phase 2) et 3 (phase 3). */
@@ -862,7 +865,7 @@ function migrateV23ToV24(v23: GameStateV23): GameStateV24 {
  * candidat personnalisé), comme une partie neuve ; la projection par département reste vide
  * jusqu'à la semaine suivante, les intentions ne bougent pas.
  */
-function migrateV24ToV25(v24: GameStateV24): GameState {
+function migrateV24ToV25(v24: GameStateV24): GameStateV25 {
   const ruleset = getRuleset(CURRENT_RULESET_KEY);
   return {
     ...v24,
@@ -876,6 +879,24 @@ function migrateV24ToV25(v24: GameStateV24): GameState {
     implantation: Object.fromEntries(
       Object.values(v24.actors).map((actor) => [actor.id, startingImplantation(actor, ruleset)]),
     ),
+  };
+}
+
+/**
+ * Format 25 → 26 (phase 25 ter) : le journal de mandat des décisions ministérielles naît vide
+ * (les urgences déjà tranchées n'ont pas de suivi) ; une décision en attente garde ses options,
+ * sans propositions ciblées ni contexte (champs facultatifs).
+ */
+function migrateV25ToV26(v25: GameStateV25): GameState {
+  return {
+    ...v25,
+    meta: {
+      ...v25.meta,
+      engineVersion: ENGINE_VERSION,
+      rulesetVersion: CURRENT_RULESET_KEY,
+      saveSchemaVersion: 26,
+    },
+    quinquennat: v25.quinquennat ? { ...v25.quinquennat, suivisDecisions: [] } : null,
   };
 }
 
@@ -904,6 +925,7 @@ const MIGRATIONS: Record<number, (state: never) => unknown> = {
   22: migrateV22ToV23,
   23: migrateV23ToV24,
   24: migrateV24ToV25,
+  25: migrateV25ToV26,
 };
 
 export type LoadedState = { state: GameState; stateHash: string; migratedFrom: number | null };

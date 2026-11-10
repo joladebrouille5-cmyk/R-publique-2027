@@ -34,7 +34,7 @@ const RULESETS: ReadonlyMap<string, Ruleset> = new Map(
 );
 
 /** Jeu de règles utilisé pour les nouvelles parties. */
-export const CURRENT_RULESET_KEY = 'presidentielle-2027@23.0.0';
+export const CURRENT_RULESET_KEY = 'presidentielle-2027@24.0.0';
 
 export class UnknownRulesetError extends Error {
   constructor(readonly key: string) {

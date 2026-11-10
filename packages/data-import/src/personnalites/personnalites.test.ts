@@ -4,7 +4,7 @@ import { ImportError } from '../geometry/coverage';
 import { buildPersonalities, mentionsCommune, photoFiles, type BuildInput } from './build';
 import { familyAt, parseChes, partyAt, toAxis } from './ches';
 import { freeLicense, originalUrl, parseAuthor, parseLicenses } from './commons';
-import type { Selected } from './selection';
+import { AJOUTS_MANUELS, type Selected } from './selection';
 import { parseSparql, sparqlQuery } from './wikidata';
 import {
   citationAfter,
@@ -333,6 +333,12 @@ describe('Commons, CHES et Wikidata', () => {
 });
 
 describe('assemblage des fiches', () => {
+  it('joint les ajouts à la main (phase 25 ter) après les fiches importées, hors « non intégrées »', () => {
+    const result = buildPersonalities(input());
+    expect(result.personnalites.slice(-AJOUTS_MANUELS.length)).toEqual(AJOUTS_MANUELS);
+    expect(result.nonIntegrees.some((n) => n.nom === 'Riner')).toBe(false);
+  });
+
   it('produit des fiches sourcées : candidature, position, photo créditée, implantation, moyens', () => {
     const result = buildPersonalities(input());
     const [exemple, test, hors, primaire] = result.personnalites;
