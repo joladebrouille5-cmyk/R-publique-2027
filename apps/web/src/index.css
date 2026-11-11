@@ -398,6 +398,60 @@
 }
 
 /* Feutrine du tapis de jeu (phase 25) : aplat bleu nuit et grain de tissu. */
+/* Phase 26 : la main en CSS 3D. L'éventail (--eventail, de −1 à +1 selon la place de la carte
+   dans la main) incline, tourne et abaisse la carte ; le toucher la fait pencher (--penche-x/y) ;
+   la carte prise se redresse et se soulève. Sans mouvement : en mouvement réduit, l'éventail reste
+   (c'est une disposition), seules les transitions disparaissent. */
+.eventail-carte {
+  transform-style: preserve-3d;
+  transform: translateY(calc(var(--eventail, 0) * var(--eventail, 0) * 0.9rem))
+    rotateZ(calc(var(--eventail, 0) * 9deg)) rotateY(calc(var(--eventail, 0) * -22deg));
+  transform-origin: 50% 120%;
+  transition: transform 180ms var(--ease-sortie);
+}
+.carte-3d {
+  transform-style: preserve-3d;
+  transform: translateZ(0) rotateX(var(--penche-x, 0deg)) rotateY(var(--penche-y, 0deg));
+  transition: transform 160ms var(--ease-sortie);
+  will-change: transform;
+}
+.carte-3d:not(:disabled):hover {
+  transform: translateY(-0.5rem) translateZ(24px) rotateX(var(--penche-x, 0deg))
+    rotateY(var(--penche-y, 0deg));
+}
+.carte-3d.carte-prise {
+  transform: translateY(-1.25rem) translateZ(48px) scale(1.05) rotateX(var(--penche-x, 0deg))
+    rotateY(var(--penche-y, 0deg));
+}
+.eventail-carte:has(.carte-prise) {
+  transform: none;
+  z-index: 20;
+}
+@media (prefers-reduced-motion: reduce) {
+  .eventail-carte,
+  .carte-3d {
+    transition: none;
+  }
+}
+
+/* Phase 26 : titre du jeu en relief (couches d'ombre empilées), au-dessus du drapeau animé. */
+@utility relief-craie {
+  text-shadow:
+    0 1px 0 #cfc8b6,
+    0 2px 0 #b9b2a0,
+    0 3px 0 #a09988,
+    0 4px 0 #857f70,
+    0 12px 22px rgb(0 0 0 / 0.6);
+}
+@utility relief-or {
+  text-shadow:
+    0 1px 0 #d9b93a,
+    0 2px 0 #b89a25,
+    0 3px 0 #96790f,
+    0 4px 0 #6f5a08,
+    0 14px 26px rgb(0 0 0 / 0.65);
+}
+
 @utility feutrine {
   background-color: var(--color-feutrine);
   background-image:

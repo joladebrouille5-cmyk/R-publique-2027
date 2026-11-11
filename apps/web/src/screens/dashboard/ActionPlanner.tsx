@@ -671,7 +671,9 @@ export function ActionPlanner({
                     >
                       <Icon aria-hidden="true" className="size-4" />
                     </span>
-                    <span className="truncate">{action?.libelle ?? planned.actionId}</span>
+                    <span className="min-w-0 [overflow-wrap:anywhere]">
+                      {action?.libelle ?? planned.actionId}
+                    </span>
                   </span>
                   <div
                     className={`flex items-center gap-2 ${action?.cible ? 'max-sm:w-full' : ''}`}

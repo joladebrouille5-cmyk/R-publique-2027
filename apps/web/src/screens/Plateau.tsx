@@ -13,7 +13,7 @@ import {
   type Ruleset,
 } from '@r2027/shared';
 import { Package, Play } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router';
 import { useRuleset, useSupports } from '../api/hooks';
 import { sound } from '../audio/systeme';
@@ -42,6 +42,13 @@ import {
 } from './dashboard/ActionPlanner';
 import { DecisionSpotlight } from './dashboard/DecisionSpotlight';
 import { presidencyRestriction } from './dashboard/restrictions';
+import { animerPose } from '../plateau/pose';
+import { colorOf } from '../portraits';
+import { useDecision3D } from '../scenes3d/appareil';
+import { Cinematique, FondStatique } from '../scenes3d/Cinematique';
+import { fouleDuMeeting, meetingDuBilan } from '../scenes3d/foule';
+import { REGLAGES } from '../scenes3d/qualite';
+import { SceneMeeting } from '../scenes3d/scenes';
 import { useCurrentGame } from './GameLayout';
 import { memberInfo } from './Government';
 
@@ -155,6 +162,16 @@ export function Plateau() {
     if (target === 'journal' || target === 'sauvegardes') setParams({ panneau: target });
   }, [hash, setParams]);
 
+  const bar = useRef<HTMLDivElement>(null);
+  const [barHeight, setBarHeight] = useState(0);
+  useEffect(() => {
+    const element = bar.current;
+    if (!element || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(() => setBarHeight(element.offsetHeight));
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
   const manifest = useGeoManifest();
   const topology = useTopology(manifest.data?.apercu ?? null);
   const shapes = useMemo(
@@ -163,6 +180,24 @@ export function Plateau() {
   );
 
   const actor = state.player.actorId ? state.actors[state.player.actorId] : undefined;
+  // Phase 26 : le meeting de la semaine résolue, en scène courte avant le verdict.
+  const palier3d = useDecision3D();
+  const [meetingVu, setMeetingVu] = useState<number | null>(null);
+  const meeting = useMemo(() => {
+    if (!week.debrief || !actor || !data) return null;
+    const found = meetingDuBilan(
+      week.debrief,
+      {
+        id: actor.id,
+        militants: actor.resources.militants,
+        implantation: state.implantation[actor.id] ?? {},
+      },
+      data.implantation.gains,
+    );
+    if (!found) return null;
+    const fouleMax = REGLAGES[palier3d.mode === '3d' ? palier3d.palier : 'eco'].fouleMax;
+    return { ...found, foule: fouleDuMeeting(found.meeting, fouleMax) };
+  }, [week.debrief, actor, data, state.implantation, palier3d]);
   const withRealPeople = Object.values(state.actors).some((a) => a.candidate.nature === 'reel');
   const campaigning =
     actor !== undefined && (actor.status === 'candidat' || actor.status === 'qualifie');
@@ -262,6 +297,8 @@ export function Plateau() {
     changePlan(cible === undefined ? plan.addAction : (id: string) => plan.addTargeted(id, cible))(
       actionId,
     );
+    // Phase 26 : la carte quitte la main et se pose sur le département (CSS 3D, décor).
+    if (cible && definition?.cible === 'departement') animerPose(actionId, cible);
     setArmed(null);
     setHovered(null);
     // Bruitage (phase 25) : la carte glisse sur la table.
@@ -448,10 +485,40 @@ export function Plateau() {
       inert={panneau ? true : undefined}
       aria-hidden={panneau ? true : undefined}
       className={`feutrine min-h-dvh px-3 pt-[calc(var(--sat)+0.75rem)] pr-[max(0.75rem,var(--sar))] pl-[max(0.75rem,var(--sal))] text-craie sm:px-5 pb-6`}
+      // Phase 26 : le plateau garde sous lui la place de la main et du bouton (fixés en bas) :
+      // la légende et les dernières lignes ne passent plus sous les cartes.
+      style={
+        barHeight
+          ? ({ paddingBottom: barHeight + 16, '--bas': `${barHeight}px` } as CSSProperties)
+          : undefined
+      }
     >
       <h1 id="titre-plateau" className="sr-only">
         Plateau
       </h1>
+      {meeting && week.debrief && meetingVu !== week.debrief.week && (
+        <Cinematique
+          titre={`${meeting.libelle} : ${meeting.lieu}`}
+          sousTitre={`${
+            meeting.foule.remplissage >= 0.8
+              ? 'Salle comble'
+              : meeting.foule.remplissage >= 0.5
+                ? 'Salle bien remplie'
+                : 'Salle à moitié vide'
+          }${meeting.meeting.gain > 0 ? ` : +${meeting.meeting.gain} d’implantation` : ' : sans effet sur votre implantation'}.`}
+          note="Mise en scène : la foule suit votre implantation, vos militants et le résultat du meeting ; aucune jauge réelle."
+          dureeMs={8000}
+          onFin={() => setMeetingVu(week.debrief!.week)}
+        >
+          <SceneMeeting
+            foule={meeting.foule}
+            couleur={colorOf(actor, data)}
+            label={`Salle de meeting : ${meeting.foule.spectateurs} silhouettes sur ${meeting.foule.capacite} places`}
+            repli={<FondStatique couleurs={[colorOf(actor, data), '#0d1226']} />}
+            className="h-full w-full"
+          />
+        </Cinematique>
+      )}
       {week.debrief && (
         <Verdict
           report={week.debrief}
@@ -563,6 +630,7 @@ export function Plateau() {
                 onDropCard={playing ? (actionId, code) => place(actionId, code) : undefined}
                 onHover={setHovered}
                 bubble={bubble}
+                legendCollapsed={playing && cards.length > 0}
               />
             ) : topology.isError || manifest.isError ? (
               <ErrorMessage error={topology.error ?? manifest.error} />
@@ -668,7 +736,10 @@ export function Plateau() {
       </div>
 
       {/* La main en éventail et le gros bouton doré, à portée du pouce (maquette validée). */}
-      <div className="fixed inset-x-0 bottom-0 z-30 bg-linear-to-t from-feutrine-3 via-feutrine-3/95 to-transparent pt-2 pr-(--sar) pb-[calc(0.75rem+var(--sab))] pl-(--sal)">
+      <div
+        ref={bar}
+        className="fixed inset-x-0 bottom-0 z-30 bg-linear-to-t from-feutrine-3 via-feutrine-3/95 to-transparent pt-2 pr-(--sar) pb-[calc(0.75rem+var(--sab))] pl-(--sal)"
+      >
         <div className="mx-auto max-w-3xl space-y-1.5 px-3">
           {armedCard && data && actor && (
             <div

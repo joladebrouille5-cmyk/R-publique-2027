@@ -15,7 +15,15 @@ import {
   type TerritoryLevel,
 } from '@r2027/shared';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, FastForward, RotateCcw, SkipForward, X } from 'lucide-react';
+import {
+  ArrowLeft,
+  Box,
+  FastForward,
+  Map as MapIcon,
+  RotateCcw,
+  SkipForward,
+  X,
+} from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { useRuleset } from '../api/hooks';
@@ -45,7 +53,12 @@ import {
 } from '../map/data';
 import { ElectionMap, type BBox, type MapSelection } from '../map/ElectionMap';
 import { useMediaQuery, useMode } from '../map/useMode';
-import { portraitOf } from '../portraits';
+import { boardShapes } from '../plateau/geometry';
+import { colorOf as campColor, portraitOf } from '../portraits';
+import { useDecision3D } from '../scenes3d/appareil';
+import { Cinematique, FondStatique, Sequence } from '../scenes3d/Cinematique';
+import { arcsDeReport, ralliements } from '../scenes3d/reports';
+import { Confettis, SceneCarte, SceneInvestiture, SceneRalliement } from '../scenes3d/scenes';
 import { useCurrentGame } from './GameLayout';
 import { NatureBadge } from './map/parts';
 import {
@@ -194,7 +207,7 @@ function Night({ result }: { result: RoundResult }) {
     ];
   }, [m]);
   const depName = (code: string) => departements.get(code)?.nom ?? code;
-  const counts = result.territoire?.departements ?? {};
+  const counts = useMemo(() => result.territoire?.departements ?? {}, [result]);
   const partOf = (code: string, t = minute) => avancement(rythme[code], t);
   const depResult = (code: string, t = minute): TerritoryResult | undefined => {
     const c = counts[code];
@@ -315,6 +328,66 @@ function Night({ result }: { result: RoundResult }) {
     else setSelected(selection);
   };
   const overlay = useRef<HTMLDivElement>(null);
+
+  // Phase 26 : la soirée en 3D (repli : la carte 2D). Départements extrudés à la hauteur du score
+  // du candidat en tête, colorés en onde au fil du dépouillement ; au second tour, les arcs des
+  // reports de voix. Tout vient du résultat déjà dépouillé par le moteur.
+  const scene3d = useDecision3D().mode === '3d';
+  const [vue, setVue] = useState<'3d' | '2d'>('3d');
+  const [reports, setReports] = useState(true);
+  const shapes = useMemo(
+    () => (overview.data?.departements ? boardShapes(overview.data.departements) : null),
+    [overview.data],
+  );
+  const etats3d = (() => {
+    const out: Record<string, { couleur: string; score: number; avancement: number }> = {};
+    for (const [code, c] of Object.entries(counts)) {
+      const final = fromCounts(c, keys);
+      const leader = leaderOf(final);
+      out[code] = {
+        couleur: leader === null ? noData : palette.colorOf(leader),
+        score: leader === null || final.exprimes === 0 ? 0 : final.voix[leader]! / final.exprimes,
+        avancement: avancement(rythme[code], minute),
+      };
+    }
+    return out;
+  })();
+  const transferts = useMemo(
+    () => (round === 2 ? ralliements(state.elections.consignes, state.elections.t1) : []),
+    [round, state.elections],
+  );
+  const arcs3d = useMemo(
+    () =>
+      round === 2 && reports
+        ? arcsDeReport(state.elections.consignes, state.elections.t1).map((arc) => ({
+            ...arc,
+            couleur: palette.colorOf(keys.indexOf(arc.vers)),
+          }))
+        : [],
+    [round, reports, state.elections, palette, keys],
+  );
+  const en3d = scene3d && vue === '3d' && !drill && shapes !== null;
+
+  // Transitions de fin de soirée : ralliement (premier tour, des candidats éliminés soutiennent le
+  // joueur qualifié), investiture (second tour, le mandat commence) et confettis de la victoire.
+  const playerId = state.player.actorId;
+  const rallies = useMemo(
+    () =>
+      round === 1 && playerId && result.qualified.includes(playerId)
+        ? ralliements(state.elections.consignes, result).filter((r) => r.vers === playerId)
+        : [],
+    [round, playerId, result, state.elections.consignes],
+  );
+  const [transition, setTransition] = useState<'ralliement' | 'investiture' | null>(null);
+  const [joue, setJoue] = useState(false);
+  if (done && !joue) {
+    setJoue(true);
+    if (rallies.length > 0) setTransition('ralliement');
+    else if (round === 2 && result.winner && state.meta.phase === 'presidence')
+      setTransition('investiture');
+  }
+  const victoire = done && result.winner !== null && result.winner === playerId;
+  const campJoueur = campColor(playerId ? state.actors[playerId] : undefined, ruleset.data);
 
   // Classement, bandeau, fil et annonce.
   const nameOf = (id: string) => candidats.find((c) => c.key === id)?.label ?? id;
@@ -470,6 +543,74 @@ function Night({ result }: { result: RoundResult }) {
         />
       </div>
 
+      {victoire && !transition && <Confettis couleur={campJoueur} />}
+      {transition === 'ralliement' && (
+        <Cinematique
+          titre={
+            rallies.length === 1
+              ? `${nameOf(rallies[0]!.de)} appelle à voter pour vous`
+              : `${rallies.length} candidats appellent à voter pour vous`
+          }
+          sousTitre={`${rallies.map((r) => `${nameOf(r.de)} (${percent(r.part / 10_000)} au premier tour)`).join(', ')}.`}
+          note="Consignes de vote simulées : aucun propos n’est prêté à une personne réelle."
+          dureeMs={12_000}
+          onFin={() => setTransition(null)}
+        >
+          <Sequence
+            apresMs={7500}
+            premier={
+              <SceneRalliement
+                rallie={campColor(state.actors[rallies[0]!.de], ruleset.data)}
+                camp={campJoueur}
+                duree={8}
+                label="Deux foules aux couleurs de chaque camp se rejoignent et n’en font plus qu’une"
+                repli={
+                  <FondStatique
+                    couleurs={[campColor(state.actors[rallies[0]!.de], ruleset.data), campJoueur]}
+                  />
+                }
+                className="h-full w-full"
+              />
+            }
+            second={
+              shapes && (
+                <SceneCarte
+                  nom="reports"
+                  label={`Reports de voix : ${rallies.length} arc(s) vers vos départements les plus forts`}
+                  shapes={shapes}
+                  etats={Object.fromEntries(
+                    Object.entries(etats3d).map(([code, e]) => [code, { ...e, avancement: 1 }]),
+                  )}
+                  arcs={arcsDeReport(
+                    state.elections.consignes.filter((c) => c.toActorId === playerId),
+                    result,
+                  ).map((arc) => ({ ...arc, couleur: campJoueur }))}
+                  attente={noData}
+                  repli={null}
+                  intro={false}
+                  className="h-full w-full"
+                />
+              )
+            }
+          />
+        </Cinematique>
+      )}
+      {transition === 'investiture' && (
+        <Cinematique
+          titre="L’investiture"
+          sousTitre={`${nameOf(result.winner!)} entre à l’Élysée : le quinquennat commence.`}
+          note="Cour de l’Élysée stylisée ; cérémonie simulée."
+          dureeMs={11_000}
+          onFin={() => setTransition(null)}
+        >
+          <SceneInvestiture
+            duree={10}
+            label="La cour d’honneur de l’Élysée : tapis rouge, garde républicaine, drapeau"
+            repli={<FondStatique couleurs={['#1f3a93', '#f4f1ea', '#d0312d']} />}
+            className="h-full w-full bg-linear-to-b from-[#f2c9a0] via-[#f6e3c8] to-[#cfe0f2]"
+          />
+        </Cinematique>
+      )}
       {done && (
         <section
           aria-labelledby="titre-verdict"
@@ -505,6 +646,16 @@ function Night({ result }: { result: RoundResult }) {
                 <ErrorMessage error={overview.error} onRetry={() => void overview.refetch()} />
               ) : !m || overview.isPending ? (
                 <p className="p-4 text-sm text-slate-300">Chargement de la carte…</p>
+              ) : en3d ? (
+                <SceneCarte
+                  label={`Carte de France en relief : ${now.departementsTermines} départements dépouillés sur ${now.departements}`}
+                  shapes={shapes}
+                  etats={etats3d}
+                  arcs={arcs3d}
+                  attente={noData}
+                  repli={<p className="p-4 text-sm text-slate-300">Chargement de la carte…</p>}
+                  className="h-full w-full"
+                />
               ) : (
                 <ElectionMap
                   label="Carte du dépouillement"
@@ -554,12 +705,31 @@ function Night({ result }: { result: RoundResult }) {
                       </span>
                     </p>
                   </div>
+                ) : en3d ? (
+                  <p className="rounded-2xl bg-slate-950/90 px-3 py-2 text-xs font-medium text-white">
+                    Relief : score du candidat en tête. Tournez et zoomez la carte au doigt.
+                  </p>
                 ) : (
                   <p className="rounded-2xl bg-slate-950/90 px-3 py-2 text-xs font-medium text-white">
                     Touchez un département au détail communal pour suivre ses communes.
                   </p>
                 )}
               </div>
+              {scene3d && shapes && !drill && (
+                <button
+                  type="button"
+                  onClick={() => setVue(vue === '3d' ? '2d' : '3d')}
+                  aria-pressed={vue === '3d'}
+                  className={`absolute right-3 bottom-3 z-20 inline-flex min-h-11 items-center gap-2 rounded-full border border-slate-200/80 bg-white/95 px-4 text-sm font-bold shadow-raised dark:border-slate-700 dark:bg-slate-900/95 ${pressable}`}
+                >
+                  {vue === '3d' ? (
+                    <MapIcon aria-hidden="true" className="size-4" />
+                  ) : (
+                    <Box aria-hidden="true" className="size-4" />
+                  )}
+                  {vue === '3d' ? 'Vue 2D' : 'Vue 3D'}
+                </button>
+              )}
               {selected && (
                 <div className="absolute inset-x-3 bottom-3 z-20 flex animate-monte items-start gap-2 rounded-2xl border border-slate-200/80 bg-white/95 p-3 text-sm shadow-raised sm:right-auto sm:max-w-sm dark:border-slate-700 dark:bg-slate-900/95">
                   <p role="status" className="min-w-0 flex-1">
@@ -673,6 +843,32 @@ function Night({ result }: { result: RoundResult }) {
             </div>
           </div>
 
+          {transferts.length > 0 && (
+            <section aria-labelledby="titre-reports" className="space-y-2 text-xs">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h2 id="titre-reports" className="font-sans text-sm font-bold tracking-normal">
+                  Reports de voix
+                </h2>
+                {en3d && (
+                  <label className="inline-flex min-h-9 items-center gap-2 font-semibold">
+                    <input
+                      type="checkbox"
+                      checked={reports}
+                      onChange={(event) => setReports(event.target.checked)}
+                      className="size-4 accent-republique-600"
+                    />
+                    Arcs sur la carte 3D
+                  </label>
+                )}
+              </div>
+              <ReportsListe
+                transferts={transferts}
+                nameOf={nameOf}
+                colorOf={(id) => palette.colorOf(keys.indexOf(id))}
+              />
+            </section>
+          )}
+
           <section aria-labelledby="titre-legende-soiree" className="space-y-2 text-xs">
             <h2 id="titre-legende-soiree" className="font-sans text-sm font-bold tracking-normal">
               Lecture de la carte
@@ -759,5 +955,43 @@ function Night({ result }: { result: RoundResult }) {
           ' Ce tour n’a pas de détail territorial (partie migrée d’une version antérieure) : la carte reste en attente et le résultat national tombe à minuit.'}
       </p>
     </section>
+  );
+}
+
+/**
+ * Reports de voix en liste (phase 26) : la lecture écrite des arcs de la carte 3D, et leur repli.
+ * La barre de chaque ralliement est proportionnelle aux voix du premier tour du candidat rallié.
+ */
+export function ReportsListe({
+  transferts,
+  nameOf,
+  colorOf,
+}: {
+  transferts: readonly { de: string; vers: string; poids: number; part: number }[];
+  nameOf: (id: string) => string;
+  colorOf: (id: string) => string;
+}) {
+  const max = Math.max(1, ...transferts.map((t) => t.poids));
+  return (
+    <ul className="space-y-1.5" aria-label="Reports de voix du premier tour">
+      {transferts.map((t) => (
+        <li key={`${t.de}-${t.vers}`} className="space-y-0.5">
+          <span className="block">
+            <strong>{nameOf(t.de)}</strong> → {nameOf(t.vers)} :{' '}
+            <span className="tabular-nums">
+              {t.poids.toLocaleString('fr-FR')} voix du premier tour ({percent(t.part / 10_000)})
+            </span>
+          </span>
+          <span
+            aria-hidden="true"
+            className="block h-1.5 rounded-full"
+            style={{ width: `${(t.poids / max) * 100}%`, backgroundColor: colorOf(t.vers) }}
+          />
+        </li>
+      ))}
+      <li className="text-encre-2">
+        Consignes de vote simulées ; le réservoir de voix n’est pas un report mesuré.
+      </li>
+    </ul>
   );
 }

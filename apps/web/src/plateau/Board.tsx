@@ -58,6 +58,7 @@ export function Board({
   onDropCard,
   onHover,
   bubble,
+  legendCollapsed = false,
 }: {
   shapes: readonly BoardShape[];
   state: GameState;
@@ -75,6 +76,11 @@ export function Board({
    * du département survolé ou touché (déjà écrite dans son nom : non annoncée).
    */
   bubble?: { code: string; content: ReactNode; announce?: boolean } | null | undefined;
+  /**
+   * Phase 26 : main déployée au bas de l'écran, la légende se replie derrière « Légende » pour
+   * ne plus passer sous les cartes ; elle s'ouvre au toucher.
+   */
+  legendCollapsed?: boolean;
 }) {
   const anchor = bubble ? shapes.find((s) => s.code === bubble.code) : undefined;
   const [x, y, width, height] = BOARD_VIEWBOX;
@@ -112,6 +118,23 @@ export function Board({
     }
   };
   const pending = reading !== 'implantation' && !hasProjection(state);
+  const legendList = (
+    <ul
+      aria-label="Légende"
+      className="flex flex-wrap gap-x-3 gap-y-1 text-[0.68rem] text-encre-carton-2"
+    >
+      {legend.map((item) => (
+        <li key={item.label} className="inline-flex items-center gap-1.5">
+          <span
+            aria-hidden="true"
+            className={`inline-block size-2.5 rounded-sm border border-trait/60 ${item.swatch}`}
+            style={item.swatch ? undefined : { backgroundColor: item.fill }}
+          />
+          {item.label}
+        </li>
+      ))}
+    </ul>
+  );
   return (
     <figure className="flex flex-col gap-2">
       <figcaption className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs font-bold text-encre-carton">
@@ -131,7 +154,9 @@ export function Board({
       </figcaption>
       <div
         ref={frame}
-        className="relative mx-auto aspect-[1000/1180] w-full max-w-[max(13rem,calc((100dvh-35rem)*1000/1180))] sm:max-w-[max(15rem,calc((100dvh-38rem)*1000/1180))]"
+        // Phase 26 : le plateau tient au-dessus de la main et du bouton fixés en bas (--bas, hauteur
+        // mesurée par l'écran) : ni la carte ni la légende ne passent dessous.
+        className="relative mx-auto aspect-[1000/1180] w-full max-w-[max(11rem,calc((100dvh-var(--bas,17.5rem)-18.5rem)*1000/1180))] transition-[max-width] duration-200 sm:max-w-[max(15rem,calc((100dvh-var(--bas,17.5rem)-20.5rem)*1000/1180))]"
       >
         <svg
           viewBox={`${x} ${y} ${width} ${height}`}
@@ -163,6 +188,7 @@ export function Board({
               <path
                 key={shape.code}
                 d={shape.d}
+                data-dept={shape.code}
                 // Couleur par une classe générée (une variable CSS ne vaut rien dans l'attribut `fill`).
                 data-fill={paint.fill}
                 role="button"
@@ -257,21 +283,16 @@ export function Board({
           Chiffres : votre score projeté, arrondi, en % (détail au toucher d’un département).
         </p>
       )}
-      <ul
-        aria-label="Légende"
-        className="flex flex-wrap gap-x-3 gap-y-1 text-[0.68rem] text-encre-carton-2"
-      >
-        {legend.map((item) => (
-          <li key={item.label} className="inline-flex items-center gap-1.5">
-            <span
-              aria-hidden="true"
-              className={`inline-block size-2.5 rounded-sm border border-trait/60 ${item.swatch}`}
-              style={item.swatch ? undefined : { backgroundColor: item.fill }}
-            />
-            {item.label}
-          </li>
-        ))}
-      </ul>
+      {legendCollapsed ? (
+        <details className="text-[0.68rem] text-encre-carton-2">
+          <summary className="inline-flex min-h-8 cursor-pointer items-center gap-1.5 font-bold text-encre-carton">
+            Légende ({legend.length} teintes)
+          </summary>
+          {legendList}
+        </details>
+      ) : (
+        legendList
+      )}
     </figure>
   );
 }

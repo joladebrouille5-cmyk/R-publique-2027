@@ -88,6 +88,14 @@ export default tseslint.config(
     },
   },
 
+  // Scènes 3D (phase 26) : three.js se pilote par mutation, image après image (uniformes de
+  // shaders, matrices d'instances, caméra) ; la règle d'immuabilité du compilateur React ne
+  // s'applique pas à ces objets, qui ne sont pas de l'état React.
+  {
+    files: ['apps/web/src/scenes3d/three/**/*.{ts,tsx}'],
+    rules: { 'react-hooks/immutability': 'off' },
+  },
+
   // Application mobile : l'interface de apps/web branchée sur le moteur local (@r2027/local-api),
   // qui exécute la simulation sur l'appareil derrière le même contrat que l'API.
   {

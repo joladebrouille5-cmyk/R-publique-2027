@@ -43,6 +43,13 @@ const VACANT = 'fill-slate-200 dark:fill-slate-700';
 /** Opacité des autres sièges quand un groupe interpelle le gouvernement (phase 15). */
 const DIMMED = 0.28;
 export const colorOf = (id: string) => GROUP_COLORS[id] ?? FALLBACK;
+/** Couleur d'un groupe en hexadécimal (scène 3D de l'hémicycle, phase 26) : mêmes teintes. */
+export function groupHex(id: string, dark: boolean): string {
+  const [light, night] = [...(GROUP_COLORS[id]?.fill ?? '').matchAll(/#[0-9a-f]{6}/gi)].map(
+    (m) => m[0],
+  );
+  return (dark ? night : light) ?? '#64748b';
+}
 
 /** Rang de l'hémicycle (convention du jeu) : moyenne des deux axes, puis axe économique. */
 export function seatingOrder<T extends Pick<AssemblyGroup, 'id' | 'position'>>(

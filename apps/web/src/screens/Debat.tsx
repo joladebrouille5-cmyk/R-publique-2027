@@ -21,6 +21,9 @@ import {
   outcomeLabel,
   playerOnStage,
 } from './debat/parts';
+import { colorOf } from '../portraits';
+import { parole, tensionDuDebat } from '../scenes3d/debat';
+import { SceneDebat } from '../scenes3d/scenes';
 import { useCurrentGame } from './GameLayout';
 
 // Écran « Débat en direct » (phase 10) : le joueur joue une carte par séquence ; le moteur
@@ -95,6 +98,17 @@ function Plateau({ session }: { session: DebateSession }) {
   const index = session.enCours?.index ?? session.sequences.length;
   const depart = ruleset.data?.debats.approbation.depart ?? 50;
   const cancelled = cancelledDebate(session);
+  // Phase 26 : habillage 3D du plateau (aucune mécanique) : un pupitre par candidat présent, à
+  // la couleur de sa famille politique ; cadrage et lumière suivent la tension des échanges.
+  const pupitres = useMemo(
+    () =>
+      session.invites
+        .filter((id) => !session.refus.includes(id))
+        .map((id) => ({ id, couleur: colorOf(state.actors[id], ruleset.data) })),
+    [session.invites, session.refus, state.actors, ruleset.data],
+  );
+  const tension = tensionDuDebat(session);
+  const voix = parole(session);
   // Son (phase 19) : pas de musique sur le plateau ; jingle d'ouverture d'un débat à venir ou en cours.
   useAmbiance('silence', 2);
   useCue(session.statut !== 'termine' && !cancelled ? 'debat' : null);
@@ -193,6 +207,16 @@ function Plateau({ session }: { session: DebateSession }) {
         {announcement}
       </p>
 
+      {!cancelled && pupitres.length > 0 && (
+        <SceneDebat
+          pupitres={pupitres}
+          parle={session.statut === 'termine' ? null : voix.parle}
+          cible={voix.cible}
+          tension={tension}
+          label={`Plateau du débat : ${pupitres.length} pupitres aux couleurs des candidats, sans personnage ; lumière ${tension >= 0.6 ? 'froide, échanges vifs' : tension >= 0.35 ? 'neutre, le ton monte' : 'chaude, échanges posés'}`}
+          className="aspect-[16/9] max-h-[46dvh] w-full rounded-dossier"
+        />
+      )}
       <Lecterns state={state} ruleset={ruleset.data} session={session} />
       <div className={card}>
         <ApprovalChart state={state} session={session} depart={depart} />

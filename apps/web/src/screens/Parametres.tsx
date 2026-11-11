@@ -1,3 +1,4 @@
+import { QualiteSettings } from '../components/QualiteSettings';
 import type { Ruleset } from '@r2027/shared';
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { useCurrentRuleset, useHealth } from '../api/hooks';
@@ -543,6 +544,7 @@ export function Parametres() {
         label="Sommaire des paramètres"
         items={[
           { id: 'titre-apparence', label: 'Apparence' },
+          { id: 'titre-3d', label: 'Scènes 3D' },
           { id: 'titre-son', label: 'Son' },
           { id: 'titre-rappels', label: 'Rappels' },
           ...(ruleset.data ? [{ id: 'titre-credits', label: 'Crédits' }] : []),
@@ -552,6 +554,10 @@ export function Parametres() {
 
       <Section id="titre-apparence" title="Apparence">
         <ThemeChoice />
+      </Section>
+
+      <Section id="titre-3d" title="Scènes 3D">
+        <QualiteSettings />
       </Section>
 
       <Section id="titre-son" title="Son">

@@ -1,5 +1,5 @@
 import { FAMILLE_LABELS, type ActionDefinition, type Famille, type Ruleset } from '@r2027/shared';
-import { createElement, useId } from 'react';
+import { createElement, useId, type PointerEvent } from 'react';
 import { formatResource, RESOURCE_LABELS } from '../labels';
 import { actionIcon } from '../screens/dashboard/actionIcons';
 import { effectLines } from '../screens/dashboard/ActionPlanner';
@@ -22,6 +22,21 @@ const RING: Record<Famille, string> = {
   organisation: 'ring-famille-organisation text-famille-organisation',
 };
 
+/** Inclinaison de la carte vers le point touché (variables lues par `.carte-3d`). */
+function pencher(event: PointerEvent<HTMLButtonElement>) {
+  const carte = event.currentTarget;
+  const boite = carte.getBoundingClientRect();
+  if (boite.width === 0 || boite.height === 0) return;
+  const x = (event.clientX - boite.left) / boite.width - 0.5;
+  const y = (event.clientY - boite.top) / boite.height - 0.5;
+  carte.style.setProperty('--penche-x', `${(-y * 16).toFixed(1)}deg`);
+  carte.style.setProperty('--penche-y', `${(x * 20).toFixed(1)}deg`);
+}
+function redresser(event: PointerEvent<HTMLButtonElement>) {
+  event.currentTarget.style.removeProperty('--penche-x');
+  event.currentTarget.style.removeProperty('--penche-y');
+}
+
 /** Effet principal, en quelques mots (« +12 implantation », « + Notoriété »). */
 function headline(definition: ActionDefinition, gain: number | undefined): string {
   if (gain) return `+${gain} implantation`;
@@ -41,7 +56,6 @@ export function Card({
   reason,
   combo,
   armed,
-  tilt = '',
   onPick,
 }: {
   definition: ActionDefinition;
@@ -53,8 +67,6 @@ export function Card({
   combo: string | null;
   /** Carte prise, en attente de sa cible : elle se soulève. */
   armed: boolean;
-  /** Inclinaison de la carte dans l'éventail. */
-  tilt?: string;
   onPick: (actionId: string) => void;
 }) {
   const id = useId();
@@ -84,10 +96,15 @@ export function Card({
       aria-pressed={armed}
       aria-label={`Carte « ${definition.libelle} », ${cost}`}
       aria-describedby={`${id}-effet${reason ? ` ${id}-raison` : ''}${combo ? ` ${id}-combo` : ''}`}
-      className={`relative flex h-36 w-28 shrink-0 flex-col sm:h-44 sm:w-32 overflow-hidden rounded-2xl border-2 border-bord-carte bg-carton text-left text-encre-carton shadow-carte transition-transform duration-200 ease-sortie focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-or disabled:cursor-not-allowed ${
-        armed
-          ? 'z-20 -translate-y-5 scale-105 rotate-0 ring-4 ring-or'
-          : `${tilt} hover:-translate-y-2`
+      data-carte={definition.id}
+      // Phase 26 : la carte penche sous le doigt (ou la souris), vers le point touché.
+      onPointerMove={pencher}
+      onPointerDown={pencher}
+      onPointerLeave={redresser}
+      onPointerUp={redresser}
+      onPointerCancel={redresser}
+      className={`carte-3d relative flex h-40 w-28 shrink-0 flex-col overflow-hidden rounded-2xl border-2 border-bord-carte bg-carton text-left text-encre-carton shadow-carte focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-or disabled:cursor-not-allowed sm:h-44 sm:w-32 ${
+        armed ? 'carte-prise z-20 ring-4 ring-or' : ''
       } ${combo && !reason && !armed ? 'ring-4 ring-or' : ''} ${reason ? 'opacity-75 grayscale' : ''}`}
     >
       <span
@@ -95,7 +112,9 @@ export function Card({
           presidency ? 'bg-encre-carton' : BAND[famille]
         }`}
       >
-        <span className="truncate">{presidency ? 'Agenda' : FAMILLE_LABELS[famille]}</span>
+        <span className="min-w-0 leading-tight">
+          {presidency ? 'Agenda' : FAMILLE_LABELS[famille]}
+        </span>
         <span className="shrink-0 rounded bg-black/30 px-1 tabular-nums">{hours}</span>
       </span>
       <span
@@ -109,7 +128,18 @@ export function Card({
           strokeWidth: 2.4,
         })}
       </span>
-      <span className="px-1.5 pt-1 text-center font-display text-[0.74rem] leading-[1.1] font-extrabold sm:px-2 sm:pt-1.5 sm:text-[0.82rem]">
+      {/* Titre entier, jamais tronqué : il passe à la ligne, en plus petit s'il est long. */}
+      <span
+        data-titre-carte=""
+        lang="fr"
+        className={`px-1.5 pt-1 text-center font-display leading-[1.08] font-extrabold text-balance hyphens-auto [overflow-wrap:anywhere] sm:px-2 sm:pt-1.5 ${
+          definition.libelle.length > 30
+            ? 'text-[0.62rem] sm:text-[0.7rem]'
+            : definition.libelle.length > 20
+              ? 'text-[0.68rem] sm:text-[0.76rem]'
+              : 'text-[0.74rem] sm:text-[0.82rem]'
+        }`}
+      >
         {definition.libelle}
       </span>
       {euros && (

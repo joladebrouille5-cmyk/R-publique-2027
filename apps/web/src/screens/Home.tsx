@@ -1,3 +1,4 @@
+import { SceneDrapeau } from '../scenes3d/scenes';
 import { candidateName, type GameSummary, type Ruleset } from '@r2027/shared';
 import { ChevronRight, Plus } from 'lucide-react';
 import { Link } from 'react-router';
@@ -175,17 +176,20 @@ export function Home() {
         aria-labelledby="titre-jeu"
         className="feutrine mx-auto max-w-6xl rounded-b-plateau px-4 pt-8 pb-8 sm:rounded-plateau sm:pt-14"
       >
-        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-end lg:gap-12">
+        {/* Phase 26 : le drapeau en tissu animé (onde au toucher) ; statique pendant son chargement,
+            sans WebGL ou en mouvement réduit. Le titre, en relief, reste du texte. */}
+        <SceneDrapeau className="-mx-4 -mt-8 mb-0 h-[24dvh] min-h-36 rounded-b-plateau sm:mx-0 sm:-mt-6 sm:h-[30dvh] sm:rounded-plateau" />
+        <div className="relative -mt-9 lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-end lg:gap-12 sm:-mt-14 pointer-events-none *:pointer-events-auto">
           <div>
             {/* Affiche-titre (phase 21) : deux passages d'encre, le rouge imprimé sur le bleu. */}
             <h1
               id="titre-jeu"
               className="isolate font-display leading-[0.78] font-black tracking-normal"
             >
-              <span className="block animate-apparait text-[clamp(4rem,24vw,12.5rem)] tracking-[-0.01em] text-craie [font-stretch:58%]">
+              <span className="block animate-apparait text-[clamp(4rem,24vw,12.5rem)] tracking-[-0.01em] text-craie relief-craie [font-stretch:58%]">
                 RÉPUBLIQUE
               </span>{' '}
-              <span className="-mt-[0.14em] -ml-[0.03em] sm:-mt-[0.2em] block animate-calage text-[clamp(6rem,28vw,15.5rem)] tracking-[-0.03em] text-or [font-stretch:122%]">
+              <span className="-mt-[0.14em] -ml-[0.03em] sm:-mt-[0.2em] block animate-calage text-[clamp(6rem,28vw,15.5rem)] tracking-[-0.03em] text-or relief-or [font-stretch:122%]">
                 2027
               </span>
             </h1>

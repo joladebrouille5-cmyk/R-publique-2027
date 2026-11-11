@@ -5,15 +5,18 @@ import {
   type Ruleset,
 } from '@r2027/shared';
 import { Check, Radio, X } from 'lucide-react';
-import { useId, useRef } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useCue } from '../../audio/hooks';
 import { Badge } from '../../components/Badge';
-import { Hemicycle, seatingOrder } from '../../components/Hemicycle';
+import { seatingOrder } from '../../components/Hemicycle';
 import { TensionGauge } from '../../components/ParliamentGauges';
 import { useModal } from '../../components/useModal';
 import { buttonGhost } from '../../components/ui';
 import { formatGameDate } from '../../labels';
+import { useDecision3D } from '../../scenes3d/appareil';
+import { reactionDeLaSalle, type Reaction } from '../../scenes3d/hemicycle';
+import { SceneHemicycle } from '../../scenes3d/scenes';
 import { CandidacyOptionBody } from './CandidacyOptions';
 import { DECISION_KINDS, NominationChoice, ResponsibleMinister } from './DecisionsPanel';
 
@@ -23,6 +26,19 @@ import { DECISION_KINDS, NominationChoice, ResponsibleMinister } from './Decisio
 // qui interpelle, jauge de tension) ou un rendez-vous d'élus, présentés en plein écran avec leurs
 // choix. Choisir renseigne la réponse de la semaine ; rien n'est calculé ici : textes, options et
 // effets viennent du moteur. Aucun propos n'est attribué à une personne réelle.
+// Phase 26 : pendant les questions au gouvernement, l'hémicycle est une salle en 3D (repli : les
+// points de l'hémicycle 2D). La caméra plonge sur le groupe qui interpelle, revient sur le banc du
+// gouvernement quand la réplique est choisie, puis la salle réagit selon les points de tension de
+// cette réplique (jeu de règles) ; le pop-up se ferme ensuite de lui-même.
+
+const REACTION_TEXTE: Record<Reaction, string> = {
+  apaisement: 'La salle s’apaise.',
+  echauffement: 'La salle s’échauffe.',
+  'contre-attaque': 'L’opposition proteste, la majorité applaudit.',
+};
+/** Durée du retour sur le banc du gouvernement, puis de la réaction de la salle (ms). */
+const REPONSE_MS = 1400;
+const REACTION_MS = 2400;
 
 /** Sièges de l'Assemblée en jeu, de la gauche vers la droite (convention de l'hémicycle). */
 function hemicycleGroups(state: GameState, ruleset: Ruleset) {
@@ -73,9 +89,36 @@ export function DecisionSpotlight({
   const theme = decision.themeId
     ? ruleset?.parlement.qag.themes.find((t) => t.id === decision.themeId)
     : undefined;
+  const groupes = useMemo(() => (ruleset ? hemicycleGroups(state, ruleset) : []), [state, ruleset]);
+  // Séance en 3D : la réplique choisie se voit dans la salle avant la fermeture.
+  const scene3d = useDecision3D().mode === '3d' && live;
+  const [replique, setReplique] = useState<{
+    reaction: Reaction;
+    etape: 'reponse' | 'reaction';
+  } | null>(null);
+  const [regard, setRegard] = useState<'large' | 'question'>('large');
+  useEffect(() => {
+    if (!scene3d) return;
+    const timer = window.setTimeout(() => setRegard('question'), 1600);
+    return () => window.clearTimeout(timer);
+  }, [scene3d]);
+  useEffect(() => {
+    if (!replique) return;
+    const timer = window.setTimeout(
+      () =>
+        replique.etape === 'reponse' ? setReplique({ ...replique, etape: 'reaction' }) : onClose(),
+      replique.etape === 'reponse' ? REPONSE_MS : REACTION_MS,
+    );
+    return () => window.clearTimeout(timer);
+  }, [replique, onClose]);
   const choose = (optionId: string) => {
     onAnswer(decision.id, optionId);
-    onClose();
+    const points = ruleset?.parlement.qag.banques
+      .flatMap((b) => b.reponses)
+      .find((r) => r.id === optionId)?.tension;
+    if (scene3d && points !== undefined && !replique)
+      setReplique({ reaction: reactionDeLaSalle(points), etape: 'reponse' });
+    else onClose();
   };
 
   return createPortal(
@@ -148,12 +191,21 @@ export function DecisionSpotlight({
                   )}
                 </span>
               </p>
-              <Hemicycle
+              <SceneHemicycle
                 title="Hémicycle pendant les questions au gouvernement"
                 total={ruleset.assemblee.siegesTotal}
-                groups={hemicycleGroups(state, ruleset)}
+                groups={groupes}
                 speaker={decision.groupeId ?? null}
+                plan={replique ? (replique.etape === 'reponse' ? 'reponse' : 'large') : regard}
+                reaction={replique?.etape === 'reaction' ? replique.reaction : null}
+                tension={state.parlement.tension.valeur}
               />
+              <p role="status" className="min-h-5 text-sm font-semibold text-encre-2">
+                {replique &&
+                  (replique.etape === 'reponse'
+                    ? 'Le gouvernement répond.'
+                    : REACTION_TEXTE[replique.reaction])}
+              </p>
               <TensionGauge
                 tension={state.parlement.tension}
                 seuilMotion={ruleset.parlement.tension.seuilMotion}
@@ -191,6 +243,7 @@ export function DecisionSpotlight({
                     <button
                       type="button"
                       aria-pressed={chosen}
+                      disabled={replique !== null}
                       onClick={() => choose(option.id)}
                       className={`relative flex w-full flex-col gap-1 rounded-card border-2 p-4 pr-12 text-left transition duration-150 active:scale-[0.99] ${
                         chosen
