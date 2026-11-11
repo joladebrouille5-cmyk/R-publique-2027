@@ -462,6 +462,7 @@ export default function France3D(props: France3DProps) {
       visible={props.visible}
       camera={{ position: [0, 2400, 1700], fov: 45, near: 10, far: 9000 }}
       environnement={0.6}
+      eclairage="salle"
       post={{ bloom: 0.35, seuil: 0.93, vignette: 0.55, grain: 0.04 }}
       fond={props.sombre ? '#03050b' : '#1b2438'}
     >

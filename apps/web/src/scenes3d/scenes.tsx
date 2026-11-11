@@ -2,6 +2,7 @@ import { lazy, useMemo, type ReactNode } from 'react';
 import { groupHex, Hemicycle, type HemicycleGroup } from '../components/Hemicycle';
 import { useMode } from '../map/useMode';
 import type { BoardShape } from '../plateau/geometry';
+import { PLANS, urlActif } from './actifs';
 import { Cadre3D } from './Cadre3D';
 import type { Departement3D } from './carte';
 import type { Foule } from './foule';
@@ -227,20 +228,27 @@ export function SceneRalliement({
   );
 }
 
-export function SceneInvestiture({
-  duree,
-  label,
-  repli,
-  className = '',
-}: {
-  duree: number;
-  label: string;
-  repli: ReactNode;
-  className?: string;
-}) {
+/**
+ * Investiture : la cour d'honneur de l'Élysée, d'après une vraie photographie (Wikimedia Commons,
+ * créditée). En 3D, la caméra avance dans la cour ; sans 3D ou en mouvement réduit, la
+ * photographie fixe.
+ */
+export function SceneInvestiture({ duree, className = '' }: { duree: number; className?: string }) {
+  const plan = PLANS.elysee;
+  if (!plan) return null;
+  const fixe = (
+    <img
+      src={urlActif(plan.fichier)}
+      alt={plan.titre}
+      data-plan="fixe"
+      className={`object-cover object-[50%_42%] ${className}`}
+    />
+  );
   return (
-    <Cadre3D nom="investiture" label={label} repli={repli} className={className}>
-      {(palier, visible) => <Investiture3D palier={palier} visible={visible} duree={duree} />}
+    <Cadre3D nom="investiture" label={plan.titre} repli={fixe} className={className}>
+      {(palier, visible) => (
+        <Investiture3D palier={palier} visible={visible} duree={duree} plan={plan} />
+      )}
     </Cadre3D>
   );
 }

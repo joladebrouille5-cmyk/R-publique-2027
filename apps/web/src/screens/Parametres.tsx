@@ -6,6 +6,7 @@ import { ErrorMessage } from '../components/ErrorMessage';
 import { LogoCreditLine } from '../components/RealMedia';
 import { PhotoCreditLine } from '../components/RealPersonality';
 import { ReminderSettings } from '../components/ReminderSettings';
+import { SceneCredits } from '../components/SceneCredits';
 import { MusicCredits, SoundSettings } from '../components/SoundSettings';
 import { SectionNav } from '../components/SectionNav';
 import { ThemeChoice } from '../components/ThemeChoice';
@@ -464,6 +465,10 @@ function Credits({ ruleset }: { ruleset: Ruleset }) {
 
         <Sub title="Musique">
           <MusicCredits />
+        </Sub>
+
+        <Sub title="Scènes 3D">
+          <SceneCredits />
         </Sub>
 
         <Sub title="Polices">

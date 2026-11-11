@@ -4,10 +4,12 @@ import {
   ACESFilmicToneMapping,
   HalfFloatType,
   PCFSoftShadowMap,
+  EquirectangularReflectionMapping,
   PMREMGenerator,
   Vector2,
   WebGLRenderTarget,
 } from 'three';
+import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { BokehPass } from 'three/examples/jsm/postprocessing/BokehPass.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
@@ -15,7 +17,9 @@ import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+import type { SceneLightingId } from '@r2027/shared';
 import { useQualiteStore } from '../../stores/qualite';
+import { ECLAIRAGES, urlActif } from '../actifs';
 import { creerGardeFps, REGLAGES, type Palier } from '../qualite';
 
 // Toile commune des scènes 3D (phase 26) : canevas au palier de qualité décidé, rendu arrêté
@@ -79,23 +83,55 @@ function GardeFps({ nom, palier }: { nom: string; palier: Palier }) {
 }
 
 /**
- * Éclairage par environnement : une pièce aux grands panneaux lumineux, calculée une fois, que
- * tous les matériaux physiques reflètent (bois verni, velours, verre, métal).
+ * Éclairage par environnement, que tous les matériaux physiques reflètent (bois verni, velours,
+ * verre, métal). Aux paliers « standard » et « élevé », une photographie à grande dynamique d'un
+ * vrai lieu (salle, studio) ; en attendant son chargement, au palier « éco » ou si le
+ * fichier manque, une pièce aux grands panneaux lumineux calculée par le jeu.
  */
-function Environnement({ intensite }: { intensite: number }) {
+function Environnement({
+  intensite,
+  eclairage,
+  palier,
+}: {
+  intensite: number;
+  eclairage: SceneLightingId | undefined;
+  palier: Palier;
+}) {
   const { gl, scene } = useThree();
   useEffect(() => {
     const pmrem = new PMREMGenerator(gl);
-    const piece = new RoomEnvironment();
-    const texture = pmrem.fromScene(piece, 0.04).texture;
-    scene.environment = texture;
-    scene.environmentIntensity = intensite;
+    let courant = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    let actif = true;
+    scene.environment = courant;
+    const photo = eclairage && REGLAGES[palier].textures >= 512 ? ECLAIRAGES[eclairage] : undefined;
+    if (photo) {
+      new HDRLoader().load(
+        urlActif(photo.fichier),
+        (image) => {
+          image.mapping = EquirectangularReflectionMapping;
+          if (actif) {
+            const env = pmrem.fromEquirectangular(image).texture;
+            courant.dispose();
+            courant = env;
+            scene.environment = env;
+            tracer(`${eclairage}`, { eclairage: 'photographie' });
+          }
+          image.dispose();
+        },
+        undefined,
+        () => {},
+      );
+    }
     return () => {
+      actif = false;
       scene.environment = null;
-      texture.dispose();
+      courant.dispose();
       pmrem.dispose();
     };
-  }, [gl, scene, intensite]);
+  }, [gl, scene, eclairage, palier]);
+  useEffect(() => {
+    scene.environmentIntensity = intensite;
+  }, [scene, intensite]);
   return null;
 }
 
@@ -186,6 +222,7 @@ export function Toile({
   camera,
   post,
   environnement = 1,
+  eclairage,
   exposition = 1,
   fond,
   children,
@@ -198,6 +235,8 @@ export function Toile({
   post?: Post | undefined;
   /** Intensité de l'éclairage par environnement (0 : aucun, scène à ses seules lumières). */
   environnement?: number;
+  /** Lieu photographié qui éclaire la scène (repli : la pièce calculée). */
+  eclairage?: SceneLightingId;
   exposition?: number;
   /** Couleur de fond (transparente par défaut : le décor HTML se voit derrière). */
   fond?: string;
@@ -220,7 +259,9 @@ export function Toile({
     >
       {fond && <color attach="background" args={[fond]} />}
       <GardeFps nom={nom} palier={palier} />
-      {environnement > 0 && <Environnement intensite={environnement} />}
+      {environnement > 0 && (
+        <Environnement intensite={environnement} eclairage={eclairage} palier={palier} />
+      )}
       {children}
       {post && reglages.postTraitement && <PostTraitement nom={nom} palier={palier} post={post} />}
     </Canvas>

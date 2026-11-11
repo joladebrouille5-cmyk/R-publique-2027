@@ -16,7 +16,8 @@
     "assemblee": "node --disable-warning=ExperimentalWarning --import tsx src/cli/assemblee.ts",
     "economie": "node --disable-warning=ExperimentalWarning --import tsx src/cli/economie.ts",
     "legislatives": "node --disable-warning=ExperimentalWarning --import tsx src/cli/legislatives.ts",
-    "sons": "node --disable-warning=ExperimentalWarning --import tsx src/cli/sons.ts"
+    "sons": "node --disable-warning=ExperimentalWarning --import tsx src/cli/sons.ts",
+    "scenes": "node --disable-warning=ExperimentalWarning --import tsx src/cli/scenes.ts"
   },
   "dependencies": {
     "7zip-bin": "5.2.0",

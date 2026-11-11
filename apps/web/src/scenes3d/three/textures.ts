@@ -1,9 +1,12 @@
+import type { SceneMaterialId } from '@r2027/shared';
 import { CanvasTexture, RepeatWrapping, SRGBColorSpace, type Texture } from 'three';
+import { MATIERES, urlActif } from '../actifs';
 
-// Textures de matériaux fabriquées à l'ouverture de la scène (phase 26), sans aucun fichier :
-// bois veiné, pierre de taille, velours, gravier, ardoise, toile. Chaque matière donne une
-// couleur, un relief (carte de normales tirée de la hauteur) et une rugosité, pour un rendu
-// physique : c'est le grain des matériaux qui fait le réalisme, pas la géométrie.
+// Textures de matériaux des scènes (phase 26). Chaque matière donne une couleur, un relief (carte
+// de normales) et une rugosité, pour un rendu physique. Deux sources : des photographies de vrais
+// matériaux (Poly Haven, domaine public — chêne, parquet, pierre de taille, velours, béton), chargées à l'ouverture de la scène aux paliers « standard » et « élevé » ; et
+// des matières fabriquées par le code (bruit fractal), qui tiennent la place pendant le
+// chargement, au palier « éco » et si un fichier manque.
 
 /** Bruit de valeur lissé, répétable sur `periode` (les textures se raccordent bord à bord). */
 function bruit(periode: number, graine: number) {
@@ -154,37 +157,6 @@ const RECETTES = {
       return { r: t, g: t, b: t, hauteur: f, rugosite: 0.85 + 0.15 * f };
     });
   },
-  /** Gravier de cour : petits cailloux clairs, joints sombres. */
-  gravier(cote: number) {
-    const caillou = fractal(2, 56, 53);
-    const teinte = fractal(3, 6, 59);
-    return fabriquer(cote, 6, (u, v) => {
-      const c = caillou(u, v);
-      const bosse = Math.pow(c, 1.6);
-      const t = 0.35 + 0.65 * bosse;
-      const [r, g, b] = melange(
-        [0.52, 0.47, 0.38],
-        [0.86, 0.8, 0.68],
-        t * (0.8 + 0.2 * teinte(u, v)),
-      );
-      return { r: r!, g: g!, b: b!, hauteur: bosse, rugosite: 0.95 };
-    });
-  },
-  /** Ardoise des toits : rangs d'écailles décalés, reflets bleutés. */
-  ardoise(cote: number) {
-    const tache = fractal(3, 12, 61);
-    return fabriquer(cote, 5, (u, v) => {
-      const rangs = 14;
-      const rang = Math.floor(v * rangs);
-      const x = (u * rangs * 0.6 + (rang % 2) * 0.5) % 1;
-      const y = (v * rangs) % 1;
-      const joint = Math.min(x, 1 - x) < 0.04 || y < 0.07 ? 0 : 1;
-      const n = tache(u, v);
-      const t = joint * (0.55 + 0.45 * n);
-      const [r, g, b] = melange([0.1, 0.11, 0.14], [0.3, 0.33, 0.4], t);
-      return { r: r!, g: g!, b: b!, hauteur: joint * (1 - y * 0.6), rugosite: 0.45 + 0.3 * n };
-    });
-  },
   /** Sol de béton ciré sombre (salle, plateau). */
   beton(cote: number) {
     const nuage = fractal(5, 4, 67);
@@ -203,27 +175,94 @@ const RECETTES = {
   },
 } as const;
 
-export type NomMatiere = keyof typeof RECETTES;
-const cache = new Map<string, Matiere>();
+/** Côté représenté par une matière fabriquée, en mètres (les photographies ont le leur). */
+const TAILLE_FABRIQUEE: Record<SceneMaterialId, number> = {
+  bois: 1.6,
+  parquet: 1.6,
+  pierre: 2.4,
+  velours: 0.6,
+  beton: 3,
+};
+const RECETTE: Record<SceneMaterialId, keyof typeof RECETTES> = {
+  bois: 'bois',
+  parquet: 'bois',
+  pierre: 'pierre',
+  velours: 'velours',
+  beton: 'beton',
+};
 
-/** Matière fabriquée une fois par taille, puis partagée entre les scènes (jamais libérée). */
-export function matiere(nom: NomMatiere, cote: number): Matiere {
-  const cle = `${nom}:${cote}`;
-  let m = cache.get(cle);
-  if (!m) {
-    m = RECETTES[nom](cote);
-    cache.set(cle, m);
-  }
-  return m;
+/** Côté à partir duquel les photographies remplacent les matières fabriquées (pas en « éco »). */
+const PHOTO_DES = 512;
+const photographiee = (nom: SceneMaterialId, cote: number) =>
+  cote >= PHOTO_DES ? MATIERES[nom] : undefined;
+
+type Entree = { base: Matiere; copies: Matiere[] };
+const cache = new Map<string, Entree>();
+
+/** Remplace l'image d'une carte (et de ses copies répétées) par la photographie, une fois chargée. */
+function photographier(entree: Entree, carte: keyof Matiere, url: string) {
+  const image = new Image();
+  image.decoding = 'async';
+  image.onload = () => {
+    entree.base[carte].image = image;
+    for (const m of [entree.base, ...entree.copies]) {
+      m[carte].anisotropy = 8;
+      m[carte].needsUpdate = true;
+    }
+  };
+  // Fichier absent ou illisible : la matière fabriquée reste en place.
+  image.onerror = () => {};
+  image.src = url;
 }
 
-/** La même matière, répétée `u` × `v` fois sur la surface (textures clonées, image partagée). */
-export function repeter(m: Matiere, u: number, v: number): Matiere {
-  const clone = (t: Texture) => {
+function entreeDe(nom: SceneMaterialId, cote: number): Entree {
+  const cle = `${nom}:${cote}`;
+  let entree = cache.get(cle);
+  if (!entree) {
+    entree = { base: RECETTES[RECETTE[nom]](Math.min(cote, 512)), copies: [] };
+    cache.set(cle, entree);
+    const photo = photographiee(nom, cote);
+    if (photo) {
+      photographier(entree, 'map', urlActif(photo.couleur));
+      photographier(entree, 'normalMap', urlActif(photo.normale));
+      photographier(entree, 'roughnessMap', urlActif(photo.rugosite));
+    }
+  }
+  return entree;
+}
+
+/** Matière partagée entre les scènes (jamais libérée), répétée une fois sur la surface. */
+export function matiere(nom: SceneMaterialId, cote: number): Matiere {
+  return entreeDe(nom, cote).base;
+}
+
+/**
+ * La matière à sa vraie échelle sur une surface de `largeurM` × `hauteurM` mètres (dans le sens
+ * des coordonnées de texture). `tournee` : le fil de la matière suit la largeur (pupitres, lames).
+ */
+export function etendre(
+  nom: SceneMaterialId,
+  cote: number,
+  largeurM: number,
+  hauteurM: number,
+  tournee = false,
+): Matiere {
+  const entree = entreeDe(nom, cote);
+  const taille = photographiee(nom, cote)?.tailleM ?? TAILLE_FABRIQUEE[nom];
+  const copie = (t: Texture) => {
     const c = t.clone();
-    c.repeat.set(u, v);
+    if (tournee) {
+      c.rotation = Math.PI / 2;
+      c.repeat.set(hauteurM / taille, largeurM / taille);
+    } else c.repeat.set(largeurM / taille, hauteurM / taille);
     c.needsUpdate = true;
     return c;
   };
-  return { map: clone(m.map), normalMap: clone(m.normalMap), roughnessMap: clone(m.roughnessMap) };
+  const m = {
+    map: copie(entree.base.map),
+    normalMap: copie(entree.base.normalMap),
+    roughnessMap: copie(entree.base.roughnessMap),
+  };
+  entree.copies.push(m);
+  return m;
 }

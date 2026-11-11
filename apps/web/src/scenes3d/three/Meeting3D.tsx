@@ -13,7 +13,7 @@ import {
 import type { Foule } from '../foule';
 import { REGLAGES, type Palier } from '../qualite';
 import { alea, creerFoule, placesDeSalle, profondeurDeSalle } from './foule';
-import { matiere, repeter } from './textures';
+import { etendre } from './textures';
 import { mettreAuPoint, Toile, tracer } from './Toile';
 
 // Scène de meeting (phase 26) : une grande salle dans la pénombre, un mur d'écrans à la couleur
@@ -133,10 +133,14 @@ function Salle({ foule, couleur, palier }: Meeting3DProps) {
   );
 
   const sol = useMemo(
-    () => repeter(matiere('beton', reglages.textures), largeur / 6, (profondeur + 14) / 6),
+    () => etendre('beton', reglages.textures, largeur + 10, profondeur + 24),
     [reglages.textures, largeur, profondeur],
   );
-  const bois = useMemo(() => matiere('bois', reglages.textures), [reglages.textures]);
+  const largeurScene = Math.min(largeur * 0.8, 26);
+  const bois = useMemo(
+    () => etendre('bois', reglages.textures, largeurScene, 5),
+    [reglages.textures, largeurScene],
+  );
   const materiaux = useMemo(() => {
     const teinte = new Color(couleur);
     return {
@@ -213,7 +217,6 @@ function Salle({ foule, couleur, palier }: Meeting3DProps) {
     });
   });
 
-  const largeurScene = Math.min(largeur * 0.8, 26);
   return (
     <>
       <fogExp2 attach="fog" args={[BRUME, 0.02]} />
@@ -239,7 +242,7 @@ function Salle({ foule, couleur, palier }: Meeting3DProps) {
       </mesh>
       <mesh position={[0, 1.31, -0.5]} rotation-x={-Math.PI / 2}>
         <planeGeometry args={[largeurScene, 5]} />
-        <meshStandardMaterial {...bois} color="#6b6b6b" />
+        <meshStandardMaterial {...bois} color="#5e4a3a" />
       </mesh>
       <mesh position={[0, 1.9, 0.6]}>
         <boxGeometry args={[0.62, 1.15, 0.42]} />
@@ -294,7 +297,8 @@ export default function Meeting3D(props: Meeting3DProps) {
       visible={props.visible}
       camera={{ position: [0, 2.4, 20], fov: 50, near: 0.3, far: 300 }}
       fond={BRUME}
-      environnement={0.15}
+      environnement={0.12}
+      eclairage="studio"
       post={{ bloom: 0.45, seuil: 0.7, ouverture: 0.00035, vignette: 0.6, grain: 0.05 }}
     >
       <Salle {...props} />

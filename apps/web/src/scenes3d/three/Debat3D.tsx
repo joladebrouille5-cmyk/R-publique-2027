@@ -14,7 +14,7 @@ import {
 import { Reflector } from 'three/examples/jsm/objects/Reflector.js';
 import { dureeDuPlan, plansDuDebat, type Plan } from '../debat';
 import { REGLAGES, type Palier } from '../qualite';
-import { matiere, repeter } from './textures';
+import { etendre, matiere } from './textures';
 import { amortir, mettreAuPoint, Toile, tracer } from './Toile';
 
 // Plateau du débat en 3D (phase 26) : un studio de télévision — sol noir laqué qui reflète le
@@ -115,10 +115,7 @@ function Plateau({ pupitres, parle, cible, tension, palier }: Debat3DProps) {
     m.rotation.x = -Math.PI / 2;
     return m;
   }, [reglages.reflets, envergure]);
-  const metal = useMemo(
-    () => repeter(matiere('beton', reglages.textures), 1, 1),
-    [reglages.textures],
-  );
+  const metal = useMemo(() => matiere('beton', reglages.textures), [reglages.textures]);
   useEffect(
     () => () => {
       ecran.dispose();
@@ -233,7 +230,11 @@ function Plateau({ pupitres, parle, cible, tension, palier }: Debat3DProps) {
       ) : (
         <mesh rotation-x={-Math.PI / 2}>
           <circleGeometry args={[envergure + 9, 64]} />
-          <meshStandardMaterial {...metal} roughness={0.2} metalness={0.5} />
+          <meshStandardMaterial
+            {...etendre('beton', reglages.textures, 30, 30)}
+            roughness={0.2}
+            metalness={0.5}
+          />
         </mesh>
       )}
       {/* Voile sombre sur le miroir : un sol laqué, pas une glace. */}
@@ -339,7 +340,8 @@ export default function Debat3D(props: Debat3DProps) {
       visible={props.visible}
       camera={{ position: [0, 3.2, 10], fov: 32 }}
       fond="#04060c"
-      environnement={0.25}
+      environnement={0.3}
+      eclairage="studio"
     >
       <Plateau {...props} />
     </Toile>

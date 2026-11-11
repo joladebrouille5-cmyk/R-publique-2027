@@ -339,3 +339,43 @@ describe('main de cartes et meeting', () => {
     ).toBeNull();
   });
 });
+
+describe('actifs photographiques', () => {
+  const PUBLIC = join(__dirname, '..', '..', 'public');
+
+  it('embarque chaque fichier du manifeste, crédité (auteur, licence, source)', async () => {
+    const { ACTIFS } = await import('./actifs');
+    const fichiers = [
+      ...ACTIFS.matieres.flatMap((m) => [m.couleur, m.normale, m.rugosite]),
+      ...ACTIFS.eclairages.map((e) => e.fichier),
+      ...ACTIFS.plans.map((p) => p.fichier),
+    ];
+    expect(fichiers.length).toBeGreaterThan(10);
+    for (const fichier of fichiers) expect(statSync(join(PUBLIC, fichier)).size).toBeGreaterThan(0);
+    for (const plan of ACTIFS.plans) {
+      expect(plan.auteur).not.toBe('');
+      expect(plan.licence).toMatch(/^CC BY/);
+      expect(plan.source).toMatch(/^https:\/\/commons\.wikimedia\.org\/wiki\/File:/);
+    }
+  });
+
+  it('montre la photographie de l’Élysée, fixe, quand la 3D n’est pas disponible', async () => {
+    const { SceneInvestiture } = await import('./scenes');
+    const { container } = render(<SceneInvestiture duree={10} />);
+    const image = screen.getByRole('img', { name: /palais de l’Élysée/ });
+    expect(image).toHaveAttribute('src', expect.stringContaining('scenes3d/plans/elysee.webp'));
+    expect(container.querySelector('[data-scene3d]')).toBeNull();
+  });
+
+  it('crédite la photographie et les actifs dans les paramètres', async () => {
+    const { SceneCredits } = await import('../components/SceneCredits');
+    render(<SceneCredits />);
+    const photos = screen.getByRole('list', { name: 'Photographies de lieux' });
+    expect(photos).toHaveTextContent('photographie de TCY');
+    expect(photos).toHaveTextContent('CC BY-SA 3.0');
+    expect(photos).toHaveTextContent('tapis rouge ajouté');
+    expect(
+      screen.getByRole('list', { name: 'Textures et éclairages' }).querySelectorAll('li'),
+    ).toHaveLength(7);
+  });
+});

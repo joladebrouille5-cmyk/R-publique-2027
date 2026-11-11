@@ -29,6 +29,7 @@
     "data:economie": "pnpm --filter @r2027/data-import run economie",
     "data:legislatives": "pnpm --filter @r2027/data-import run legislatives",
     "data:sons": "pnpm --filter @r2027/data-import run sons",
+    "data:scenes": "pnpm --filter @r2027/data-import run scenes",
     "mesure:carte": "node scripts/spike-carte/spike.mjs",
     "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test",
     "sim:equilibrage": "pnpm --filter @r2027/engine exec tsx scripts/sim-equilibrage.ts"

@@ -1,0 +1,130 @@
+{
+  "verifieLe": "2026-11-11",
+  "note": "Scènes 3D : textures de matériaux et éclairages par environnement de Poly Haven (polyhaven.com), dans le domaine public (CC0 1.0), nom et auteurs lus dans la fiche de chaque actif ; photographies de lieux réels de Wikimedia Commons, licence et auteur lus sur la page de chaque fichier, modifications déclarées. Import par pnpm data:scenes. Les autres décors (salles, plateau, foules) sont construits par le jeu : aucun modèle 3D n’est emprunté, aucune personne réelle n’est représentée.",
+  "matieres": [
+    {
+      "id": "bois",
+      "titre": "Oak Veneer 01",
+      "auteurs": "Jenelle van Heerden",
+      "licence": "CC0 1.0",
+      "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/deed.fr",
+      "source": "https://polyhaven.com/a/oak_veneer_01",
+      "modifications": "Cartes de couleur, de relief et de rugosité réduites à 1024 px et converties en WebP.",
+      "octets": 226154,
+      "tailleM": 1.83,
+      "couleur": "scenes3d/textures/bois-couleur.webp",
+      "normale": "scenes3d/textures/bois-normale.webp",
+      "rugosite": "scenes3d/textures/bois-rugosite.webp"
+    },
+    {
+      "id": "parquet",
+      "titre": "Herringbone Parquet",
+      "auteurs": "Jenelle van Heerden, Sergej Majboroda",
+      "licence": "CC0 1.0",
+      "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/deed.fr",
+      "source": "https://polyhaven.com/a/herringbone_parquet",
+      "modifications": "Cartes de couleur, de relief et de rugosité réduites à 1024 px et converties en WebP.",
+      "octets": 131320,
+      "tailleM": 3.4,
+      "couleur": "scenes3d/textures/parquet-couleur.webp",
+      "normale": "scenes3d/textures/parquet-normale.webp",
+      "rugosite": "scenes3d/textures/parquet-rugosite.webp"
+    },
+    {
+      "id": "pierre",
+      "titre": "Marble 01",
+      "auteurs": "Rob Tuytel",
+      "licence": "CC0 1.0",
+      "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/deed.fr",
+      "source": "https://polyhaven.com/a/marble_01",
+      "modifications": "Cartes de couleur, de relief et de rugosité réduites à 1024 px et converties en WebP.",
+      "octets": 50304,
+      "tailleM": 1.5,
+      "couleur": "scenes3d/textures/pierre-couleur.webp",
+      "normale": "scenes3d/textures/pierre-normale.webp",
+      "rugosite": "scenes3d/textures/pierre-rugosite.webp"
+    },
+    {
+      "id": "velours",
+      "titre": "Velour Velvet",
+      "auteurs": "colormass, Rico Cilliers",
+      "licence": "CC0 1.0",
+      "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/deed.fr",
+      "source": "https://polyhaven.com/a/velour_velvet",
+      "modifications": "Cartes de couleur, de relief et de rugosité réduites à 1024 px et converties en WebP ; couleur ramenée au gris (la scène la teinte).",
+      "octets": 530308,
+      "tailleM": 0.284,
+      "couleur": "scenes3d/textures/velours-couleur.webp",
+      "normale": "scenes3d/textures/velours-normale.webp",
+      "rugosite": "scenes3d/textures/velours-rugosite.webp"
+    },
+    {
+      "id": "beton",
+      "titre": "Gravel Concrete 03",
+      "auteurs": "Charlotte Baglioni",
+      "licence": "CC0 1.0",
+      "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/deed.fr",
+      "source": "https://polyhaven.com/a/gravel_concrete_03",
+      "modifications": "Cartes de couleur, de relief et de rugosité réduites à 1024 px et converties en WebP.",
+      "octets": 236800,
+      "tailleM": 2.1,
+      "couleur": "scenes3d/textures/beton-couleur.webp",
+      "normale": "scenes3d/textures/beton-normale.webp",
+      "rugosite": "scenes3d/textures/beton-rugosite.webp"
+    }
+  ],
+  "eclairages": [
+    {
+      "id": "salle",
+      "titre": "Dancing Hall",
+      "auteurs": "Sergej Majboroda",
+      "licence": "CC0 1.0",
+      "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/deed.fr",
+      "source": "https://polyhaven.com/a/dancing_hall",
+      "modifications": "Image à grande dynamique de 1024 px, inchangée.",
+      "octets": 1725266,
+      "fichier": "scenes3d/hdri/salle.hdr"
+    },
+    {
+      "id": "studio",
+      "titre": "Studio Small 09",
+      "auteurs": "Sergej Majboroda",
+      "licence": "CC0 1.0",
+      "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/deed.fr",
+      "source": "https://polyhaven.com/a/studio_small_09",
+      "modifications": "Image à grande dynamique de 1024 px, inchangée.",
+      "octets": 1615248,
+      "fichier": "scenes3d/hdri/studio.hdr"
+    }
+  ],
+  "plans": [
+    {
+      "id": "elysee",
+      "titre": "Cour d’honneur du palais de l’Élysée, façade du corps de logis",
+      "auteur": "TCY",
+      "licence": "CC BY-SA 3.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "source": "https://commons.wikimedia.org/wiki/File:Cour%20de%20l'Elys%C3%A9e%203.JPG",
+      "modifications": "Réduite à 1600 px de large et convertie en WebP ; dans le jeu, recadrée selon l’écran, remise en perspective (la caméra avance dans la cour), drapeau animé, tapis rouge ajouté.",
+      "octets": 218372,
+      "fichier": "scenes3d/plans/elysee.webp",
+      "largeur": 1600,
+      "hauteur": 1759,
+      "repere": {
+        "focale": 1.4,
+        "horizon": 0.692,
+        "pied": 0.741,
+        "oeilM": 1.6
+      },
+      "drapeaux": [
+        {
+          "x": 0.455,
+          "y": 0.105,
+          "largeur": 0.045,
+          "hauteur": 0.062,
+          "mat": "droite"
+        }
+      ]
+    }
+  ]
+}

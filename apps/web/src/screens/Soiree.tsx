@@ -55,6 +55,7 @@ import { ElectionMap, type BBox, type MapSelection } from '../map/ElectionMap';
 import { useMediaQuery, useMode } from '../map/useMode';
 import { boardShapes } from '../plateau/geometry';
 import { colorOf as campColor, portraitOf } from '../portraits';
+import { PLANS } from '../scenes3d/actifs';
 import { useDecision3D } from '../scenes3d/appareil';
 import { Cinematique, FondStatique, Sequence } from '../scenes3d/Cinematique';
 import { arcsDeReport, ralliements } from '../scenes3d/reports';
@@ -599,16 +600,15 @@ function Night({ result }: { result: RoundResult }) {
         <Cinematique
           titre="L’investiture"
           sousTitre={`${nameOf(result.winner!)} entre à l’Élysée : le quinquennat commence.`}
-          note="Cour de l’Élysée stylisée ; cérémonie simulée."
+          note={`Cérémonie simulée.${
+            PLANS.elysee
+              ? ` Photographie de la cour : ${PLANS.elysee.auteur}, ${PLANS.elysee.licence} (Wikimedia Commons), animée par le jeu.`
+              : ''
+          }`}
           dureeMs={11_000}
           onFin={() => setTransition(null)}
         >
-          <SceneInvestiture
-            duree={10}
-            label="La cour d’honneur de l’Élysée : tapis rouge, garde républicaine, drapeau"
-            repli={<FondStatique couleurs={['#1f3a93', '#f4f1ea', '#d0312d']} />}
-            className="h-full w-full bg-linear-to-b from-[#f2c9a0] via-[#f6e3c8] to-[#cfe0f2]"
-          />
+          <SceneInvestiture duree={10} className="h-full w-full" />
         </Cinematique>
       )}
       {done && (

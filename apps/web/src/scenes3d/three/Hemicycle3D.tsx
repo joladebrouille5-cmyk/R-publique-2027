@@ -26,7 +26,7 @@ import {
   type Siege,
 } from '../hemicycle';
 import { REGLAGES, type Palier } from '../qualite';
-import { matiere, repeter } from './textures';
+import { etendre, matiere } from './textures';
 import { amortir, mettreAuPoint, Toile, tracer } from './Toile';
 
 // Hémicycle 3D des questions au gouvernement (phase 26) : une salle en gradins de moquette rouge,
@@ -54,6 +54,8 @@ export type Hemicycle3DProps = {
 };
 
 const VACANT = '#2b2d33';
+/** Teinte donnée au chêne clair photographié : le bois sombre et chaud des pupitres. */
+const CHENE = '#a9744c';
 const GRADIN = 0.34;
 const BANC = { rayon: 2.25, places: 14 };
 const CIBLE_LARGE = new Vector3(0, 0.9, -3.4);
@@ -141,11 +143,15 @@ function Salle(props: Hemicycle3DProps) {
     const cote = reglages.textures;
     const velours = matiere('velours', cote);
     return {
-      moquette: repeter(matiere('velours', cote), 30, 8),
-      bois: repeter(matiere('bois', cote), 14, 1),
-      boiserie: repeter(matiere('bois', cote), 9, 6),
-      pierre: repeter(matiere('pierre', cote), 6, 2),
-      colonne: repeter(matiere('pierre', cote), 1, 3),
+      // Surfaces à leur vraie échelle, en mètres (arc moyen des gradins, hauteur des murs…).
+      moquette: etendre('velours', cote, 22, 11),
+      bois: etendre('bois', cote, 20, 0.9, true),
+      boiserie: etendre('bois', cote, 5, 2.3),
+      lambris: etendre('bois', cote, 35, 1.8),
+      parquet: etendre('parquet', cote, 23, 23),
+      pierre: etendre('pierre', cote, 35, 11),
+      colonne: etendre('pierre', cote, 1.7, 7),
+      tenture: etendre('velours', cote, 6.4, 5.6),
       fauteuil: new MeshPhysicalMaterial({
         map: velours.map,
         normalMap: velours.normalMap,
@@ -240,7 +246,7 @@ function Salle(props: Hemicycle3DProps) {
       instances.setMatrixAt(i, objet.matrix);
       // Teinte du velours : la couleur du groupe, plus dense (le velours boit la lumière).
       couleur.set(siege.groupe ? (couleurs[siege.groupe] ?? VACANT) : VACANT);
-      couleur.offsetHSL(0, 0.08, -0.06);
+      couleur.offsetHSL(0, 0.12, -0.04);
       if (siege.groupe && parle) couleur.multiplyScalar(1 + 0.5 * eclat.current);
       else couleur.multiplyScalar(1 - 0.8 * eclat.current);
       instances.setColorAt(i, couleur);
@@ -292,12 +298,12 @@ function Salle(props: Hemicycle3DProps) {
         <meshStandardMaterial {...m.moquette} color="#8c1c22" roughness={1} side={DoubleSide} />
       </mesh>
       <mesh geometry={g.pupitres} castShadow receiveShadow>
-        <meshStandardMaterial {...m.bois} side={DoubleSide} />
+        <meshStandardMaterial {...m.bois} color={CHENE} side={DoubleSide} />
       </mesh>
       {/* Parquet du centre de la salle. */}
       <mesh rotation-x={-Math.PI / 2} position-y={-0.01} receiveShadow>
         <circleGeometry args={[mur, 64]} />
-        <meshStandardMaterial {...m.boiserie} color="#b0a090" />
+        <meshStandardMaterial {...m.parquet} envMapIntensity={0.1} />
       </mesh>
       {/* Mur de pierre en demi-cercle, soubassement de bois, corniche. */}
       <mesh position-y={plafond / 2}>
@@ -306,7 +312,7 @@ function Salle(props: Hemicycle3DProps) {
       </mesh>
       <mesh position-y={hauteur + 0.9}>
         <cylinderGeometry args={[mur - 0.04, mur - 0.04, 1.8, 72, 1, true, ...PHI]} />
-        <meshStandardMaterial {...m.boiserie} side={BackSide} />
+        <meshStandardMaterial {...m.lambris} color={CHENE} side={BackSide} />
       </mesh>
       <mesh position-y={plafond - 0.6}>
         <cylinderGeometry args={[mur - 0.25, mur - 0.02, 0.5, 72, 1, true, ...PHI]} />
@@ -342,24 +348,19 @@ function Salle(props: Hemicycle3DProps) {
       {/* Tribune : perchoir et tribune de l'orateur, en chêne, sous une tenture. */}
       <mesh position={[0, 1.15, 1.9]} castShadow receiveShadow>
         <boxGeometry args={[5.2, 2.3, 1.2]} />
-        <meshStandardMaterial {...m.boiserie} />
+        <meshStandardMaterial {...m.boiserie} color={CHENE} />
       </mesh>
       <mesh position={[0, 2.36, 1.9]}>
         <boxGeometry args={[5.4, 0.12, 1.4]} />
-        <meshStandardMaterial
-          color="#8a6a2c"
-          metalness={0.8}
-          roughness={0.55}
-          envMapIntensity={0.5}
-        />
+        <meshStandardMaterial {...m.boiserie} color="#6e4a30" />
       </mesh>
       <mesh position={[0, 0.6, 0.85]} castShadow receiveShadow>
         <boxGeometry args={[2.3, 1.2, 0.8]} />
-        <meshStandardMaterial {...m.boiserie} />
+        <meshStandardMaterial {...m.boiserie} color={CHENE} />
       </mesh>
       <mesh position={[0, 5.4, 2.5]} rotation-y={Math.PI}>
         <planeGeometry args={[6.4, 5.6]} />
-        <meshStandardMaterial {...m.moquette} color="#1d3a36" roughness={1} />
+        <meshStandardMaterial {...m.tenture} color="#1d3a36" roughness={1} />
       </mesh>
       <mesh position={[0, 5.4, 2.55]} rotation-y={Math.PI}>
         <planeGeometry args={[6.8, 6]} />
@@ -439,9 +440,10 @@ export default function Hemicycle3D(props: Hemicycle3DProps) {
       visible={props.visible}
       camera={{ position: [0, 8.6, 8.4], fov: 45, near: 0.2, far: 120 }}
       fond="#1a1410"
-      environnement={0.45}
-      exposition={0.85}
-      post={{ bloom: 0.25, seuil: 0.9, ouverture: 0.0005, vignette: 0.45, grain: 0.03 }}
+      environnement={0.5}
+      eclairage="salle"
+      exposition={0.78}
+      post={{ ouverture: 0.00025, vignette: 0.45, grain: 0.03 }}
     >
       <Salle {...props} />
     </Toile>

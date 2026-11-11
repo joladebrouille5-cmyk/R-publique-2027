@@ -13,7 +13,7 @@ import {
 } from 'three';
 import { REGLAGES, type Palier } from '../qualite';
 import { alea, silhouette } from './foule';
-import { matiere, repeter } from './textures';
+import { etendre } from './textures';
 import { mettreAuPoint, Toile, tracer } from './Toile';
 
 // Ralliement de l'entre-deux-tours (phase 26) : deux foules stylisées, chacune à la couleur de
@@ -151,7 +151,7 @@ function Fusion({ palier, rallie, camp, duree }: Ralliement3DProps) {
   }, [mesh, materiau, nombre]);
   const lampes = useRef<(SpotLight | null)[]>([]);
   const faisceaux = useRef<(Mesh | null)[]>([]);
-  const sol = useMemo(() => repeter(matiere('beton', REGLAGES[palier].textures), 10, 10), [palier]);
+  const sol = useMemo(() => etendre('beton', REGLAGES[palier].textures, 120, 120), [palier]);
   const lumieres = useMemo(
     () =>
       [rallie, camp].map(

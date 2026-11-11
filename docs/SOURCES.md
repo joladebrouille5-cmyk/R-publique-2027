@@ -771,6 +771,37 @@ Demande de l'utilisateur (phase 19, questionnaire du 29/10/2026) : musique d'amb
 - **Traitement** (identique pour chaque morceau, reproductible : même empreinte à chaque relance) : extrait des 150 premières secondes au plus, avec un fondu de sortie de 4 s quand le morceau est coupé ; normalisation de la sonie en deux passes (filtre `loudnorm` de ffmpeg, EBU R128 : −18 LUFS intégrés, crête vraie −1,5 dBTP) ; encodage MP3 96 kbit/s stéréo, 44,1 kHz. Total embarqué : 9,5 Mo.
 - **Jingles** (résultat à 20 h, victoire, défaite, ouverture d'un débat, nouvelle importante et, depuis la phase 21, coup de tampon de la semaine bouclée) : **aucun enregistrement**. Ce sont des partitions du jeu (`apps/web/src/audio/jingles.ts`, réécrites en phase 21) jouées par un synthétiseur Web Audio (`synth.ts` : oscillateurs, filtres, bruit et réverbération générés à graine fixe ; timbres ajoutés en phase 21 : marimba, cordes pincées, caisse claire, claquements, cliquetis de téléscripteur, tampon). Aucun indicatif de chaîne réelle n'est imité.
 
+## 8 sexdecies. Scènes 3D : photographie de l'Élysée, textures et éclairages (phase 26)
+
+Demande de l'utilisateur du 11/11/2026 : rendu « ultra réaliste » des scènes 3D, puis, à la vue de la cour de l'Élysée construite par le code, une scène d'investiture **ressemblante**. Import par `pnpm data:scenes` (`packages/data-import/src/cli/scenes.ts`), manifeste `apps/web/src/scenes3d/actifs.json`, fichiers dans `apps/web/public/scenes3d/` ; crédits affichés dans Paramètres → Crédits → Scènes 3D. Importé le 2026-11-11.
+
+**Photographie de lieu (Wikimedia Commons).** Licence et auteur lus par l'importeur sur la page du fichier ; une photographie sans licence libre est refusée.
+
+| Scène | Fichier source | Auteur | Licence | Prise de vue | Original | Modifications déclarées |
+|---|---|---|---|---|---|---|
+| Investiture | [Cour de l'Elysée 3.JPG](https://commons.wikimedia.org/wiki/File:Cour%20de%20l'Elys%C3%A9e%203.JPG) | TCY | [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0) | 31 juillet 2012 (EXIF) | 2 112 × 2 322 px, 3 108 269 octets | Réduite à 1600 px de large et convertie en WebP ; dans le jeu, recadrée selon l’écran, remise en perspective (la caméra avance dans la cour), drapeau animé, tapis rouge ajouté. |
+
+- **CC BY-SA 3.0** : réutilisation et modification libres à condition de créditer l'auteur, d'indiquer la licence, de signaler les modifications et de diffuser l'image modifiée sous la même licence (elle l'est : `apps/web/public/scenes3d/plans/elysee.webp`).
+- **Mise en relief** : la photographie est reprojetée sur deux plans (le sol de la cour, la façade) depuis le point de vue du photographe, ce qui permet à la caméra d'avancer. Les repères (focale ≈ 1,4 largeur d'image d'après l'appareil et sa focale EXIF, ligne d'horizon, pied de la façade, hauteur d'œil 1,6 m) sont **lus à la main sur l'image : estimations**, sans valeur de relevé. Le drapeau ondule par déformation locale de l'image ; le tapis rouge est ajouté par le jeu (il n'est pas sur la photographie).
+- **Image de référence fournie par l'utilisateur** (façade, tapis rouge, presse) : provenance et licence inconnues ; elle a servi de modèle de cadrage et **n'est pas intégrée** au jeu.
+- **Aucune personne** : la cour photographiée est vide ; la garde républicaine et la presse ne sont pas représentées (il faudrait des photographies de personnes réelles).
+
+**Textures de matériaux et éclairages par environnement (Poly Haven, polyhaven.com).** Domaine public (CC0 1.0 : aucune condition ; le crédit est tout de même donné). Nom et auteurs lus dans la fiche de chaque actif (`api.polyhaven.com/info`).
+
+| Rôle | Actif | Auteurs | Licence | Poids importé |
+|---|---|---|---|---|
+| bois | [Oak Veneer 01](https://polyhaven.com/a/oak_veneer_01) | Jenelle van Heerden | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/deed.fr) | 220 Ko |
+| parquet | [Herringbone Parquet](https://polyhaven.com/a/herringbone_parquet) | Jenelle van Heerden, Sergej Majboroda | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/deed.fr) | 128 Ko |
+| pierre | [Marble 01](https://polyhaven.com/a/marble_01) | Rob Tuytel | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/deed.fr) | 49 Ko |
+| velours | [Velour Velvet](https://polyhaven.com/a/velour_velvet) | colormass, Rico Cilliers | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/deed.fr) | 517 Ko |
+| beton | [Gravel Concrete 03](https://polyhaven.com/a/gravel_concrete_03) | Charlotte Baglioni | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/deed.fr) | 231 Ko |
+| salle | [Dancing Hall](https://polyhaven.com/a/dancing_hall) | Sergej Majboroda | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/deed.fr) | 1684 Ko |
+| studio | [Studio Small 09](https://polyhaven.com/a/studio_small_09) | Sergej Majboroda | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/deed.fr) | 1577 Ko |
+
+- **Traitement** : textures (couleur, relief, rugosité) réduites à 1 024 px et converties en WebP ; le velours est ramené au gris, la scène lui donne sa teinte (rouge des gradins et du tapis, couleur de chaque groupe pour les fauteuils) ; éclairages : images à grande dynamique de 1 024 px, inchangées.
+- **ambientCG** (ambientcg.com, CC0) : autorisé par l'utilisateur, mais ses téléchargements passent par un autre hôte (`acg-download.struffelproductions.com`), non autorisé dans cet environnement : **aucun actif d'ambientCG n'est utilisé**.
+- **Modèles 3D** : aucun n'est emprunté (Poly Haven n'a ni hémicycle, ni pupitre, ni personnage ; ses sièges sont trop lourds pour 577 exemplaires sur un téléphone). Salles, plateau et foules restent construits par le jeu.
+
 ## 9. Points restant non vérifiés
 
 1. Texte exact, sur Légifrance, de la loi n° 62-1292 (parrainages, financement) et de l'article L. 52-11.
