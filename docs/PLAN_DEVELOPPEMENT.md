@@ -1174,6 +1174,33 @@ Brief de l'utilisateur du 10/11/2026 (intitulé « Phase 24-ter : le jeu post-é
 
 **Bilan (10/11/2026)** — application 1.19.0 (`versionCode` 20), puis 1.19.1 (`versionCode` 21) avec la photo de Teddy Riner ; jeu de règles 24.0.0, format 26 (parties existantes migrées, journal vide), moteur 0.26.0.
 
+### Phase 26 — Scènes 3D des moments forts (terminée, critères de performance non vérifiables ici)
+
+Brief de l'utilisateur du 10/11/2026 (« Phase 26 : scènes 3D ») : la 3D marque les moments forts (questions au gouvernement, soirée électorale, débat, meeting, ralliement, investiture, écran-titre) et laisse le reste du jeu en 2D ; three.js par react-three-fiber, chargé à la demande ; aucune personnalité réelle en 3D. **Changement de direction du 11/11/2026**, à la vue des premiers rendus (aplats, pavés de couleur) jugés « enfantins » : rendu **réaliste**. Le moteur, les règles et le format de sauvegarde ne changent pas (jeu de règles 24.0.0, format 26, moteur 0.26.0).
+
+| # | Critère d'acceptation | État |
+|---|---|---|
+| 1 | QAG : hémicycle 3D, 577 sièges selon les groupes de la partie, 3 plans de caméra, groupe interpellateur en surbrillance, 3 réactions liées à la tension, textes en HTML. | fait : 577 fauteuils instanciés aux effectifs de la partie ; plans large, plongée sur le groupe (projecteur), retour sur le banc du gouvernement ; réactions apaisement, échauffement, contre-attaque d'après les points de tension de la réplique (jeu de règles) et la tension parlementaire |
+| 2 | Soirée électorale : carte 3D départementale extrudée, coloration progressive, rotation et zoom au doigt, légende HTML, déclenchement sur les résultats et bouton « vue 3D ». | fait : ouverte en 3D les soirs de scrutin, bouton « Vue 2D / Vue 3D » ; relief = score du candidat en tête |
+| 3 | Main en CSS 3D : éventail, tilt au toucher, plus de chevauchement avec la légende, plus de titre tronqué. | fait : éventail qui suit le défilement, carte qui penche sous le doigt, pose animée ; le plateau tient au-dessus de la main (hauteur mesurée), légende repliée ; mesuré sur 390 × 844 : bas de la légende à 548 px, haut de la main à 566 px, 0 titre tronqué sur 18 |
+| 4 | Ralliement et investiture : présentes, sautables, écran statique en mouvement réduit. | fait (fin de la soirée du premier et du second tour) |
+| 5 | ≥ 55 images par seconde en moyenne sur un appareil de milieu de gamme ; repli 2D vérifié (WebGL indisponible, moins de 30 images par seconde). | **non vérifié** pour la cadence : cet environnement n'a ni téléphone ni processeur graphique (rendu logiciel, quelques images par seconde, sans rapport avec un appareil réel) ; repli 2D : fait et testé |
+| 6 | Surcoût ≤ 2 Mo compressés, three.js absent du paquet initial. | fait : 275 Ko compressés (gzip), entièrement chargés à la demande ; paquet initial sans three.js (vérifié sur le paquet construit et par un test) |
+| 7 | Tests existants verts, essai Android non dégradé. | fait (un scénario mis à jour : il déplie la légende) |
+| 8 | Nouveaux tests : sièges, repli 2D, chargement à la demande. | fait (33 tests) |
+| 9 | Débat : plateau 3D, au moins 3 plans, lumière réactive à la tension, aucune personnalité. | fait : 4 plans (large, serré, champ-contrechamp, écran partagé) ; pupitres vides |
+| 10 | Meeting : foule en un seul appel de dessin, corrélée aux données de la partie. | fait : un seul maillage instancié pour toute la foule (2 779 silhouettes dans l'essai, 32 appels de dessin pour la scène entière, décor et post-traitement compris ; l'écart d'un appel avec et sans foule a été mesuré sur la première version de la scène, 14 contre 13, pas remesuré depuis) ; test fief réussi contre meeting raté |
+| 11 | Reports de voix : arcs proportionnels, dans l'entre-deux-tours et réutilisables. | fait : arcs sur la carte du second tour et dans la transition de ralliement, liste écrite en repli ; test de proportionnalité |
+| 12 | Écran-titre : drapeau en shader de tissu, onde au toucher, chargement initial non dégradé. | fait : drapeau statique (CSS) pendant le chargement |
+| 13 | Trois paliers forçables, « éco » sans post-traitement, confettis et vague aux deux autres. | fait (Paramètres → Scènes 3D) |
+
+- **Rendu réaliste, sans aucun fichier** : matériaux physiques éclairés par un environnement, ombres douces, courbe de tons ACES, profondeur de champ (palier élevé), bloom, vignette et grain ; textures de bois, pierre, velours, gravier, ardoise et béton fabriquées à l'ouverture de la scène (bruit fractal, cartes de normales et de rugosité). Hémicycle : gradins de moquette rouge, pupitres de chêne, fauteuils de velours, colonnade. Débat : sol laqué qui reflète le décor (scène dessinée en miroir), pupitres de métal à face lumineuse. Meeting et ralliement : foule de silhouettes humaines sans visage, à contre-jour dans la brume, faisceaux de projecteurs. Investiture : cour de l'Élysée stylisée sous un ciel calculé (diffusion atmosphérique), garde suggérée par des silhouettes casquées. Carte : maquette posée sur une table laquée.
+- **Limite du réalisme** : tout est procédural. Un rendu photographique demanderait des modèles et des textures d'après photo (plusieurs dizaines de Mo) ; les sites d'actifs libres (Poly Haven, ambientCG) ne sont pas joignables depuis cet environnement. Les personnes restent des silhouettes sans visage, par règle du projet (aucune personnalité réelle en 3D).
+- **Décisions** : la tension du débat n'existe pas dans le moteur ; elle est lue dans ce qu'il produit déjà (part d'attaques et de petites phrases, coups retournés, écart d'approbation), pour la mise en scène seulement. Le poids d'un report de voix est le nombre de voix du premier tour du candidat rallié (réservoir orienté par sa consigne, pas un transfert mesuré). La foule d'un meeting se déduit de l'implantation, des militants et du gain obtenu : mise en scène, aucune jauge de salle affichée. En automatique, un rendu logiciel vaut WebGL indisponible ; un palier forcé passe outre et n'est jamais abaissé. Le meeting ne s'affiche qu'en 3D (le verdict dit déjà le résultat) ; ralliement et investiture gardent leur écran statique.
+- **Reste à faire** : mesurer la cadence sur un vrai téléphone de milieu de gamme et ajuster les paliers ; la règle des immuables du compilateur React est désactivée pour `scenes3d/three` (three.js se pilote par mutation).
+
+**Bilan (11/11/2026)** — application 1.20.0 (`versionCode` 22) ; `three` 0.187.0 et `@react-three/fiber` 9.8.2 ajoutés à l'interface.
+
 ---
 
 ## 5. Questions ouvertes
