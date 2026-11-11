@@ -93,6 +93,10 @@ test('une semaine au plateau : pose, combos, verdict, boîte de jeu', async ({ p
     await expect(finistere(page)).toHaveAccessibleName(/intentions.* : .*\d+,\d %/);
     await finistere(page).click();
   }
+  // Phase 26 : main déployée, la légende est repliée (elle ne passe plus sous les cartes) ; elle
+  // s'ouvre au toucher.
+  await expect(page.getByRole('list', { name: 'Légende' })).toBeHidden();
+  await page.getByText(/^Légende \(\d+ teintes\)$/).click();
   await expect(page.getByRole('list', { name: 'Légende' })).toBeVisible();
   await audit(page, 'Plateau, lecture « Sondage local »');
   await readings.getByRole('radio', { name: 'Qui mène' }).click();
