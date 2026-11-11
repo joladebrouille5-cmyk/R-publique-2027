@@ -26,6 +26,7 @@ export function Cinematique({
 }) {
   const anime = useDecision3D().mode === '3d';
   const bouton = useRef<HTMLButtonElement>(null);
+  const cadre = useRef<HTMLDivElement>(null);
   const fin = useRef(onFin);
   useEffect(() => {
     fin.current = onFin;
@@ -33,8 +34,22 @@ export function Cinematique({
   useEffect(() => {
     bouton.current?.focus();
     if (!anime) return;
-    const timer = window.setTimeout(() => fin.current(), dureeMs);
-    return () => window.clearTimeout(timer);
+    // Le compte à rebours part quand la scène est à l'écran (three.js se charge à la demande) :
+    // un appareil lent ne voit pas la transition se refermer avant d'avoir commencé.
+    let timer = 0;
+    let attente = 0;
+    const lancer = () => {
+      timer = window.setTimeout(() => fin.current(), dureeMs);
+    };
+    const guetter = (essais: number) => {
+      if (essais <= 0 || cadre.current?.querySelector('canvas')) lancer();
+      else attente = window.setTimeout(() => guetter(essais - 1), 150);
+    };
+    guetter(40);
+    return () => {
+      window.clearTimeout(timer);
+      window.clearTimeout(attente);
+    };
   }, [anime, dureeMs]);
   return createPortal(
     <div
@@ -48,7 +63,9 @@ export function Cinematique({
         if (event.key === 'Escape') onFin();
       }}
     >
-      <div className="absolute inset-0">{children}</div>
+      <div ref={cadre} className="absolute inset-0">
+        {children}
+      </div>
       <div className="pointer-events-none relative space-y-2 bg-linear-to-t from-black/85 via-black/55 to-transparent px-5 pt-24 pb-[calc(1.5rem+var(--sab))] text-center">
         <h2 className="font-display text-3xl leading-tight font-extrabold text-balance sm:text-5xl">
           {titre}

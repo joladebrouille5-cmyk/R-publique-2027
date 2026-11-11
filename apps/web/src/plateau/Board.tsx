@@ -156,7 +156,7 @@ export function Board({
         ref={frame}
         // Phase 26 : le plateau tient au-dessus de la main et du bouton fixés en bas (--bas, hauteur
         // mesurée par l'écran) : ni la carte ni la légende ne passent dessous.
-        className="relative mx-auto aspect-[1000/1180] w-full max-w-[max(11rem,calc((100dvh-var(--bas,17.5rem)-18.5rem)*1000/1180))] transition-[max-width] duration-200 sm:max-w-[max(15rem,calc((100dvh-var(--bas,17.5rem)-20.5rem)*1000/1180))]"
+        className="relative mx-auto aspect-[1000/1180] w-full max-w-[max(11rem,calc((100dvh-var(--bas,17.5rem)-20.5rem)*1000/1180))] transition-[max-width] duration-200 sm:max-w-[max(15rem,calc((100dvh-var(--bas,17.5rem)-20.5rem)*1000/1180))]"
       >
         <svg
           viewBox={`${x} ${y} ${width} ${height}`}

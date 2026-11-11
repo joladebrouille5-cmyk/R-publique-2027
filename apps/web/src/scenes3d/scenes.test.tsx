@@ -90,6 +90,7 @@ beforeEach(() => {
   mouvementReduit(false);
 });
 afterEach(() => {
+  vi.useRealTimers();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
   oublierAppareil();
@@ -244,6 +245,8 @@ describe('transitions', () => {
     const ecran = screen.getByRole('dialog', { name: 'Ralliement' });
     expect(ecran).toHaveAttribute('data-cinematique', 'animee');
     expect(screen.getByRole('button', { name: 'Passer' })).toBeInTheDocument();
+    // Sans canevas à l'écran (ici, jamais), le compte à rebours part après six secondes d'attente.
+    act(() => vi.advanceTimersByTime(6_100));
     act(() => vi.advanceTimersByTime(11_000));
     expect(onFin).not.toHaveBeenCalled();
     act(() => vi.advanceTimersByTime(1_500));
