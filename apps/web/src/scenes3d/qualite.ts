@@ -24,12 +24,20 @@ export type ReglagesPalier = {
   vague: boolean;
   /** Particules par arc de report de voix. */
   particulesArc: number;
+  /** Ombres portées douces. */
+  ombres: boolean;
+  /** Profondeur de champ (flou d'arrière-plan des plans serrés) et occlusion ambiante. */
+  profondeurDeChamp: boolean;
+  /** Reflets du sol (plateau du débat) : la scène est dessinée une seconde fois, en miroir. */
+  reflets: boolean;
+  /** Côté des textures de matériaux fabriquées à l'ouverture (bois, pierre, velours…), en pixels. */
+  textures: number;
 };
 
 export const REGLAGES: Record<Palier, ReglagesPalier> = {
   eleve: {
     libelle: 'Élevé',
-    aide: 'Tous les effets, foule complète, image fine.',
+    aide: 'Ombres, reflets, profondeur de champ, foule complète, image fine.',
     pixelRatioMax: 2,
     postTraitement: true,
     antialias: true,
@@ -37,10 +45,14 @@ export const REGLAGES: Record<Palier, ReglagesPalier> = {
     confettis: 1600,
     vague: true,
     particulesArc: 90,
+    ombres: true,
+    profondeurDeChamp: true,
+    reflets: true,
+    textures: 1024,
   },
   standard: {
     libelle: 'Standard',
-    aide: 'Effets de lumière, foule moyenne : le réglage d’un téléphone récent.',
+    aide: 'Ombres, reflets et effets de lumière, foule moyenne : le réglage d’un téléphone récent.',
     pixelRatioMax: 1.5,
     postTraitement: true,
     antialias: true,
@@ -48,10 +60,14 @@ export const REGLAGES: Record<Palier, ReglagesPalier> = {
     confettis: 700,
     vague: true,
     particulesArc: 50,
+    ombres: true,
+    profondeurDeChamp: false,
+    reflets: true,
+    textures: 512,
   },
   eco: {
     libelle: 'Éco',
-    aide: 'Sans effets de lumière, foule réduite, image allégée : ménage la batterie.',
+    aide: 'Sans ombres ni effets de lumière, foule réduite, image allégée : ménage la batterie.',
     pixelRatioMax: 1,
     postTraitement: false,
     antialias: false,
@@ -59,6 +75,10 @@ export const REGLAGES: Record<Palier, ReglagesPalier> = {
     confettis: 0,
     vague: false,
     particulesArc: 16,
+    ombres: false,
+    profondeurDeChamp: false,
+    reflets: false,
+    textures: 256,
   },
 };
 

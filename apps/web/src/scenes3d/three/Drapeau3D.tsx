@@ -31,7 +31,7 @@ function Drapeau() {
         });
       }}
     >
-      <planeGeometry args={[1, 1, 72, 40]} />
+      <planeGeometry args={[1, 1, 160, 90]} />
     </mesh>
   );
 }

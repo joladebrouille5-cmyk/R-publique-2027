@@ -1,23 +1,27 @@
 import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useMemo, useRef } from 'react';
 import {
-  AdditiveBlending,
+  CircleGeometry,
   Color,
   PerspectiveCamera,
+  ShaderMaterial,
   Vector3,
   type AmbientLight,
-  type DirectionalLight,
   type Mesh,
-  type MeshBasicMaterial,
+  type MeshStandardMaterial,
+  type SpotLight,
 } from 'three';
+import { Reflector } from 'three/examples/jsm/objects/Reflector.js';
 import { dureeDuPlan, plansDuDebat, type Plan } from '../debat';
-import type { Palier } from '../qualite';
-import { amortir, Toile, tracer } from './Toile';
+import { REGLAGES, type Palier } from '../qualite';
+import { matiere, repeter } from './textures';
+import { amortir, mettreAuPoint, Toile, tracer } from './Toile';
 
-// Plateau du débat en 3D (phase 26) : une table, un pupitre par candidat présent aux couleurs de
-// son camp et une colonne de lumière à sa place — aucune silhouette, aucun visage. La réalisation
-// alterne plan large, plan serré, champ-contrechamp et écran partagé selon la tension ; la
-// lumière passe du chaud (échanges posés) au froid (échanges vifs).
+// Plateau du débat en 3D (phase 26) : un studio de télévision — sol noir laqué qui reflète le
+// décor, mur d'écrans, pupitres de métal brossé à face lumineuse aux couleurs de chaque camp,
+// table de l'arbitrage, projecteurs. Aucune silhouette, aucun visage : des places vides. La
+// réalisation alterne plan large, plan serré, champ-contrechamp et écran partagé selon la
+// tension ; la lumière passe du chaud (échanges posés) au froid (échanges vifs).
 
 export type Pupitre = { id: string; couleur: string };
 
@@ -32,8 +36,29 @@ export type Debat3DProps = {
   tension: number;
 };
 
-const CHAUD = new Color('#ffd2a1');
-const FROID = new Color('#a9c6ff');
+const CHAUD = new Color('#ffcf9a');
+const FROID = new Color('#9fc0ff');
+const MUR_CHAUD = new Color('#ff8a3a');
+const MUR_FROID = new Color('#2f6bff');
+
+/** Mur d'écrans du studio : bandes de lumière verticales qui dérivent, joints de dalles. */
+const ECRAN = {
+  vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+  fragmentShader: /* glsl */ `
+    uniform vec3 uTeinte; uniform float uTemps; uniform float uTension; varying vec2 vUv;
+    void main() {
+      float x = vUv.x * 9.0 + uTemps * (0.08 + uTension * 0.5);
+      float bande = pow(0.5 + 0.5 * sin(x * 6.2832), 24.0);
+      float voile = 0.5 + 0.5 * sin(vUv.x * 3.0 - uTemps * 0.2 + vUv.y * 2.0);
+      float haut = smoothstep(0.0, 0.5, vUv.y) * smoothstep(1.0, 0.75, vUv.y);
+      vec2 dalle = abs(fract(vUv * vec2(24.0, 4.0)) - 0.5);
+      float joint = smoothstep(0.5, 0.47, max(dalle.x, dalle.y));
+      vec3 c = uTeinte * (0.015 + 0.07 * voile * haut) + mix(uTeinte, vec3(1.0), 0.5) * 1.4 * bande * haut;
+      gl_FragColor = vec4(c * (0.7 + 0.3 * joint), 1.0);
+      #include <tonemapping_fragment>
+      #include <colorspace_fragment>
+    }`,
+};
 
 /** Emplacement de chaque pupitre : en arc de cercle, face à la caméra. */
 function emplacements(nombre: number): Vector3[] {
@@ -46,14 +71,14 @@ function emplacements(nombre: number): Vector3[] {
   });
 }
 
-function Plateau({ pupitres, parle, cible, tension }: Debat3DProps) {
+function Plateau({ pupitres, parle, cible, tension, palier }: Debat3DProps) {
+  const reglages = REGLAGES[palier];
   const { gl, scene, camera, size } = useThree();
   const places = useMemo(() => emplacements(pupitres.length), [pupitres.length]);
-  const seconde = useMemo(() => new PerspectiveCamera(38, 1, 0.1, 200), []);
+  const seconde = useMemo(() => new PerspectiveCamera(32, 1, 0.1, 200), []);
   const ambiance = useRef<AmbientLight>(null);
-  const cle = useRef<DirectionalLight>(null);
-  const colonnes = useRef<(Mesh | null)[]>([]);
-  const ecrans = useRef<(Mesh | null)[]>([]);
+  const projecteurs = useRef<(SpotLight | null)[]>([]);
+  const faces = useRef<(Mesh | null)[]>([]);
   const etat = useRef({ tension, regard: new Vector3(0, 1.2, 0), plan: 'large' as Plan });
   const teinte = useMemo(() => new Color(), []);
   const iParle = Math.max(
@@ -66,16 +91,53 @@ function Plateau({ pupitres, parle, cible, tension }: Debat3DProps) {
       : (iParle + 1) % pupitres.length;
   const envergure = Math.max(4, ...places.map((p) => Math.abs(p.x))) + 1.5;
 
+  const ecran = useMemo(
+    () =>
+      new ShaderMaterial({
+        ...ECRAN,
+        uniforms: {
+          uTeinte: { value: new Color() },
+          uTemps: { value: 0 },
+          uTension: { value: 0 },
+        },
+      }),
+    [],
+  );
+  // Sol laqué : un miroir sombre (la scène y est dessinée une seconde fois), ou un vernis simple.
+  const miroir = useMemo(() => {
+    if (!reglages.reflets) return null;
+    const m = new Reflector(new CircleGeometry(envergure + 9, 64), {
+      textureWidth: 512,
+      textureHeight: 512,
+      color: 0x30333a,
+      clipBias: 0.003,
+    });
+    m.rotation.x = -Math.PI / 2;
+    return m;
+  }, [reglages.reflets, envergure]);
+  const metal = useMemo(
+    () => repeter(matiere('beton', reglages.textures), 1, 1),
+    [reglages.textures],
+  );
+  useEffect(
+    () => () => {
+      ecran.dispose();
+      miroir?.geometry.dispose();
+      miroir?.dispose();
+    },
+    [ecran, miroir],
+  );
+
   /** Cadre serré sur un pupitre : la caméra se place face à lui, légèrement de côté. */
   const serrer = (cam: PerspectiveCamera, index: number, cote: number, delta: number) => {
     const p = places[index]!;
-    const cibleCam = new Vector3(p.x + cote * 0.9, 1.9, p.z + 4.2);
+    const cibleCam = new Vector3(p.x + cote * 1.1, 1.75, p.z + 4.4);
     cam.position.set(
       amortir(cam.position.x, cibleCam.x, 3, delta),
       amortir(cam.position.y, cibleCam.y, 3, delta),
       amortir(cam.position.z, cibleCam.z, 3, delta),
     );
-    return new Vector3(p.x, 1.35, p.z);
+    return new Vector3(p.x, 1.25, p.z);
   };
 
   // Le rendu est pris en charge ici (priorité 1) : l'écran partagé dessine deux vues côte à côte.
@@ -90,41 +152,42 @@ function Plateau({ pupitres, parle, cible, tension }: Debat3DProps) {
     if (e.plan === 'large') {
       const recul = Math.max(1, (envergure * 1.15) / (size.width / size.height) / 4.4);
       cam.position.set(
-        amortir(cam.position.x, Math.sin(t * 0.18) * 1.2, 2, delta),
-        amortir(cam.position.y, 2.6 + recul, 2, delta),
-        amortir(cam.position.z, 6.5 * recul + 2, 2, delta),
+        amortir(cam.position.x, Math.sin(t * 0.18) * 1.6, 2, delta),
+        amortir(cam.position.y, 2.6 + recul * 0.9, 2, delta),
+        amortir(cam.position.z, 6.5 * recul + 2.5, 2, delta),
       );
-      regard = new Vector3(0, 1.1, 0.5);
+      regard = new Vector3(0, 1.2, 0.5);
     } else if (e.plan === 'champ-contrechamp') regard = serrer(cam, iCible, -1, delta);
     else regard = serrer(cam, iParle, 1, delta);
     e.regard.lerp(regard, 1 - Math.exp(-4 * delta));
     cam.lookAt(e.regard);
+    mettreAuPoint('debat', cam.position.distanceTo(e.regard));
 
     // Lumière : chaude et enveloppante quand le ton est posé, froide et contrastée quand il monte.
     teinte.copy(CHAUD).lerp(FROID, e.tension);
     if (ambiance.current) {
       ambiance.current.color.copy(teinte);
-      ambiance.current.intensity = 1.5 - 0.9 * e.tension;
+      ambiance.current.intensity = 0.5 - 0.35 * e.tension;
     }
-    if (cle.current) {
-      cle.current.color.copy(teinte);
-      cle.current.intensity = 1.6 + 2.4 * e.tension;
-    }
-    colonnes.current.forEach((colonne, i) => {
-      if (!colonne) return;
-      const actif = i === iParle && parle !== null;
-      (colonne.material as MeshBasicMaterial).opacity = amortir(
-        (colonne.material as MeshBasicMaterial).opacity,
-        actif ? 0.55 + 0.15 * Math.sin(t * 5) : 0.14,
+    ecran.uniforms.uTeinte!.value.copy(MUR_CHAUD).lerp(MUR_FROID, e.tension);
+    ecran.uniforms.uTemps!.value = t;
+    ecran.uniforms.uTension!.value = e.tension;
+    projecteurs.current.forEach((lampe, i) => {
+      if (!lampe) return;
+      lampe.color.copy(teinte);
+      const actif = parle !== null && i === iParle;
+      lampe.intensity = amortir(lampe.intensity, (actif ? 520 : 200) * (1 + e.tension), 4, delta);
+    });
+    faces.current.forEach((face, i) => {
+      if (!face) return;
+      const actif = parle !== null && i === iParle;
+      const materiau = face.material as MeshStandardMaterial;
+      materiau.emissiveIntensity = amortir(
+        materiau.emissiveIntensity,
+        actif ? 1.5 + 0.2 * Math.sin(t * 5) : 0.75,
         4,
         delta,
       );
-    });
-    ecrans.current.forEach((ecran, i) => {
-      if (ecran)
-        (ecran.material as MeshBasicMaterial).color
-          .copy(teinte)
-          .multiplyScalar(0.25 + 0.2 * Math.sin(t * (0.8 + e.tension * 3) + i * 1.7) ** 2);
     });
 
     gl.setScissorTest(false);
@@ -160,72 +223,107 @@ function Plateau({ pupitres, parle, cible, tension }: Debat3DProps) {
     return () => window.clearInterval(releve);
   }, []);
 
+  const r = envergure + 5;
   return (
     <>
-      <ambientLight ref={ambiance} intensity={1.2} />
-      <directionalLight ref={cle} position={[3, 8, 6]} intensity={2} />
-      {/* Sol du studio et anneau lumineux. */}
-      <mesh rotation-x={-Math.PI / 2}>
-        <circleGeometry args={[envergure + 6, 64]} />
-        <meshStandardMaterial color="#0b1024" roughness={0.35} metalness={0.4} />
+      <fogExp2 attach="fog" args={['#04060c', 0.018]} />
+      <ambientLight ref={ambiance} intensity={0.4} />
+      {miroir ? (
+        <primitive object={miroir} />
+      ) : (
+        <mesh rotation-x={-Math.PI / 2}>
+          <circleGeometry args={[envergure + 9, 64]} />
+          <meshStandardMaterial {...metal} roughness={0.2} metalness={0.5} />
+        </mesh>
+      )}
+      {/* Voile sombre sur le miroir : un sol laqué, pas une glace. */}
+      {miroir && (
+        <mesh rotation-x={-Math.PI / 2} position-y={0.004}>
+          <circleGeometry args={[envergure + 9, 64]} />
+          <meshStandardMaterial color="#05070c" transparent opacity={0.55} roughness={0.3} />
+        </mesh>
+      )}
+      <mesh rotation-x={-Math.PI / 2} position-y={0.012}>
+        <ringGeometry args={[envergure + 1.2, envergure + 1.28, 128]} />
+        <meshBasicMaterial color="#ffe2a8" />
       </mesh>
-      <mesh rotation-x={-Math.PI / 2} position-y={0.01}>
-        <ringGeometry args={[envergure + 1.2, envergure + 1.4, 96]} />
-        <meshBasicMaterial color="#e3c46c" />
+      {/* Table de l'arbitrage : plateau de verre fumé sur socle, sans personne autour. */}
+      <mesh position={[0, 0.4, 4.2]} castShadow>
+        <cylinderGeometry args={[0.35, 0.55, 0.8, 40]} />
+        <meshStandardMaterial color="#0b0d13" roughness={0.3} metalness={0.8} />
       </mesh>
-      {/* Table de l'arbitrage, au centre, sans personne autour. */}
-      <mesh position={[0, 0.5, 3.4]}>
-        <cylinderGeometry args={[1.5, 1.3, 1, 40]} />
-        <meshStandardMaterial color="#1a2247" roughness={0.3} metalness={0.5} />
+      <mesh position={[0, 0.83, 4.2]} castShadow>
+        <cylinderGeometry args={[1.05, 1.05, 0.05, 64]} />
+        <meshPhysicalMaterial color="#10141d" roughness={0.08} metalness={0.2} clearcoat={1} />
       </mesh>
-      <mesh position={[0, 1.02, 3.4]} rotation-x={-Math.PI / 2}>
-        <ringGeometry args={[1.25, 1.5, 48]} />
-        <meshBasicMaterial color="#e3c46c" />
+      <mesh position={[0, 0.86, 4.2]} rotation-x={-Math.PI / 2}>
+        <ringGeometry args={[1.0, 1.05, 64]} />
+        <meshBasicMaterial color="#ffe2a8" />
       </mesh>
-      {/* Fond de studio : écrans dont la lumière suit la tension. */}
-      {Array.from({ length: 7 }, (_, i) => {
-        const angle = Math.PI * (0.2 + (0.6 * i) / 6);
-        const r = envergure + 4.5;
-        return (
-          <mesh
-            key={i}
-            ref={(m) => void (ecrans.current[i] = m)}
-            position={[r * Math.cos(angle), 3.4, 3 - r * Math.sin(angle)]}
-            rotation-y={Math.PI / 2 - angle}
-          >
-            <planeGeometry args={[r * 0.26, 6.2]} />
-            <meshBasicMaterial color="#223" />
-          </mesh>
-        );
-      })}
+      {/* Mur d'écrans en arc, derrière les candidats. */}
+      <mesh position={[0, 3.6, 3]}>
+        <cylinderGeometry args={[r, r, 7.2, 64, 1, true, Math.PI * 0.62, Math.PI * 0.76]} />
+        <primitive object={ecran} attach="material" side={1} />
+      </mesh>
+      {/* Poutre de projecteurs. */}
+      <mesh position={[0, 7.4, 4]}>
+        <boxGeometry args={[envergure * 2 + 4, 0.25, 0.25]} />
+        <meshStandardMaterial color="#0a0b0e" metalness={0.9} roughness={0.4} />
+      </mesh>
       {pupitres.map((pupitre, i) => {
         const p = places[i]!;
         const orientation = Math.atan2(-p.x, 6 - p.z);
         return (
-          <group key={pupitre.id} position={p} rotation-y={orientation}>
-            <mesh position={[0, 0.62, 0]}>
-              <boxGeometry args={[1.05, 1.24, 0.6]} />
-              <meshStandardMaterial color="#141a36" roughness={0.4} metalness={0.3} />
-            </mesh>
-            <mesh position={[0, 0.66, 0.31]}>
-              <planeGeometry args={[0.92, 1.05]} />
-              <meshBasicMaterial color={pupitre.couleur} />
-            </mesh>
-            <mesh position={[0, 1.27, 0.04]} rotation-x={-0.28}>
-              <boxGeometry args={[1.15, 0.05, 0.7]} />
-              <meshStandardMaterial color="#e3c46c" roughness={0.3} metalness={0.7} />
-            </mesh>
-            {/* La place du candidat : une colonne de lumière à sa couleur, pas une silhouette. */}
-            <mesh ref={(m) => void (colonnes.current[i] = m)} position={[0, 2.6, -0.75]}>
-              <cylinderGeometry args={[0.34, 0.5, 5.2, 24, 1, true]} />
-              <meshBasicMaterial
-                color={pupitre.couleur}
-                transparent
-                opacity={0.14}
-                blending={AdditiveBlending}
-                depthWrite={false}
-              />
-            </mesh>
+          <group key={pupitre.id}>
+            <spotLight
+              ref={(l) => void (projecteurs.current[i] = l)}
+              position={[p.x * 0.8, 7.2, p.z + 4]}
+              target-position={[p.x, 1, p.z]}
+              angle={0.3}
+              penumbra={0.8}
+              intensity={200}
+              castShadow={reglages.ombres}
+              shadow-mapSize={[512, 512]}
+              shadow-bias={-0.001}
+            />
+            <group position={p} rotation-y={orientation}>
+              {/* Fût de métal brossé, face de verre lumineuse à la couleur du camp, tablette. */}
+              <mesh position={[0, 0.6, 0]} castShadow>
+                <boxGeometry args={[0.9, 1.2, 0.5]} />
+                <meshStandardMaterial {...metal} color="#8a8f9a" roughness={0.35} metalness={0.9} />
+              </mesh>
+              <mesh ref={(m) => void (faces.current[i] = m)} position={[0, 0.62, 0.256]}>
+                <planeGeometry args={[0.74, 1.02]} />
+                <meshStandardMaterial
+                  color="#000000"
+                  emissive={pupitre.couleur}
+                  emissiveIntensity={0.75}
+                  roughness={0.2}
+                />
+              </mesh>
+              <mesh position={[0, 1.24, 0.02]} rotation-x={-0.22} castShadow>
+                <boxGeometry args={[1.08, 0.045, 0.66]} />
+                <meshPhysicalMaterial color="#0d1017" roughness={0.15} clearcoat={1} />
+              </mesh>
+              {/* Deux micros sur col de cygne. */}
+              {[-0.16, 0.16].map((x) => (
+                <group key={x} position={[x, 1.28, 0.1]} rotation-x={0.5}>
+                  <mesh position-y={0.17}>
+                    <cylinderGeometry args={[0.008, 0.008, 0.34, 6]} />
+                    <meshStandardMaterial color="#111" metalness={0.8} roughness={0.4} />
+                  </mesh>
+                  <mesh position-y={0.36}>
+                    <capsuleGeometry args={[0.018, 0.05, 2, 8]} />
+                    <meshStandardMaterial color="#1b1b1e" roughness={0.9} />
+                  </mesh>
+                </group>
+              ))}
+              {/* Liseré lumineux au sol : la place du candidat. */}
+              <mesh rotation-x={-Math.PI / 2} position={[0, 0.014, -0.75]}>
+                <ringGeometry args={[0.5, 0.55, 48]} />
+                <meshBasicMaterial color={pupitre.couleur} />
+              </mesh>
+            </group>
           </group>
         );
       })}
@@ -239,8 +337,9 @@ export default function Debat3D(props: Debat3DProps) {
       nom="debat"
       palier={props.palier}
       visible={props.visible}
-      camera={{ position: [0, 3.6, 10], fov: 38 }}
-      fond="#050814"
+      camera={{ position: [0, 3.2, 10], fov: 32 }}
+      fond="#04060c"
+      environnement={0.25}
     >
       <Plateau {...props} />
     </Toile>

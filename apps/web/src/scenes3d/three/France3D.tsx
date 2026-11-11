@@ -21,7 +21,7 @@ import {
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { anneaux, HAUTEUR_SOCLE, hauteurDuRelief, type Departement3D } from '../carte';
 import { REGLAGES, type Palier } from '../qualite';
-import { amortir, Toile, tracer } from './Toile';
+import { amortir, mettreAuPoint, Toile, tracer } from './Toile';
 
 // Carte de France 3D (phase 26) : départements extrudés (une seule géométrie, un seul appel de
 // dessin), relief proportionnel au score du candidat en tête, dépouillement en onde lumineuse
@@ -122,7 +122,7 @@ const RELIEF_VERTEX = /* glsl */ `
   uniform sampler2D uDonnees;
   attribute float aDept; attribute vec2 aCentre; attribute float aRayon;
   varying vec3 vCouleur; varying float vAvancement; varying float vDistance;
-  varying vec3 vNormale; varying float vHaut;
+  varying vec3 vNormale; varying float vHaut; varying vec3 vMonde;
   void main() {
     vec4 etat = texelFetch(uDonnees, ivec2(int(aDept), 0), 0);
     float hauteur = texelFetch(uDonnees, ivec2(int(aDept), 1), 0).r;
@@ -130,24 +130,40 @@ const RELIEF_VERTEX = /* glsl */ `
     vDistance = distance(position.xz, aCentre) / aRayon;
     vNormale = normal; vHaut = position.y;
     vec3 p = vec3(position.x, position.y * hauteur, position.z);
+    vMonde = p;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
   }`;
 const RELIEF_FRAGMENT = /* glsl */ `
   uniform vec3 uAttente; uniform float uVague; uniform float uTemps;
   varying vec3 vCouleur; varying float vAvancement; varying float vDistance;
-  varying vec3 vNormale; varying float vHaut;
+  varying vec3 vNormale; varying float vHaut; varying vec3 vMonde;
+  float grain(vec2 p) { return fract(sin(dot(floor(p), vec2(12.9898, 78.233))) * 43758.5453); }
   void main() {
     // Onde du dépouillement : le résultat gagne le département depuis sa préfecture.
     float front = vAvancement * 1.35;
     float revele = mix(step(0.5, vAvancement), smoothstep(front, front - 0.18, vDistance), uVague);
     float enCours = step(0.002, vAvancement) * step(vAvancement, 0.998);
-    float crete = uVague * enCours * exp(-pow((vDistance - front) / 0.07, 2.0));
-    float ressac = uVague * enCours * 0.12 * sin(vDistance * 22.0 - uTemps * 6.0) * revele;
-    vec3 couleur = mix(uAttente, vCouleur, revele);
+    float crete = uVague * enCours * exp(-pow((vDistance - front) / 0.045, 2.0));
+    float ressac = uVague * enCours * 0.05 * sin(vDistance * 22.0 - uTemps * 6.0) * revele;
+    vec3 teinte = mix(uAttente, vCouleur, revele);
+    // Maquette de résine teintée : dessus satiné à grain fin, flancs plus sombres vers le socle
+    // (occlusion), arête supérieure accrochée par la lumière.
     vec3 n = normalize(vNormale);
-    float lumiere = 0.5 + 0.5 * max(0.0, dot(n, normalize(vec3(0.35, 0.85, 0.4))));
-    lumiere *= mix(0.62, 1.0, step(0.5, n.y)) * mix(0.75, 1.0, vHaut);
-    gl_FragColor = vec4(couleur * (lumiere + ressac) + vec3(1.0, 0.92, 0.7) * crete * 1.6, 1.0);
+    vec3 vue = normalize(cameraPosition - vMonde);
+    vec3 lampe = normalize(vec3(-0.35, 0.8, 0.45));
+    float dessus = step(0.5, n.y);
+    float diffus = max(0.0, dot(n, lampe));
+    float matiere = 0.94 + 0.06 * grain(vMonde.xz * 1.7);
+    float bordure = mix(1.0, 0.82, smoothstep(0.75, 1.05, vDistance)) ;
+    float occlusion = mix(0.35 + 0.65 * smoothstep(0.0, 1.0, vHaut), 1.0, dessus);
+    float arete = (1.0 - dessus) * smoothstep(0.93, 1.0, vHaut) * 0.08;
+    float reflet = pow(max(0.0, dot(n, normalize(lampe + vue))), 40.0) * 0.1 * dessus;
+    float fresnel = pow(1.0 - max(0.0, dot(n, vue)), 4.0) * 0.08;
+    vec3 c = teinte * matiere * bordure * occlusion * (0.16 + 0.7 * diffus + ressac);
+    c += vec3(1.0) * (reflet + arete) + vec3(0.5, 0.6, 0.9) * fresnel * 0.4;
+    c += vec3(1.0, 0.82, 0.5) * crete * 0.5;
+    gl_FragColor = vec4(c, 1.0);
+    #include <tonemapping_fragment>
     #include <colorspace_fragment>
   }`;
 
@@ -157,7 +173,7 @@ const LUMIERES_VERTEX = /* glsl */ `
   void main() {
     float avancement = texelFetch(uDonnees, ivec2(int(aDept), 0), 0).a;
     float hauteur = texelFetch(uDonnees, ivec2(int(aDept), 1), 0).r;
-    vForce = smoothstep(0.9, 1.0, avancement) * (0.8 + 0.2 * sin(uTemps * 3.0 + aDept));
+    vForce = smoothstep(0.9, 1.0, avancement) * (0.5 + 0.12 * sin(uTemps * 3.0 + aDept));
     vec4 mv = modelViewMatrix * vec4(position.x, hauteur + 4.0, position.z, 1.0);
     gl_PointSize = uTaille * vForce / -mv.z;
     gl_Position = projectionMatrix * mv;
@@ -319,7 +335,7 @@ function Carte({
         transparent: true,
         depthWrite: false,
         blending: AdditiveBlending,
-        uniforms: { uDonnees: { value: donnees }, uTaille: { value: 9000 }, uTemps: { value: 0 } },
+        uniforms: { uDonnees: { value: donnees }, uTaille: { value: 5200 }, uTemps: { value: 0 } },
         vertexShader: LUMIERES_VERTEX,
         fragmentShader: LUMIERES_FRAGMENT,
       }),
@@ -364,7 +380,7 @@ function Carte({
   }, [controles]);
   const distance = useMemo(() => {
     const aspect = size.width / Math.max(1, size.height);
-    return Math.max(1500, 1320 / aspect);
+    return Math.max(1500, 1000 / aspect);
   }, [size]);
   useEffect(() => {
     controles.minDistance = distance * 0.3;
@@ -399,6 +415,7 @@ function Carte({
     materiaux.relief.uniforms.uTemps!.value = t;
     materiaux.lumieres.uniforms.uTemps!.value = t;
 
+    mettreAuPoint(nom, camera.position.distanceTo(controles.target));
     if (touche.current) {
       controles.update();
       return;
@@ -417,10 +434,17 @@ function Carte({
 
   return (
     <>
+      {/* Table laquée sombre sur laquelle la maquette est posée : elle reflète la pièce. */}
       <mesh rotation-x={-Math.PI / 2} position-y={-0.5}>
-        <circleGeometry args={[1500, 48]} />
-        <meshBasicMaterial color={sombre ? '#050916' : '#aebbd8'} />
+        <circleGeometry args={[2600, 64]} />
+        <meshStandardMaterial
+          color={sombre ? '#04070f' : '#27324a'}
+          roughness={0.18}
+          metalness={0.6}
+          envMapIntensity={sombre ? 0.5 : 0.9}
+        />
       </mesh>
+      <directionalLight position={[-300, 700, 400]} intensity={1.2} />
       <mesh geometry={geometrie} material={materiaux.relief} frustumCulled={false} />
       <points geometry={lumieres} material={materiaux.lumieres} frustumCulled={false} />
       {arcs.map((arc, i) => (
@@ -437,8 +461,9 @@ export default function France3D(props: France3DProps) {
       palier={props.palier}
       visible={props.visible}
       camera={{ position: [0, 2400, 1700], fov: 45, near: 10, far: 9000 }}
-      post
-      fond={props.sombre ? '#070d22' : '#c9d4ea'}
+      environnement={0.6}
+      post={{ bloom: 0.35, seuil: 0.93, vignette: 0.55, grain: 0.04 }}
+      fond={props.sombre ? '#03050b' : '#1b2438'}
     >
       <Carte {...props} />
     </Toile>
